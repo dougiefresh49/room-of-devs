@@ -41,3 +41,9 @@ with open(path, "w", encoding="utf-8") as f:
 PY
 
 log "Set ElevenLabs voice to $VOICE_ID"
+
+# Pre-generate phrases for this voice in the background
+SERVER_DIR="$TTS_DIR/tts-server"
+if [ -f "$SERVER_DIR/src/phrases.ts" ] && command -v pnpm &>/dev/null; then
+    (cd "$SERVER_DIR" && pnpm exec tsx src/phrases.ts "$VOICE_ID") &>/dev/null &
+fi

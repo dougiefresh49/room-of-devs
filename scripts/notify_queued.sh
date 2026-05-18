@@ -55,7 +55,7 @@ from pathlib import Path
 filepath, config_path, log_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
 TTS_DIR = os.path.expanduser("~/.cursor/tts")
-PLAY = os.path.join(TTS_DIR, "scripts", "play.sh")
+PLAY = os.path.join(TTS_DIR, "scripts", "play_node.sh")
 RANDOM_SFX = os.path.join(TTS_DIR, "scripts", "random_sfx.sh")
 
 

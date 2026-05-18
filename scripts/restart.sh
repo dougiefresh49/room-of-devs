@@ -24,4 +24,4 @@ if [ -z "$QUEUE_FILE" ] || [ ! -f "$QUEUE_FILE" ]; then
     exit 1
 fi
 
-exec "$SCRIPTS_DIR/play.sh" "$QUEUE_FILE"
+exec "$SCRIPTS_DIR/play_node.sh" "$QUEUE_FILE"

@@ -60,18 +60,37 @@ fi
 # ── 4. Copy scripts ──────────────────────────────────────────────
 log "Installing scripts to $TTS_DIR/scripts/"
 for script in \
-    ingest.sh play.sh stop.sh pause.sh play_latest.sh media_control.sh \
+    ingest.sh play.sh play_node.sh stop.sh pause.sh play_latest.sh media_control.sh \
     restart.sh quit.sh set_speed.sh clear_queue.sh clear_thread_queue.sh \
     set_listening.sh enqueue_manual.sh piper_http_launch.sh set_voice.sh \
     notify_queued.sh set_notifications.sh set_notification_sound.sh \
     clean_text.py gemini_process.py fetch_voices.py load_env.sh \
     paste_voice_id.sh generate_sfx.sh random_sfx.sh cleanup_played.sh \
-    build_read_aloud_notifier_app.sh; do
+    build_read_aloud_notifier_app.sh \
+    hook_stop.sh hook_prompt.sh tts-server.sh \
+    set_streaming.sh \
+    set_session_mute.sh set_session_voice.sh \
+    ingest_claude_code.sh fetch_credits.sh; do
     if [ -f "$PROJECT_DIR/scripts/$script" ]; then
         cp "$PROJECT_DIR/scripts/$script" "$TTS_DIR/scripts/$script"
     fi
 done
 chmod +x "$TTS_DIR/scripts/"*.sh "$TTS_DIR/scripts/"*.py 2>/dev/null || true
+
+# ── 4b. Install Node.js TTS server ──────────────────────────────
+if command -v pnpm &>/dev/null; then
+    log "Installing Node.js TTS server..."
+    TTS_SERVER_DEST="$TTS_DIR/tts-server"
+    rm -rf "$TTS_SERVER_DEST"
+    cp -r "$PROJECT_DIR/tts-server" "$TTS_SERVER_DEST"
+    cd "$TTS_SERVER_DEST"
+    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+    log "TTS server installed at $TTS_SERVER_DEST"
+    cd "$PROJECT_DIR"
+else
+    log "pnpm not found — skipping Node.js TTS server install"
+    log "  Install pnpm: npm install -g pnpm"
+fi
 
 # ── 5. Write default config (if not present) ──────────────────────
 CONFIG_FILE="$TTS_DIR/config.json"
@@ -97,7 +116,7 @@ except (OSError, json.JSONDecodeError):
 defaults = {
     "elevenlabs_voice_id": "",
     "elevenlabs_model_id": "eleven_v3",
-    "gemini_model": "gemini-2.0-flash-lite",
+    "gemini_model": "gemini-3.1-flash-lite",
     "default_speed": 1.25,
     "notifications_enabled": False,
     "notification_icon": "~/.cursor/tts/icons/tmnt-notification-queued.png",
@@ -105,6 +124,8 @@ defaults = {
     "terminal_notifier_app": "",
     "notification_sound": "random_sfx",
     "sfx_categories": ["boom", "bram", "fantasy", "impact", "weapon"],
+    "streaming_enabled": False,
+    "streaming_session_prefix": "auto",
     "played_retention_count": 50,
 }
 
@@ -196,13 +217,16 @@ log ""
 log "Setup complete! Summary:"
 log "  Config:      $CONFIG_FILE"
 log "  Scripts:     $TTS_DIR/scripts/"
+log "  TTS Server:  $TTS_DIR/tts-server/"
 log "  Queue:       $TTS_DIR/queue/"
 log "  Sounds:      $TTS_DIR/sounds/default/"
 log "  Hooks:       $HOOKS_FILE"
-log "  TTS Engine:  ElevenLabs (eleven_v3) — falls back to macOS say"
+log "  TTS Engine:  ElevenLabs (eleven_v3) via Node.js server"
 log ""
 log "Next steps:"
 log "  1. Set your ElevenLabs voice in the SwiftBar menu (Voice submenu)"
-log "  2. Enable notifications if desired (Settings → Notifications)"
+log "  2. Start the TTS server: $TTS_DIR/scripts/tts-server.sh start"
+log "  3. Generate phrases: cd $TTS_DIR/tts-server && pnpm run generate-phrases"
+log "  4. Enable streaming in SwiftBar menu for auto-play"
 log ""
 log "Hotkeys: SwiftBar menu — Play Latest (ctrl+shift+p), Pause/Resume (ctrl+shift+space)."

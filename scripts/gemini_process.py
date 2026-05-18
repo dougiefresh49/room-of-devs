@@ -94,7 +94,7 @@ def load_env():
             break
 
 
-def call_gemini(text, api_key, model="gemini-2.0-flash-lite"):
+def call_gemini(text, api_key, model="gemini-3.1-flash-lite", timeout=15):
     """Call Gemini API to process text for TTS using curl (avoids Python SSL issues on macOS)."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
@@ -115,12 +115,13 @@ def call_gemini(text, api_key, model="gemini-2.0-flash-lite"):
         r = subprocess.run(
             [
                 "curl", "-s", "-f",
+                "--max-time", str(timeout),
                 "-X", "POST",
                 "-H", "Content-Type: application/json",
                 "-d", payload,
                 url,
             ],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=timeout,
         )
         if r.returncode != 0:
             log(f"Gemini curl failed (exit {r.returncode}): {r.stderr.strip()[:200]}")
@@ -184,7 +185,7 @@ def main():
     load_env()
     config = load_config()
     api_key = os.environ.get("GEMINI_API_KEY", "")
-    model = config.get("gemini_model", "gemini-2.0-flash-lite")
+    model = config.get("gemini_model", "gemini-3.1-flash-lite")
 
     result = None
     if api_key:

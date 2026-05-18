@@ -3,3 +3,6 @@ __pycache__/
 .DS_Store
 .cursor/
 .env
+node_modules/
+dist/
+tts-server/src/characters.json

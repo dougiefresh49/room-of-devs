@@ -27,11 +27,23 @@ DEFAULT_SPEED="1.25"
 VOICE_ID=""
 NOTIFICATIONS_ON=0
 NOTIFICATION_SOUND="random_sfx"
+STREAMING_ON=0
 if [ -f "$CONFIG" ]; then
     DEFAULT_SPEED=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('default_speed', 1.25))" 2>/dev/null || echo "1.25")
     VOICE_ID=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('elevenlabs_voice_id', ''))" 2>/dev/null || echo "")
     NOTIFICATIONS_ON=$(python3 -c "import json; print(1 if json.load(open('$CONFIG')).get('notifications_enabled') is True else 0)" 2>/dev/null || echo "0")
     NOTIFICATION_SOUND=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('notification_sound', 'random_sfx'))" 2>/dev/null || echo "random_sfx")
+    STREAMING_ON=$(python3 -c "import json; print(1 if json.load(open('$CONFIG')).get('streaming_enabled') is True else 0)" 2>/dev/null || echo "0")
+fi
+
+# ── Check TTS server status ──────────────────────────────────────
+DAEMON_RUNNING=false
+DAEMON_PID_FILE="$TTS_DIR/.tts-server.pid"
+if [ -f "$DAEMON_PID_FILE" ]; then
+    DAEMON_PID=$(cat "$DAEMON_PID_FILE" 2>/dev/null || true)
+    if [ -n "$DAEMON_PID" ] && kill -0 "$DAEMON_PID" 2>/dev/null; then
+        DAEMON_RUNNING=true
+    fi
 fi
 
 # ── Count unplayed items ──────────────────────────────────────────
@@ -273,7 +285,7 @@ for grp_key, items in group_list:
             print(f"--⏳ {prev} | disabled=true")
         else:
             print(
-                f"--{prev} | bash={scripts_dir}/play.sh param1={path} terminal=false refresh=true"
+                f"--{prev} | bash={scripts_dir}/play_node.sh param1={path} terminal=false refresh=true"
             )
     token = base64.urlsafe_b64encode(
         json.dumps({"key": grp_key}, separators=(",", ":")).encode("utf-8")
@@ -410,6 +422,17 @@ if os.path.isfile(cache_file):
 
 voice_names = {v.get("voice_id", ""): v.get("name", "?") for v in voices}
 
+muted_sessions = []
+muted_path = os.path.join(tts_dir, "muted_sessions.json")
+if os.path.isfile(muted_path):
+    try:
+        with open(muted_path) as f:
+            muted_sessions = json.load(f)
+        if not isinstance(muted_sessions, list):
+            muted_sessions = []
+    except (OSError, json.JSONDecodeError):
+        pass
+
 active_sessions = []
 if os.path.isdir(sessions_dir):
     try:
@@ -435,11 +458,18 @@ else:
     for sid, name, cwd in sorted(active_sessions, key=lambda x: x[1]):
         current_voice = session_voices.get(sid, "")
         voice_label = voice_names.get(current_voice, "default") if current_voice else "default"
+        is_muted = sid in muted_sessions
         display_name = name.replace("|", "/")
         if len(display_name) > 24:
             display_name = display_name[:22] + ".."
-        print(f"--{display_name}: {voice_label}")
+        mute_indicator = " [muted]" if is_muted else ""
+        print(f"--{display_name}: {voice_label}{mute_indicator}")
 
+        if is_muted:
+            print(f"----Unmute | bash={scripts_dir}/set_session_mute.sh param1={sid} param2=unmute terminal=false refresh=true")
+        else:
+            print(f"----Mute | bash={scripts_dir}/set_session_mute.sh param1={sid} param2=mute terminal=false refresh=true")
+        print("---- | disabled=true")
         print(f"----Use Default | bash={scripts_dir}/set_session_voice.sh param1={sid} param2=--clear terminal=false refresh=true")
         for v in voices:
             vid = v.get("voice_id", "")
@@ -449,7 +479,7 @@ else:
 PY
 
 echo "Speed: ${DEFAULT_SPEED}x"
-SPEEDS=("0.75" "1.0" "1.25" "1.5" "2.0")
+SPEEDS=("0.75" "1.0" "1.1" "1.15" "1.2" "1.25" "1.5" "2.0")
 for spd in "${SPEEDS[@]}"; do
     if [ "$spd" = "$DEFAULT_SPEED" ]; then
         LABEL="✓ ${spd}x"
@@ -463,6 +493,16 @@ if [ "$NOTIFICATIONS_ON" = 1 ]; then
     echo "Notifications: On | bash=$SCRIPTS_DIR/set_notifications.sh param1=off terminal=false refresh=true"
 else
     echo "Notifications: Off | bash=$SCRIPTS_DIR/set_notifications.sh param1=on terminal=false refresh=true"
+fi
+
+if [ "$STREAMING_ON" = 1 ]; then
+    if [ "$DAEMON_RUNNING" = true ]; then
+        echo "Streaming: On (server running) | bash=$SCRIPTS_DIR/set_streaming.sh param1=off terminal=false refresh=true"
+    else
+        echo "Streaming: On (server stopped) | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
+    fi
+else
+    echo "Streaming: Off | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
 fi
 
 case "$NOTIFICATION_SOUND" in

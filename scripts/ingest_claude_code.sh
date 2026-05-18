@@ -29,7 +29,7 @@ PAYLOAD_FILE=$(mktemp /tmp/cc-hook-payload.XXXXXX)
 cat > "$PAYLOAD_FILE"
 
 # Wait for the transcript to finish flushing the final assistant message
-sleep 2
+sleep 1
 
 python3 - "$TTS_DIR" "$LOG_FILE" "$PAYLOAD_FILE" <<'PY'
 import json
@@ -182,6 +182,7 @@ QUEUED_FILE=$(ls -t "$QUEUE_DIR"/*-cc-*.json 2>/dev/null | head -1)
 if [ -n "$QUEUED_FILE" ] && [ -f "$QUEUED_FILE" ]; then
     "$TTS_DIR/scripts/notify_queued.sh" "$QUEUED_FILE" 2>/dev/null || true
 fi
+
 
 # Cleanup old played files in background
 "$TTS_DIR/scripts/cleanup_played.sh" &>/dev/null &

@@ -41,6 +41,13 @@ else
   echo "Warning: $SET_LISTENING missing after setup."
 fi
 
+# Start the TTS server daemon if streaming is enabled
+TTS_SERVER_SH="${HOME}/.cursor/tts/scripts/tts-server.sh"
+STREAMING_ON=$(python3 -c "import json; print(1 if json.load(open('${HOME}/.cursor/tts/config.json')).get('streaming_enabled') else 0)" 2>/dev/null || echo "0")
+if [ "$STREAMING_ON" = "1" ] && [ -x "$TTS_SERVER_SH" ]; then
+  "$TTS_SERVER_SH" start
+fi
+
 if open -a SwiftBar 2>/dev/null; then
   echo "SwiftBar opened."
 else

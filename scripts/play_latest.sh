@@ -35,4 +35,4 @@ if [ -z "$LATEST" ] || [ ! -f "$LATEST" ]; then
 fi
 
 log "Playing latest: $(basename "$LATEST")"
-exec "$SCRIPTS_DIR/play.sh" "$LATEST"
+exec "$SCRIPTS_DIR/play_node.sh" "$LATEST"
