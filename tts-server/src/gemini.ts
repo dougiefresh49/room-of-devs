@@ -1,9 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { log } from "./logger.js";
 
-const SYSTEM_PROMPT = `You convert AI agent markdown responses into natural spoken text for ElevenLabs v3 TTS.
-
-You are preparing text that will be read aloud to a developer who just got a response from their AI coding assistant. Read it like a dev friend summarizing what the agent did, not like a robot reading documentation.
+const BASE_SYSTEM_PROMPT = `You convert AI agent markdown responses into natural spoken text for ElevenLabs v3 TTS.
 
 Rules:
 1. REMOVE all code blocks, shell commands, import statements, and raw code. Never read code aloud.
@@ -27,6 +25,25 @@ Rules:
 
 Output ONLY the processed speech text. No explanations, no quotes, no surrounding markdown.`;
 
+export interface CharacterContext {
+  name: string;
+  personality: string;
+  speechStyle: string;
+}
+
+function buildSystemPrompt(character?: CharacterContext | null): string {
+  if (!character) {
+    return BASE_SYSTEM_PROMPT + `\n\nRead it like a dev friend summarizing what the agent did.`;
+  }
+
+  return BASE_SYSTEM_PROMPT + `\n\nYou are rewriting this as ${character.name}. Stay in character throughout.
+
+Personality: ${character.personality}
+Speech style: ${character.speechStyle}
+
+Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.`;
+}
+
 let client: GoogleGenAI | null = null;
 
 function getClient(): GoogleGenAI | null {
@@ -39,7 +56,8 @@ function getClient(): GoogleGenAI | null {
 
 export async function processWithGemini(
   text: string,
-  model = "gemini-3.1-flash-lite"
+  model = "gemini-3.1-flash-lite",
+  character?: CharacterContext | null
 ): Promise<string | null> {
   const ai = getClient();
   if (!ai) {
@@ -48,12 +66,13 @@ export async function processWithGemini(
   }
 
   try {
+    const systemPrompt = buildSystemPrompt(character);
     const response = await ai.models.generateContent({
       model,
       contents: text,
       config: {
-        systemInstruction: SYSTEM_PROMPT,
-        temperature: 0.3,
+        systemInstruction: systemPrompt,
+        temperature: character ? 0.5 : 0.3,
         maxOutputTokens: 4096,
       },
     });

@@ -30,7 +30,7 @@ function loadCharacters(): Record<string, CharacterProfile> {
   return characters!;
 }
 
-function getCharacter(voiceId: string): CharacterProfile | null {
+export function getCharacter(voiceId: string): CharacterProfile | null {
   return loadCharacters()[voiceId] ?? null;
 }
 

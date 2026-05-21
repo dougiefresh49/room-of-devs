@@ -13,6 +13,7 @@ import {
 } from "./config.js";
 import { processWithGemini, fallbackClean } from "./gemini.js";
 import { streamTTS, resolveVoiceId } from "./elevenlabs.js";
+import { getCharacter } from "./dynamic-response.js";
 import {
   isProcessing,
   markProcessing,
@@ -96,8 +97,19 @@ async function processQueueFile(filePath: string): Promise<void> {
   try {
     await waitForLock();
 
+    const voiceId = resolveVoiceId(sessionId);
+    if (!voiceId) {
+      log("server", "No voice ID configured — skip");
+      return;
+    }
+
+    const character = getCharacter(voiceId);
+    const characterCtx = character
+      ? { name: character.name, personality: character.personality, speechStyle: character.speechStyle }
+      : null;
+
     let processed =
-      (await processWithGemini(item.text, config.gemini_model)) ??
+      (await processWithGemini(item.text, config.gemini_model, characterCtx)) ??
       fallbackClean(item.text);
 
     if (!processed.trim()) {
@@ -113,11 +125,7 @@ async function processQueueFile(filePath: string): Promise<void> {
 
     processed = truncateForTTS(processed);
 
-    const voiceId = resolveVoiceId(sessionId);
-    if (!voiceId) {
-      log("server", "No voice ID configured — skip");
-      return;
-    }
+    log("server", `Character: ${character?.name ?? "default"}, voice: ${voiceId}`);
 
     const stream = await streamTTS(processed, { voiceId });
     if (!stream) {
