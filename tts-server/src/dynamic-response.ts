@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import { loadConfig } from "./config.js";
 import { streamTTS } from "./elevenlabs.js";
-import { playStreamBuffer, playMp3Buffer } from "./audio.js";
+import { playStreamBuffer, playMp3Buffer, type ReplayMeta } from "./audio.js";
 import { playRandomPhrase } from "./phrases.js";
 import { log } from "./logger.js";
 
@@ -87,7 +87,9 @@ Rules:
 
 export async function handleDynamicResponse(
   voiceId: string,
-  userPrompt?: string
+  userPrompt?: string,
+  sessionId?: string,
+  sessionName?: string
 ): Promise<boolean> {
   const character = getCharacter(voiceId);
 
@@ -104,10 +106,19 @@ export async function handleDynamicResponse(
     return playRandomPhrase(voiceId);
   }
 
+  const meta: ReplayMeta = {
+    source: "dynamic-response",
+    sessionId,
+    sessionName,
+    character: character.name,
+    textPreview: responseText.slice(0, 120),
+    timestamp: new Date().toISOString(),
+  };
+
   const stream = await streamTTS(responseText, { voiceId });
   if (stream) {
     log("dynamic", `Streaming: "${responseText}"`);
-    await playStreamBuffer(stream as any, "dynamic-response");
+    await playStreamBuffer(stream as any, "dynamic-response", meta);
     return true;
   }
 
@@ -117,15 +128,27 @@ export async function handleDynamicResponse(
 
 export async function handleAskUser(
   voiceId: string,
-  questionText: string
+  questionText: string,
+  sessionId?: string,
+  sessionName?: string
 ): Promise<boolean> {
   if (!questionText?.trim()) return false;
 
   const character = getCharacter(voiceId);
   const key = process.env.GEMINI_API_KEY;
+
+  const meta: ReplayMeta = {
+    source: "ask-user",
+    sessionId,
+    sessionName,
+    character: character?.name,
+    textPreview: questionText.slice(0, 120),
+    timestamp: new Date().toISOString(),
+  };
+
   if (!key) {
     log("dynamic", "No GEMINI_API_KEY for ask-user — streaming raw question");
-    return streamAndPlay(voiceId, questionText);
+    return streamAndPlay(voiceId, questionText, meta);
   }
 
   const config = loadConfig();
@@ -158,20 +181,25 @@ Rules:
     });
 
     const text = response.text?.trim();
-    if (!text) return streamAndPlay(voiceId, questionText);
+    if (!text) return streamAndPlay(voiceId, questionText, meta);
 
+    meta.textPreview = text.slice(0, 120);
     log("dynamic", `Ask-user response: "${text}"`);
-    return streamAndPlay(voiceId, text);
+    return streamAndPlay(voiceId, text, meta);
   } catch (err: any) {
     log("dynamic", `Ask-user Gemini error: ${err.message}`);
-    return streamAndPlay(voiceId, questionText);
+    return streamAndPlay(voiceId, questionText, meta);
   }
 }
 
-async function streamAndPlay(voiceId: string, text: string): Promise<boolean> {
+async function streamAndPlay(
+  voiceId: string,
+  text: string,
+  meta?: ReplayMeta
+): Promise<boolean> {
   const stream = await streamTTS(text, { voiceId });
   if (stream) {
-    await playStreamBuffer(stream as any, "ask-user-response");
+    await playStreamBuffer(stream as any, "ask-user-response", meta);
     return true;
   }
   return false;

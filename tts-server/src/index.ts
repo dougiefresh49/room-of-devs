@@ -22,6 +22,7 @@ import {
   releaseLock,
   stopCurrent,
   playStreamBuffer,
+  type ReplayMeta,
 } from "./audio.js";
 import { log } from "./logger.js";
 
@@ -133,8 +134,17 @@ async function processQueueFile(filePath: string): Promise<void> {
       return;
     }
 
+    const replayMeta: ReplayMeta = {
+      source: "queue",
+      sessionId: sessionId,
+      sessionName: item.thread_title || lookupSessionName(sessionId || "") || undefined,
+      character: character?.name,
+      textPreview: processed.slice(0, 120),
+      timestamp: new Date().toISOString(),
+    };
+
     log("server", `Playing: ${name} (${processed.length} chars)`);
-    const code = await playStreamBuffer(stream as any, filePath);
+    const code = await playStreamBuffer(stream as any, filePath, replayMeta);
     if (code === 0) {
       moveToPlayed(filePath);
     } else {

@@ -1,5 +1,5 @@
 import { spawn, ChildProcess, execSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync, readdirSync } from "fs";
 import {
   STREAM_PID_FILE,
   STREAM_LOCK,
@@ -9,6 +9,9 @@ import {
 } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
+
+const REPLAY_DIR = join(TTS_DIR, "replay");
+const MAX_REPLAY_FILES = 20;
 
 const PAUSED_FLAG = join(TTS_DIR, ".playback-paused");
 const PLAYBACK_FILE_REF = join(TTS_DIR, ".playback-file");
@@ -114,9 +117,61 @@ export function playFile(filePath: string): Promise<number> {
   });
 }
 
+export interface ReplayMeta {
+  source: string;
+  sessionId?: string;
+  sessionName?: string;
+  character?: string;
+  textPreview?: string;
+  timestamp: string;
+}
+
+function pruneReplayDir(): void {
+  try {
+    const files = readdirSync(REPLAY_DIR)
+      .filter((f) => f.endsWith(".mp3"))
+      .sort();
+    while (files.length > MAX_REPLAY_FILES) {
+      const oldest = files.shift()!;
+      try { unlinkSync(join(REPLAY_DIR, oldest)); } catch {}
+      try { unlinkSync(join(REPLAY_DIR, oldest.replace(".mp3", ".json"))); } catch {}
+    }
+  } catch {}
+}
+
+function saveReplayFile(
+  chunks: Uint8Array[],
+  queueFile: string,
+  meta?: ReplayMeta
+): string | null {
+  try {
+    mkdirSync(REPLAY_DIR, { recursive: true });
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const label = queueFile.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);
+    const filename = `${ts}_${label}.mp3`;
+    const filePath = join(REPLAY_DIR, filename);
+    const total = chunks.reduce((n, c) => n + c.length, 0);
+    const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)), total);
+    writeFileSync(filePath, buf);
+    if (meta) {
+      writeFileSync(
+        join(REPLAY_DIR, filename.replace(".mp3", ".json")),
+        JSON.stringify(meta, null, 2)
+      );
+    }
+    pruneReplayDir();
+    log("audio", `Saved replay: ${filename} (${(total / 1024).toFixed(1)} KB)`);
+    return filePath;
+  } catch (err: any) {
+    log("audio", `Failed to save replay: ${err.message}`);
+    return null;
+  }
+}
+
 export function playStreamBuffer(
   audioStream: AsyncIterable<Uint8Array>,
-  queueFile: string
+  queueFile: string,
+  replayMeta?: ReplayMeta
 ): Promise<number> {
   return new Promise(async (resolve) => {
     const config = loadConfig();
@@ -146,14 +201,20 @@ export function playStreamBuffer(
     writeFileSync(PLAYBACK_FILE_REF, queueFile);
     writeFileSync(AUDIO_REF, "streaming");
 
+    const replayChunks: Uint8Array[] = [];
+
     child.on("close", (code) => {
       if (currentProcess === child) currentProcess = null;
       cleanup();
+      if (replayChunks.length > 0) {
+        saveReplayFile(replayChunks, queueFile, replayMeta);
+      }
       resolve(code ?? 0);
     });
 
     try {
       for await (const chunk of audioStream) {
+        replayChunks.push(chunk);
         if (child.stdin && !child.stdin.destroyed) {
           child.stdin.write(chunk);
         }
@@ -164,6 +225,23 @@ export function playStreamBuffer(
       child.kill("SIGTERM");
     }
   });
+}
+
+export function replayLast(nth = 1): Promise<number> {
+  try {
+    if (!existsSync(REPLAY_DIR)) return Promise.resolve(1);
+    const files = readdirSync(REPLAY_DIR)
+      .filter((f) => f.endsWith(".mp3"))
+      .sort();
+    if (files.length === 0) return Promise.resolve(1);
+    const target = files[Math.max(0, files.length - nth)];
+    const filePath = join(REPLAY_DIR, target);
+    log("audio", `Replaying: ${target}`);
+    return playFile(filePath);
+  } catch (err: any) {
+    log("audio", `Replay error: ${err.message}`);
+    return Promise.resolve(1);
+  }
 }
 
 export function playMp3Buffer(buf: Buffer): Promise<number> {

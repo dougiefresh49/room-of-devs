@@ -128,6 +128,7 @@ echo "---"
 
 # ── Play latest (SwiftBar: ctrl+shift+p; Hammerspoon: ctrl+Play) ─
 echo "Play Latest | bash=$SCRIPTS_DIR/play_latest.sh terminal=false refresh=true shortcut=ctrl+shift+p"
+echo "Replay Last | bash=$SCRIPTS_DIR/replay.sh terminal=false refresh=true shortcut=ctrl+shift+r"
 
 echo "---"
 
@@ -300,6 +301,79 @@ else
 fi
 
 echo "---"
+
+# ── Recent Playback (replay saved audio) ─────────────────────────
+REPLAY_DIR="$TTS_DIR/replay"
+if [ -d "$REPLAY_DIR" ]; then
+    REPLAY_COUNT=$(find "$REPLAY_DIR" -name '*.mp3' -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$REPLAY_COUNT" -gt 0 ] 2>/dev/null && [ "$REPLAY_COUNT" -ne 0 ]; then
+        echo "Recent Playback | disabled=true size=12"
+        python3 - "$REPLAY_DIR" "$SCRIPTS_DIR" <<'PY'
+import json
+import os
+import sys
+from datetime import datetime, timezone
+
+replay_dir = sys.argv[1]
+scripts_dir = sys.argv[2]
+files = sorted(
+    [f for f in os.listdir(replay_dir) if f.endswith(".mp3")],
+    reverse=True,
+)[:10]
+
+for f in files:
+    path = os.path.join(replay_dir, f)
+    meta_path = path.replace(".mp3", ".json")
+    size_kb = os.path.getsize(path) / 1024
+
+    meta = {}
+    if os.path.isfile(meta_path):
+        try:
+            with open(meta_path) as mf:
+                meta = json.load(mf)
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    # Use file mtime for local time (always correct timezone)
+    mtime = os.path.getmtime(path)
+    local_dt = datetime.fromtimestamp(mtime)
+    hour = local_dt.hour % 12 or 12
+    ampm = "am" if local_dt.hour < 12 else "pm"
+    time_str = f"{hour}:{local_dt.minute:02d}{ampm}"
+
+    # Build label from metadata
+    parts = []
+    session = meta.get("sessionName") or meta.get("sessionId", "")[:12]
+    character = meta.get("character")
+    source = meta.get("source", "")
+    preview = meta.get("textPreview", "")
+
+    if session:
+        parts.append(f"[{session}]")
+    if character:
+        parts.append(character)
+    elif source == "dynamic-response":
+        parts.append("prompt ack")
+    elif source == "ask-user":
+        parts.append("question")
+    elif source == "queue":
+        parts.append("response")
+
+    if preview:
+        prev = preview[:50].replace("\n", " ").strip()
+        if prev:
+            parts.append(f"— {prev}...")
+
+    label = " ".join(parts) if parts else f.replace(".mp3", "")
+    display = f"{time_str} {label}"
+    display = display.replace("|", "/")
+    if len(display) > 70:
+        display = display[:68] + ".."
+    print(f"{display} | bash=/usr/bin/afplay param1={path} terminal=false size=12")
+PY
+        echo "---"
+    fi
+fi
 
 # ── Settings (voice, speed, notifications) ────────────────────────
 echo "Settings | disabled=true size=12"
