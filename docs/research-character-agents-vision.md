@@ -266,6 +266,147 @@ This is buildable with Three.js + React Three Fiber + Live2D models. The heavies
 
 ---
 
+## 7. Follow-Up Research (2026-05-21)
+
+### Wispr Flow — Can We Hook Into It?
+
+**No public API or SDK.** Wispr Flow is a closed macOS dictation app ($15/mo). It works system-wide via accessibility APIs but doesn't expose transcription output to other apps programmatically. No webhooks, no clipboard hooks, no file-based transcript access. Their developer page just lists app integrations (Cursor, VS Code, etc.) — it types into whatever app has focus, that's it.
+
+**Local STT Alternatives (ranked for our use case):**
+
+| Tool | Type | Push-to-Talk | Speed | Cost |
+|------|------|-------------|-------|------|
+| **Superwhisper** | macOS native app | Yes (Option-Space) | Real-time | $249.99 lifetime |
+| **whisper.cpp** | C++ library | DIY | 7-33x real-time on Metal | Free |
+| **MacWhisper** | macOS app | No (file transcription) | Batch | €59 lifetime |
+
+**Recommendation:** Superwhisper is the best drop-in for push-to-talk dictation on macOS. For a custom integration (Phase 2/3), whisper.cpp compiled with Metal gives us full control and runs fast on Apple Silicon.
+
+### Hermes Agent — Local Intent Router
+
+**Hermes Agent** by NousResearch is now #1 on OpenRouter's global rankings (as of May 2026). It runs locally via Ollama and supports structured tool calling out of the box.
+
+**Architecture for our use case:**
+```
+Superwhisper/whisper.cpp (STT)
+    → Hermes 3 via Ollama (intent classification)
+        → "yo Mikey, check that bug" → {agent: "mikey", action: "status", session: 1}
+    → Route to correct Claude Code session
+    → Response via ElevenLabs TTS
+```
+
+**Key details:**
+- Three-tier architecture: UI → core agent logic → execution backends
+- Bridges "Natural Language Space" (user intent) to "Code Entity Space" (tool execution)
+- Runs locally — no cloud dependency for the routing layer
+- Known issue: can hang with tool definitions on some Ollama versions (GitHub issue #25629)
+
+**Trade-off vs ElevenLabs agents:** ElevenLabs agents bundle STT+LLM+TTS but bill by connection minute. Hermes locally is free for the routing, and we only pay ElevenLabs for TTS output — significantly cheaper for always-on scenarios.
+
+### ElevenLabs Agent Minutes — How Billing Works
+
+- **Wall-clock connection time** — billed from when the call starts to when it ends or the window closes
+- **95% silence discount** — periods of silence longer than 10 seconds are billed at 5% of the normal rate
+- **Plans:** Starter (250 min), Creator (500 min), Pro (2000 min), Scale (11k min)
+- **Overages:** ~$0.07-0.12/min depending on plan tier
+- **LLM costs are separate** — if using their hosted LLM, that's additional
+
+**Verdict:** For an always-on "dev team voice channel," even with the silence discount, agent minutes add up. Better to use ElevenLabs for TTS only ($0.18/1000 chars on Starter) and handle STT + routing locally.
+
+### What ElevenLabs Voice Agents Actually Are
+
+Yes, they're literally STT → LLM → TTS with tool calling, but with good engineering:
+- Managed WebSocket connection handling bi-directional audio
+- Built-in turn detection and interruption handling
+- Server tools (webhooks) and client tools (browser-side)
+- Latency optimization (~400ms end-to-end)
+
+**What we'd lose building it ourselves:** Turn detection quality, interrupt handling, and the tight latency optimization. What we'd gain: no per-minute billing, full control over routing, and the ability to use local models for intent classification.
+
+### Voice Cloning — Open Source Options
+
+| Model | Clone Quality | Speed | Voice Cloning | License |
+|-------|-------------|-------|---------------|---------|
+| **Chatterbox** (Resemble AI) | Best (MOS ~4.5) | Real-time | 1-sec reference clip | Apache 2.0 |
+| **F5-TTS** | Great | 7-33x real-time | 10-sec reference | MIT |
+| **Fish Speech** | Good (MOS 4.1) | Real-time | Reference audio | Apache 2.0 |
+| **Kokoro** | Good | 36x real-time | No cloning (preset voices) | Apache 2.0 |
+| **GPT-SoVITS** | Good | Moderate | 1-min fine-tune, 5-sec zero-shot | MIT |
+
+**Chatterbox** is the standout — SoTA quality, Apache 2.0, zero-shot from 1 second of audio, 23 languages. Has a Turbo variant for even faster inference. If we ever want to drop ElevenLabs for cost reasons, Chatterbox running locally on Apple Silicon is the move.
+
+### Visual Novel Dialog Style — Lightest Path
+
+For the "character portrait + speech bubble" overlay idea:
+
+**Best options:**
+- **WebGAL** — Web-based visual novel engine, MPL-2.0, Pixi.js effects, visual editor. Could embed as an Electron overlay.
+- **Tuesday JS** — Minimal JS visual novel engine, runs in browser, MIT licensed. Extremely lightweight.
+- **Custom React component** — Honestly the simplest path. A `<DialogBox>` component with: character portrait (left), name plate, text area with typewriter effect, driven by WebSocket events from the TTS server.
+
+**For Phase 4, the custom React approach wins** — we don't need branching narrative or save/load. We just need: show character portrait, animate text as it's spoken, hide when done.
+
+### 3D Character Generation — Meshy.ai & Alternatives
+
+| Tool | Input | Output | Quality | Pricing |
+|------|-------|--------|---------|---------|
+| **Meshy.ai** | Image/text → 3D | GLB/FBX/OBJ | Good | Free tier, $20/mo pro |
+| **Tripo3D** | Image → 3D | GLB/FBX | Good | Free tier available |
+| **Rodin AI** | Image → 3D | Various | High | API-based |
+| **TRELLIS** | Image → 3D | GLB | High | Open source |
+
+Meshy exports GLB directly compatible with Three.js / React Three Fiber. There are tutorials showing the exact Meshy → React Three Fiber pipeline (including multiple animation support). For TMNT characters, the workflow would be: character art → Meshy image-to-3D → export GLB → load in React Three Fiber → drive animations from agent state.
+
+### Avatar Creation Pipeline
+
+**2D (easiest):**
+1. Draw character with separate layers (eyes, mouth, hair, body) in Photoshop/Clip Studio
+2. Rig in Live2D Cubism (free tier or $54/year) — add deformers, physics
+3. Export to VTube Studio or embed via pixi-live2d-display in browser
+4. **Inochi2D** is a free open-source alternative to Live2D (less polished)
+
+**3D:**
+1. Generate in Meshy.ai from character art or use VRoid Studio (free, anime-style)
+2. Export as VRM/GLB
+3. Load in React Three Fiber with blend shapes for expressions
+4. Drive visemes from TTS audio for lip-sync
+
+### ContextDB — Temporal Knowledge Graph
+
+**What:** A graph-vector database with epistemics — facts have expiration dates, source credibility (Bayesian), memory decay rates, and conflict detection.
+
+**Interesting for us because:** Multi-agent systems need shared state that ages. "Mikey fixed the auth bug" is true now but stale next week. ContextDB tracks when facts were true vs when the system learned them.
+
+**SDKs:** Go, Python, TypeScript (gRPC + REST). Backends: in-memory, Postgres+pgvector, Qdrant, Redis.
+
+**Verdict:** Overkill for Phase 2-3 but worth revisiting for Phase 3's "inter-agent awareness" feature where agents need to know what other agents have done.
+
+### Multi-Agent @ Tagging — Claude Code Already Has This
+
+Claude Code has built-in **Agent Teams** orchestration via the `SendMessage` tool:
+- Sessions can send messages to each other
+- Supports orchestrator patterns (one main agent delegates to specialists)
+- Uses tmux under the hood for session management
+
+**Related projects found:**
+- **AgentWire-Dev** — Self-hosted web portal for voice-controlling local and remote AI coding agents via tmux. Push-to-talk from browser, Whisper STT, Chatterbox/Qwen3 TTS. **This is the closest thing to what we're building.** `pip install agentwire-dev`
+- **Agent of Empires (AoE)** — Terminal dispatch panel, runs agents in tmux sessions with git worktree isolation
+- **TMAI** — Multi-agent interface for monitoring/controlling Claude Code sessions in tmux
+- **Agent Deck** — Terminal session manager TUI for multiple AI coding agents
+
+### Prior Art — Voice-Controlled AI Coding
+
+**AgentWire-Dev** is the most direct competitor/inspiration. Key differences from our project:
+- They use local TTS (Chatterbox/Qwen3), we use ElevenLabs (higher quality, cloned voices)
+- They don't have character personas
+- They don't have visual avatars
+- They're Python-based, we're TypeScript/bash
+- They have multi-machine SSH support (we don't yet)
+
+**Our differentiators:** Character personas with custom cloned voices, the visual avatar roadmap, and the SwiftBar menu bar integration for always-on monitoring.
+
+---
+
 ## Key Links
 
 - [Caveman plugin](https://github.com/JuliusBrussee/caveman)
@@ -276,3 +417,10 @@ This is buildable with Three.js + React Three Fiber + Live2D models. The heavies
 - [Open-LLM-VTuber](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)
 - [TalkingHead](https://github.com/met4citizen/TalkingHead)
 - [Persona Engine](https://github.com/fagenorn/handcrafted-persona-engine)
+- [AgentWire-Dev](https://github.com/dotdevdotdev/agentwire-dev) — closest prior art for voice-controlled multi-agent coding
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) — local intent routing
+- [Chatterbox TTS](https://github.com/resemble-ai/chatterbox) — SoTA open-source voice cloning
+- [ContextDB](https://github.com/antiartificial/contextdb) — temporal knowledge graph for agent memory
+- [WebGAL](https://github.com/OpenWebGAL/WebGAL) — web visual novel engine
+- [Meshy.ai](https://www.meshy.ai/) — AI image-to-3D generation
+- [Superwhisper](https://superwhisper.com/) — macOS push-to-talk STT
