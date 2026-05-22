@@ -1,6 +1,6 @@
 # Multi-Agent Architecture v2 — Hermes Agent Orchestration
 
-*Design doc — 2026-05-21*
+_Design doc — 2026-05-21_
 
 ---
 
@@ -19,6 +19,7 @@
 ### Important: How Hermes Actually Works (from v0.14.0 research)
 
 Hermes agents do **NOT** communicate directly with each other. There is no peer-to-peer messaging. Coordination happens via:
+
 1. **Shared kanban board** — SQLite DB at `~/.hermes/kanban.db` with structured handoff metadata
 2. **`hermes mcp serve`** — exposes a conversation as an MCP server for other agents
 3. **`delegate_task`** — spawns sub-agents (sync or parallel, max 3 concurrent by default)
@@ -41,30 +42,30 @@ agy's review flagged that running separate Hermes instances as a swarm is fighti
                Shell hooks / Webhooks / Plugin API
                              │
 ┌────────────────────────────┴────────────────────────────────────┐
-│              SINGLE Hermes Instance (Splinter)                   │
+│              SINGLE Hermes Instance (Splinter)                  │
 │                                                                 │
 │  Kanban Board (SQLite)                                          │
-│  ┌────────┐ ┌──────┐ ┌────────┐ ┌─────────┐ ┌──────┐          │
-│  │ Triage │→│ Todo │→│ Ready  │→│ Running │→│ Done │           │
-│  └────────┘ └──────┘ └────────┘ └─────────┘ └──────┘          │
+│  ┌────────┐ ┌──────┐ ┌────────┐ ┌─────────┐ ┌──────┐            │
+│  │ Triage │→│ Todo │→│ Ready  │→│ Running │→│ Done │            │
+│  └────────┘ └──────┘ └────────┘ └─────────┘ └──────┘            │
 │                                                                 │
-│  Sub-agents spawned via delegate_task:                           │
-│  ┌──────────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐   │
-│  │ DONATELLO    │ │ LEONARDO  │ │ RAPHAEL   │ │ MIKEY     │   │
-│  │ profile      │ │ profile   │ │ profile   │ │ profile   │   │
-│  │              │ │           │ │           │ │           │   │
-│  │ Tools:       │ │ Tools:    │ │ Tools:    │ │ Tools:    │   │
-│  │ · Claude API │ │ · Claude  │ │ · Claude  │ │ · Codex   │   │
-│  │ · agy/Gemini │ │   API     │ │   API     │ │   CLI     │   │
-│  │ · Web search │ │ · Codex   │ │ · Test    │ │ · agy     │   │
-│  │ · Code review│ │   CLI     │ │   runners │ │ · Scripts │   │
-│  │              │ │ · Git ops │ │ · Linters │ │           │   │
-│  │ Blue button  │ │ Teal btn  │ │ Red btn   │ │ Yellow btn│   │
-│  └──────────────┘ └───────────┘ └───────────┘ └───────────┘   │
+│  Sub-agents spawned via delegate_task:                          │
+│  ┌──────────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐     │
+│  │ DONATELLO    │ │ LEONARDO  │ │ RAPHAEL   │ │ MIKEY     │     │
+│  │ profile      │ │ profile   │ │ profile   │ │ profile   │     │
+│  │              │ │           │ │           │ │           │     │
+│  │ Tools:       │ │ Tools:    │ │ Tools:    │ │ Tools:    │     │
+│  │ · Claude API │ │ · Claude  │ │ · Claude  │ │ · Codex   │     │
+│  │ · agy/Gemini │ │   API     │ │   API     │ │   CLI     │     │
+│  │ · Web search │ │ · Codex   │ │ · Test    │ │ · agy     │     │
+│  │ · Code review│ │   CLI     │ │   runners │ │ · Scripts │     │
+│  │              │ │ · Git ops │ │ · Linters │ │           │     │
+│  │ Blue button  │ │ Teal btn  │ │ Red btn   │ │ Yellow btn│     │
+│  └──────────────┘ └───────────┘ └───────────┘ └───────────┘     │
 │                                                                 │
 │  Max 3 concurrent sub-agents (configurable)                     │
 │  Dispatcher loop every 60s: reclaims stale, promotes tasks      │
-│  Heartbeat/zombie detection: stuck agents auto-blocked           │
+│  Heartbeat/zombie detection: stuck agents auto-blocked          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -98,16 +99,16 @@ If direct button-to-agent routing requires independent sessions:
 
 ## How It Differs from v1
 
-| Aspect | v1 (Current) | v2 (Hermes) |
-|--------|-------------|-------------|
-| **What is an "agent"** | Claude Code session | Hermes agent with multiple tool backends |
-| **Task assignment** | Manual (you pick which session) | Splinter auto-decomposes and assigns |
-| **Tool selection** | Claude Code only | Per-agent: Claude Code, Codex CLI, agy, web search, etc. |
-| **Background work** | One task at a time per session | `/background` for parallel tasks within an agent |
-| **Memory** | Conversation context only | Persistent session logs, searchable across days |
-| **Inter-agent awareness** | None | Shared kanban, inter-agent messaging |
-| **Task tracking** | Manual / git commits | Auto-kanban with triage → in-progress → done |
-| **Voice interaction** | "Read response aloud" | "Talk to specific agent, get orchestrated response" |
+| Aspect                    | v1 (Current)                    | v2 (Hermes)                                              |
+| ------------------------- | ------------------------------- | -------------------------------------------------------- |
+| **What is an "agent"**    | Claude Code session             | Hermes agent with multiple tool backends                 |
+| **Task assignment**       | Manual (you pick which session) | Splinter auto-decomposes and assigns                     |
+| **Tool selection**        | Claude Code only                | Per-agent: Claude Code, Codex CLI, agy, web search, etc. |
+| **Background work**       | One task at a time per session  | `/background` for parallel tasks within an agent         |
+| **Memory**                | Conversation context only       | Persistent session logs, searchable across days          |
+| **Inter-agent awareness** | None                            | Shared kanban, inter-agent messaging                     |
+| **Task tracking**         | Manual / git commits            | Auto-kanban with triage → in-progress → done             |
+| **Voice interaction**     | "Read response aloud"           | "Talk to specific agent, get orchestrated response"      |
 
 ---
 
@@ -118,6 +119,7 @@ If direct button-to-agent routing requires independent sessions:
 **Personality:** Wise, patient, strategic. Sees the big picture.
 
 **Responsibilities:**
+
 - Receive high-level goals from the user ("refactor the auth system")
 - Decompose into sub-tasks on the kanban board
 - Assign tasks to the right turtle based on specialization
@@ -135,6 +137,7 @@ If direct button-to-agent routing requires independent sessions:
 **Specialization:** Research, architecture decisions, code review, complex refactors
 
 **Tools:**
+
 - Claude Code (deep reasoning, complex code changes)
 - agy/Gemini (research, web search, documentation)
 - Code review tools
@@ -148,6 +151,7 @@ If direct button-to-agent routing requires independent sessions:
 **Specialization:** Core implementation, feature development, git workflow
 
 **Tools:**
+
 - Claude Code (primary implementation)
 - Codex CLI (fast code generation for boilerplate)
 - Git operations (branching, PRs, merge management)
@@ -161,6 +165,7 @@ If direct button-to-agent routing requires independent sessions:
 **Specialization:** Bug hunting, test writing, performance debugging
 
 **Tools:**
+
 - Claude Code (debugging, test generation)
 - Test runners (jest, vitest, pytest)
 - Linters and static analysis
@@ -175,6 +180,7 @@ If direct button-to-agent routing requires independent sessions:
 **Specialization:** Quick prototypes, scripts, UI experiments, "just make it work"
 
 **Tools:**
+
 - Codex CLI (fast vibe coding)
 - agy/Gemini (quick scripts, one-off automation)
 - UI frameworks, playground tools
@@ -188,7 +194,7 @@ If direct button-to-agent routing requires independent sessions:
 ### Example 1: "Refactor the auth system"
 
 ```
-You (voice): "Splinter, we need to refactor the auth middleware. 
+You (voice): "Splinter, we need to refactor the auth middleware.
               Legal flagged the session token storage."
 
 Splinter:
@@ -197,8 +203,8 @@ Splinter:
   3. Assigns Leo (background): "Prepare a feature branch, set up test fixtures"
 
 Donnie (reports back via voice):
-  "I've reviewed the auth middleware. The session tokens are stored in 
-   plain cookies — that's the compliance issue. I recommend migrating 
+  "I've reviewed the auth middleware. The session tokens are stored in
+   plain cookies — that's the compliance issue. I recommend migrating
    to httpOnly secure cookies with encrypted payloads. Here's the plan..."
 
 Splinter:
@@ -207,7 +213,7 @@ Splinter:
   6. Assigns Mikey (background): "Update the login page UI to handle new token format"
 
 Raph (reports back):
-  "Tests are passing but I found an edge case — expired tokens aren't 
+  "Tests are passing but I found an edge case — expired tokens aren't
    being cleared on the client side. Filing that as a sub-task."
 
 Splinter:
@@ -222,11 +228,11 @@ You: [Hold BLUE button — Donatello]
      "Donnie, what's the best way to handle rate limiting on this API?"
 
 Donatello (direct response, no orchestrator):
-  Uses agy to research current best practices, checks existing codebase 
+  Uses agy to research current best practices, checks existing codebase
   for rate limiting patterns, responds in-character via voice.
 
-  "Okay so I looked at what we've got. The API doesn't have any rate 
-   limiting right now — which is, frankly, terrifying. I'd recommend 
+  "Okay so I looked at what we've got. The API doesn't have any rate
+   limiting right now — which is, frankly, terrifying. I'd recommend
    express-rate-limit with a Redis backing store. Want me to set it up?"
 ```
 
@@ -235,7 +241,7 @@ Donatello (direct response, no orchestrator):
 ```
 You open Hermes dashboard, drop into triage:
   - "Add dark mode to the settings page"
-  - "Fix the flaky CI test in user.spec.ts"  
+  - "Fix the flaky CI test in user.spec.ts"
   - "Upgrade React to v20"
 
 Splinter auto-assigns:
@@ -254,12 +260,14 @@ You work on something else the whole time.
 ### Hermes has three concrete integration points for our TTS pipeline
 
 **1. Shell lifecycle hooks (simplest, most like our current setup)**
+
 - Hermes supports shell scripts at key agent lifecycle points
 - Wire our existing ingestion script as a Hermes shell hook
 - On agent response → push to `~/.cursor/tts/queue/` as JSON
 - Closest to how Claude Code Stop hooks work today
 
 **2. Plugin system (most powerful)**
+
 - Plugins live at `~/.hermes/plugins/` (user) or `.hermes/plugins/` (project)
 - Expose slash commands, tool dispatch, execution blocking, result transformation
 - v0.14.0 adds `ctx.llm` for direct LLM calls from plugins and `tool_override` flags
@@ -267,12 +275,14 @@ You work on something else the whole time.
 - Could also add a `tool_override` that transforms agent output into voice-ready text
 
 **3. Webhooks (event-driven, good for async)**
+
 - `hermes webhook subscribe` for event-driven activation
 - Supports prompt templating and cross-platform delivery
 - On task completion → webhook fires → triggers TTS pipeline
 - Best for the kanban-driven autonomous workflow (Phase 4)
 
 **4. HTTP API (for programmatic control)**
+
 - OpenAI-compatible chat completions endpoint
 - Anthropic Messages API compatible
 - v0.14.0 exposes run approval events for programmatic clients
@@ -298,24 +308,28 @@ Button press → Pi → Mac (tts-server)
 ## Migration Path from v1
 
 ### Phase 1: Single Hermes agent (low risk)
+
 - Install Hermes alongside existing Claude Code setup
 - Run ONE character as a Hermes agent (Donatello) while others stay as Claude Code sessions
 - Wire Hermes output through existing TTS pipeline
 - Validate that the voice/persona experience works the same
 
 ### Phase 2: All characters as Hermes agents
+
 - Migrate remaining characters to Hermes agents
 - Each agent gets its own tool configuration (which backends it can use)
 - Arcade buttons route to Hermes agents instead of Claude Code sessions
 - Claude Code becomes a tool that agents use, not the agent itself
 
 ### Phase 3: Add Splinter orchestrator
+
 - Top-level Hermes agent with kanban/task management
 - Auto-decomposition of goals into sub-tasks
 - Sub-agent assignment based on specialization
 - Background task support for parallel work
 
 ### Phase 4: Full autonomous workflow
+
 - Drop goals into kanban triage
 - Splinter assigns and coordinates
 - Agents work in parallel, report back via voice
@@ -327,6 +341,7 @@ Button press → Pi → Mac (tts-server)
 ## Trade-offs vs v1
 
 ### Advantages
+
 - **Much more capable** — agents can use multiple tools, work in parallel, coordinate
 - **Persistent memory** — "what did we work on yesterday?" works
 - **Auto-task-management** — kanban decomposition means less manual orchestration
@@ -334,6 +349,7 @@ Button press → Pi → Mac (tts-server)
 - **Built-in background tasks** — no custom implementation needed
 
 ### Risks / Concerns
+
 - **Latency (BIGGEST RISK)** — stacking LLM round-trips: STT → Splinter routing → turtle planning → Claude Code execution → TTS. Time-to-first-audio could be 10-20s+ for complex tasks. **Must prototype a hello-world through the full chain to measure before committing.**
 - **Claude Code as Hermes tool is not paved** — Claude Code has a Hermes skill file but is NOT a native kanban worker lane. Wrapping an interactive CLI into programmatic kanban task completion requires custom integration work.
 - **File conflict in parallel work** — if Leo and Mikey modify the same repo concurrently, git state conflicts arise. Need git worktree isolation per agent (Claude Code Agent Teams already handles this).
@@ -343,7 +359,9 @@ Button press → Pi → Mac (tts-server)
 - **Cost** — running multiple model backends simultaneously
 
 ### Fallback Plan
+
 If v2 proves too complex or Hermes doesn't meet needs:
+
 - v1 architecture remains fully functional
 - Claude Code Agent Teams (SendMessage) provides basic multi-agent without Hermes
 - Hermes agents can be added incrementally — no all-or-nothing migration
@@ -366,6 +384,7 @@ If v2 proves too complex or Hermes doesn't meet needs:
 ## Hermes Technical Details (v0.14.0, released 2026-05-16)
 
 ### Kanban Internals
+
 - SQLite DB at `~/.hermes/kanban.db` (multi-board: `~/.hermes/kanban/boards/<slug>/kanban.db`)
 - Task states: `triage → todo → ready → running → blocked → done → archived`
 - Dispatcher loop every 60s: reclaims stale claims, promotes when dependencies complete
@@ -374,11 +393,13 @@ If v2 proves too complex or Hermes doesn't meet needs:
 - Per-task `max_retries` with full run history
 
 ### Background Tasks
+
 - `/background` (alias `/bg`) runs prompts in separate background sessions
 - `process list/poll/wait/log/kill/write` for lifecycle management
 - `watch_patterns` config for real-time stdout/stderr monitoring with notifications
 
 ### Provider Support (30+)
+
 - Anthropic (API key or OAuth — routes as Claude Code on Max plan)
 - OpenAI / Codex (`openai-codex`, `copilot`, `copilot-acp`)
 - xAI / Grok (OAuth via SuperGrok/X Premium+)
@@ -387,6 +408,7 @@ If v2 proves too complex or Hermes doesn't meet needs:
 - Pluggable: implement `ProviderProfile` ABC, drop into `plugins/model-providers/`
 
 ### Memory
+
 - `MEMORY.md` + `USER.md` for long-term storage
 - Indexed memory: monolithic file splits into sub-docs loaded on-demand
 - `session_search` (FTS5 full-text with LLM summarization) for cross-session recall

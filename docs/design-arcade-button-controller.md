@@ -56,16 +56,25 @@ Use existing Fosiya arcade buttons + Raspberry Pi Model B as a physical push-to-
 ┌──────────────────────────┐          ┌──────────────────────────────┐
 │   Arcade Button Box      │          │         MacBook              │
 │   (Raspberry Pi inside)  │          │                              │
-│                          │   WiFi   │                              │
+│                          │   USB    │                              │
 │  GPIO ←→ Buttons + LEDs  │◄────────►│  tts-server (Node.js)       │
-│  Python script            │  WebSocket│   ├─ /ws/buttons endpoint  │
+│  Python script            │  Serial  │   ├─ Serial listener        │
 │   ├─ Read button GPIO    │          │   ├─ whisper.cpp (STT)       │
 │   ├─ Control LED GPIO    │          │   ├─ Route to Claude session │
-│   ├─ WebSocket client    │          │   ├─ ElevenLabs TTS          │
+│   ├─ Serial over USB     │          │   ├─ ElevenLabs TTS          │
 │   └─ LED state machine   │          │   └─ LED state events back   │
 │                          │          │                              │
 └──────────────────────────┘          └──────────────────────────────┘
 ```
+
+**Connection:** Pi connects to Mac via USB cable. The Pi's USB port provides both power and a serial data connection. On macOS, the Pi appears as `/dev/tty.usbmodemXXXX` or `/dev/tty.usbserial-XXXX`. Communication is bidirectional JSON-line protocol over serial (115200 baud).
+
+**Why USB over WiFi:**
+- Pi Model B has no WiFi chip (would need a USB dongle, which takes the only free USB port)
+- USB is simpler: one cable for power + data, no network config, no reconnection logic
+- Serial is lower latency than WiFi WebSocket (~1ms vs ~5-20ms)
+- More reliable — no dropped connections from WiFi interference
+- If upgrading to Pi Zero W later, can switch to WiFi without changing the message protocol
 
 ### Data Flow: Push-to-Talk
 
