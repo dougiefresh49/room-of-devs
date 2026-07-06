@@ -369,6 +369,44 @@ If v2 proves too complex or Hermes doesn't meet needs:
 
 ---
 
+## Hardware Topology (Optional: Multi-Machine)
+
+Hermes supports treating machines as nodes in a distributed orchestration setup. Your friend's pattern: desktop as a dedicated Hermes node with kanban state centralized there, other machines connect and observe.
+
+**Available hardware:**
+
+| Machine | Role | Specs | Notes |
+|---------|------|-------|-------|
+| MacBook Pro (primary) | Development + TTS + arcade buttons | Current daily driver | Runs tts-server, ElevenLabs, whisper.cpp |
+| MacBook Pro (2014/2015) | Potential worker node | 16GB RAM | Could run 1-2 Hermes sub-agents autonomously |
+| MacBook Pro (2014/2015 #2) | Spare (needs battery) | 16GB RAM | Available if needed |
+| Raspberry Pi Model B | Arcade button controller | 256MB RAM | GPIO + USB serial only |
+
+**Possible topology:**
+
+```
+┌─────────────────────────────┐     ┌────────────────────────────┐
+│  Primary MacBook Pro         │     │  2014 MacBook Pro (worker) │
+│                              │     │                            │
+│  Splinter (orchestrator)     │◄───►│  Leonardo + Raphael agents │
+│  TTS pipeline                │ SSH │  Claude Code / Codex CLI   │
+│  Arcade button listener      │     │  ContextDB (local BadgerDB)│
+│  ContextDB (PostgreSQL)      │     │                            │
+│  Kanban state (source of truth)│    └────────────────────────────┘
+│                              │
+└─────────────────────────────┘
+```
+
+**When this makes sense:**
+- Running 3-4 concurrent Claude Code sessions on one machine gets CPU/memory heavy
+- Offload long-running background agents to the older MacBook
+- Kanban state stays centralized on primary machine — workers connect over LAN
+- Could also just run everything on the primary MacBook and only add the second machine if resource-constrained
+
+**For MVP:** Single machine is fine. The architecture doesn't require multi-machine — it's just an option if concurrent agents strain resources.
+
+---
+
 ## Open Questions (Updated with Research)
 
 1. ~~**Hermes hook system**~~ — **ANSWERED:** Yes. Shell lifecycle hooks, plugin system with `tool_override`, and `hermes webhook subscribe` all work for wiring into TTS pipeline.
@@ -409,11 +447,56 @@ If v2 proves too complex or Hermes doesn't meet needs:
 
 ### Memory
 
-- `MEMORY.md` + `USER.md` for long-term storage
+- `MEMORY.md` + `USER.md` for long-term storage (default)
 - Indexed memory: monolithic file splits into sub-docs loaded on-demand
 - `session_search` (FTS5 full-text with LLM summarization) for cross-session recall
 - 1-hour cross-session prompt caching (system prompts + skills stay warm)
 - SQLite session history with parent/child lineage tracking
+
+### ContextDB — Epistemic Memory Provider (Recommended for v2)
+
+**[hermes-memory-contextdb](https://github.com/antiartificial/hermes-memory-contextdb)** replaces the default file-based memory with an epistemic graph-vector database. Created by a friend of the project — direct access to the maintainer for support.
+
+**Why ContextDB over default Hermes memory:**
+
+- **Epistemic reasoning** — credibility scores, source tracking, confidence calibration. Agents don't just recall facts; they know how confident they are and where the knowledge came from.
+- **Semantic vector search** — pgvector-backed similarity retrieval vs FTS5 keyword matching. Agents find related context even when wording differs.
+- **Evidence chains** — `contextdb_explain` returns narrative explanations with source attribution. Splinter can trace *why* an agent believes something.
+- **Memory decay & conflict awareness** — stale knowledge naturally deprioritizes; conflicting facts surface for resolution instead of silently overwriting.
+- **Cross-agent shared memory** — all agents write to the same ContextDB namespace. Donatello's research findings are immediately available to Leonardo without explicit handoff.
+- **Minimal tool surface** — only two tools (`contextdb_search` + `contextdb_explain`), keeping agent tool budgets lean.
+
+**Setup:**
+
+```yaml
+# ~/.hermes/config.yaml
+memory:
+  provider: contextdb
+  contextdb:
+    namespace: "tmnt-agents"
+    mode: "agent_memory"
+```
+
+```bash
+# ~/.hermes/.env
+CONTEXTDB_HOST=localhost
+CONTEXTDB_PORT=5432
+CONTEXTDB_USER=hermes
+CONTEXTDB_PASSWORD=<password>
+CONTEXTDB_DATABASE=hermes_contextdb
+```
+
+**Storage options:**
+- **PostgreSQL + pgvector** (production) — run on the Mac Mini as a persistent shared store
+- **Embedded BadgerDB** (dev/local) — zero-config fallback, good for single-machine prototyping
+
+**How it fits the TMNT architecture:**
+- Splinter writes task decomposition rationale → turtles recall *why* they were assigned a task
+- Donatello's research findings get high credibility scores → other agents trust and reuse them
+- Raphael's bug reports include evidence chains → when a similar bug appears, the context surfaces automatically
+- Cross-session memory persists between conversations — "what did we learn about auth last week?" works naturally
+
+**Installation:** Drop into `~/.hermes/plugins/contextdb/` — Hermes discovers it via the plugin system.
 
 ---
 
@@ -427,6 +510,7 @@ If v2 proves too complex or Hermes doesn't meet needs:
 - [Architecture](https://hermes-agent.nousresearch.com/docs/developer-guide/architecture)
 - [CLI Reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands)
 - [v0.14.0 Release Notes](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.5.16)
+- [hermes-memory-contextdb](https://github.com/antiartificial/hermes-memory-contextdb) — epistemic graph-vector memory provider
 - [v1 Architecture (current)](./design-arcade-button-controller.md)
 - [Avatar Pipeline](./design-avatar-pipeline.md)
 - [Research Doc](./research-character-agents-vision.md)
