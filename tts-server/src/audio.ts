@@ -1,7 +1,8 @@
-import { spawn, ChildProcess, execSync } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync, readdirSync } from "fs";
 import {
   STREAM_PID_FILE,
+  PLAYBACK_PID_FILE,
   STREAM_LOCK,
   PROCESSING_DIR,
   TTS_DIR,
@@ -31,9 +32,25 @@ export function isProcessing(basename: string): boolean {
   }
 }
 
-export function markProcessing(basename: string): void {
+// Atomic claim: exclusive-create the marker so two processes (daemon +
+// manual play_node.sh) can't both pass an isProcessing() check and
+// double-spend Gemini/ElevenLabs on the same queue file.
+export function claimProcessing(basename: string): boolean {
   mkdirSync(PROCESSING_DIR, { recursive: true });
-  writeFileSync(join(PROCESSING_DIR, basename), String(process.pid));
+  const marker = join(PROCESSING_DIR, basename);
+  try {
+    writeFileSync(marker, String(process.pid), { flag: "wx" });
+    return true;
+  } catch {
+    if (isProcessing(basename)) return false; // live holder
+    try {
+      unlinkSync(marker); // stale marker from a dead process
+      writeFileSync(marker, String(process.pid), { flag: "wx" });
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export function clearProcessing(basename: string): void {
@@ -54,7 +71,10 @@ export function acquireLock(): boolean {
   return true;
 }
 
-export function waitForLock(timeoutMs = 120_000): Promise<boolean> {
+// Timeout must exceed the longest possible playback (~4-5 min for a
+// 4,800-char message), otherwise we steal the lock from a live holder
+// and talk over it.
+export function waitForLock(timeoutMs = 600_000): Promise<boolean> {
   return new Promise((resolve) => {
     if (acquireLock()) return resolve(true);
     const start = Date.now();
@@ -63,10 +83,19 @@ export function waitForLock(timeoutMs = 120_000): Promise<boolean> {
         clearInterval(interval);
         resolve(true);
       } else if (Date.now() - start > timeoutMs) {
-        clearInterval(interval);
-        writeFileSync(STREAM_LOCK, String(process.pid));
-        log("audio", "Lock timeout — stealing");
-        resolve(true);
+        // Only steal from a dead holder; if it's alive, keep waiting.
+        let holderAlive = false;
+        try {
+          const pid = Number(readFileSync(STREAM_LOCK, "utf-8").trim());
+          process.kill(pid, 0);
+          holderAlive = true;
+        } catch {}
+        if (!holderAlive) {
+          clearInterval(interval);
+          writeFileSync(STREAM_LOCK, String(process.pid));
+          log("audio", "Lock timeout — holder dead, stealing");
+          resolve(true);
+        }
       }
     }, 500);
   });
@@ -84,19 +113,35 @@ export function stopCurrent(): void {
     currentProcess.kill("SIGTERM");
     currentProcess = null;
   }
-  try {
-    execSync("pkill -f 'ffplay.*cursor-tts' 2>/dev/null || true", {
-      stdio: "ignore",
-    });
-  } catch {}
-  try {
-    execSync("pkill -f afplay 2>/dev/null || true", { stdio: "ignore" });
-  } catch {}
+  // Kill by PID file — works even from a fresh process where
+  // currentProcess is null (e.g. `tsx src/index.ts stop`).
+  for (const pidFile of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
+    try {
+      const pid = Number(readFileSync(pidFile, "utf-8").trim());
+      if (pid > 0) process.kill(pid, "SIGTERM");
+    } catch {}
+  }
   cleanup();
 }
 
+// Both PID files hold the same player PID: STREAM_PID_FILE is the server's
+// own reference; PLAYBACK_PID_FILE is what pause.sh / media_control.sh /
+// the SwiftBar plugin / hammerspoon read.
+function writePidFiles(pid: number | undefined): void {
+  if (!pid) return;
+  writeFileSync(STREAM_PID_FILE, String(pid));
+  writeFileSync(PLAYBACK_PID_FILE, String(pid));
+}
+
+function removePidFiles(): void {
+  for (const f of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
+    try { unlinkSync(f); } catch {}
+  }
+}
+
 function cleanup(): void {
-  for (const f of [STREAM_PID_FILE, PAUSED_FLAG, AUDIO_REF, PLAYBACK_FILE_REF]) {
+  removePidFiles();
+  for (const f of [PAUSED_FLAG, AUDIO_REF, PLAYBACK_FILE_REF]) {
     try { unlinkSync(f); } catch {}
   }
 }
@@ -104,16 +149,31 @@ function cleanup(): void {
 export function playFile(filePath: string): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
-    const speed = config.default_speed;
+    // Replay files were saved from ElevenLabs streams, which bake in speed
+    // up to the API max of 1.2x. Only the residual factor above 1.2 needs
+    // applying here — using the full default_speed would over-speed them.
+    const rawSpeed = config.default_speed;
+    const speed = rawSpeed > 1.2 ? +(rawSpeed / 1.2).toFixed(4) : 1.0;
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
 
     const child = spawn("afplay", args, { stdio: "ignore" });
     currentProcess = child;
-    child.on("close", (code) => {
+    writePidFiles(child.pid);
+
+    let settled = false;
+    const settle = (code: number) => {
+      if (settled) return;
+      settled = true;
       if (currentProcess === child) currentProcess = null;
-      resolve(code ?? 0);
+      removePidFiles();
+      resolve(code);
+    };
+    child.on("error", (err) => {
+      log("audio", `afplay error: ${err.message}`);
+      settle(1);
     });
+    child.on("close", (code) => settle(code ?? 0));
   });
 }
 
@@ -197,20 +257,34 @@ export function playStreamBuffer(
     });
     currentProcess = child;
 
-    writeFileSync(STREAM_PID_FILE, String(child.pid));
+    writePidFiles(child.pid);
     writeFileSync(PLAYBACK_FILE_REF, queueFile);
     writeFileSync(AUDIO_REF, "streaming");
 
     const replayChunks: Uint8Array[] = [];
 
-    child.on("close", (code) => {
+    let settled = false;
+    const settle = (code: number, saveReplay: boolean) => {
+      if (settled) return;
+      settled = true;
       if (currentProcess === child) currentProcess = null;
       cleanup();
-      if (replayChunks.length > 0) {
+      if (saveReplay && replayChunks.length > 0) {
         saveReplayFile(replayChunks, queueFile, replayMeta);
       }
-      resolve(code ?? 0);
+      resolve(code);
+    };
+
+    // Missing ffplay → spawn "error" (close never fires): resolve instead
+    // of wedging drainQueue. stdin "error" swallows EPIPE when playback is
+    // killed mid-stream, which would otherwise crash the watcher.
+    child.on("error", (err) => {
+      log("audio", `ffplay spawn error: ${err.message}`);
+      settle(1, false);
     });
+    child.stdin?.on("error", () => {});
+
+    child.on("close", (code) => settle(code ?? 0, true));
 
     try {
       for await (const chunk of audioStream) {
@@ -246,6 +320,10 @@ export function replayLast(nth = 1): Promise<number> {
 
 export function playMp3Buffer(buf: Buffer): Promise<number> {
   return new Promise((resolve) => {
+    const config = loadConfig();
+    // Phrase MP3s are generated once at 1.0x and reused across speed
+    // changes, so the full default_speed is applied at playback time.
+    const speed = Math.min(2.0, Math.max(0.5, config.default_speed));
     const ffplayArgs = [
       "-nodisp",
       "-autoexit",
@@ -254,16 +332,28 @@ export function playMp3Buffer(buf: Buffer): Promise<number> {
       "-i",
       "pipe:0",
     ];
+    if (speed !== 1.0) ffplayArgs.push("-af", `atempo=${speed}`);
 
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
     currentProcess = child;
+    writePidFiles(child.pid);
 
-    child.on("close", (code) => {
+    let settled = false;
+    const settle = (code: number) => {
+      if (settled) return;
+      settled = true;
       if (currentProcess === child) currentProcess = null;
-      resolve(code ?? 0);
+      removePidFiles();
+      resolve(code);
+    };
+    child.on("error", (err) => {
+      log("audio", `ffplay spawn error: ${err.message}`);
+      settle(1);
     });
+    child.stdin?.on("error", () => {});
+    child.on("close", (code) => settle(code ?? 0));
 
     child.stdin?.write(buf);
     child.stdin?.end();

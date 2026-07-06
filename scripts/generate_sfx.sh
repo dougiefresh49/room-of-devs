@@ -36,6 +36,17 @@ if [ "$FORCE" = false ] && [ "$EXISTING" -ge "$TARGET_COUNT" ]; then
     exit 0
 fi
 
+# With --force, move the old sounds aside so the directory doesn't grow forever
+# (random_sfx.sh only picks from the top level, so old/ is excluded).
+if [ "$FORCE" = true ] && [ "$EXISTING" -gt 0 ]; then
+    OLD_DIR="$SFX_DIR/old"
+    rm -rf "$OLD_DIR"
+    mkdir -p "$OLD_DIR"
+    mv "$SFX_DIR"/*.mp3 "$OLD_DIR"/ 2>/dev/null || true
+    log "Moved $EXISTING old sounds to $OLD_DIR"
+    EXISTING=0
+fi
+
 # Sound effect prompts by category
 declare -a PROMPTS
 PROMPTS=(

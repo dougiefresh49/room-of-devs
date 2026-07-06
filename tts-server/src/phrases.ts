@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import { join } from "path";
+import { pathToFileURL } from "url";
 import { PHRASES_DIR, loadConfig } from "./config.js";
 import { generateTTS } from "./elevenlabs.js";
 import { playMp3Buffer } from "./audio.js";
@@ -46,6 +47,9 @@ export async function generatePhrases(voiceId: string): Promise<number> {
 
     const buf = await generateTTS(DEFAULT_PHRASES[i], {
       voiceId,
+      // Generate at 1.0x — cached phrases are reused across speed changes;
+      // playMp3Buffer applies the current default_speed at playback time.
+      speed: 1.0,
       stability: 0.5,
       similarityBoost: 0.8,
       style: 0.1,
@@ -75,7 +79,7 @@ export async function playRandomPhrase(voiceId: string): Promise<boolean> {
   return true;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { loadEnv } = await import("./config.js");
   loadEnv();
   const config = loadConfig();

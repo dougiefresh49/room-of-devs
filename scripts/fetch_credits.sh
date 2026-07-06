@@ -36,7 +36,7 @@ if [ -z "$ELEVENLABS_API_KEY" ]; then
     exit 0
 fi
 
-RESPONSE=$(curl -s -f \
+RESPONSE=$(curl -s -f --max-time 5 \
     -H "xi-api-key: ${ELEVENLABS_API_KEY}" \
     "https://api.elevenlabs.io/v1/user/subscription" 2>/dev/null) || {
     log "API call failed"

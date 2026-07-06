@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TTS_DIR="$HOME/.cursor/tts"
 HOOKS_DIR="$HOME/.cursor"
-LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 SWIFTBAR_PLUGINS_DIR="${SWIFTBAR_PLUGINS_DIR:-$HOME/projects/Swiftbar/Plugins}"
 
 log() { echo "[setup] $*"; }
@@ -13,7 +12,7 @@ err() { echo "[setup] ERROR: $*" >&2; }
 
 # ── 1. Create directory structure ──────────────────────────────────
 log "Creating directory structure under $TTS_DIR"
-mkdir -p "$TTS_DIR"/{models,queue,played,cache,scripts,logs,icons,sounds/default}
+mkdir -p "$TTS_DIR"/{queue,played,cache,scripts,logs,icons,sounds/default}
 
 # ── 1b. Menu bar + notification icons ─────────────────────────────
 ICON_SRC_DIR="$PROJECT_DIR/icons"
@@ -49,22 +48,14 @@ else
     log "No .env file found at $ENV_FILE — API keys must be set manually in $ENV_DEST"
 fi
 
-# ── 3. Install Piper (optional — kept for fallback) ──────────────
-if python3 -c "import piper" 2>/dev/null; then
-    log "piper-tts installed (optional fallback)"
-else
-    log "piper-tts not installed (optional — ElevenLabs is primary TTS)"
-    log "  To install: pip3 install piper-tts 'piper-tts[http]'"
-fi
-
 # ── 4. Copy scripts ──────────────────────────────────────────────
 log "Installing scripts to $TTS_DIR/scripts/"
 for script in \
-    ingest.sh play.sh play_node.sh stop.sh pause.sh play_latest.sh media_control.sh \
+    ingest.sh play_node.sh stop.sh pause.sh play_latest.sh media_control.sh \
     restart.sh quit.sh set_speed.sh clear_queue.sh clear_thread_queue.sh \
-    set_listening.sh enqueue_manual.sh piper_http_launch.sh set_voice.sh \
+    set_listening.sh enqueue_manual.sh set_voice.sh \
     notify_queued.sh set_notifications.sh set_notification_sound.sh \
-    clean_text.py gemini_process.py fetch_voices.py load_env.sh \
+    clean_text.py fetch_voices.py load_env.sh \
     paste_voice_id.sh generate_sfx.sh random_sfx.sh cleanup_played.sh \
     build_read_aloud_notifier_app.sh \
     hook_stop.sh hook_prompt.sh hook_ask_user.sh tts-server.sh \
@@ -123,7 +114,6 @@ defaults = {
     "notification_sender": "",
     "terminal_notifier_app": "",
     "notification_sound": "random_sfx",
-    "sfx_categories": ["boom", "bram", "fantasy", "impact", "weapon"],
     "streaming_enabled": False,
     "streaming_session_prefix": "auto",
     "played_retention_count": 50,
@@ -133,6 +123,12 @@ changed = False
 for key, val in defaults.items():
     if key not in c:
         c[key] = val
+        changed = True
+
+# Drop stale Piper-era keys
+for stale in ("sfx_categories", "model", "piper_port"):
+    if stale in c:
+        del c[stale]
         changed = True
 
 if c.get("notification_icon") == "~/.cursor/tts/icons/tmnt-icon.png":
@@ -157,25 +153,6 @@ if [ -f "$HOOKS_FILE" ]; then
 else
     log "Installing hooks.json to $HOOKS_FILE"
     cp "$PROJECT_DIR/config/hooks.json" "$HOOKS_FILE"
-fi
-
-# ── 7. LaunchAgent for Piper (optional) ───────────────────────────
-PLIST_NAME="com.local.piper-tts-server.plist"
-PLIST_DEST="$LAUNCH_AGENTS_DIR/$PLIST_NAME"
-PLIST_LABEL="com.local.piper-tts-server"
-mkdir -p "$LAUNCH_AGENTS_DIR"
-
-if python3 -c "import piper" 2>/dev/null; then
-    log "Setting up Piper LaunchAgent (fallback TTS)"
-    sed -e "s|__HOME__|$HOME|g" \
-        "$PROJECT_DIR/config/$PLIST_NAME.template" > "$PLIST_DEST"
-    if launchctl list "$PLIST_LABEL" &>/dev/null; then
-        launchctl unload "$PLIST_DEST" 2>/dev/null || true
-    fi
-    launchctl load "$PLIST_DEST"
-    log "Piper HTTP server LaunchAgent loaded (fallback)"
-else
-    log "Skipping Piper LaunchAgent (not installed)"
 fi
 
 # ── 8. Install SwiftBar plugin ─────────────────────────────────────

@@ -25,44 +25,49 @@ if [ -f "$LISTENING_FLAG" ]; then
 fi
 
 input=$(cat)
-
-text=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('text',''))" 2>/dev/null) || {
-    log "Failed to parse text from hook payload"
-    exit 0
-}
-
-if [ -z "$text" ]; then
-    log "Empty text in hook payload — skipping"
-    exit 0
-fi
-
-conversation_id=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('conversation_id','unknown'))" 2>/dev/null) || conversation_id="unknown"
-generation_id=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('generation_id',''))" 2>/dev/null) || generation_id=""
-model=$(echo "$input" | python3 -c "import sys,json; print(json.load(sys.stdin).get('model',''))" 2>/dev/null) || model=""
-workspace_roots=$(echo "$input" | python3 -c "import sys,json; r=json.load(sys.stdin).get('workspace_roots',[]); print(r[0] if r else '')" 2>/dev/null) || workspace_roots=""
-
 epoch=$(date +%s)
-short_conv=$(echo "$conversation_id" | cut -c1-12)
-filename="${epoch}-${short_conv}.json"
-filepath="$QUEUE_DIR/$filename"
 
-python3 - "$text" "$conversation_id" "$generation_id" "$model" "$epoch" "$filepath" "$workspace_roots" <<'PY'
+# One python invocation: parse the payload, resolve the thread title (cached
+# per conversation_id under cache/titles/ so the SQLite scan doesn't run on
+# every response), write the queue file, and print its exact path.
+filepath=$(python3 - "$input" "$TTS_DIR" "$LOG_FILE" "$epoch" <<'PY'
 import json
 import os
 import sqlite3
 import sys
+import time
+from datetime import datetime
 
-text, conversation_id, generation_id, model, epoch, filepath, workspace_root = (
-    sys.argv[1],
-    sys.argv[2],
-    sys.argv[3],
-    sys.argv[4],
-    sys.argv[5],
-    sys.argv[6],
-    sys.argv[7],
-)
+payload_raw, tts_dir, log_path, epoch = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+queue_dir = os.path.join(tts_dir, "queue")
+titles_cache_dir = os.path.join(tts_dir, "cache", "titles")
 
-thread_title = ""
+
+def log(msg):
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            ts = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+            f.write(f"{ts} ingest: {msg}\n")
+    except OSError:
+        pass
+
+
+try:
+    payload = json.loads(payload_raw)
+except (json.JSONDecodeError, ValueError):
+    log("Failed to parse hook payload")
+    sys.exit(0)
+
+text = payload.get("text", "")
+if not text:
+    log("Empty text in hook payload — skipping")
+    sys.exit(0)
+
+conversation_id = payload.get("conversation_id") or "unknown"
+generation_id = payload.get("generation_id", "")
+model = payload.get("model", "")
+roots = payload.get("workspace_roots") or []
+workspace_root = roots[0] if roots else ""
 
 
 def _workspace_matches_header(header: dict, root: str) -> bool:
@@ -123,9 +128,13 @@ def _lookup_global_composer_headers(cid: str, root: str) -> str:
     return name_for_match(require_workspace=False)
 
 
-# 1) Legacy: full composer rows under workspace state.vscdb → composer.composerData
-ws_storage = os.path.expanduser("~/Library/Application Support/Cursor/User/workspaceStorage")
-if os.path.isdir(ws_storage):
+def _lookup_workspace_storage(cid: str, root: str) -> str:
+    """Legacy: full composer rows under workspace state.vscdb → composer.composerData."""
+    ws_storage = os.path.expanduser(
+        "~/Library/Application Support/Cursor/User/workspaceStorage"
+    )
+    if not os.path.isdir(ws_storage):
+        return ""
     for ws_dir in os.listdir(ws_storage):
         ws_json = os.path.join(ws_storage, ws_dir, "workspace.json")
         db_path = os.path.join(ws_storage, ws_dir, "state.vscdb")
@@ -136,7 +145,7 @@ if os.path.isdir(ws_storage):
             with open(ws_json) as f:
                 ws_data = json.load(f)
             ws_folder = ws_data.get("folder", "")
-            if workspace_root and workspace_root not in ws_folder:
+            if root and root not in ws_folder:
                 continue
         except Exception:
             continue
@@ -152,22 +161,50 @@ if os.path.isdir(ws_storage):
             if row:
                 composer_data = json.loads(row[0])
                 for c in composer_data.get("allComposers") or []:
-                    if c.get("composerId") == conversation_id:
-                        thread_title = (c.get("name") or "").strip()
-                        break
+                    if c.get("composerId") == cid:
+                        name = (c.get("name") or "").strip()
+                        if name:
+                            return name
         except Exception:
             pass
+    return ""
 
-        if thread_title:
-            break
 
-# 2) Migrated Cursor: workspace composer.composerData keeps only selectedComposerIds;
-#    thread titles are in global composer.composerHeaders.
+# Thread title: check the per-conversation cache first so the workspaceStorage
+# SQLite scan doesn't run on every response.
+safe_cid = "".join(ch for ch in conversation_id if ch.isalnum() or ch in "-_")[:64] or "unknown"
+cache_file = os.path.join(titles_cache_dir, f"{safe_cid}.txt")
+
+thread_title = ""
+try:
+    with open(cache_file, encoding="utf-8") as f:
+        thread_title = f.read().strip()
+except OSError:
+    pass
+
 if not thread_title:
-    thread_title = _lookup_global_composer_headers(conversation_id, workspace_root)
+    thread_title = _lookup_workspace_storage(conversation_id, workspace_root)
+    if not thread_title:
+        # Migrated Cursor: workspace composer.composerData keeps only
+        # selectedComposerIds; titles are in global composer.composerHeaders.
+        thread_title = _lookup_global_composer_headers(conversation_id, workspace_root)
+    if thread_title:
+        try:
+            os.makedirs(titles_cache_dir, exist_ok=True)
+            with open(cache_file, "w", encoding="utf-8") as f:
+                f.write(thread_title)
+        except OSError:
+            pass
 
-if len(thread_title) > 40:
-    thread_title = thread_title[:37] + "..."
+display_title = thread_title
+if len(display_title) > 40:
+    display_title = display_title[:37] + "..."
+
+short_conv = conversation_id[:12]
+# Millisecond suffix avoids same-second filename collisions (matches ingest.ts).
+ms = int(time.time() * 1000) % 1000
+filename = f"{epoch}-{ms:03d}-{short_conv}.json"
+filepath = os.path.join(queue_dir, filename)
 
 data = {
     "text": text,
@@ -175,26 +212,21 @@ data = {
     "generation_id": generation_id,
     "model": model,
     "timestamp": epoch,
-    "thread_title": thread_title,
+    "thread_title": display_title,
     "spoken": False,
 }
 with open(filepath, "w") as f:
     json.dump(data, f, indent=2)
+
+suffix = "" if display_title else " — thread title not resolved"
+log(f"Queued response: {filename} (conv={short_conv}, {len(text)} chars){suffix}")
+print(filepath)
 PY
+) || filepath=""
 
-tt_ok=false
-if python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if str(d.get('thread_title','')).strip() else 1)" "$filepath" 2>/dev/null; then
-    tt_ok=true
+if [ -n "$filepath" ] && [ -f "$filepath" ]; then
+    "$TTS_DIR/scripts/notify_queued.sh" "$filepath" 2>/dev/null || true
 fi
-
-if [ "$tt_ok" = true ]; then
-    log "Queued response: $filename (conv=$short_conv, ${#text} chars)"
-else
-    log "Queued response: $filename (conv=$short_conv, ${#text} chars) — thread title not resolved"
-fi
-
-"$TTS_DIR/scripts/notify_queued.sh" "$filepath" 2>/dev/null || true
-
 
 # Periodically clean old played files (runs in background, non-blocking)
 "$TTS_DIR/scripts/cleanup_played.sh" &>/dev/null &

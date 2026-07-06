@@ -4,7 +4,13 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import { loadConfig } from "./config.js";
 import { streamTTS } from "./elevenlabs.js";
-import { playStreamBuffer, playMp3Buffer, type ReplayMeta } from "./audio.js";
+import {
+  playStreamBuffer,
+  acquireLock,
+  waitForLock,
+  releaseLock,
+  type ReplayMeta,
+} from "./audio.js";
 import { playRandomPhrase } from "./phrases.js";
 import { log } from "./logger.js";
 
@@ -91,39 +97,67 @@ export async function handleDynamicResponse(
   sessionId?: string,
   sessionName?: string
 ): Promise<boolean> {
-  const character = getCharacter(voiceId);
-
-  if (!character || !userPrompt?.trim()) {
-    return playRandomPhrase(voiceId);
+  // dynamic_responses governs prompt acks only:
+  // "always" = fresh Gemini ack, "cached" = free cached phrase, "off" = silent.
+  const mode = loadConfig().dynamic_responses;
+  if (mode === "off") {
+    log("dynamic", "dynamic_responses=off — skipping prompt ack");
+    return false;
   }
 
-  log("dynamic", `Generating ${character.name} response for prompt (${userPrompt.length} chars)`);
-
-  const responseText = await generateCharacterResponse(userPrompt, character);
-
-  if (!responseText) {
-    log("dynamic", "Generation failed — falling back to cached phrase");
-    return playRandomPhrase(voiceId);
+  // Acks are disposable: try the lock ONCE (before any Gemini call) and
+  // skip entirely if playback is in progress — cheap, and doesn't talk over.
+  if (!acquireLock()) {
+    log("dynamic", "Playback in progress — skipping prompt ack");
+    return false;
   }
 
-  const meta: ReplayMeta = {
-    source: "dynamic-response",
-    sessionId,
-    sessionName,
-    character: character.name,
-    textPreview: responseText.slice(0, 120),
-    timestamp: new Date().toISOString(),
-  };
+  try {
+    const character = getCharacter(voiceId);
 
-  const stream = await streamTTS(responseText, { voiceId });
-  if (stream) {
-    log("dynamic", `Streaming: "${responseText}"`);
-    await playStreamBuffer(stream as any, "dynamic-response", meta);
-    return true;
+    if (mode === "cached" || !character || !userPrompt?.trim()) {
+      return await playRandomPhrase(voiceId);
+    }
+
+    log("dynamic", `Generating ${character.name} response for prompt (${userPrompt.length} chars)`);
+
+    const responseText = await generateCharacterResponse(userPrompt, character);
+
+    if (!responseText) {
+      log("dynamic", "Generation failed — falling back to cached phrase");
+      return await playRandomPhrase(voiceId);
+    }
+
+    const meta: ReplayMeta = {
+      source: "dynamic-response",
+      sessionId,
+      sessionName,
+      character: character.name,
+      textPreview: responseText.slice(0, 120),
+      timestamp: new Date().toISOString(),
+    };
+
+    const stream = await streamTTS(responseText, { voiceId });
+    if (stream) {
+      log("dynamic", `Streaming: "${responseText}"`);
+      await playStreamBuffer(stream as any, "dynamic-response", meta);
+      return true;
+    }
+
+    log("dynamic", "Stream failed — falling back to cached phrase");
+    return await playRandomPhrase(voiceId);
+  } finally {
+    releaseLock();
   }
+}
 
-  log("dynamic", "Stream failed — falling back to cached phrase");
-  return playRandomPhrase(voiceId);
+// Gemini-failure fallback: speak just the question itself (first sentence
+// or line, before the option list) instead of streaming the whole options
+// block to ElevenLabs.
+function truncateQuestion(text: string): string {
+  const firstLine = text.trim().split("\n")[0].trim();
+  const sentenceEnd = firstLine.search(/[.?!](\s|$)/);
+  return sentenceEnd >= 0 ? firstLine.slice(0, sentenceEnd + 1) : firstLine;
 }
 
 export async function handleAskUser(
@@ -134,31 +168,34 @@ export async function handleAskUser(
 ): Promise<boolean> {
   if (!questionText?.trim()) return false;
 
-  const character = getCharacter(voiceId);
-  const key = process.env.GEMINI_API_KEY;
+  // Question readouts carry real content — wait for the lock rather than skip.
+  await waitForLock();
+  try {
+    const character = getCharacter(voiceId);
+    const key = process.env.GEMINI_API_KEY;
 
-  const meta: ReplayMeta = {
-    source: "ask-user",
-    sessionId,
-    sessionName,
-    character: character?.name,
-    textPreview: questionText.slice(0, 120),
-    timestamp: new Date().toISOString(),
-  };
+    const meta: ReplayMeta = {
+      source: "ask-user",
+      sessionId,
+      sessionName,
+      character: character?.name,
+      textPreview: questionText.slice(0, 120),
+      timestamp: new Date().toISOString(),
+    };
 
-  if (!key) {
-    log("dynamic", "No GEMINI_API_KEY for ask-user — streaming raw question");
-    return streamAndPlay(voiceId, questionText, meta);
-  }
+    if (!key) {
+      log("dynamic", "No GEMINI_API_KEY for ask-user — reading question line only");
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+    }
 
-  const config = loadConfig();
-  const ai = new GoogleGenAI({ apiKey: key });
+    const config = loadConfig();
+    const ai = new GoogleGenAI({ apiKey: key });
 
-  const charContext = character
-    ? `You are ${character.name} from ${character.franchise}. Personality: ${character.personality}. Speech style: ${character.speechStyle}.`
-    : "You are a helpful coding assistant.";
+    const charContext = character
+      ? `You are ${character.name} from ${character.franchise}. Personality: ${character.personality}. Speech style: ${character.speechStyle}.`
+      : "You are a helpful coding assistant.";
 
-  const systemPrompt = `${charContext}
+    const systemPrompt = `${charContext}
 
 Your AI coding assistant just asked the developer a question with multiple choices. Read the question and options aloud naturally, as if YOU are the one asking. Stay in character.
 
@@ -169,26 +206,31 @@ Rules:
 - No quotes, no stage directions, no markdown.
 - Output ONLY the spoken text.`;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: config.gemini_model,
-      contents: `Question and options: "${questionText}"`,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.7,
-        maxOutputTokens: 150,
-      },
-    });
+    try {
+      const response = await ai.models.generateContent({
+        model: config.gemini_model,
+        contents: `Question and options: "${questionText}"`,
+        config: {
+          systemInstruction: systemPrompt,
+          temperature: 0.7,
+          maxOutputTokens: 150,
+        },
+      });
 
-    const text = response.text?.trim();
-    if (!text) return streamAndPlay(voiceId, questionText, meta);
+      const text = response.text?.trim();
+      if (!text) {
+        return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+      }
 
-    meta.textPreview = text.slice(0, 120);
-    log("dynamic", `Ask-user response: "${text}"`);
-    return streamAndPlay(voiceId, text, meta);
-  } catch (err: any) {
-    log("dynamic", `Ask-user Gemini error: ${err.message}`);
-    return streamAndPlay(voiceId, questionText, meta);
+      meta.textPreview = text.slice(0, 120);
+      log("dynamic", `Ask-user response: "${text}"`);
+      return await streamAndPlay(voiceId, text, meta);
+    } catch (err: any) {
+      log("dynamic", `Ask-user Gemini error: ${err.message}`);
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+    }
+  } finally {
+    releaseLock();
   }
 }
 

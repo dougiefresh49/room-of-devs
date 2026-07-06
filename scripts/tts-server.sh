@@ -24,6 +24,13 @@ sync_source() {
     if [ -d "$REPO_SERVER_DIR/src" ]; then
         cp "$REPO_SERVER_DIR"/src/*.ts "$SERVER_DIR/src/" 2>/dev/null || true
         cp "$REPO_SERVER_DIR"/src/*.json "$SERVER_DIR/src/" 2>/dev/null || true
+        # Sync package.json too; reinstall deps only when it actually changed
+        if [ -f "$REPO_SERVER_DIR/package.json" ] && \
+           ! diff -q "$REPO_SERVER_DIR/package.json" "$SERVER_DIR/package.json" >/dev/null 2>&1; then
+            cp "$REPO_SERVER_DIR/package.json" "$SERVER_DIR/package.json"
+            log "package.json changed — running pnpm install"
+            (cd "$SERVER_DIR" && pnpm install >> "$LOG_FILE" 2>&1) || log "pnpm install failed — check $LOG_FILE"
+        fi
         log "Synced source from $REPO_SERVER_DIR"
     fi
 }
@@ -47,9 +54,20 @@ start_server() {
 
     sync_source
 
+    TSX_BIN="$SERVER_DIR/node_modules/.bin/tsx"
+    if [ ! -x "$TSX_BIN" ]; then
+        echo "Error: tsx not found at $TSX_BIN — run setup.sh (or pnpm install in $SERVER_DIR)"
+        exit 1
+    fi
+
     cd "$SERVER_DIR"
-    nohup pnpm start >> "$LOG_FILE" 2>&1 &
+    # Launch tsx directly (not via pnpm) so the PID file holds the real watcher
+    # PID. set -m gives the background job its own process group so stop can
+    # kill the whole group as a safety net.
+    set -m
+    nohup "$TSX_BIN" src/index.ts >> "$LOG_FILE" 2>&1 &
     local pid=$!
+    set +m
     echo "$pid" > "$PID_FILE"
     disown "$pid" 2>/dev/null || true
 
@@ -73,7 +91,8 @@ stop_server() {
 
     local pid
     pid=$(cat "$PID_FILE")
-    kill "$pid" 2>/dev/null || true
+    # Kill the whole process group (safety net for any children), then the PID
+    kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
 
     local waited=0
     while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt 5 ]; do
@@ -82,7 +101,7 @@ stop_server() {
     done
 
     if kill -0 "$pid" 2>/dev/null; then
-        kill -9 "$pid" 2>/dev/null || true
+        kill -9 -- "-$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null || true
     fi
 
     rm -f "$PID_FILE"

@@ -16,10 +16,12 @@ if [ -f "$LISTENING_FLAG" ]; then
     esac
 fi
 
-# Read session_id and prompt from hook payload (stdin is JSON from Claude Code)
+# Read session_id and prompt from hook payload (stdin is JSON from Claude Code).
+# Read all of stdin — payloads can be multi-line.
 SESSION_ID=""
 USER_PROMPT=""
-if read -t 1 PAYLOAD 2>/dev/null; then
+PAYLOAD=$(cat 2>/dev/null || true)
+if [ -n "$PAYLOAD" ]; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] hook_prompt payload: $PAYLOAD" >> "$TTS_DIR/logs/hook.log" 2>/dev/null || true
     SESSION_ID=$(echo "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null || true)
     USER_PROMPT=$(echo "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('prompt', d.get('message', d.get('input', ''))))" 2>/dev/null || true)

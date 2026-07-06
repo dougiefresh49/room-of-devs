@@ -10,7 +10,6 @@ STREAM_PID_FILE="$TTS_DIR/.stream-playback-pid"
 PLAYBACK_FILE_REF="$TTS_DIR/.playback-file"
 PAUSED_FLAG="$TTS_DIR/.playback-paused"
 AUDIO_REF="$TTS_DIR/.playback-audio"
-STREAM_LOCK="$TTS_DIR/.stream-lock"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] stop: $*" >> "$LOG_FILE" 2>/dev/null; }
@@ -46,4 +45,5 @@ if [ "$stopped" = false ]; then
     log "No active playback"
 fi
 
-rm -f "$PLAYBACK_FILE_REF" "$PAUSED_FLAG" "$AUDIO_REF" "$STREAM_LOCK"
+# Note: .stream-lock is intentionally left alone — the owning process cleans it up.
+rm -f "$PLAYBACK_FILE_REF" "$PAUSED_FLAG" "$AUDIO_REF"

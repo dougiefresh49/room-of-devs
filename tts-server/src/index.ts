@@ -4,7 +4,7 @@ import { basename, join } from "path";
 import {
   QUEUE_DIR,
   PLAYED_DIR,
-  TTS_DIR,
+  FAILED_DIR,
   loadConfig,
   loadEnv,
   loadMutedSessions,
@@ -15,8 +15,7 @@ import { processWithGemini, fallbackClean } from "./gemini.js";
 import { streamTTS, resolveVoiceId } from "./elevenlabs.js";
 import { getCharacter } from "./dynamic-response.js";
 import {
-  isProcessing,
-  markProcessing,
+  claimProcessing,
   clearProcessing,
   waitForLock,
   releaseLock,
@@ -45,7 +44,18 @@ function parseQueueFile(path: string): QueueItem | null {
   }
 }
 
-function truncateForTTS(text: string, limit = 4800): string {
+// Cap raw input to Gemini — spoken output is capped at ~4,800 chars anyway,
+// so anything beyond a few multiples of that is wasted input billing.
+const GEMINI_INPUT_CAP = 16_000;
+
+// eleven_v3 per-request limit is 5,000 chars (verified against
+// elevenlabs.io/docs/overview/models on 2026-07-06); 4,800 leaves margin.
+const TTS_CHAR_CAP = 4800;
+// When Gemini failed, the fallback cleaner output is rougher — cap it much
+// lower so a hiccup doesn't bill 4,800 chars of near-raw markdown (C3).
+const FALLBACK_CHAR_CAP = 1200;
+
+function truncateForTTS(text: string, limit = TTS_CHAR_CAP): string {
   if (text.length <= limit) return text;
   const sentences = text.split(/(?<=[.!?])\s+/);
   let result = "";
@@ -58,7 +68,6 @@ function truncateForTTS(text: string, limit = 4800): string {
 
 function shouldAddPrefix(
   config: ReturnType<typeof loadConfig>,
-  sessionId?: string,
   title?: string
 ): boolean {
   const pref = config.streaming_session_prefix;
@@ -72,35 +81,42 @@ function shouldAddPrefix(
 
 async function processQueueFile(filePath: string): Promise<void> {
   const name = basename(filePath);
-  if (isProcessing(name)) {
-    log("server", `Already processing ${name} — skip`);
+  if (!claimProcessing(name)) {
+    log("server", `Already claimed by another process: ${name} — skip`);
     return;
   }
 
-  const item = parseQueueFile(filePath);
-  if (!item?.text) {
-    log("server", `Empty or invalid: ${name}`);
-    return;
-  }
-
-  const config = loadConfig();
-  const sessionId = item.conversation_id;
-
-  if (sessionId) {
-    const muted = loadMutedSessions();
-    if (muted.includes(sessionId)) {
-      log("server", `Session ${sessionId} muted — skip auto-play`);
+  try {
+    const item = parseQueueFile(filePath);
+    if (!item?.text) {
+      log("server", `Empty or invalid: ${name}`);
+      moveToFailed(filePath);
       return;
     }
-  }
 
-  markProcessing(name);
-  try {
+    const config = loadConfig();
+    const sessionId = item.conversation_id;
+
+    if (sessionId) {
+      const muted = loadMutedSessions();
+      if (muted.includes(sessionId)) {
+        log("server", `Session ${sessionId} muted — skip auto-play`);
+        return;
+      }
+    }
+
     await waitForLock();
+
+    // The file may have been processed and moved while we waited on the lock.
+    if (!existsSync(filePath)) {
+      log("server", `Queue file gone after lock wait: ${name} — skip`);
+      return;
+    }
 
     const voiceId = resolveVoiceId(sessionId);
     if (!voiceId) {
       log("server", "No voice ID configured — skip");
+      moveToFailed(filePath);
       return;
     }
 
@@ -109,9 +125,14 @@ async function processQueueFile(filePath: string): Promise<void> {
       ? { name: character.name, personality: character.personality, speechStyle: character.speechStyle }
       : null;
 
-    let processed =
-      (await processWithGemini(item.text, config.gemini_model, characterCtx)) ??
-      fallbackClean(item.text);
+    const rawText = item.text.slice(0, GEMINI_INPUT_CAP);
+
+    const geminiResult = await processWithGemini(
+      rawText,
+      config.gemini_model,
+      characterCtx
+    );
+    let processed = geminiResult ?? fallbackClean(rawText);
 
     if (!processed.trim()) {
       log("server", `No speakable text after processing: ${name}`);
@@ -119,18 +140,22 @@ async function processQueueFile(filePath: string): Promise<void> {
       return;
     }
 
-    if (shouldAddPrefix(config, sessionId, item.thread_title)) {
+    if (shouldAddPrefix(config, item.thread_title)) {
       const prefix = (item.thread_title ?? "").slice(0, 30);
       processed = `In ${prefix}... ${processed}`;
     }
 
-    processed = truncateForTTS(processed);
+    processed = truncateForTTS(
+      processed,
+      geminiResult ? TTS_CHAR_CAP : FALLBACK_CHAR_CAP
+    );
 
     log("server", `Character: ${character?.name ?? "default"}, voice: ${voiceId}`);
 
     const stream = await streamTTS(processed, { voiceId });
     if (!stream) {
       log("server", `Stream failed for ${name}`);
+      moveToFailed(filePath);
       return;
     }
 
@@ -145,13 +170,16 @@ async function processQueueFile(filePath: string): Promise<void> {
 
     log("server", `Playing: ${name} (${processed.length} chars)`);
     const code = await playStreamBuffer(stream as any, filePath, replayMeta);
-    if (code === 0) {
-      moveToPlayed(filePath);
-    } else {
-      log("server", `Playback exited ${code} for ${name}`);
+    // TTS succeeded and credits are spent — move to played regardless of
+    // exit code. A stopped playback shouldn't leave the item re-buyable;
+    // the audio is already saved in replay/.
+    if (code !== 0) {
+      log("server", `Playback exited ${code} for ${name} (stopped?)`);
     }
+    moveToPlayed(filePath);
   } catch (err: any) {
     log("server", `Error processing ${name}: ${err.message}`);
+    if (existsSync(filePath)) moveToFailed(filePath);
   } finally {
     clearProcessing(name);
     releaseLock();
@@ -165,6 +193,18 @@ function moveToPlayed(filePath: string): void {
     log("server", `Moved to played: ${basename(filePath)}`);
   } catch (err: any) {
     log("server", `Move failed: ${err.message}`);
+  }
+}
+
+// Genuine failures (bad JSON, no voice, stream/TTS failure) go to failed/
+// instead of lingering in queue/ forever, inflating the menu queue count.
+function moveToFailed(filePath: string): void {
+  try {
+    mkdirSync(FAILED_DIR, { recursive: true });
+    renameSync(filePath, join(FAILED_DIR, basename(filePath)));
+    log("server", `Moved to failed: ${basename(filePath)}`);
+  } catch (err: any) {
+    log("server", `Move to failed failed: ${err.message}`);
   }
 }
 

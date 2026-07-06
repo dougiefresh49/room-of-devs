@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
 # play_node.sh — Play a queue file via the Node.js TTS server.
-# Falls back to play.sh if pnpm/tsx not available.
 #
 # Usage: play_node.sh <queue-file>
 #
@@ -9,7 +8,9 @@ set -euo pipefail
 
 TTS_DIR="$HOME/.cursor/tts"
 SERVER_DIR="$TTS_DIR/tts-server"
-SCRIPTS_DIR="$TTS_DIR/scripts"
+LOG_FILE="$TTS_DIR/logs/hook.log"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] play_node: $*" >> "$LOG_FILE" 2>/dev/null || true; }
 
 QUEUE_FILE="${1:-}"
 if [ -z "$QUEUE_FILE" ] || [ ! -f "$QUEUE_FILE" ]; then
@@ -22,5 +23,6 @@ if [ -f "$SERVER_DIR/src/index.ts" ] && command -v pnpm &>/dev/null; then
     exec pnpm exec tsx src/index.ts once "$QUEUE_FILE"
 fi
 
-# Fallback to bash play script
-exec bash "$SCRIPTS_DIR/play.sh" "$QUEUE_FILE"
+log "ERROR: pnpm or tts-server not found — cannot play $QUEUE_FILE (run setup.sh, install pnpm)"
+echo "Error: pnpm or tts-server not found — run setup.sh and install pnpm" >&2
+exit 1

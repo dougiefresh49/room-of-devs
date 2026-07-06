@@ -1,4 +1,4 @@
-import { loadEnv, lookupSessionName } from "./config.js";
+import { loadEnv, lookupSessionName, loadMutedSessions } from "./config.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import { handleDynamicResponse, handleAskUser } from "./dynamic-response.js";
 import { replayLast } from "./audio.js";
@@ -9,6 +9,13 @@ loadEnv();
 const action = process.argv[2];
 const sessionId = process.argv[3] || "";
 const textArg = process.argv[4] || "";
+
+// Muted sessions stay silent — checked BEFORE any Gemini/ElevenLabs call.
+if (sessionId && loadMutedSessions().includes(sessionId)) {
+  log("signal", `Session ${sessionId} muted — skipping ${action}`);
+  process.exit(0);
+}
+
 const voiceId = resolveVoiceId(sessionId);
 const sessionName = (sessionId && lookupSessionName(sessionId)) || undefined;
 

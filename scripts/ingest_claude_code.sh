@@ -31,7 +31,8 @@ cat > "$PAYLOAD_FILE"
 # Wait for the transcript to finish flushing the final assistant message
 sleep 1
 
-python3 - "$TTS_DIR" "$LOG_FILE" "$PAYLOAD_FILE" <<'PY'
+# The Python block prints the exact queue file path it wrote (or nothing)
+QUEUED_FILE=$(python3 - "$TTS_DIR" "$LOG_FILE" "$PAYLOAD_FILE" <<'PY'
 import json
 import hashlib
 import os
@@ -134,9 +135,12 @@ except OSError:
     pass
 
 # Write queue file
-epoch = int(datetime.now().timestamp())
+now = datetime.now().timestamp()
+epoch = int(now)
+# Millisecond suffix avoids same-second filename collisions (matches ingest.ts).
+ms = int(now * 1000) % 1000
 short_session = session_id[:12] if session_id else "unknown"
-filename = f"{epoch}-cc-{short_session}.json"
+filename = f"{epoch}-{ms:03d}-cc-{short_session}.json"
 filepath = os.path.join(queue_dir, filename)
 
 session_name = "Claude Code"
@@ -173,12 +177,13 @@ with open(filepath, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
 
 log(f"Queued Claude Code response: {filename} ({len(text)} chars)")
+print(filepath)
 PY
+)
 
 rm -f "$PAYLOAD_FILE"
 
-# Send notification (if enabled)
-QUEUED_FILE=$(ls -t "$QUEUE_DIR"/*-cc-*.json 2>/dev/null | head -1)
+# Send notification (if enabled) for the exact file this run wrote
 if [ -n "$QUEUED_FILE" ] && [ -f "$QUEUED_FILE" ]; then
     "$TTS_DIR/scripts/notify_queued.sh" "$QUEUED_FILE" 2>/dev/null || true
 fi

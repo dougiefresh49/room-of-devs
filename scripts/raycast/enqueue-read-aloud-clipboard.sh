@@ -10,7 +10,7 @@
 # @raycast.argument1 { "type": "text", "placeholder": "Thread title (optional)", "optional": true }
 
 # Documentation:
-# @raycast.description Queues the current clipboard text for Cursor Read Aloud (SwiftBar / Piper). Copy an assistant reply, then run this command.
+# @raycast.description Queues the current clipboard text for Cursor Read Aloud (SwiftBar / ElevenLabs). Copy an assistant reply, then run this command.
 # @raycast.packageName Cursor Read Aloud
 # @raycast.needsConfirmation false
 # @raycast.author dougiefresh49

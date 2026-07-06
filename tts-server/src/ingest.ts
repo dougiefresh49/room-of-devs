@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from "fs";
-import { join, basename } from "path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
 import { createHash } from "crypto";
-import { QUEUE_DIR, TTS_DIR, SESSIONS_DIR, loadEnv } from "./config.js";
+import { QUEUE_DIR, TTS_DIR, loadEnv, lookupSessionName } from "./config.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -9,23 +9,6 @@ loadEnv();
 interface HookPayload {
   transcript_path?: string;
   session_id?: string;
-}
-
-function lookupSessionName(sessionId: string): string {
-  try {
-    if (!existsSync(SESSIONS_DIR)) return "Claude Code";
-    const files = readdirSync(SESSIONS_DIR);
-    for (const f of files) {
-      if (!f.endsWith(".json")) continue;
-      try {
-        const data = JSON.parse(
-          readFileSync(join(SESSIONS_DIR, f), "utf-8")
-        );
-        if (data.sessionId === sessionId && data.name) return data.name;
-      } catch {}
-    }
-  } catch {}
-  return "Claude Code";
 }
 
 function extractAssistantText(transcriptPath: string): string | null {
@@ -58,17 +41,18 @@ function extractAssistantText(transcriptPath: string): string | null {
   return null;
 }
 
-const DEDUP_FILE = join(TTS_DIR, ".last_cc_hash");
-
-function isDuplicate(text: string): boolean {
+// Keyed by session so two sessions finishing with the same text ("Done.")
+// don't dedup across each other.
+function isDuplicate(text: string, shortSession: string): boolean {
+  const dedupFile = join(TTS_DIR, `.last_cc_hash_${shortSession}`);
   const hash = createHash("md5").update(text).digest("hex").slice(0, 12);
   try {
-    if (existsSync(DEDUP_FILE)) {
-      const last = readFileSync(DEDUP_FILE, "utf-8").trim();
+    if (existsSync(dedupFile)) {
+      const last = readFileSync(dedupFile, "utf-8").trim();
       if (last === hash) return true;
     }
   } catch {}
-  writeFileSync(DEDUP_FILE, hash);
+  writeFileSync(dedupFile, hash);
   return false;
 }
 
@@ -89,27 +73,35 @@ if (!transcriptPath || !existsSync(transcriptPath)) {
   process.exit(0);
 }
 
-await new Promise((r) => setTimeout(r, 800));
-
-const text = extractAssistantText(transcriptPath);
+// The transcript may still be flushing when the Stop hook fires — retry
+// briefly instead of a fixed sleep (usually returns on the first pass).
+let text: string | null = extractAssistantText(transcriptPath);
+for (let attempt = 0; !text && attempt < 5; attempt++) {
+  await new Promise((r) => setTimeout(r, 200));
+  text = extractAssistantText(transcriptPath);
+}
 if (!text) {
   log("ingest", "No assistant text in transcript");
   process.exit(0);
 }
 
-if (isDuplicate(text)) {
+const shortSession = sessionId.slice(0, 12);
+
+if (isDuplicate(text, shortSession)) {
   log("ingest", "Duplicate response — skipping");
   process.exit(0);
 }
 
-const epoch = Math.floor(Date.now() / 1000);
-const shortSession = sessionId.slice(0, 12);
-const filename = `${epoch}-cc-${shortSession}.json`;
+const now = Date.now();
+const epoch = Math.floor(now / 1000);
+// Millisecond suffix avoids same-second filename collisions (B8).
+const ms = String(now % 1000).padStart(3, "0");
+const filename = `${epoch}-${ms}-cc-${shortSession}.json`;
 const filepath = join(QUEUE_DIR, filename);
 
 mkdirSync(QUEUE_DIR, { recursive: true });
 
-const sessionName = lookupSessionName(sessionId);
+const sessionName = lookupSessionName(sessionId) ?? "Claude Code";
 
 const data = {
   text,

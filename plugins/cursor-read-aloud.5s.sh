@@ -29,11 +29,29 @@ NOTIFICATIONS_ON=0
 NOTIFICATION_SOUND="random_sfx"
 STREAMING_ON=0
 if [ -f "$CONFIG" ]; then
-    DEFAULT_SPEED=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('default_speed', 1.25))" 2>/dev/null || echo "1.25")
-    VOICE_ID=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('elevenlabs_voice_id', ''))" 2>/dev/null || echo "")
-    NOTIFICATIONS_ON=$(python3 -c "import json; print(1 if json.load(open('$CONFIG')).get('notifications_enabled') is True else 0)" 2>/dev/null || echo "0")
-    NOTIFICATION_SOUND=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('notification_sound', 'random_sfx'))" 2>/dev/null || echo "random_sfx")
-    STREAMING_ON=$(python3 -c "import json; print(1 if json.load(open('$CONFIG')).get('streaming_enabled') is True else 0)" 2>/dev/null || echo "0")
+    # One python3 call prints all five values, one per line (perf: was 5 spawns).
+    CONFIG_VALUES=$(python3 - "$CONFIG" 2>/dev/null <<'PY'
+import json, sys
+try:
+    c = json.load(open(sys.argv[1]))
+except Exception:
+    c = {}
+print(c.get('default_speed', 1.25))
+print(c.get('elevenlabs_voice_id', ''))
+print(1 if c.get('notifications_enabled') is True else 0)
+print(c.get('notification_sound', 'random_sfx'))
+print(1 if c.get('streaming_enabled') is True else 0)
+PY
+    ) || CONFIG_VALUES=""
+    if [ -n "$CONFIG_VALUES" ]; then
+        {
+            read -r DEFAULT_SPEED
+            read -r VOICE_ID
+            read -r NOTIFICATIONS_ON
+            read -r NOTIFICATION_SOUND
+            read -r STREAMING_ON
+        } <<< "$CONFIG_VALUES"
+    fi
 fi
 
 # ── Check TTS server status ──────────────────────────────────────
@@ -132,53 +150,60 @@ echo "Replay Last | bash=$SCRIPTS_DIR/replay.sh terminal=false refresh=true shor
 
 echo "---"
 
-# ── Now playing (media controls) ──────────────────────────────────
-if [ "$IS_PLAYING" = true ]; then
-    if [ "$IS_PAUSED" = true ]; then
-        echo "▶ Resume | bash=$SCRIPTS_DIR/pause.sh terminal=false refresh=true shortcut=ctrl+shift+space"
-    else
-        echo "⏯ Pause | bash=$SCRIPTS_DIR/pause.sh terminal=false refresh=true shortcut=ctrl+shift+space"
-    fi
-    echo "⏮ Start Over | bash=$SCRIPTS_DIR/restart.sh terminal=false refresh=true"
-    echo "⏹ Stop Playback | bash=$SCRIPTS_DIR/stop.sh terminal=false refresh=true"
-    if [ -f "$PLAYBACK_FILE_REF" ]; then
-        NOW_LINE=$(python3 -c "
-import json, sys
-path = sys.argv[1]
-try:
-    with open(path) as fh:
-        d = json.load(fh)
-    title = (d.get('thread_title') or '').strip()
-    if not title:
-        title = str(d.get('conversation_id', 'unknown'))[:12]
-    if len(title) > 28:
-        title = title[:26] + '...'
-    text = (d.get('text', '') or '')[:60].replace(chr(10), ' ').strip()
-    print(f'Now Playing: {title} — {text}...')
-except Exception:
-    print('Now Playing: …')
-" "$(tr -d '\n' < "$PLAYBACK_FILE_REF")" 2>/dev/null || echo "Now Playing: …")
-        echo "$NOW_LINE | disabled=true size=11"
-    fi
-    echo "---"
-fi
-
-# ── Agent Messages ──────────────────────────────────────────────
-echo "Agent Messages | disabled=true size=12"
-export QUEUE_DIR SCRIPTS_DIR
+# ── Now Playing / Agent Messages / Recent Playback ───────────────
+# One python3 call emits all three dynamic sections (perf: was 3 spawns).
 PROCESSING_DIR="$TTS_DIR/.processing"
-export PROCESSING_DIR
-if [ "$QUEUE_COUNT" -gt 0 ] 2>/dev/null && [ "$QUEUE_COUNT" -ne 0 ]; then
-    python3 - <<'PY'
+REPLAY_DIR="$TTS_DIR/replay"
+export QUEUE_DIR SCRIPTS_DIR PROCESSING_DIR REPLAY_DIR PLAYBACK_FILE_REF
+export IS_PLAYING IS_PAUSED QUEUE_COUNT
+python3 - <<'PY'
 import base64
 import json
 import os
 from collections import defaultdict
+from datetime import datetime
 
 queue_dir = os.environ["QUEUE_DIR"]
 scripts_dir = os.environ["SCRIPTS_DIR"]
 processing_dir = os.environ.get("PROCESSING_DIR", "")
+replay_dir = os.environ.get("REPLAY_DIR", "")
+playback_ref = os.environ.get("PLAYBACK_FILE_REF", "")
+is_playing = os.environ.get("IS_PLAYING", "false") == "true"
+is_paused = os.environ.get("IS_PAUSED", "false") == "true"
+try:
+    queue_count = int(os.environ.get("QUEUE_COUNT", "0"))
+except ValueError:
+    queue_count = 0
 sessions_dir = os.path.expanduser("~/.claude/sessions")
+
+# ── Now playing (media controls) ──────────────────────────────
+if is_playing:
+    if is_paused:
+        print(f"▶ Resume | bash={scripts_dir}/pause.sh terminal=false refresh=true shortcut=ctrl+shift+space")
+    else:
+        print(f"⏯ Pause | bash={scripts_dir}/pause.sh terminal=false refresh=true shortcut=ctrl+shift+space")
+    print(f"⏮ Start Over | bash={scripts_dir}/restart.sh terminal=false refresh=true")
+    print(f"⏹ Stop Playback | bash={scripts_dir}/stop.sh terminal=false refresh=true")
+    if os.path.isfile(playback_ref):
+        try:
+            with open(playback_ref) as fh:
+                target = fh.read().replace("\n", "")
+            with open(target) as fh:
+                d = json.load(fh)
+            title = (d.get("thread_title") or "").strip()
+            if not title:
+                title = str(d.get("conversation_id", "unknown"))[:12]
+            if len(title) > 28:
+                title = title[:26] + "..."
+            text = (d.get("text", "") or "")[:60].replace(chr(10), " ").strip()
+            now_line = f"Now Playing: {title} — {text}..."
+        except Exception:
+            now_line = "Now Playing: …"
+        print(f"{now_line} | disabled=true size=11")
+    print("---")
+
+# ── Agent Messages ────────────────────────────────────────────
+print("Agent Messages | disabled=true size=12")
 
 def load_json(path):
     try:
@@ -238,181 +263,142 @@ def preview_for(path, data):
     dur = f"{mins}m{secs:02d}s" if mins > 0 else f"{secs}s"
     return f"[{title}] {text}... (~{dur})"
 
-paths = []
-try:
-    for name in os.listdir(queue_dir):
-        if name.endswith(".json"):
-            paths.append(os.path.join(queue_dir, name))
-except OSError:
+if queue_count > 0:
     paths = []
+    try:
+        for name in os.listdir(queue_dir):
+            if name.endswith(".json"):
+                paths.append(os.path.join(queue_dir, name))
+    except OSError:
+        paths = []
 
-paths.sort(key=lambda p: os.path.basename(p), reverse=True)
+    paths.sort(key=lambda p: os.path.basename(p), reverse=True)
 
-groups = defaultdict(list)
-for p in paths:
-    d = load_json(p)
-    if not d:
-        continue
-    cid = (d.get("conversation_id") or "").strip()
-    key = cid if cid else (d.get("thread_title") or "unknown")
-    groups[key].append((p, d))
+    groups = defaultdict(list)
+    for p in paths:
+        d = load_json(p)
+        if not d:
+            continue
+        cid = (d.get("conversation_id") or "").strip()
+        key = cid if cid else (d.get("thread_title") or "unknown")
+        groups[key].append((p, d))
 
-def group_sort_key(items):
-    return max((os.path.basename(i[0]) for i in items), default="")
+    def group_sort_key(items):
+        return max((os.path.basename(i[0]) for i in items), default="")
 
-group_list = sorted(groups.items(), key=lambda kv: group_sort_key(kv[1]), reverse=True)
+    group_list = sorted(groups.items(), key=lambda kv: group_sort_key(kv[1]), reverse=True)
 
-for grp_key, items in group_list:
-    items.sort(key=lambda x: os.path.basename(x[0]), reverse=True)
-    first = items[0][1]
-    label = (first.get("thread_title") or "").strip()
-    cid = (first.get("conversation_id") or "").strip()
-    if not label or label == "Claude Code":
-        session_name = lookup_session_name(cid)
-        if session_name:
-            label = session_name
-        elif not label:
-            label = str(cid or "Chat")[:16]
-    if len(label) > 32:
-        label = label[:30] + "..."
-    n = len(items)
-    count_prefix = f"({n:02d}) "
-    print(f"{count_prefix}{label} | disabled=true")
-    for path, data in items:
-        processing = is_processing(path)
-        prev = preview_for(path, data)
-        prev = prev.replace("|", "/")
-        if processing:
-            print(f"--⏳ {prev} | disabled=true")
-        else:
-            print(
-                f"--{prev} | bash={scripts_dir}/play_node.sh param1={path} terminal=false refresh=true"
-            )
-    token = base64.urlsafe_b64encode(
-        json.dumps({"key": grp_key}, separators=(",", ":")).encode("utf-8")
-    ).decode("ascii").rstrip("=")
-    print("-- | disabled=true")
-    print(
-        f"--Clear Messages | bash={scripts_dir}/clear_thread_queue.sh param1={token} terminal=false refresh=true"
-    )
+    for grp_key, items in group_list:
+        items.sort(key=lambda x: os.path.basename(x[0]), reverse=True)
+        first = items[0][1]
+        label = (first.get("thread_title") or "").strip()
+        cid = (first.get("conversation_id") or "").strip()
+        if not label or label == "Claude Code":
+            session_name = lookup_session_name(cid)
+            if session_name:
+                label = session_name
+            elif not label:
+                label = str(cid or "Chat")[:16]
+        if len(label) > 32:
+            label = label[:30] + "..."
+        n = len(items)
+        count_prefix = f"({n:02d}) "
+        print(f"{count_prefix}{label} | disabled=true")
+        for path, data in items:
+            processing = is_processing(path)
+            prev = preview_for(path, data)
+            prev = prev.replace("|", "/")
+            if processing:
+                print(f"--⏳ {prev} | disabled=true")
+            else:
+                print(
+                    f"--{prev} | bash={scripts_dir}/play_node.sh param1={path} terminal=false refresh=true"
+                )
+        token = base64.urlsafe_b64encode(
+            json.dumps({"key": grp_key}, separators=(",", ":")).encode("utf-8")
+        ).decode("ascii").rstrip("=")
+        print("-- | disabled=true")
+        print(
+            f"--Clear Messages | bash={scripts_dir}/clear_thread_queue.sh param1={token} terminal=false refresh=true"
+        )
+else:
+    print("No queued responses | disabled=true")
+
+print("---")
+
+# ── Recent Playback (replay saved audio) ──────────────────────
+if os.path.isdir(replay_dir):
+    try:
+        replay_files = sorted(
+            [f for f in os.listdir(replay_dir) if f.endswith(".mp3")],
+            reverse=True,
+        )
+    except OSError:
+        replay_files = []
+    if replay_files:
+        print("Recent Playback | disabled=true size=12")
+        for f in replay_files[:10]:
+            path = os.path.join(replay_dir, f)
+            meta_path = path.replace(".mp3", ".json")
+
+            meta = {}
+            if os.path.isfile(meta_path):
+                try:
+                    with open(meta_path) as mf:
+                        meta = json.load(mf)
+                except (OSError, json.JSONDecodeError):
+                    pass
+
+            # Use file mtime for local time (always correct timezone)
+            mtime = os.path.getmtime(path)
+            local_dt = datetime.fromtimestamp(mtime)
+            hour = local_dt.hour % 12 or 12
+            ampm = "am" if local_dt.hour < 12 else "pm"
+            time_str = f"{hour}:{local_dt.minute:02d}{ampm}"
+
+            # Build label from metadata
+            parts = []
+            session = meta.get("sessionName") or meta.get("sessionId", "")[:12]
+            character = meta.get("character")
+            source = meta.get("source", "")
+            preview = meta.get("textPreview", "")
+
+            if session:
+                parts.append(f"[{session}]")
+            if character:
+                parts.append(character)
+            elif source == "dynamic-response":
+                parts.append("prompt ack")
+            elif source == "ask-user":
+                parts.append("question")
+            elif source == "queue":
+                parts.append("response")
+
+            if preview:
+                prev = preview[:50].replace("\n", " ").strip()
+                if prev:
+                    parts.append(f"— {prev}...")
+
+            label = " ".join(parts) if parts else f.replace(".mp3", "")
+            display = f"{time_str} {label}"
+            display = display.replace("|", "/")
+            if len(display) > 70:
+                display = display[:68] + ".."
+            print(f"{display} | bash=/usr/bin/afplay param1={path} terminal=false size=12")
+        print("---")
 PY
-else
-    echo "No queued responses | disabled=true"
-fi
-
-echo "---"
-
-# ── Recent Playback (replay saved audio) ─────────────────────────
-REPLAY_DIR="$TTS_DIR/replay"
-if [ -d "$REPLAY_DIR" ]; then
-    REPLAY_COUNT=$(find "$REPLAY_DIR" -name '*.mp3' -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$REPLAY_COUNT" -gt 0 ] 2>/dev/null && [ "$REPLAY_COUNT" -ne 0 ]; then
-        echo "Recent Playback | disabled=true size=12"
-        python3 - "$REPLAY_DIR" "$SCRIPTS_DIR" <<'PY'
-import json
-import os
-import sys
-from datetime import datetime, timezone
-
-replay_dir = sys.argv[1]
-scripts_dir = sys.argv[2]
-files = sorted(
-    [f for f in os.listdir(replay_dir) if f.endswith(".mp3")],
-    reverse=True,
-)[:10]
-
-for f in files:
-    path = os.path.join(replay_dir, f)
-    meta_path = path.replace(".mp3", ".json")
-    size_kb = os.path.getsize(path) / 1024
-
-    meta = {}
-    if os.path.isfile(meta_path):
-        try:
-            with open(meta_path) as mf:
-                meta = json.load(mf)
-        except (OSError, json.JSONDecodeError):
-            pass
-
-    # Use file mtime for local time (always correct timezone)
-    mtime = os.path.getmtime(path)
-    local_dt = datetime.fromtimestamp(mtime)
-    hour = local_dt.hour % 12 or 12
-    ampm = "am" if local_dt.hour < 12 else "pm"
-    time_str = f"{hour}:{local_dt.minute:02d}{ampm}"
-
-    # Build label from metadata
-    parts = []
-    session = meta.get("sessionName") or meta.get("sessionId", "")[:12]
-    character = meta.get("character")
-    source = meta.get("source", "")
-    preview = meta.get("textPreview", "")
-
-    if session:
-        parts.append(f"[{session}]")
-    if character:
-        parts.append(character)
-    elif source == "dynamic-response":
-        parts.append("prompt ack")
-    elif source == "ask-user":
-        parts.append("question")
-    elif source == "queue":
-        parts.append("response")
-
-    if preview:
-        prev = preview[:50].replace("\n", " ").strip()
-        if prev:
-            parts.append(f"— {prev}...")
-
-    label = " ".join(parts) if parts else f.replace(".mp3", "")
-    display = f"{time_str} {label}"
-    display = display.replace("|", "/")
-    if len(display) > 70:
-        display = display[:68] + ".."
-    print(f"{display} | bash=/usr/bin/afplay param1={path} terminal=false size=12")
-PY
-        echo "---"
-    fi
-fi
 
 # ── Settings (voice, speed, notifications) ────────────────────────
 echo "Settings | disabled=true size=12"
 
-# ── Voice: ElevenLabs voices from API cache ───────────────────────
+# ── Voice: ElevenLabs voices from API cache + per-session overrides ─
+# One python3 call emits the Voice line, voice submenu, and Session Voices
+# submenu (perf: was 3 spawns).
 export VOICE_ID_CURRENT="$VOICE_ID"
 export SCRIPTS_DIR_EXPORT="$SCRIPTS_DIR"
-VOICE_DISPLAY="$VOICE_ID"
-if [ -z "$VOICE_ID" ]; then
-    VOICE_DISPLAY="Not set"
-fi
-
-# Try to get voice name from cache
-if [ -n "$VOICE_ID" ] && [ -f "$TTS_DIR/cache/voices.json" ]; then
-    VOICE_NAME=$(python3 -c "
-import json, sys
-vid = sys.argv[1]
-try:
-    with open(sys.argv[2]) as f:
-        voices = json.load(f)
-    for v in voices:
-        if v.get('voice_id') == vid:
-            print(v.get('name', vid))
-            break
-    else:
-        print(vid[:16] + '...' if len(vid) > 16 else vid)
-except Exception:
-    print(vid[:16] + '...' if len(vid) > 16 else vid)
-" "$VOICE_ID" "$TTS_DIR/cache/voices.json" 2>/dev/null) || VOICE_NAME="$VOICE_ID"
-    VOICE_DISPLAY="$VOICE_NAME"
-fi
-
-echo "Voice: ${VOICE_DISPLAY}"
-
-# Voice submenu from cached ElevenLabs voices
 python3 - <<'PY'
 import json
 import os
-from collections import defaultdict
 
 scripts_dir = os.environ.get("SCRIPTS_DIR_EXPORT", "")
 current_vid = os.environ.get("VOICE_ID_CURRENT", "")
@@ -427,6 +413,21 @@ if os.path.isfile(cache_file):
     except (OSError, json.JSONDecodeError):
         pass
 
+# Current voice display line
+if not current_vid:
+    voice_display = "Not set"
+elif not os.path.isfile(cache_file):
+    voice_display = current_vid
+else:
+    for v in voices:
+        if v.get("voice_id") == current_vid:
+            voice_display = v.get("name", current_vid)
+            break
+    else:
+        voice_display = current_vid[:16] + "..." if len(current_vid) > 16 else current_vid
+print(f"Voice: {voice_display}")
+
+# Voice submenu from cached ElevenLabs voices
 if not voices:
     print(f"--No voices cached | disabled=true")
     print(f"--Refresh Voices | bash={scripts_dir}/fetch_voices.py param1=--refresh terminal=false refresh=true")
@@ -464,33 +465,18 @@ else:
     print(f"--Refresh Voices | bash={scripts_dir}/fetch_voices.py param1=--refresh terminal=false refresh=true")
 
 print(f"--Paste Voice ID... | bash={scripts_dir}/paste_voice_id.sh terminal=false refresh=true")
-PY
 
-# ── Per-session voice overrides ──────────────────────────────────
-echo "Session Voices"
-python3 - <<'PY'
-import json
-import os
+# ── Per-session voice overrides ──────────────────────────────
+print("Session Voices")
 
-tts_dir = os.path.expanduser("~/.cursor/tts")
-scripts_dir = os.path.join(tts_dir, "scripts")
 sessions_dir = os.path.expanduser("~/.claude/sessions")
 session_voices_path = os.path.join(tts_dir, "session_voices.json")
-cache_file = os.path.join(tts_dir, "cache", "voices.json")
 
 session_voices = {}
 if os.path.isfile(session_voices_path):
     try:
         with open(session_voices_path) as f:
             session_voices = json.load(f)
-    except (OSError, json.JSONDecodeError):
-        pass
-
-voices = []
-if os.path.isfile(cache_file):
-    try:
-        with open(cache_file) as f:
-            voices = json.load(f)
     except (OSError, json.JSONDecodeError):
         pass
 

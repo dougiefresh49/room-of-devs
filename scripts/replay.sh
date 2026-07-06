@@ -16,4 +16,4 @@ mkdir -p "$(dirname "$LOG_FILE")"
 
 log "Replaying message (nth=$NTH)"
 cd "$SERVER_DIR"
-exec npx tsx src/signal.ts replay "" "$NTH"
+exec pnpm exec tsx src/signal.ts replay "" "$NTH"

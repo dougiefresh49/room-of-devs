@@ -6,3 +6,6 @@ __pycache__/
 node_modules/
 dist/
 tts-server/src/characters.json
+.antigravitycli/
+.claude/settings.local.json
+other-claude.md

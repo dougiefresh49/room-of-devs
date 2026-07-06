@@ -117,7 +117,7 @@ Edit `~/.cursor/tts/config.json`:
 
 Raw agent responses go through two stages before synthesis:
 
-### 1. Gemini Preprocessing (`gemini_process.py`)
+### 1. Gemini Preprocessing (`tts-server/src/gemini.ts`)
 
 Converts developer-oriented markdown into natural spoken text with ElevenLabs v3 audio tags:
 

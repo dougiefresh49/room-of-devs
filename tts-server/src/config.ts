@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, writeFileSync } from "fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { fileURLToPath } from "url";
@@ -15,8 +15,12 @@ export const SESSION_VOICES_PATH = join(TTS_DIR, "session_voices.json");
 export const MUTED_SESSIONS_PATH = join(TTS_DIR, "muted_sessions.json");
 export const PHRASES_DIR = join(TTS_DIR, "sounds", "phrases");
 export const STREAM_PID_FILE = join(TTS_DIR, ".stream-playback-pid");
+// Legacy PID file read by pause.sh, media_control.sh, the SwiftBar plugin,
+// and hammerspoon — written alongside STREAM_PID_FILE so those controls work.
+export const PLAYBACK_PID_FILE = join(TTS_DIR, ".playback-pid");
 export const STREAM_LOCK = join(TTS_DIR, ".stream-lock");
 export const PROCESSING_DIR = join(TTS_DIR, ".processing");
+export const FAILED_DIR = join(TTS_DIR, "failed");
 
 export interface Config {
   elevenlabs_voice_id: string;
@@ -28,6 +32,10 @@ export interface Config {
   streaming_enabled: boolean;
   streaming_session_prefix: "auto" | "always" | "never";
   played_retention_count: number;
+  // Prompt-ack behavior on UserPromptSubmit:
+  // "always" = fresh Gemini-generated ack (default), "cached" = free cached
+  // phrase only, "off" = silent. Ask-user question readouts are unaffected.
+  dynamic_responses: "always" | "cached" | "off";
 }
 
 const DEFAULTS: Config = {
@@ -40,6 +48,7 @@ const DEFAULTS: Config = {
   streaming_enabled: false,
   streaming_session_prefix: "auto",
   played_retention_count: 50,
+  dynamic_responses: "always",
 };
 
 let cachedConfig: Config | null = null;
@@ -47,9 +56,7 @@ let configMtime = 0;
 
 export function loadConfig(): Config {
   try {
-    const mtime = existsSync(CONFIG_PATH)
-      ? readFileSync(CONFIG_PATH).length
-      : 0;
+    const mtime = statSync(CONFIG_PATH).mtimeMs;
     if (cachedConfig && mtime === configMtime) return cachedConfig;
 
     const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
@@ -59,11 +66,6 @@ export function loadConfig(): Config {
   } catch {
     return { ...DEFAULTS };
   }
-}
-
-export function invalidateConfigCache(): void {
-  cachedConfig = null;
-  configMtime = 0;
 }
 
 export function loadSessionVoices(): Record<string, string> {
@@ -95,7 +97,6 @@ export interface SessionInfo {
 export function getActiveSessions(): SessionInfo[] {
   try {
     if (!existsSync(SESSIONS_DIR)) return [];
-    const { readdirSync } = require("fs");
     const files: string[] = readdirSync(SESSIONS_DIR);
     const sessions: SessionInfo[] = [];
     for (const f of files) {

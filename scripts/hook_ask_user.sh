@@ -19,10 +19,11 @@ if [ -f "$LISTENING_FLAG" ]; then
     esac
 fi
 
-# Read hook payload from stdin
+# Read hook payload from stdin (read all of it — payloads can be multi-line)
 SESSION_ID=""
 QUESTION_TEXT=""
-if read -t 1 PAYLOAD 2>/dev/null; then
+PAYLOAD=$(cat 2>/dev/null || true)
+if [ -n "$PAYLOAD" ]; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] hook_ask_user payload: $PAYLOAD" >> "$LOG_FILE" 2>/dev/null || true
     SESSION_ID=$(echo "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null || true)
     # Extract questions and options into a readable summary

@@ -8,7 +8,6 @@
   "notification_sender": "",
   "terminal_notifier_app": "",
   "notification_sound": "random_sfx",
-  "sfx_categories": ["boom", "bram", "fantasy", "impact", "weapon"],
   "played_retention_count": 50,
   "streaming_enabled": false,
   "streaming_session_prefix": "auto"
