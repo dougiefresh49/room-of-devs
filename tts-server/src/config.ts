@@ -126,6 +126,14 @@ export const ARCADE_NAMED_COLORS = [
 export type ArcadeNamedColor = (typeof ARCADE_NAMED_COLORS)[number];
 
 export type StickDirection = "left" | "right" | "up" | "down";
+export type StickPole = "low" | "high";
+
+// Analog stick direction → axis byte + which way deflection goes.
+// Learned by hold-sampling, not bit-edge capture (axes are centered ~127).
+export interface StickMapping {
+  byte: number;
+  pole: StickPole;
+}
 
 export interface ArcadeButton {
   name: string;
@@ -134,7 +142,8 @@ export interface ArcadeButton {
   // Optional distinct action for a long press (≥ HOLD_MS). Without it, a held
   // action button just fires `action` on release.
   hold_action?: string;
-  // Analog stick direction (learned like a button — full deflection edges).
+  // Legacy: stick dirs used to live in buttons keyed by bit index. Ignored on
+  // load — real mappings are in ArcadeButtons.sticks.
   stick?: StickDirection;
   // Panel UI tint — named arcade colors or a hex string (#rgb / #rrggbb).
   color?: string;
@@ -144,6 +153,7 @@ export interface ArcadeButton {
 export interface ArcadeButtons {
   device_hint: string;
   buttons: Record<string, ArcadeButton>;
+  sticks?: Partial<Record<StickDirection, StickMapping>>;
 }
 
 // Substring alternation matched against product+manufacturer during device
@@ -152,6 +162,40 @@ export const DEFAULT_DEVICE_HINT = "joystick|usb gamepad|generic";
 
 let cachedArcade: ArcadeButtons | null = null;
 let arcadeMtime = 0;
+
+function parseStickMapping(raw: unknown): StickMapping | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const byte = typeof o.byte === "number" && Number.isInteger(o.byte) ? o.byte : NaN;
+  const pole = o.pole === "low" || o.pole === "high" ? o.pole : null;
+  if (!Number.isFinite(byte) || byte < 0 || !pole) return null;
+  return { byte, pole };
+}
+
+function parseSticks(
+  raw: unknown
+): Partial<Record<StickDirection, StickMapping>> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Partial<Record<StickDirection, StickMapping>> = {};
+  for (const dir of ["left", "right", "up", "down"] as const) {
+    const m = parseStickMapping((raw as Record<string, unknown>)[dir]);
+    if (m) out[dir] = m;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Drop legacy stick-in-buttons entries (bit-index model was wrong for axes). */
+function stripLegacyStickButtons(
+  buttons: Record<string, ArcadeButton>
+): Record<string, ArcadeButton> {
+  const out: Record<string, ArcadeButton> = {};
+  for (const [k, v] of Object.entries(buttons)) {
+    if (!v || typeof v !== "object") continue;
+    if (v.stick) continue;
+    out[k] = v;
+  }
+  return out;
+}
 
 export function loadArcadeButtons(): ArcadeButtons {
   const fallback: ArcadeButtons = {
@@ -162,13 +206,18 @@ export function loadArcadeButtons(): ArcadeButtons {
     const mtime = statSync(ARCADE_BUTTONS_PATH).mtimeMs;
     if (cachedArcade && mtime === arcadeMtime) return cachedArcade;
     const raw = JSON.parse(readFileSync(ARCADE_BUTTONS_PATH, "utf-8"));
+    const buttons =
+      raw.buttons && typeof raw.buttons === "object"
+        ? stripLegacyStickButtons(raw.buttons as Record<string, ArcadeButton>)
+        : {};
+    const sticks = parseSticks(raw.sticks);
     cachedArcade = {
       device_hint:
         typeof raw.device_hint === "string" && raw.device_hint.trim()
           ? raw.device_hint
           : DEFAULT_DEVICE_HINT,
-      buttons:
-        raw.buttons && typeof raw.buttons === "object" ? raw.buttons : {},
+      buttons,
+      ...(sticks ? { sticks } : {}),
     };
     arcadeMtime = mtime;
     return cachedArcade;

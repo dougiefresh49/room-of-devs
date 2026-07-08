@@ -17,6 +17,8 @@ import {
   type ArcadeButton,
   type ArcadeButtons,
   type StickDirection,
+  type StickMapping,
+  type StickPole,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { log } from "./logger.js";
@@ -46,8 +48,11 @@ const RECONNECT_MS = 3000;
 // analog axes for the stick. We don't hardcode byte offsets — we XOR each
 // report against the previous one and treat every changed bit as an event,
 // keyed by a stable index = byteOffset*8 + bitOffset. That index is
-// deterministic across runs (so learn mode's mapping stays valid), and stick /
-// axis noise just produces indices that no button is mapped to → ignored.
+// deterministic across runs (so learn mode's mapping stays valid).
+//
+// Axes are NOT bit-edges: they're analog bytes centered ~127. Calibration
+// records which bytes jittered at idle (axis candidates) + each one's median
+// baseline. Stick dispatch uses threshold + hysteresis on those bytes.
 type Edge = "down" | "up";
 
 // Analog axis bytes jitter constantly at idle (127↔128↔129 ADC noise on the
@@ -56,28 +61,65 @@ type Edge = "down" | "up";
 // the device should be untouched is marked noise and masked forever after.
 const CALIBRATION_MS = 1500;
 
-function makeDiffer(
-  onCalibrated?: (noisyCount: number) => void
-): (buf: Buffer, emit: (edge: Edge, idx: number) => void) => void {
+export interface Differ {
+  (buf: Buffer, emit: (edge: Edge, idx: number) => void): void;
+  /** Byte offsets that changed during the idle calibration window. */
+  axisCandidates: () => number[];
+  /** Median idle value per axis-candidate byte. */
+  axisBaselines: () => Map<number, number>;
+  isCalibrated: () => boolean;
+}
+
+function median(samples: number[]): number {
+  if (samples.length === 0) return 127;
+  const sorted = [...samples].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
+    : sorted[mid]!;
+}
+
+function makeDiffer(onCalibrated?: (noisyCount: number) => void): Differ {
   let prev: Buffer | null = null;
   let calibrateUntil = 0;
   let calibrated = false;
   const noise = new Set<number>();
-  return (buf, emit) => {
+  // During calibration: any byte whose value changes is an axis candidate;
+  // we keep every sample of that byte to compute a median baseline.
+  const axisChanged = new Set<number>();
+  const axisSamples = new Map<number, number[]>();
+  let baselines = new Map<number, number>();
+
+  const differ = ((buf: Buffer, emit: (edge: Edge, idx: number) => void) => {
     const now = Date.now();
     if (!prev) {
       prev = Buffer.from(buf);
       calibrateUntil = now + CALIBRATION_MS;
+      // Seed samples from the first report so a quiet axis still has a baseline
+      // if it later jitters once.
+      for (let byte = 0; byte < buf.length; byte++) {
+        axisSamples.set(byte, [buf[byte]!]);
+      }
       return;
     }
     if (!calibrated && now >= calibrateUntil) {
       calibrated = true;
+      baselines = new Map();
+      for (const byte of axisChanged) {
+        baselines.set(byte, median(axisSamples.get(byte) ?? [127]));
+      }
       onCalibrated?.(noise.size);
     }
     const len = Math.max(prev.length, buf.length);
     for (let byte = 0; byte < len; byte++) {
       const a = prev[byte] ?? 0;
       const b = buf[byte] ?? 0;
+      if (!calibrated) {
+        const samples = axisSamples.get(byte) ?? [];
+        samples.push(b);
+        axisSamples.set(byte, samples);
+        if (a !== b) axisChanged.add(byte);
+      }
       let changed = a ^ b;
       if (!changed) continue;
       for (let bit = 0; bit < 8; bit++) {
@@ -85,12 +127,49 @@ function makeDiffer(
         if (changed & mask) {
           const idx = byte * 8 + bit;
           if (!calibrated) noise.add(idx);
-          else if (!noise.has(idx)) emit(b & mask ? "down" : "up", idx);
+          else if (!noise.has(idx) && !mappedAxisBytes.has(byte)) {
+            emit(b & mask ? "down" : "up", idx);
+          }
         }
       }
     }
     prev = Buffer.from(buf);
-  };
+  }) as Differ;
+
+  differ.axisCandidates = () => [...axisChanged].sort((a, b) => a - b);
+  differ.axisBaselines = () => new Map(baselines);
+  differ.isCalibrated = () => calibrated;
+  return differ;
+}
+
+// ── Stick axis: threshold + hysteresis (pure) ─────────────────────
+// Fire when the byte crosses the pole threshold FROM armed; re-arm only when
+// the value returns to the dead zone (96–160). Cooldown is applied by caller.
+export type StickArmState = "armed" | "fired";
+
+const STICK_FIRE_LOW = 64;
+const STICK_FIRE_HIGH = 192;
+const STICK_REARM_LO = 96;
+const STICK_REARM_HI = 160;
+const STICK_LEARN_MIN_DEV = 48;
+const STICK_LEARN_SAMPLE_MS = 1200;
+
+export function evaluateStickAxis(
+  prev: StickArmState,
+  value: number,
+  pole: StickPole
+): { fire: boolean; state: StickArmState } {
+  if (prev === "armed") {
+    const crossed =
+      pole === "low" ? value < STICK_FIRE_LOW : value > STICK_FIRE_HIGH;
+    if (crossed) return { fire: true, state: "fired" };
+    return { fire: false, state: "armed" };
+  }
+  // fired → re-arm in dead zone
+  if (value >= STICK_REARM_LO && value <= STICK_REARM_HI) {
+    return { fire: false, state: "armed" };
+  }
+  return { fire: false, state: "fired" };
 }
 
 // ── Failure isolation ─────────────────────────────────────────────
@@ -201,6 +280,33 @@ let whiteStickUsed = false;
 
 const STICK_COOLDOWN_MS = 200;
 const stickCooldownUntil = new Map<StickDirection, number>();
+const stickArmState = new Map<StickDirection, StickArmState>();
+/** Axis bytes currently mapped in sticks — excluded from bit-edge button emit. */
+const mappedAxisBytes = new Set<number>();
+
+function refreshMappedAxisBytes(): void {
+  mappedAxisBytes.clear();
+  const sticks = loadArcadeButtons().sticks;
+  if (!sticks) return;
+  for (const m of Object.values(sticks)) {
+    if (m) mappedAxisBytes.add(m.byte);
+  }
+}
+
+function onReportAxes(buf: Buffer): void {
+  refreshMappedAxisBytes();
+  const sticks = loadArcadeButtons().sticks;
+  if (!sticks) return;
+  for (const dir of ["left", "right", "up", "down"] as const) {
+    const m = sticks[dir];
+    if (!m) continue;
+    const value = buf[m.byte] ?? 127;
+    const prev = stickArmState.get(dir) ?? "armed";
+    const { fire, state } = evaluateStickAxis(prev, value, m.pole);
+    stickArmState.set(dir, state);
+    if (fire) safe(() => handleStick(dir));
+  }
+}
 
 let triageIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -398,7 +504,6 @@ function characterHold(character: string, phase: "start" | "stop"): void {
 function handlePress(idx: number): void {
   const btn = buttonFor(idx);
   if (!btn) return;
-  if (btn.stick) return; // stick edges are handled on DOWN only
   if (isGrantNextButton(btn) && whiteStickUsed) {
     whiteStickUsed = false;
     return; // stick flick during hold → suppress grant
@@ -419,14 +524,14 @@ function handlePress(idx: number): void {
 
 function handleHoldStart(idx: number): void {
   const btn = buttonFor(idx);
-  if (!btn || btn.stick) return;
+  if (!btn) return;
   if (isGrantNextButton(btn) && whiteStickUsed) return;
   if (btn.character) characterHold(btn.character, "start");
 }
 
 function handleHoldEnd(idx: number): void {
   const btn = buttonFor(idx);
-  if (!btn || btn.stick) return;
+  if (!btn) return;
   if (isGrantNextButton(btn) && whiteStickUsed) {
     whiteStickUsed = false;
     return;
@@ -507,12 +612,6 @@ function onEdge(edge: Edge, idx: number): void {
 
   const btn = buttonFor(idx);
 
-  // Stick directions: DOWN edges only (cooldown inside handleStick).
-  if (btn?.stick) {
-    if (edge === "down") safe(() => handleStick(btn.stick!));
-    return;
-  }
-
   // Track white / grant_next physical hold for stick-modifier corner snap.
   if (isGrantNextButton(btn)) {
     if (edge === "down") {
@@ -549,6 +648,7 @@ function clearPending(): void {
   suppressPress.clear();
   whitePhysicallyDown = false;
   whiteStickUsed = false;
+  stickArmState.clear();
   if (triageIdleTimer) {
     clearTimeout(triageIdleTimer);
     triageIdleTimer = null;
@@ -590,9 +690,16 @@ function openDevice(): void {
   if (!path) return; // unplugged → silent no-op; the scheduler retries
   try {
     const d = new HID(path);
+    refreshMappedAxisBytes();
     // Reset baseline + recalibrate noise mask so the first report doesn't fire.
     differ = makeDiffer((n) => log("hid", `calibrated — masked ${n} noisy bit(s)`));
-    d.on("data", (buf: Buffer) => safe(() => differ(buf, onEdge)));
+    stickArmState.clear();
+    d.on("data", (buf: Buffer) =>
+      safe(() => {
+        differ(buf, onEdge);
+        if (differ.isCalibrated()) onReportAxes(buf);
+      })
+    );
     d.on("error", (err: any) => {
       log("hid", `device error: ${err?.message ?? err}`);
       closeDevice(); // reconnect is the scheduler's job — never a timer here
@@ -638,7 +745,7 @@ export function stopHid(): void {
 // ── Learn mode ────────────────────────────────────────────────────
 // Walk the physical buttons in a fixed order, record the HID index of the next
 // button each one fires, and write arcade_buttons.json with sensible default
-// bindings. No wiring assumptions — this is how the map gets written.
+// bindings. Stick dirs are learned separately via hold-sample on axis bytes.
 interface LearnSpec {
   name: string;
   def: Omit<ArcadeButton, "name">;
@@ -656,35 +763,22 @@ const LEARN_ORDER: LearnSpec[] = [
   { name: "coin", def: { action: "cycle_mode", hold_action: "hold_room" } },
 ];
 
-const STICK_LEARN_ORDER: LearnSpec[] = [
-  {
-    name: "stick_left",
-    def: { stick: "left" },
-    prompt: "push the stick LEFT and release",
-  },
-  {
-    name: "stick_right",
-    def: { stick: "right" },
-    prompt: "push the stick RIGHT and release",
-  },
-  {
-    name: "stick_up",
-    def: { stick: "up" },
-    prompt: "push the stick UP and release",
-  },
-  {
-    name: "stick_down",
-    def: { stick: "down" },
-    prompt: "push the stick DOWN and release",
-  },
-];
+const STICK_DIRS: StickDirection[] = ["left", "right", "up", "down"];
 
-const ALL_LEARN_SPECS = [...LEARN_ORDER, ...STICK_LEARN_ORDER];
+function stickDirFromLearnName(name: string): StickDirection | null {
+  const m = /^stick_(left|right|up|down)$/.exec(name);
+  return m ? (m[1] as StickDirection) : null;
+}
 
 const LEARN_TIMEOUT_MS = 30_000;
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function learn(): Promise<void> {
-  const hint = loadArcadeButtons().device_hint;
+  const existing = loadArcadeButtons();
+  const hint = existing.device_hint;
   const path = findDevicePath(hint);
   if (!path) {
     console.error(
@@ -710,11 +804,16 @@ async function learn(): Promise<void> {
     );
     process.exit(1);
   }
+
+  let latestBuf: Buffer | null = null;
   let calibrated = false;
   const ldiff = makeDiffer((noisy) => {
     calibrated = true;
     console.log(`calibrated — masked ${noisy} noisy axis bit(s). Ready!\n`);
   });
+  // During learn, skip runtime stick dispatch (mappedAxisBytes may be stale /
+  // empty); we only want bit-edges for buttons + raw buffers for stick sample.
+  mappedAxisBytes.clear();
   let onDown: ((idx: number) => void) | null = null;
   d.on("error", (err: any) => {
     console.error(`Device error: ${err?.message ?? err}`);
@@ -722,6 +821,7 @@ async function learn(): Promise<void> {
   });
   d.on("data", (buf: Buffer) => {
     try {
+      latestBuf = Buffer.from(buf);
       ldiff(buf, (edge, idx) => {
         if (edge === "down" && onDown) {
           const cb = onDown;
@@ -736,12 +836,10 @@ async function learn(): Promise<void> {
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-  const waitInput = (spec: LearnSpec): Promise<number | null> =>
+  const waitButton = (spec: LearnSpec): Promise<number | null> =>
     new Promise((resolve) => {
       let done = false;
-      const label = spec.prompt
-        ? `${spec.prompt} (or 's' + Enter to skip)... `
-        : `Press the ${spec.name.toUpperCase()} button now (or 's' + Enter to skip)... `;
+      const label = `Press the ${spec.name.toUpperCase()} button now (or 's' + Enter to skip)... `;
       process.stdout.write(label);
       const finish = (v: number | null) => {
         if (done) return;
@@ -768,7 +866,103 @@ async function learn(): Promise<void> {
       };
     });
 
-  console.log("Learn mode — map each physical button / stick direction to its HID index.");
+  async function learnStickDir(dir: StickDirection): Promise<StickMapping | null> {
+    const dirLabel = dir.toUpperCase();
+
+    const attempt = async (retry: boolean): Promise<StickMapping | "skip" | null> => {
+      const prompt = retry
+        ? `Not enough deflection — push the stick ${dirLabel} and HOLD it (or 's' + Enter to skip)... `
+        : `push the stick ${dirLabel} and HOLD it (or 's' + Enter to skip)... `;
+
+      let skipped = false;
+      const onLine = (line: string) => {
+        if (line.trim().toLowerCase() === "s") skipped = true;
+      };
+      rl.on("line", onLine);
+      process.stdout.write(prompt);
+
+      const baselines = ldiff.axisBaselines();
+      const candidates = ldiff.axisCandidates();
+      const start = Date.now();
+      const peakAbs = new Map<number, number>();
+      const peakSigned = new Map<number, number>();
+
+      while (Date.now() - start < STICK_LEARN_SAMPLE_MS) {
+        if (skipped) break;
+        await sleep(20);
+        if (!latestBuf) continue;
+        const bytes =
+          candidates.length > 0
+            ? candidates
+            : [...Array(latestBuf.length).keys()];
+        for (const byte of bytes) {
+          const base = baselines.get(byte) ?? 127;
+          const v = latestBuf[byte] ?? base;
+          const signed = v - base;
+          const abs = Math.abs(signed);
+          if (abs >= (peakAbs.get(byte) ?? 0)) {
+            peakAbs.set(byte, abs);
+            peakSigned.set(byte, signed);
+          }
+        }
+      }
+      rl.off("line", onLine);
+      if (skipped) {
+        process.stdout.write("(skipped)\n");
+        return "skip";
+      }
+
+      let bestByte = -1;
+      let bestAbs = 0;
+      let bestSigned = 0;
+      for (const [byte, abs] of peakAbs) {
+        if (abs > bestAbs) {
+          bestAbs = abs;
+          bestByte = byte;
+          bestSigned = peakSigned.get(byte) ?? 0;
+        }
+      }
+      if (bestByte < 0 || bestAbs < STICK_LEARN_MIN_DEV) return null;
+      const pole: StickPole = bestSigned < 0 ? "low" : "high";
+      process.stdout.write(
+        `recorded stick ${dir} → byte ${bestByte} pole ${pole} (dev ${bestSigned})\n`
+      );
+      return { byte: bestByte, pole };
+    };
+
+    let result = await attempt(false);
+    if (result === "skip") return null;
+    if (!result) {
+      result = await attempt(true);
+      if (result === "skip" || !result) {
+        if (result !== "skip") process.stdout.write("(skipped — still too weak)\n");
+        return null;
+      }
+    }
+
+    // Release gate: wait until axis returns near center so the next prompt
+    // doesn't see leftover deflection.
+    process.stdout.write("...release the stick and wait for center... ");
+    const baselines = ldiff.axisBaselines();
+    const releaseDeadline = Date.now() + LEARN_TIMEOUT_MS;
+    while (Date.now() < releaseDeadline) {
+      await sleep(40);
+      if (!latestBuf) continue;
+      const v = latestBuf[result.byte] ?? 127;
+      const base = baselines.get(result.byte) ?? 127;
+      if (
+        Math.abs(v - base) < 20 ||
+        (v >= STICK_REARM_LO && v <= STICK_REARM_HI)
+      ) {
+        process.stdout.write("ok\n");
+        return result;
+      }
+    }
+    process.stdout.write("(timeout, continuing)\n");
+    return result;
+  }
+
+  console.log("Learn mode — map each physical button / stick direction.");
   console.log("Calibrating: DON'T touch the buttons or joystick for 2 seconds...");
   await new Promise<void>((resolve) => {
     const poll = setInterval(() => {
@@ -783,30 +977,39 @@ async function learn(): Promise<void> {
       resolve();
     }, 4000);
   });
-  // `learn <name>` = single-button mode: add/remap ONE button, preserving the
-  // rest of the existing mapping. Known names keep their standard role; new
-  // names default to opening the Room panel.
+
+  // `learn <name>` = single-button / single-stick mode.
   const only = process.argv[3]?.trim().toLowerCase();
   let buttons: Record<string, ArcadeButton> = {};
-  let order: LearnSpec[] = ALL_LEARN_SPECS;
+  let sticks: Partial<Record<StickDirection, StickMapping>> = {
+    ...(existing.sticks ?? {}),
+  };
+  let buttonOrder: LearnSpec[] = LEARN_ORDER;
+  let stickOrder: StickDirection[] = STICK_DIRS;
+
   if (only) {
-    buttons = { ...loadArcadeButtons().buttons };
-    const known = ALL_LEARN_SPECS.find((s) => s.name === only);
-    order = [known ?? { name: only, def: { action: "panel" } }];
-    // Drop any existing index bound to this name — it's being remapped.
-    for (const [idx, b] of Object.entries(buttons)) {
-      if (b.name === only) delete buttons[idx];
+    const stickDir = stickDirFromLearnName(only);
+    if (stickDir) {
+      buttonOrder = [];
+      stickOrder = [stickDir];
+      buttons = { ...existing.buttons };
+      delete sticks[stickDir];
+    } else {
+      stickOrder = [];
+      buttons = { ...existing.buttons };
+      const known = LEARN_ORDER.find((s) => s.name === only);
+      buttonOrder = [known ?? { name: only, def: { action: "panel" } }];
+      for (const [idx, b] of Object.entries(buttons)) {
+        if (b.name === only) delete buttons[idx];
+      }
     }
   } else {
     console.log("\n── Buttons ──");
+    sticks = {}; // full learn rewrites sticks from scratch
   }
-  let stickSectionStarted = false;
-  for (const spec of order) {
-    if (!only && STICK_LEARN_ORDER.some((s) => s.name === spec.name) && !stickSectionStarted) {
-      stickSectionStarted = true;
-      console.log("\n── Stick ──");
-    }
-    const idx = await waitInput(spec);
+
+  for (const spec of buttonOrder) {
+    const idx = await waitButton(spec);
     if (idx == null) continue;
     if (buttons[String(idx)]) {
       console.log(
@@ -820,9 +1023,18 @@ async function learn(): Promise<void> {
     };
   }
 
+  if (stickOrder.length > 0) {
+    if (!only) console.log("\n── Stick ──");
+    for (const dir of stickOrder) {
+      const mapping = await learnStickDir(dir);
+      if (mapping) sticks[dir] = mapping;
+    }
+  }
+
   const cfg: ArcadeButtons = {
     device_hint: hint || DEFAULT_DEVICE_HINT,
     buttons,
+    ...(Object.keys(sticks).length > 0 ? { sticks } : {}),
   };
   saveArcadeButtons(cfg);
   console.log(`\nWrote ${ARCADE_BUTTONS_PATH}`);

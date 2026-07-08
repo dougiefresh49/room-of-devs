@@ -798,7 +798,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
       return;
     }
     const buttons = { ...cfg.buttons, [key]: merged };
-    writeButtons({ device_hint: cfg.device_hint, buttons });
+    writeButtons({ device_hint: cfg.device_hint, buttons, sticks: cfg.sticks });
     sendButtons(ws);
     return;
   }
@@ -812,7 +812,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
     }
     const buttons = { ...cfg.buttons };
     delete buttons[key];
-    writeButtons({ device_hint: cfg.device_hint, buttons });
+    writeButtons({ device_hint: cfg.device_hint, buttons, sticks: cfg.sticks });
     sendButtons(ws);
     return;
   }

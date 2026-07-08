@@ -40,17 +40,6 @@ const JOYSTICK_ROWS: Array<[string, string]> = [
 ];
 
 function describeButton(btn: ArcadeButton): string {
-  if (btn.stick) {
-    const snap =
-      btn.stick === "left"
-        ? "bl"
-        : btn.stick === "right"
-          ? "br"
-          : btn.stick === "up"
-            ? "tr"
-            : "bc";
-    return `Stick ${btn.stick} → triage cycle / grant / dismiss; White+stick → snap panel ${snap}`;
-  }
   if (btn.character) {
     const who = btn.character;
     const hold = `Hold → push-to-talk to ${who}`;
@@ -73,6 +62,16 @@ function buildButtonRows(): Array<[string, string]> {
   )) {
     const label = btn.name || `Button ${idx}`;
     rows.push([label, describeButton(btn)]);
+  }
+  if (cfg.sticks) {
+    for (const dir of ["left", "right", "up", "down"] as const) {
+      const m = cfg.sticks[dir];
+      if (!m) continue;
+      rows.push([
+        `stick_${dir}`,
+        `Axis byte ${m.byte} (${m.pole}) → triage / snap`,
+      ]);
+    }
   }
   if (rows.length === 0) {
     rows.push(["(none mapped)", "Run hid.ts learn or map buttons in the panel"]);
