@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, readdirSync, renameSync, writeFileSync } from "fs";
+import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { spawn } from "child_process";
 import { pathToFileURL } from "url";
@@ -10,6 +10,8 @@ import {
   ARCADE_BUTTONS_PATH,
   DEFAULT_DEVICE_HINT,
   loadArcadeButtons,
+  loadConfig,
+  saveArcadeButtons,
   loadSessionVoices,
   effectivePlaybackMode,
   type ArcadeButton,
@@ -182,6 +184,20 @@ const MODE_CYCLE: Record<string, string> = {
   silent: "auto",
 };
 
+// Valid `action` / `hold_action` values for arcade_buttons.json (panel UI lists these).
+export const HID_ACTIONS = [
+  "grant_next",
+  "replay",
+  "stop",
+  "pause",
+  "panel",
+  "cycle_mode",
+  "toggle_mode",
+  "hold_room",
+] as const;
+
+export type HidAction = (typeof HID_ACTIONS)[number];
+
 function doAction(action: string): void {
   switch (action) {
     case "grant_next":
@@ -311,7 +327,54 @@ interface Pending {
 }
 const pending = new Map<number, Pending>();
 
+// Learn-capture bridge (panel-ws): one-shot arm; non-noise DOWN resolves.
+let captureArmed: {
+  resolve: (idx: number) => void;
+  timer: ReturnType<typeof setTimeout>;
+} | null = null;
+const suppressPress = new Set<number>();
+
+export function isCaptureReady(): boolean {
+  return loadConfig().arcade_enabled && device !== null;
+}
+
+export function captureNextPress(timeoutMs = 15_000): Promise<number | null> {
+  if (!isCaptureReady()) return Promise.resolve(null);
+  if (captureArmed) {
+    clearTimeout(captureArmed.timer);
+    captureArmed.resolve = () => {};
+    captureArmed = null;
+  }
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      captureArmed = null;
+      resolve(null);
+    }, timeoutMs);
+    captureArmed = {
+      timer,
+      resolve: (idx) => {
+        clearTimeout(timer);
+        captureArmed = null;
+        resolve(idx);
+      },
+    };
+  });
+}
+
 function onEdge(edge: Edge, idx: number): void {
+  if (edge === "down" && captureArmed) {
+    const armed = captureArmed;
+    captureArmed = null;
+    clearTimeout(armed.timer);
+    suppressPress.add(idx);
+    armed.resolve(idx);
+    return;
+  }
+  if (suppressPress.has(idx)) {
+    if (edge === "up") suppressPress.delete(idx);
+    return;
+  }
+
   if (edge === "down") {
     if (pending.has(idx)) return; // ignore repeat-downs for a held button
     const p: Pending = {
@@ -335,6 +398,11 @@ function onEdge(edge: Edge, idx: number): void {
 function clearPending(): void {
   for (const p of pending.values()) clearTimeout(p.timer);
   pending.clear();
+  suppressPress.clear();
+  if (captureArmed) {
+    clearTimeout(captureArmed.timer);
+    captureArmed = null;
+  }
 }
 
 // ── Device discovery / open / reconnect ───────────────────────────
@@ -434,12 +502,6 @@ const LEARN_ORDER: LearnSpec[] = [
 ];
 
 const LEARN_TIMEOUT_MS = 30_000;
-
-function writeArcadeButtons(cfg: ArcadeButtons): void {
-  const tmp = `${ARCADE_BUTTONS_PATH}.tmp.${process.pid}`;
-  writeFileSync(tmp, JSON.stringify(cfg, null, 2) + "\n");
-  renameSync(tmp, ARCADE_BUTTONS_PATH);
-}
 
 async function learn(): Promise<void> {
   const hint = loadArcadeButtons().device_hint;
@@ -547,14 +609,18 @@ async function learn(): Promise<void> {
         `  (index ${idx} already mapped to "${buttons[String(idx)].name}" — overwriting with "${spec.name}")`
       );
     }
-    buttons[String(idx)] = { name: spec.name, ...spec.def };
+    buttons[String(idx)] = {
+      ...(buttons[String(idx)] ?? {}),
+      name: spec.name,
+      ...spec.def,
+    };
   }
 
   const cfg: ArcadeButtons = {
     device_hint: hint || DEFAULT_DEVICE_HINT,
     buttons,
   };
-  writeArcadeButtons(cfg);
+  saveArcadeButtons(cfg);
   console.log(`\nWrote ${ARCADE_BUTTONS_PATH}`);
   console.log(JSON.stringify(cfg, null, 2));
 

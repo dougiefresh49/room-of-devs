@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, readdirSync, statSync } from "fs";
+import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, renameSync } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { fileURLToPath } from "url";
@@ -113,6 +113,18 @@ export function loadSessionVoices(): Record<string, string> {
 // `name` is the friendly label learn mode assigns, and exactly one of
 // `character` (color buttons → floor grant / PTT for that persona's session)
 // or `action` (global commands) drives dispatch. See hid.ts.
+export const ARCADE_NAMED_COLORS = [
+  "white",
+  "blue",
+  "red",
+  "teal",
+  "yellow",
+  "green",
+  "black",
+] as const;
+
+export type ArcadeNamedColor = (typeof ARCADE_NAMED_COLORS)[number];
+
 export interface ArcadeButton {
   name: string;
   character?: string;
@@ -120,6 +132,9 @@ export interface ArcadeButton {
   // Optional distinct action for a long press (≥ HOLD_MS). Without it, a held
   // action button just fires `action` on release.
   hold_action?: string;
+  // Panel UI tint — named arcade colors or a hex string (#rgb / #rrggbb).
+  color?: string;
+  notes?: string;
 }
 
 export interface ArcadeButtons {
@@ -156,6 +171,21 @@ export function loadArcadeButtons(): ArcadeButtons {
   } catch {
     return fallback;
   }
+}
+
+export function isValidArcadeColor(color: string): boolean {
+  const c = color.trim();
+  if (!c) return false;
+  if ((ARCADE_NAMED_COLORS as readonly string[]).includes(c.toLowerCase())) return true;
+  return /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?([0-9a-fA-F]{2})?$/.test(c);
+}
+
+export function saveArcadeButtons(cfg: ArcadeButtons): void {
+  const tmp = `${ARCADE_BUTTONS_PATH}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(cfg, null, 2) + "\n");
+  renameSync(tmp, ARCADE_BUTTONS_PATH);
+  cachedArcade = null;
+  arcadeMtime = 0;
 }
 
 export function loadMutedSessions(): string[] {

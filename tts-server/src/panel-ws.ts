@@ -5,12 +5,14 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { WebSocketServer, WebSocket } from "ws";
-import { loadConfig, TTS_DIR } from "./config.js";
+import { loadConfig, TTS_DIR, loadArcadeButtons, saveArcadeButtons, isValidArcadeColor, type ArcadeButton, type ArcadeButtons } from "./config.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
 import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
 import { runStatusSay } from "./status-say.js";
 import { knownDirs, isResumableSession, listResumable } from "./session-catalog.js";
+import { HID_ACTIONS, captureNextPress, isCaptureReady } from "./hid.js";
+import { buildShortcutsPayload } from "./shortcuts.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CHARACTERS_PATH = join(__dirname, "characters.json");
@@ -35,7 +37,21 @@ export type PanelMessage =
   | { type: "resume_session"; sessionId: string; dir: string; persona: string }
   | { type: "set_voice"; sessionId: string; character: string }
   | { type: "set_nickname"; sessionId: string; label: string }
-  | { type: "hold_room" };
+  | { type: "hold_room" }
+  | { type: "get_buttons" }
+  | { type: "set_button"; idx: number; patch: ButtonPatch }
+  | { type: "remove_button"; idx: number }
+  | { type: "learn_capture" }
+  | { type: "get_shortcuts" };
+
+export type ButtonPatch = {
+  name?: string;
+  character?: string;
+  action?: string;
+  hold_action?: string;
+  color?: string;
+  notes?: string;
+};
 
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;
@@ -75,6 +91,142 @@ function runSignalReplay(): void {
 export function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return true;
   return origin.startsWith("tauri://") || origin.startsWith("http://localhost");
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === "object" && !Array.isArray(v);
+}
+
+function isOptionalString(v: unknown): v is string | undefined {
+  return v === undefined || typeof v === "string";
+}
+
+function parseButtonPatch(raw: unknown): ButtonPatch | "bad_message" {
+  if (!isPlainObject(raw)) return "bad_message";
+  const keys = Object.keys(raw);
+  const allowed = new Set(["name", "character", "action", "hold_action", "color", "notes"]);
+  if (keys.length === 0 || keys.some((k) => !allowed.has(k))) return "bad_message";
+  const patch = raw as Record<string, unknown>;
+  if (
+    !isOptionalString(patch.name) ||
+    !isOptionalString(patch.character) ||
+    !isOptionalString(patch.action) ||
+    !isOptionalString(patch.hold_action) ||
+    !isOptionalString(patch.color) ||
+    !isOptionalString(patch.notes)
+  ) {
+    return "bad_message";
+  }
+  return {
+    name: patch.name,
+    character: patch.character,
+    action: patch.action,
+    hold_action: patch.hold_action,
+    color: patch.color,
+    notes: patch.notes,
+  };
+}
+
+function listCharacterNames(): string[] {
+  if (!existsSync(CHARACTERS_PATH)) return [];
+  try {
+    const chars = JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
+      string,
+      { name?: string }
+    >;
+    const names = new Set<string>();
+    for (const entry of Object.values(chars)) {
+      const n = entry?.name?.trim();
+      if (n) names.add(n);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
+  }
+}
+
+export function buildButtonsMessage(): {
+  type: "buttons";
+  device_hint: string;
+  buttons: Record<string, ArcadeButton>;
+  actions: string[];
+  characters: string[];
+} {
+  const cfg = loadArcadeButtons();
+  return {
+    type: "buttons",
+    device_hint: cfg.device_hint,
+    buttons: cfg.buttons,
+    actions: [...HID_ACTIONS],
+    characters: listCharacterNames(),
+  };
+}
+
+function isKnownCharacter(name: string): boolean {
+  const lower = name.trim().toLowerCase();
+  return listCharacterNames().some((c) => c.toLowerCase() === lower);
+}
+
+function isValidAction(name: string): boolean {
+  return (HID_ACTIONS as readonly string[]).includes(name);
+}
+
+function applyButtonPatch(existing: ArcadeButton | undefined, patch: ButtonPatch): ArcadeButton | "bad_message" {
+  const merged: ArcadeButton = { ...(existing ?? { name: "" }) };
+  if (patch.name !== undefined) {
+    const n = patch.name.trim();
+    if (!n) return "bad_message";
+    merged.name = n;
+  } else if (!merged.name?.trim()) {
+    return "bad_message";
+  }
+  if (patch.character !== undefined) {
+    const c = patch.character.trim();
+    if (c && !isKnownCharacter(c)) return "bad_message";
+    if (c) {
+      merged.character = c;
+      delete merged.action;
+    } else {
+      delete merged.character;
+    }
+  }
+  if (patch.action !== undefined) {
+    const a = patch.action.trim();
+    if (a && !isValidAction(a)) return "bad_message";
+    if (a) {
+      merged.action = a;
+      delete merged.character;
+    } else {
+      delete merged.action;
+    }
+  }
+  if (patch.hold_action !== undefined) {
+    const h = patch.hold_action.trim();
+    if (h && !isValidAction(h)) return "bad_message";
+    if (h) merged.hold_action = h;
+    else delete merged.hold_action;
+  }
+  if (patch.color !== undefined) {
+    const col = patch.color.trim();
+    if (col && !isValidArcadeColor(col)) return "bad_message";
+    if (col) merged.color = col;
+    else delete merged.color;
+  }
+  if (patch.notes !== undefined) {
+    const notes = patch.notes.trim();
+    if (notes) merged.notes = notes;
+    else delete merged.notes;
+  }
+  if (merged.character && merged.action) return "bad_message";
+  return merged;
+}
+
+function writeButtons(cfg: ArcadeButtons): void {
+  saveArcadeButtons(cfg);
+}
+
+function sendButtons(ws: WebSocket): void {
+  ws.send(JSON.stringify(buildButtonsMessage()));
 }
 
 export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message" {
@@ -165,6 +317,26 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
     case "hold_room":
       if (keys.length !== 1) return "bad_message";
       return { type: "hold_room" };
+    case "get_buttons":
+    case "get_shortcuts":
+    case "learn_capture":
+      if (keys.length !== 1) return "bad_message";
+      return { type: msg.type };
+    case "set_button": {
+      if (keys.length !== 3) return "bad_message";
+      if (typeof msg.idx !== "number" || !Number.isInteger(msg.idx) || msg.idx < 0) {
+        return "bad_message";
+      }
+      const patch = parseButtonPatch(msg.patch);
+      if (patch === "bad_message") return "bad_message";
+      return { type: "set_button", idx: msg.idx, patch };
+    }
+    case "remove_button":
+      if (keys.length !== 2) return "bad_message";
+      if (typeof msg.idx !== "number" || !Number.isInteger(msg.idx) || msg.idx < 0) {
+        return "bad_message";
+      }
+      return { type: "remove_button", idx: msg.idx };
     default:
       return "bad_message";
   }
@@ -198,7 +370,8 @@ function sendError(
     | "not_team"
     | "bad_dir"
     | "bad_persona"
-    | "bad_session",
+    | "bad_session"
+    | "no_device",
   sessionId?: string
 ): void {
   const err: Record<string, string> = { type: "error", code };
@@ -332,6 +505,56 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
 
   if (msg.type === "known_dirs") {
     ws.send(JSON.stringify({ type: "known_dirs", dirs: knownDirs() }));
+    return;
+  }
+
+  if (msg.type === "get_buttons") {
+    sendButtons(ws);
+    return;
+  }
+
+  if (msg.type === "get_shortcuts") {
+    ws.send(JSON.stringify(buildShortcutsPayload()));
+    return;
+  }
+
+  if (msg.type === "set_button") {
+    const cfg = loadArcadeButtons();
+    const key = String(msg.idx);
+    const merged = applyButtonPatch(cfg.buttons[key], msg.patch);
+    if (merged === "bad_message") {
+      sendError(ws, "bad_message");
+      return;
+    }
+    const buttons = { ...cfg.buttons, [key]: merged };
+    writeButtons({ device_hint: cfg.device_hint, buttons });
+    sendButtons(ws);
+    return;
+  }
+
+  if (msg.type === "remove_button") {
+    const cfg = loadArcadeButtons();
+    const key = String(msg.idx);
+    if (!cfg.buttons[key]) {
+      sendError(ws, "bad_message");
+      return;
+    }
+    const buttons = { ...cfg.buttons };
+    delete buttons[key];
+    writeButtons({ device_hint: cfg.device_hint, buttons });
+    sendButtons(ws);
+    return;
+  }
+
+  if (msg.type === "learn_capture") {
+    if (!isCaptureReady()) {
+      sendError(ws, "no_device");
+      return;
+    }
+    captureNextPress(15_000).then((idx) => {
+      if (idx == null) return;
+      safe(() => ws.send(JSON.stringify({ type: "captured", idx })));
+    });
     return;
   }
 

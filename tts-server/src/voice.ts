@@ -373,6 +373,7 @@ function composeStatus(): string {
 }
 
 export function matchGrammar(text: string): Action | null {
+  // Phrase table mirrored in shortcuts.ts (VOICE_GRAMMAR_ROWS) — keep in sync.
   let m: RegExpMatchArray | null;
 
   m = text.match(/^(go ahead|go)(?:\s+(.+))?$/);
