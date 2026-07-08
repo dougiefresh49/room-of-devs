@@ -99,6 +99,7 @@ button,
 }
 
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -110,6 +111,56 @@ button,
   text-align: left;
   color: inherit;
   transition: opacity 0.15s, border-color 0.15s;
+}
+
+.card-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 1;
+}
+
+.card:hover .card-actions {
+  opacity: 1;
+}
+
+.hover-btn {
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(37, 42, 51, 0.92);
+  color: var(--text);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hover-btn:hover:not(:disabled) {
+  background: #2f3540;
+  border-color: #5a6270;
+}
+
+.hover-btn.disabled,
+.hover-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: var(--muted);
+}
+
+.hover-btn.kill-btn.armed {
+  background: #4a1f1f;
+  border-color: var(--red);
+  color: #fca5a5;
+}
+
+.hover-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .card:hover {

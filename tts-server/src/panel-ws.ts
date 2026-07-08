@@ -7,6 +7,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { loadConfig, TTS_DIR } from "./config.js";
 import { buildSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
+import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
+import { runStatusSay } from "./status-say.js";
 
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
@@ -15,6 +17,9 @@ const TOKEN_PATH = join(TTS_DIR, "panel_ws_token");
 export type PanelMessage =
   | { type: "grant"; sessionId: string }
   | { type: "ptt"; phase: "start" | "stop"; sessionId: string }
+  | { type: "focus_terminal"; sessionId: string }
+  | { type: "kill_team"; sessionId: string }
+  | { type: "status_say"; sessionId: string }
   | { type: "replay" }
   | { type: "stop" }
   | { type: "pause" };
@@ -80,6 +85,13 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
         return "bad_message";
       }
       return { type: "ptt", phase: msg.phase, sessionId: msg.sessionId };
+    case "focus_terminal":
+    case "kill_team":
+    case "status_say":
+      if (keys.length !== 2 || typeof msg.sessionId !== "string" || !msg.sessionId.trim()) {
+        return "bad_message";
+      }
+      return { type: msg.type, sessionId: msg.sessionId };
     case "replay":
     case "stop":
     case "pause":
@@ -110,12 +122,46 @@ function broadcastSnapshot(): void {
 
 function sendError(
   ws: WebSocket,
-  code: "bad_message" | "stale_session",
+  code: "bad_message" | "stale_session" | "not_team",
   sessionId?: string
 ): void {
   const err: Record<string, string> = { type: "error", code };
   if (sessionId) err.sessionId = sessionId;
   ws.send(JSON.stringify(err));
+}
+
+function focusTerminal(sessionId: string): void {
+  const tmux = tmuxForSession(sessionId);
+  if (!tmux) return;
+  const script = `tmux attach -t ${tmux.replace(/"/g, '\\"')}`;
+  try {
+    const child = spawn(
+      "osascript",
+      [
+        "-e",
+        `tell app "Terminal" to do script "${script}"`,
+        "-e",
+        'tell app "Terminal" to activate',
+      ],
+      { stdio: "ignore" }
+    );
+    child.on("error", (e) => log("panel-ws", `focus_terminal spawn error: ${e.message}`));
+  } catch (err: any) {
+    log("panel-ws", `focus_terminal failed: ${err?.message ?? err}`);
+  }
+}
+
+function killTeam(sessionId: string): void {
+  const tmux = tmuxForSession(sessionId);
+  if (!tmux) return;
+  try {
+    const child = spawn("tmux", ["kill-session", "-t", tmux], { stdio: "ignore" });
+    child.on("error", (e) => log("panel-ws", `kill_team spawn error: ${e.message}`));
+  } catch (err: any) {
+    log("panel-ws", `kill_team failed: ${err?.message ?? err}`);
+  }
+  removeSessionFromTeamMap(sessionId);
+  safe(broadcastSnapshot);
 }
 
 function dispatch(msg: PanelMessage): void {
@@ -125,6 +171,15 @@ function dispatch(msg: PanelMessage): void {
       return;
     case "ptt":
       runScript("ptt.sh", [msg.phase, msg.sessionId]);
+      return;
+    case "focus_terminal":
+      focusTerminal(msg.sessionId);
+      return;
+    case "kill_team":
+      killTeam(msg.sessionId);
+      return;
+    case "status_say":
+      runStatusSay(msg.sessionId);
       return;
     case "replay":
       runSignalReplay();
@@ -145,9 +200,22 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
     return;
   }
 
-  if (msg.type === "grant" || msg.type === "ptt") {
+  if (
+    msg.type === "grant" ||
+    msg.type === "ptt" ||
+    msg.type === "focus_terminal" ||
+    msg.type === "kill_team" ||
+    msg.type === "status_say"
+  ) {
     if (!sessionInSnapshot(msg.sessionId)) {
       sendError(ws, "stale_session", msg.sessionId);
+      return;
+    }
+  }
+
+  if (msg.type === "focus_terminal" || msg.type === "kill_team") {
+    if (!isTeamSession(msg.sessionId)) {
+      sendError(ws, "not_team", msg.sessionId);
       return;
     }
   }

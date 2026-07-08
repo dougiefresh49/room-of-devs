@@ -17,6 +17,7 @@ import { getCharacter } from "./dynamic-response.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import type { SessionState } from "./state.js";
 import { log } from "./logger.js";
+import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
 
 export interface AgentView {
   sessionId: string;
@@ -27,6 +28,7 @@ export interface AgentView {
   raisedCount: number;
   supersededCount: number;
   muted: boolean;
+  isTeam: boolean;
 }
 
 interface StateFile {
@@ -110,6 +112,7 @@ function countSuperseded(shortSession: string, raisedAt: string | null): number 
 
 export function buildSnapshot(): AgentView[] {
   const muted = new Set(loadMutedSessions());
+  const teamIds = teamSessionIds();
   const agents: AgentView[] = [];
 
   try {
@@ -133,6 +136,7 @@ export function buildSnapshot(): AgentView[] {
         raisedCount: countQueued(shortSession),
         supersededCount: countSuperseded(shortSession, state.raisedAt ?? null),
         muted: muted.has(sessionId),
+        isTeam: teamIds.has(sessionId),
       });
     }
   } catch (err: any) {
@@ -153,7 +157,7 @@ export function subscribe(cb: NotifyCallback): () => void {
 export function startStateWatch(): void {
   if (watcher) return;
   try {
-    watcher = watch(STATE_DIR, { ignoreInitial: true });
+    watcher = watch([STATE_DIR, TEAM_MAP_PATH], { ignoreInitial: true });
     watcher.on("add", () => scheduleNotify());
     watcher.on("change", () => scheduleNotify());
     watcher.on("unlink", () => scheduleNotify());

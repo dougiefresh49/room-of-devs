@@ -12,6 +12,7 @@ interface AgentView {
   raisedCount: number;
   supersededCount: number;
   muted: boolean;
+  isTeam: boolean;
 }
 
 interface WsConfig {
@@ -21,12 +22,14 @@ interface WsConfig {
 
 const HOLD_MS = 300;
 const RECONNECT_MS = 2000;
+const KILL_ARM_MS = 2000;
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let ws: WebSocket | null = null;
 let connected = false;
 let agents: AgentView[] = [];
 const staleSessions = new Set<string>();
+const killArmed = new Map<string, ReturnType<typeof setTimeout>>();
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const stateLabels: Record<AgentState, string> = {
@@ -73,6 +76,8 @@ function initials(name: string): string {
 function renderCard(agent: AgentView): string {
   const greyed = !connected || staleSessions.has(agent.sessionId);
   const mutedClass = agent.muted ? " muted" : "";
+  const teamOnly = !agent.isTeam;
+  const killIsArmed = killArmed.has(agent.sessionId);
   const raisedChip =
     agent.state === "hand_raised"
       ? `<span class="chip raised" title="Hand raised">✋</span>`
@@ -87,11 +92,34 @@ function renderCard(agent: AgentView): string {
       : "";
 
   return `
-    <button
+    <div
       class="card state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}"
       data-session="${agent.sessionId}"
-      type="button"
+      role="button"
+      tabindex="0"
     >
+      <div class="card-actions">
+        <button
+          type="button"
+          class="hover-btn${teamOnly ? " disabled" : ""}"
+          data-hover-action="focus"
+          title="${teamOnly ? "team sessions only" : "Jump to terminal"}"
+          ${teamOnly ? "disabled" : ""}
+        >🖥</button>
+        <button
+          type="button"
+          class="hover-btn kill-btn${teamOnly ? " disabled" : ""}${killIsArmed ? " armed" : ""}"
+          data-hover-action="kill"
+          title="${teamOnly ? "team sessions only" : killIsArmed ? "click again to end session" : "End session"}"
+          ${teamOnly ? "disabled" : ""}
+        >⏻</button>
+        <button
+          type="button"
+          class="hover-btn"
+          data-hover-action="status"
+          title="Speak status"
+        >ℹ️</button>
+      </div>
       <div class="avatar-wrap">
         <img class="avatar" src="${avatarSrc(agent)}" alt="" />
         <span class="avatar-fallback">${initials(agent.name)}</span>
@@ -104,7 +132,7 @@ function renderCard(agent: AgentView): string {
         </div>
         <div class="chips">${raisedChip}${queueChip}${supersededChip}</div>
       </div>
-    </button>
+    </div>
   `;
 }
 
@@ -134,6 +162,7 @@ function render() {
   `;
 
   bindCards();
+  bindHoverActions();
   bindControls();
   bindAvatars();
   bindDrag();
@@ -171,8 +200,49 @@ function bindControls() {
   });
 }
 
+function armKill(sessionId: string) {
+  const existing = killArmed.get(sessionId);
+  if (existing) clearTimeout(existing);
+  const timer = setTimeout(() => {
+    killArmed.delete(sessionId);
+    render();
+  }, KILL_ARM_MS);
+  killArmed.set(sessionId, timer);
+}
+
+function bindHoverActions() {
+  app.querySelectorAll<HTMLButtonElement>("[data-hover-action]").forEach((btn) => {
+    const card = btn.closest<HTMLElement>(".card");
+    if (!card) return;
+    const sessionId = card.dataset.session!;
+
+    btn.addEventListener("mousedown", (e) => e.stopPropagation());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (btn.disabled) return;
+
+      const action = btn.dataset.hoverAction;
+      if (action === "focus") {
+        send({ type: "focus_terminal", sessionId });
+      } else if (action === "status") {
+        send({ type: "status_say", sessionId });
+      } else if (action === "kill") {
+        if (killArmed.has(sessionId)) {
+          const timer = killArmed.get(sessionId)!;
+          clearTimeout(timer);
+          killArmed.delete(sessionId);
+          send({ type: "kill_team", sessionId });
+        } else {
+          armKill(sessionId);
+          render();
+        }
+      }
+    });
+  });
+}
+
 function bindCards() {
-  app.querySelectorAll<HTMLButtonElement>(".card").forEach((card) => {
+  app.querySelectorAll<HTMLElement>(".card").forEach((card) => {
     const sessionId = card.dataset.session!;
     let holdTimer: ReturnType<typeof setTimeout> | null = null;
     let pttActive = false;
@@ -229,6 +299,13 @@ function handleMessage(raw: string) {
   if (msg.type === "snapshot" && Array.isArray(msg.agents)) {
     agents = msg.agents;
     staleSessions.clear();
+    for (const sid of killArmed.keys()) {
+      if (!agents.some((a) => a.sessionId === sid)) {
+        const t = killArmed.get(sid);
+        if (t) clearTimeout(t);
+        killArmed.delete(sid);
+      }
+    }
     render();
     return;
   }

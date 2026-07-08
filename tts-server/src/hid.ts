@@ -17,10 +17,11 @@ import {
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { log } from "./logger.js";
+import { loadTeamMap } from "./team-map.js";
+import { runStatusSay } from "./status-say.js";
 
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
-const TEAM_MAP_PATH = join(TTS_DIR, "team_map.json");
 
 // A press held this long or longer is a hold (PTT), not a tap (grant).
 const HOLD_MS = 500;
@@ -130,15 +131,6 @@ function readState(sessionId: string): StateSnapshot | null {
     return JSON.parse(readFileSync(p, "utf-8")) as StateSnapshot;
   } catch {
     return null;
-  }
-}
-
-function loadTeamMap(): Record<string, { sessionId?: string }> {
-  try {
-    if (!existsSync(TEAM_MAP_PATH)) return {};
-    return JSON.parse(readFileSync(TEAM_MAP_PATH, "utf-8"));
-  } catch {
-    return {};
   }
 }
 
@@ -262,8 +254,18 @@ function characterHold(character: string, phase: "start" | "stop"): void {
 function handlePress(idx: number): void {
   const btn = buttonFor(idx);
   if (!btn) return;
-  if (btn.character) characterPress(btn.character);
-  else if (btn.action) doAction(btn.action);
+  if (btn.character) {
+    if (noteTripleTap(idx)) {
+      tapTimes.delete(idx);
+      const sid = resolveCharacterSession(btn.character);
+      if (sid) {
+        log("hid", `triple-tap status → ${btn.character} (${sid.slice(0, 12)})`);
+        runStatusSay(sid);
+        return;
+      }
+    }
+    characterPress(btn.character);
+  } else if (btn.action) doAction(btn.action);
 }
 
 function handleHoldStart(idx: number): void {
@@ -283,6 +285,17 @@ function handleHoldEnd(idx: number): void {
 }
 
 // ── Press / hold detection ────────────────────────────────────────
+const TRIPLE_WINDOW_MS = 900;
+const tapTimes = new Map<number, number[]>();
+
+function noteTripleTap(idx: number): boolean {
+  const now = Date.now();
+  const prev = (tapTimes.get(idx) ?? []).filter((t) => now - t < TRIPLE_WINDOW_MS);
+  prev.push(now);
+  tapTimes.set(idx, prev);
+  return prev.length >= 3;
+}
+
 interface Pending {
   timer: ReturnType<typeof setTimeout>;
   holding: boolean;
