@@ -30,6 +30,7 @@ interface NowPlaying {
   // ISO string from the server; parsed to epoch ms for karaoke highlighting.
   startedAt: string | number;
   approxCharsPerSec: number;
+  playbackRate?: number;
   // [word, startMs] tuples when the server streamed with ElevenLabs timestamps.
   alignment?: [string, number][];
 }
@@ -67,6 +68,22 @@ interface ShortcutSection {
   rows: [string, string][];
 }
 
+interface VoiceOption {
+  id: string;
+  name: string;
+  character?: string | null;
+}
+
+interface RoomSettings {
+  default_voice_id?: string | null;
+  playback_mode?: string | null;
+  mood?: string | null;
+  speed?: number | null;
+  notifications?: boolean | null;
+  listening?: boolean | null;
+  dynamic_acks?: string | null;
+}
+
 // name → full character name the server + team.sh match on; avatar → asset dir.
 const PERSONAS: Persona[] = [
   { name: "Leonardo", label: "Leo", avatar: "leonardo" },
@@ -78,7 +95,8 @@ const PERSONAS: Persona[] = [
   { name: "Karai", label: "Karai", avatar: "karai" },
 ];
 
-type PickerTab = "new" | "resume" | "buttons" | "help";
+type PickerTab = "new" | "resume";
+type SettingsTab = "general" | "buttons" | "help";
 type ButtonColor = "white" | "blue" | "red" | "teal" | "yellow" | "green" | "black";
 type LearnMode = "rebind" | "add";
 
@@ -95,6 +113,9 @@ const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
 const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
 const LEARN_CAPTURE_MS = 15000;
+const PLAYBACK_MODES = ["auto", "announce", "silent"] as const;
+const MOODS = ["focus", "arcade", "quiet", "normal"] as const;
+const DYNAMIC_ACKS = ["always", "cached", "off"] as const;
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let ws: WebSocket | null = null;
@@ -114,6 +135,8 @@ let renamingSessionId: string | null = null;
 
 let pickerOpen = false;
 let pickerTab: PickerTab = "new";
+let settingsOpen = false;
+let settingsTab: SettingsTab = "general";
 let knownDirsList: string[] = [];
 let resumableList: ResumableSession[] = [];
 let toast: { kind: "launch" | "error"; text: string } | null = null;
@@ -126,6 +149,11 @@ let buttonActions: string[] = [];
 let buttonCharacters: string[] = [];
 let buttonsLoaded = false;
 let buttonsWritable = true;
+let settings: RoomSettings = {};
+let settingsLoaded = false;
+let settingsWritable = true;
+let settingsVoices: VoiceOption[] = [];
+let voicesLoaded = false;
 let shortcutsSections: ShortcutSection[] = [];
 let shortcutsLoaded = false;
 let shortcutsAvailable = true;
@@ -154,6 +182,7 @@ const icons = {
   expand: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
   plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.04.04a2.1 2.1 0 0 1-2.97 2.97l-.04-.04a1.8 1.8 0 0 0-2-.36 1.8 1.8 0 0 0-1.1 1.65V21a2.1 2.1 0 0 1-4.2 0v-.06a1.8 1.8 0 0 0-1.1-1.65 1.8 1.8 0 0 0-2 .36l-.04.04a2.1 2.1 0 1 1-2.97-2.97l.04-.04a1.8 1.8 0 0 0 .36-2 1.8 1.8 0 0 0-1.65-1.1H3a2.1 2.1 0 0 1 0-4.2h.06a1.8 1.8 0 0 0 1.65-1.1 1.8 1.8 0 0 0-.36-2l-.04-.04a2.1 2.1 0 1 1 2.97-2.97l.04.04a1.8 1.8 0 0 0 2 .36h.01a1.8 1.8 0 0 0 1.09-1.65V3a2.1 2.1 0 0 1 4.2 0v.06a1.8 1.8 0 0 0 1.1 1.65 1.8 1.8 0 0 0 2-.36l.04-.04a2.1 2.1 0 1 1 2.97 2.97l-.04.04a1.8 1.8 0 0 0-.36 2 1.8 1.8 0 0 0 1.65 1.1H21a2.1 2.1 0 0 1 0 4.2h-.06a1.8 1.8 0 0 0-1.54.38z"/></svg>`,
   back: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h5l2 2h9a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/></svg>`,
 } as const;
@@ -514,7 +543,8 @@ function startCaptionSync() {
   let lastActive = -2;
 
   const tick = () => {
-    const elapsed = Date.now() - started;
+    const rate = Number.isFinite(np.playbackRate) && (np.playbackRate ?? 0) > 0 ? np.playbackRate ?? 1 : 1;
+    const elapsed = (Date.now() - started) * rate;
     let active = -1;
     for (let i = 0; i < align.length; i++) {
       if (elapsed >= align[i][1]) active = i;
@@ -527,9 +557,9 @@ function startCaptionSync() {
     if (el) {
       const offset = Math.max(
         0,
-        el.offsetLeft + el.offsetWidth / 2 - trackEl.clientWidth / 2
+        el.offsetTop + el.offsetHeight / 2 - trackEl.clientHeight / 2
       );
-      wordsEl.style.transform = `translateX(${-offset}px)`;
+      trackEl.scrollTo({ top: offset, behavior: "smooth" });
     }
   };
 
@@ -552,6 +582,11 @@ function render() {
     return;
   }
 
+  if (settingsOpen) {
+    renderSettings();
+    return;
+  }
+
   app.classList.remove("dock-mode");
   document.body.classList.remove("dock-window");
   const connClass = connected ? "up" : "down";
@@ -561,6 +596,7 @@ function render() {
       <div class="header-actions no-drag">
         <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
         <button type="button" class="icon-btn window-btn" data-window-action="picker-open" title="New session">${icons.plus}</button>
+        <button type="button" class="icon-btn window-btn" data-window-action="settings-open" title="Settings">${icons.gear}</button>
         <button type="button" class="icon-btn window-btn" data-window-action="dock-on" title="Dock room">${icons.dock}</button>
         <button type="button" class="icon-btn window-btn" data-window-action="close" title="Close room">${icons.close}</button>
       </div>
@@ -767,7 +803,14 @@ function renderButtonRow(idx: string, config: ButtonConfig): string {
         title="Cycle color"
         ${buttonsWritable ? "" : "disabled"}
       ></button>
-      <div class="button-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <input
+        class="button-name no-drag"
+        data-button-name="${escapeHtml(idx)}"
+        value="${escapeHtml(name)}"
+        title="display name - safe to rename"
+        aria-label="Button display name"
+        ${buttonsWritable ? "" : "disabled"}
+      />
       <button
         type="button"
         class="button-code-chip${isLearning ? " learning" : ""} no-drag"
@@ -851,9 +894,206 @@ function renderShortcutsView(): string {
     </div>`;
 }
 
+function settingValue(key: keyof RoomSettings, fallback: string): string {
+  const value = settings[key];
+  return typeof value === "string" && value ? value : fallback;
+}
+
+function settingBool(key: keyof RoomSettings): boolean {
+  return settings[key] === true;
+}
+
+function settingSpeed(): number {
+  const value = settings.speed;
+  return typeof value === "number" && Number.isFinite(value) ? Math.min(2, Math.max(0.75, value)) : 1;
+}
+
+function voiceLabel(voice: VoiceOption): string {
+  return voice.name || voice.character || voice.id;
+}
+
+function voiceAvatarSrc(voice: VoiceOption): string {
+  const character = (voice.character ?? "default").toLowerCase();
+  return `avatars/tmnt/${character}/idle.png`;
+}
+
+function renderSegmented(
+  group: string,
+  options: readonly string[],
+  current: string,
+  labels: Record<string, string>,
+): string {
+  return `
+    <div class="settings-segmented no-drag" data-setting-group="${group}">
+      ${options.map((value) => `
+        <button
+          type="button"
+          class="settings-segment${current === value ? " active" : ""}"
+          data-setting-key="${group}"
+          data-setting-value="${escapeHtml(value)}"
+          aria-pressed="${current === value}"
+          ${settingsWritable ? "" : "disabled"}
+        >${escapeHtml(labels[value] ?? value)}</button>
+      `).join("")}
+    </div>`;
+}
+
+function renderVoiceRail(): string {
+  if (!voicesLoaded) {
+    return '<p class="settings-note">Waiting for voices</p>';
+  }
+  const characterVoices = settingsVoices.filter((voice) => voice.character != null);
+  if (!characterVoices.length) {
+    return '<p class="settings-note">Character voices unavailable</p>';
+  }
+  const current = settings.default_voice_id ?? "";
+  return `
+    <div class="settings-voice-rail no-drag">
+      ${characterVoices.map((voice) => {
+        const label = escapeHtml(voiceLabel(voice));
+        const active = voice.id === current;
+        return `
+          <button
+            type="button"
+            class="settings-voice-chip${active ? " active" : ""}"
+            data-default-voice="${escapeHtml(voice.id)}"
+            title="${label}"
+            aria-pressed="${active}"
+            ${settingsWritable ? "" : "disabled"}
+          >
+            <span class="settings-voice-av">
+              <img class="avatar settings-voice-img" src="${voiceAvatarSrc(voice)}" alt="" />
+              <span class="avatar-fallback settings-voice-fallback">${escapeHtml(label.slice(0, 1).toUpperCase())}</span>
+            </span>
+            <span>${label}</span>
+          </button>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderOtherVoices(): string {
+  const otherVoices = settingsVoices.filter((voice) => voice.character == null);
+  if (!voicesLoaded || !otherVoices.length) return "";
+  const current = settings.default_voice_id ?? "";
+  return `
+    <select class="settings-select no-drag" data-default-voice-select ${settingsWritable ? "" : "disabled"}>
+      <option value="">Other voices...</option>
+      ${otherVoices.map((voice) => `
+        <option value="${escapeHtml(voice.id)}"${voice.id === current ? " selected" : ""}>${escapeHtml(voiceLabel(voice))}</option>
+      `).join("")}
+    </select>`;
+}
+
+function renderGeneralSettings(): string {
+  if (!connected) {
+    return '<section class="settings-panel"><p class="picker-empty">Disconnected</p></section>';
+  }
+  if (!settingsWritable) {
+    return '<section class="settings-panel"><p class="picker-empty">Settings unavailable</p></section>';
+  }
+  const playbackMode = settingValue("playback_mode", "auto");
+  const mood = settingValue("mood", "normal");
+  const moodOptions: string[] = MOODS.includes(mood as (typeof MOODS)[number])
+    ? [...MOODS]
+    : [...MOODS, "custom"];
+  const speed = settingSpeed();
+  return `
+    <section class="settings-panel">
+      <div class="settings-status">${settingsLoaded ? "Ready" : "Waiting for settings"}</div>
+      <div class="settings-group">
+        <div class="settings-label">Default voice</div>
+        ${renderVoiceRail()}
+        ${renderOtherVoices()}
+      </div>
+      <div class="settings-grid">
+        <div class="settings-group">
+          <div class="settings-label">Playback mode</div>
+          ${renderSegmented("playback_mode", PLAYBACK_MODES, playbackMode, { auto: "Auto", announce: "Announce", silent: "Silent" })}
+        </div>
+        <div class="settings-group">
+          <div class="settings-label">Mood</div>
+          ${renderSegmented("mood", moodOptions, moodOptions.includes(mood) ? mood : "custom", { focus: "Focus", arcade: "Arcade", quiet: "Quiet", normal: "Normal", custom: "Custom" })}
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label settings-label-row">
+          <span>Speed</span>
+          <span class="settings-value" data-setting-speed-label>${speed.toFixed(2)}x</span>
+        </div>
+        <input class="settings-slider no-drag" data-setting-speed type="range" min="0.75" max="2" step="0.25" value="${speed}" ${settingsWritable ? "" : "disabled"} />
+      </div>
+      <div class="settings-grid">
+        <label class="settings-toggle no-drag">
+          <span>Notifications</span>
+          <input type="checkbox" data-setting-toggle="notifications" ${settingBool("notifications") ? "checked" : ""} ${settingsWritable ? "" : "disabled"} />
+        </label>
+        <label class="settings-toggle no-drag">
+          <span>Listening</span>
+          <input type="checkbox" data-setting-toggle="listening" ${settingBool("listening") ? "checked" : ""} ${settingsWritable ? "" : "disabled"} />
+        </label>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label">Dynamic acks</div>
+        ${renderSegmented("dynamic_acks", DYNAMIC_ACKS, settingValue("dynamic_acks", "cached"), { always: "Always", cached: "Cached", off: "Off" })}
+      </div>
+      <button type="button" class="settings-hold no-drag${roomHeld ? " active" : ""}" data-settings-hold aria-pressed="${roomHeld}">
+        ${roomHeld ? "Release the Room" : "Hold the Room"}
+      </button>
+    </section>`;
+}
+
+function settingsTitle(): string {
+  if (settingsTab === "buttons") return "Button Mapping";
+  if (settingsTab === "help") return "Shortcuts";
+  return "Settings";
+}
+
+function settingsTabButton(tab: SettingsTab, label: string): string {
+  return `<button type="button" class="picker-tab${settingsTab === tab ? " active" : ""}" data-settings-tab="${tab}" role="tab">${label}</button>`;
+}
+
+function renderSettings() {
+  app.classList.remove("dock-mode");
+  document.body.classList.remove("dock-window");
+  const connClass = connected ? "up" : "down";
+  const body =
+    settingsTab === "general"
+      ? renderGeneralSettings()
+      : settingsTab === "buttons"
+        ? renderButtonsView()
+        : renderShortcutsView();
+
+  app.innerHTML = shellHtml(`
+    <header class="strip drag-region" data-tauri-drag-region>
+      <div class="strip-left">
+        <button type="button" class="icon-btn window-btn no-drag" data-window-action="settings-back" title="Back to room">${icons.back}</button>
+        <span class="title" data-tauri-drag-region>${settingsTitle()}</span>
+      </div>
+      <div class="header-actions no-drag">
+        <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
+        <button type="button" class="icon-btn window-btn" data-window-action="close" title="Close room">${icons.close}</button>
+      </div>
+    </header>
+    <main class="picker">
+      <div class="picker-tabs no-drag" role="tablist">
+        ${settingsTabButton("general", "General")}
+        ${settingsTabButton("buttons", "Buttons")}
+        ${settingsTabButton("help", "Help")}
+      </div>
+      ${body}
+    </main>
+    ${toastHtml()}
+  `);
+
+  bindWindowActions();
+  bindSettingsTabs();
+  bindGeneralSettings();
+  bindButtonMapping();
+  bindAvatars();
+  bindDrag();
+}
+
 function pickerTitle(): string {
-  if (pickerTab === "buttons") return "Button Mapping";
-  if (pickerTab === "help") return "Shortcuts";
   return "New Session";
 }
 
@@ -868,11 +1108,7 @@ function renderPicker() {
   const body =
     pickerTab === "new"
       ? `<div class="picker-list">${renderNewRows()}</div>`
-      : pickerTab === "resume"
-        ? `<div class="picker-list">${renderResumeRows()}</div>`
-        : pickerTab === "buttons"
-          ? renderButtonsView()
-          : renderShortcutsView();
+      : `<div class="picker-list">${renderResumeRows()}</div>`;
 
   app.innerHTML = shellHtml(`
     <header class="strip drag-region" data-tauri-drag-region>
@@ -889,8 +1125,6 @@ function renderPicker() {
       <div class="picker-tabs no-drag" role="tablist">
         ${pickerTabButton("new", "New")}
         ${pickerTabButton("resume", "Resume")}
-        ${pickerTabButton("buttons", "Buttons")}
-        ${pickerTabButton("help", "Help")}
       </div>
       ${body}
     </main>
@@ -908,6 +1142,7 @@ function renderPicker() {
 
 function openPicker() {
   pickerOpen = true;
+  settingsOpen = false;
   pickerTab = "new";
   browseDir = null;
   clearToastTimers();
@@ -920,6 +1155,24 @@ function openPicker() {
 function closePicker() {
   pickerOpen = false;
   browseDir = null;
+  cancelLearnCapture();
+  clearToastTimers();
+  toast = null;
+  render();
+}
+
+function openSettings() {
+  settingsOpen = true;
+  pickerOpen = false;
+  settingsTab = "general";
+  clearToastTimers();
+  toast = null;
+  requestSettingsTabData();
+  render();
+}
+
+function closeSettings() {
+  settingsOpen = false;
   cancelLearnCapture();
   clearToastTimers();
   toast = null;
@@ -966,19 +1219,101 @@ function bindPickerTabs() {
       const tab = btn.dataset.pickerTab as PickerTab;
       if (tab && tab !== pickerTab) {
         pickerTab = tab;
-        requestPickerTabData();
         render();
       }
     });
   });
 }
 
-function requestPickerTabData() {
-  if (pickerTab === "buttons") {
+function requestSettingsBaseData() {
+  send({ type: "get_settings" });
+  send({ type: "list_voices" });
+}
+
+function requestSettingsTabData() {
+  if (settingsTab === "general") {
+    requestSettingsBaseData();
+  } else if (settingsTab === "buttons") {
     send({ type: "get_buttons" });
-  } else if (pickerTab === "help") {
+  } else if (settingsTab === "help") {
     send({ type: "get_shortcuts" });
   }
+}
+
+function bindSettingsTabs() {
+  app.querySelectorAll<HTMLButtonElement>("[data-settings-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.settingsTab as SettingsTab;
+      if (tab && tab !== settingsTab) {
+        settingsTab = tab;
+        requestSettingsTabData();
+        render();
+      }
+    });
+  });
+}
+
+function commitSetting(key: keyof RoomSettings | "default_voice", value: string | number | boolean) {
+  if (!settingsWritable) return;
+  const localKey = key === "default_voice" ? "default_voice_id" : key;
+  settings = { ...settings, [localKey]: value };
+  send({ type: "set_setting", key, value });
+  render();
+}
+
+function bindGeneralSettings() {
+  if (!settingsOpen || settingsTab !== "general") return;
+
+  app.querySelectorAll<HTMLButtonElement>("[data-default-voice]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const voiceId = btn.dataset.defaultVoice;
+      if (voiceId) commitSetting("default_voice", voiceId);
+    });
+  });
+
+  const otherVoices = app.querySelector<HTMLSelectElement>("[data-default-voice-select]");
+  otherVoices?.addEventListener("change", (e) => {
+    e.stopPropagation();
+    if (otherVoices.value) commitSetting("default_voice", otherVoices.value);
+  });
+
+  app.querySelectorAll<HTMLButtonElement>("[data-setting-key]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.settingKey as keyof RoomSettings | undefined;
+      const value = btn.dataset.settingValue;
+      if (!key || !value || value === "custom") return;
+      commitSetting(key, value);
+    });
+  });
+
+  const speed = app.querySelector<HTMLInputElement>("[data-setting-speed]");
+  const commitSpeed = () => {
+    if (!speed) return;
+    commitSetting("speed", Number(speed.value));
+  };
+  speed?.addEventListener("input", () => {
+    const next = Number(speed.value);
+    settings = { ...settings, speed: next };
+    const label = app.querySelector<HTMLElement>("[data-setting-speed-label]");
+    if (label) label.textContent = `${next.toFixed(2)}x`;
+  });
+  speed?.addEventListener("change", commitSpeed);
+  speed?.addEventListener("pointerup", commitSpeed);
+
+  app.querySelectorAll<HTMLInputElement>("[data-setting-toggle]").forEach((input) => {
+    input.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const key = input.dataset.settingToggle as keyof RoomSettings | undefined;
+      if (key) commitSetting(key, input.checked);
+    });
+  });
+
+  app.querySelector<HTMLButtonElement>("[data-settings-hold]")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    send({ type: "hold_room" });
+  });
 }
 
 function bindBrowseRow() {
@@ -1051,6 +1386,7 @@ function commitButtonPatch(idx: string, patch: Partial<ButtonConfig>) {
   if (!buttonsWritable) return;
   buttonMappings[idx] = { ...(buttonMappings[idx] ?? { name: `Button ${idx}` }), ...patch };
   send({ type: "set_button", idx: Number(idx), patch });
+  render();
 }
 
 function handleCapturedButton(idx: string) {
@@ -1086,7 +1422,7 @@ function handleCapturedButton(idx: string) {
 }
 
 function bindButtonMapping() {
-  if (pickerTab !== "buttons") return;
+  if (!settingsOpen || settingsTab !== "buttons") return;
 
   app.querySelectorAll<HTMLButtonElement>("[data-button-color]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -1094,7 +1430,6 @@ function bindButtonMapping() {
       const idx = btn.dataset.buttonColor;
       if (!idx) return;
       commitButtonPatch(idx, { color: nextButtonColor(buttonMappings[idx] ?? { name: `Button ${idx}` }) });
-      render();
     });
   });
 
@@ -1126,7 +1461,21 @@ function bindButtonMapping() {
       } else {
         commitButtonPatch(idx, { action: null, character: null });
       }
-      render();
+    });
+  });
+
+  app.querySelectorAll<HTMLInputElement>("[data-button-name]").forEach((input) => {
+    input.addEventListener("click", (e) => e.stopPropagation());
+    input.addEventListener("blur", () => {
+      const idx = input.dataset.buttonName;
+      const name = input.value.trim();
+      if (idx && name) commitButtonPatch(idx, { name });
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      }
     });
   });
 
@@ -1180,6 +1529,9 @@ function bindWindowActions() {
       if (btn.dataset.windowAction === "picker-back") {
         e.preventDefault();
         closePicker();
+      } else if (btn.dataset.windowAction === "settings-back") {
+        e.preventDefault();
+        closeSettings();
       }
     });
     btn.addEventListener("mousedown", (e) => e.stopPropagation());
@@ -1195,6 +1547,8 @@ function bindWindowActions() {
       }
       else if (action === "picker-open") openPicker();
       else if (action === "picker-back" && pickerOpen) closePicker();
+      else if (action === "settings-open") openSettings();
+      else if (action === "settings-back" && settingsOpen) closeSettings();
       else if (action === "close") void getCurrentWindow().close();
     });
   });
@@ -1393,6 +1747,57 @@ const PICKER_ERROR_TEXT: Record<string, string> = {
   bad_session: "Session no longer resumable",
 };
 
+function normalizeSettings(value: unknown): RoomSettings {
+  if (!value || typeof value !== "object") return {};
+  const input = value as Record<string, unknown>;
+  const next: RoomSettings = {};
+  if (typeof input.default_voice_id === "string" || input.default_voice_id == null) {
+    next.default_voice_id = input.default_voice_id as string | null | undefined;
+  }
+  if (typeof input.playback_mode === "string" || input.playback_mode == null) {
+    next.playback_mode = input.playback_mode as string | null | undefined;
+  }
+  if (typeof input.mood === "string" || input.mood == null) {
+    next.mood = input.mood as string | null | undefined;
+  }
+  if (typeof input.speed === "number" || input.speed == null) {
+    next.speed = input.speed as number | null | undefined;
+  }
+  if (typeof input.notifications === "boolean" || input.notifications == null) {
+    next.notifications = input.notifications as boolean | null | undefined;
+  }
+  if (typeof input.listening === "boolean" || input.listening == null) {
+    next.listening = input.listening as boolean | null | undefined;
+  }
+  if (typeof input.dynamic_acks === "string" || input.dynamic_acks == null) {
+    next.dynamic_acks = input.dynamic_acks as string | null | undefined;
+  }
+  return next;
+}
+
+function normalizeVoices(value: unknown): VoiceOption[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((voice) => {
+    if (!voice || typeof voice !== "object") return [];
+    const input = voice as Record<string, unknown>;
+    const id = typeof input.id === "string"
+      ? input.id
+      : typeof input.voice_id === "string"
+        ? input.voice_id
+        : "";
+    if (!id) return [];
+    const name = typeof input.name === "string"
+      ? input.name
+      : typeof input.label === "string"
+        ? input.label
+        : id;
+    const character = typeof input.character === "string" || input.character == null
+      ? input.character as string | null | undefined
+      : undefined;
+    return [{ id, name, character }];
+  });
+}
+
 function handleMessage(raw: string) {
   let msg: {
     type: string;
@@ -1409,6 +1814,8 @@ function handleMessage(raw: string) {
     characters?: string[];
     idx?: number | string;
     sections?: ShortcutSection[];
+    settings?: unknown;
+    voices?: unknown;
   };
   try {
     msg = JSON.parse(raw);
@@ -1458,7 +1865,22 @@ function handleMessage(raw: string) {
     buttonCharacters = Array.isArray(msg.characters) ? msg.characters.filter((v): v is string => typeof v === "string") : [];
     buttonsLoaded = true;
     buttonsWritable = true;
-    if (pickerOpen && pickerTab === "buttons") render();
+    if (settingsOpen && settingsTab === "buttons") render();
+    return;
+  }
+
+  if (msg.type === "settings" || msg.type === "get_settings") {
+    settings = normalizeSettings(msg.settings ?? msg);
+    settingsLoaded = true;
+    settingsWritable = true;
+    if (settingsOpen && settingsTab === "general") render();
+    return;
+  }
+
+  if (msg.type === "voices" || msg.type === "list_voices") {
+    settingsVoices = normalizeVoices(msg.voices);
+    voicesLoaded = true;
+    if (settingsOpen && settingsTab === "general") render();
     return;
   }
 
@@ -1478,7 +1900,7 @@ function handleMessage(raw: string) {
       }));
     shortcutsLoaded = true;
     shortcutsAvailable = true;
-    if (pickerOpen && pickerTab === "help") render();
+    if (settingsOpen && settingsTab === "help") render();
     return;
   }
 
@@ -1500,12 +1922,17 @@ function handleMessage(raw: string) {
   }
 
   if (msg.type === "error" && msg.code && ["unknown_command", "unsupported", "not_implemented"].includes(msg.code)) {
-    if (pickerTab === "buttons") {
+    if (settingsOpen && settingsTab === "general") {
+      settingsWritable = false;
+      settingsLoaded = true;
+      voicesLoaded = true;
+      render();
+    } else if (settingsOpen && settingsTab === "buttons") {
       buttonsWritable = false;
       buttonsLoaded = true;
       cancelLearnCapture();
       render();
-    } else if (pickerTab === "help") {
+    } else if (settingsOpen && settingsTab === "help") {
       shortcutsAvailable = false;
       shortcutsLoaded = true;
       render();
