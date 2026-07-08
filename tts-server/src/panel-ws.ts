@@ -1,7 +1,8 @@
 import { createServer, type Server } from "http";
 import { randomBytes } from "crypto";
-import { chmodSync, existsSync, unlinkSync, writeFileSync } from "fs";
-import { join } from "path";
+import { chmodSync, existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { WebSocketServer, WebSocket } from "ws";
 import { loadConfig, TTS_DIR } from "./config.js";
@@ -9,6 +10,10 @@ import { buildSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
 import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
 import { runStatusSay } from "./status-say.js";
+import { knownDirs, isResumableSession, listResumable } from "./session-catalog.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CHARACTERS_PATH = join(__dirname, "characters.json");
 
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
@@ -22,7 +27,11 @@ export type PanelMessage =
   | { type: "status_say"; sessionId: string }
   | { type: "replay" }
   | { type: "stop" }
-  | { type: "pause" };
+  | { type: "pause" }
+  | { type: "list_resumable" }
+  | { type: "known_dirs" }
+  | { type: "spawn_session"; dir: string; persona: string }
+  | { type: "resume_session"; sessionId: string; dir: string; persona: string };
 
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;
@@ -95,8 +104,39 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
     case "replay":
     case "stop":
     case "pause":
+    case "list_resumable":
+    case "known_dirs":
       if (keys.length !== 1) return "bad_message";
       return { type: msg.type };
+    case "spawn_session":
+      if (
+        keys.length !== 3 ||
+        typeof msg.dir !== "string" ||
+        !msg.dir.trim() ||
+        typeof msg.persona !== "string" ||
+        !msg.persona.trim()
+      ) {
+        return "bad_message";
+      }
+      return { type: "spawn_session", dir: msg.dir, persona: msg.persona };
+    case "resume_session":
+      if (
+        keys.length !== 4 ||
+        typeof msg.sessionId !== "string" ||
+        !msg.sessionId.trim() ||
+        typeof msg.dir !== "string" ||
+        !msg.dir.trim() ||
+        typeof msg.persona !== "string" ||
+        !msg.persona.trim()
+      ) {
+        return "bad_message";
+      }
+      return {
+        type: "resume_session",
+        sessionId: msg.sessionId,
+        dir: msg.dir,
+        persona: msg.persona,
+      };
     default:
       return "bad_message";
   }
@@ -122,12 +162,50 @@ function broadcastSnapshot(): void {
 
 function sendError(
   ws: WebSocket,
-  code: "bad_message" | "stale_session" | "not_team",
+  code:
+    | "bad_message"
+    | "stale_session"
+    | "not_team"
+    | "bad_dir"
+    | "bad_persona"
+    | "bad_session",
   sessionId?: string
 ): void {
   const err: Record<string, string> = { type: "error", code };
   if (sessionId) err.sessionId = sessionId;
   ws.send(JSON.stringify(err));
+}
+
+function isKnownPersona(persona: string): boolean {
+  if (!existsSync(CHARACTERS_PATH)) return false;
+  try {
+    const chars = JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
+      string,
+      { name?: string }
+    >;
+    const lower = persona.toLowerCase();
+    for (const entry of Object.values(chars)) {
+      if (entry?.name?.toLowerCase() === lower) return true;
+    }
+  } catch {
+    /* invalid characters.json */
+  }
+  return false;
+}
+
+function isValidDir(dir: string): boolean {
+  try {
+    return existsSync(dir) && statSync(dir).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function spawnTeam(persona: string, dir: string, resumeSessionId?: string): void {
+  const args = resumeSessionId
+    ? [persona, dir, "--resume", resumeSessionId]
+    : [persona, dir];
+  runScript("team.sh", args);
 }
 
 function focusTerminal(sessionId: string): void {
@@ -197,6 +275,46 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   const msg = validatePanelMessage(raw);
   if (msg === "bad_message") {
     sendError(ws, "bad_message");
+    return;
+  }
+
+  if (msg.type === "list_resumable") {
+    ws.send(JSON.stringify({ type: "resumable", sessions: listResumable() }));
+    return;
+  }
+
+  if (msg.type === "known_dirs") {
+    ws.send(JSON.stringify({ type: "known_dirs", dirs: knownDirs() }));
+    return;
+  }
+
+  if (msg.type === "spawn_session") {
+    if (!isValidDir(msg.dir)) {
+      sendError(ws, "bad_dir");
+      return;
+    }
+    if (!isKnownPersona(msg.persona)) {
+      sendError(ws, "bad_persona");
+      return;
+    }
+    spawnTeam(msg.persona, msg.dir);
+    return;
+  }
+
+  if (msg.type === "resume_session") {
+    if (!isValidDir(msg.dir)) {
+      sendError(ws, "bad_dir");
+      return;
+    }
+    if (!isKnownPersona(msg.persona)) {
+      sendError(ws, "bad_persona");
+      return;
+    }
+    if (!isResumableSession(msg.sessionId)) {
+      sendError(ws, "bad_session", msg.sessionId);
+      return;
+    }
+    spawnTeam(msg.persona, msg.dir, msg.sessionId);
     return;
   }
 
