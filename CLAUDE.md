@@ -43,6 +43,7 @@ Rankings, higher = better. Cost reflects what we actually pay (subscriptions wit
 | model        | cost | intelligence | taste | reachable via                    |
 | ------------ | ---- | ------------ | ----- | -------------------------------- |
 | composer-2.5 | 8    | 5            | 5     | cursor-agent CLI (`agent`)       |
+| grok-4.5     | 8    | 6            | 6     | cursor-agent CLI (`--model grok-4.5-fast-xhigh`; everyday tier `-fast-high`) |
 | gpt-5.x      | 8    | 7            | 5     | codex CLI (`codex`)              |
 | sonnet-5     | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'` |
 | opus-4.8     | 4    | 7            | 8     | Agent/Workflow `model: 'opus'`   |
@@ -52,7 +53,7 @@ How to apply:
 
 - These are defaults, not limits. You have standing permission to override them: if a cheaper model's output doesn't meet the bar, rerun or redo the work with a smarter model without asking. Judge the output, not the price tag. Escalating costs less than shipping mediocre work.
 - Cost is a tie-breaker only; when axes conflict for anything that ships, intelligence > taste > cost.
-- Bulk/mechanical work (clear-spec implementation, formatting sweeps, migrations, batch refactors): composer-2.5 via cursor-agent — it's effectively free and runs in an isolated worktree while you keep working.
+- Bulk/mechanical work (clear-spec implementation, formatting sweeps, migrations, batch refactors): composer-2.5 or grok-4.5 via cursor-agent (grok audition 2026-07-08: passed a 9-file cross-module task with distinction — modifier-path suppression, circular-import defense, unprompted deterministic tie-breaking; prefer grok for trickier multi-file work, composer for pure mechanical) — it's effectively free and runs in an isolated worktree while you keep working.
 - Anything user-facing (SwiftBar menu labels, spoken-text prompts, character copy) needs taste ≥ 7: sonnet-5 minimum, opus-4.8/fable-5 preferred. The Gemini system prompts in `gemini.ts` and `dynamic-response.ts` directly shape what gets spoken — treat prompt edits as user-facing work.
 - Reviews of plans/implementations: fable-5 or opus-4.8, optionally composer-2.5 or gpt-5.x as an extra independent perspective (see the `codex-review` skill).
 - Never use Haiku. For trivial work (classification, log filtering, glue, bulk edits), use composer-2.5 or gpt-5.x — they're effectively free and better.
