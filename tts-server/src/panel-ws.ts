@@ -364,7 +364,13 @@ export function buildSettingsValues(): Record<string, unknown> {
 }
 
 export function buildSettingsMessage(): { type: "settings"; values: Record<string, unknown> } {
-  return { type: "settings", values: buildSettingsValues() };
+  const values = buildSettingsValues();
+  // Panel-friendly aliases — the frontend normalizer reads these key names.
+  // Keeping both spellings costs nothing and decouples the two vocabularies.
+  values.speed = values.default_speed;
+  values.notifications = values.notifications_enabled;
+  values.dynamic_acks = values.dynamic_responses;
+  return { type: "settings", values };
 }
 
 function sendSettings(ws: WebSocket): void {
@@ -380,6 +386,8 @@ export function buildListVoicesMessage(): {
     .slice(0, 40)
     .map((v) => ({
       voiceId: v.voice_id,
+      // Alias for the panel's normalizer, which reads id/voice_id.
+      voice_id: v.voice_id,
       name: v.name,
       character: chars[v.voice_id]?.name ?? null,
     }));
@@ -412,6 +420,10 @@ function isKnownVoiceId(voiceId: string): boolean {
 }
 
 function applySetSetting(key: string, value: unknown): boolean {
+  // Panel vocabulary aliases (see buildSettingsMessage).
+  if (key === "notifications") key = "notifications_enabled";
+  if (key === "dynamic_acks") key = "dynamic_responses";
+  if (key === "default_voice_id") key = "default_voice";
   switch (key) {
     case "speed": {
       const n = typeof value === "number" ? value : Number(value);

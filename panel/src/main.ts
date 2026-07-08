@@ -1,4 +1,5 @@
 import "./style.css";
+import { renderMarkdown, stripMarkdown } from "./markdown";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -105,6 +106,7 @@ const DOCK_MIN_SIZE = new LogicalSize(88, 56);
 const DOCK_AVATAR_STEP = 44;
 const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
+const DOCK_EXPANDED_WIDTH = 520;
 const DOCK_COMPACT_HEIGHT = 126;
 const DOCK_EXPANDED_HEIGHT = 218;
 const DOCK_BOTTOM_GAP = 12;
@@ -375,7 +377,10 @@ function escapeHtml(s: string): string {
 }
 
 function dockWidth(): number {
-  return Math.max(agents.length, 1) * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
+  const compactWidth = Math.max(agents.length, 1) * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
+  return dockSummaryExpanded && dockCaptions && nowPlaying
+    ? Math.max(compactWidth, DOCK_EXPANDED_WIDTH)
+    : compactWidth;
 }
 
 function dockHeight(): number {
@@ -479,7 +484,10 @@ function renderDockCaption(): string {
   if (!dockCaptions || !nowPlaying?.text) return "";
   const agent = agents.find((a) => a.sessionId === nowPlaying?.sessionId);
   const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
-  const summary = escapeHtml((nowPlaying.rawText?.trim() || nowPlaying.text).trim());
+  const rawSummary = (nowPlaying.rawText?.trim() || nowPlaying.text).trim();
+  const summary = dockSummaryExpanded
+    ? renderMarkdown(rawSummary)
+    : escapeHtml(stripMarkdown(rawSummary));
   const expandedClass = dockSummaryExpanded ? " expanded" : "";
   const endedClass = nowPlaying.endedAt ? " ended" : "";
   return `
