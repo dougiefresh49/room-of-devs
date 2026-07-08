@@ -119,6 +119,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const { loadEnv } = await import("./config.js");
   loadEnv();
   const config = loadConfig();
+
+  // `play <voiceId> <kind>` — playback only (no generation, no credits).
+  // announce.sh shells to this to sound a cached chime as room-level meta audio.
+  if (process.argv[2] === "play") {
+    const voiceId = process.argv[3] || config.elevenlabs_voice_id;
+    const kind = (process.argv[4] as PhraseKind) || "announce";
+    if (!voiceId || !PHRASE_KINDS.includes(kind)) {
+      console.error("Usage: tsx src/phrases.ts play <voiceId> <ack|announce|question>");
+      process.exit(1);
+    }
+    const played = await playRandomPhrase(voiceId, kind, "meta");
+    process.exit(played ? 0 : 1);
+  }
+
   const voiceId = process.argv[2] || config.elevenlabs_voice_id;
   const kind = (process.argv[3] as PhraseKind) || "ack";
   if (!voiceId) {

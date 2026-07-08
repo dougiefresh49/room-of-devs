@@ -1,8 +1,8 @@
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
-import { loadConfig } from "./config.js";
+import { loadConfig, effectivePlaybackMode, QUEUE_DIR } from "./config.js";
 import { streamTTS } from "./elevenlabs.js";
 import {
   playStreamBuffer,
@@ -13,6 +13,7 @@ import {
   type PlaybackContext,
 } from "./audio.js";
 import { playRandomPhrase } from "./phrases.js";
+import { setSessionState } from "./state.js";
 import { log } from "./logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -166,6 +167,36 @@ function truncateQuestion(text: string): string {
   return sentenceEnd >= 0 ? firstLine.slice(0, sentenceEnd + 1) : firstLine;
 }
 
+// Write an ask-user question into the queue with the same shape ingest uses
+// (`-cc-<shortSession>.json`, source "ask-user") so grant_floor / the daemon
+// read and synthesize it through the normal on-grant path — no second code path.
+function enqueueQuestionFile(
+  sessionId: string,
+  sessionName: string | undefined,
+  text: string
+): void {
+  try {
+    const now = Date.now();
+    const epoch = Math.floor(now / 1000);
+    const ms = String(now % 1000).padStart(3, "0");
+    const filename = `${epoch}-${ms}-cc-${sessionId.slice(0, 12)}.json`;
+    const data = {
+      text,
+      conversation_id: sessionId,
+      generation_id: "",
+      model: "claude-code",
+      timestamp: String(epoch),
+      thread_title: sessionName ?? "Claude Code",
+      spoken: false,
+      source: "ask-user",
+    };
+    writeFileSync(join(QUEUE_DIR, filename), JSON.stringify(data, null, 2));
+    log("dynamic", `Ask-user queued for grant: ${filename}`);
+  } catch (err: any) {
+    log("dynamic", `enqueueQuestionFile failed: ${err.message}`);
+  }
+}
+
 export async function handleAskUser(
   voiceId: string,
   questionText: string,
@@ -176,6 +207,20 @@ export async function handleAskUser(
 
   // Ask-user readouts are session-bound (§2) — attribute to the asking session.
   const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
+  // Announce mode etiquette (§3): questions are the exact uninvited audio (and
+  // credit spend) this mode exists to prevent. Don't synthesize — queue the
+  // question for the normal on-grant path, raise the hand, and sound the cached
+  // "I've got a question" chime. Granting the floor reads it. Auto mode below
+  // keeps today's immediate readout unchanged.
+  if (effectivePlaybackMode() === "announce") {
+    if (sessionId) {
+      enqueueQuestionFile(sessionId, sessionName, questionText);
+      setSessionState(sessionId, "hand_raised");
+    }
+    log("dynamic", "Announce mode — question chimed, hand raised, no synthesis");
+    return await playRandomPhrase(voiceId, "question", ctx);
+  }
 
   // Question readouts carry real content — wait for the lock rather than skip.
   await waitForLock();

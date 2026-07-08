@@ -26,6 +26,7 @@ import {
   type PlaybackContext,
 } from "./audio.js";
 import { seedStateOnStartup } from "./state.js";
+import { maybeFireDeferredAnnounce } from "./announce.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -243,6 +244,9 @@ async function drainQueue(): Promise<void> {
     }
   }
   processing = false;
+  // Floor is settling and the drain is empty — fire any deferred announce
+  // (validates hands against live state; no-op if the lock is still held).
+  maybeFireDeferredAnnounce();
 }
 
 const command = process.argv[2];
@@ -260,6 +264,9 @@ if (command === "once") {
     process.exit(1);
   }
   await processQueueFile(file);
+  // Grant / manual play settled — same deferred-announce check as the daemon
+  // drain, so a hand that deferred while this item played gets its nudge.
+  maybeFireDeferredAnnounce();
   process.exit(0);
 }
 
