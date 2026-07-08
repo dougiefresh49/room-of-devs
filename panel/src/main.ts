@@ -27,12 +27,9 @@ interface AgentView {
 interface NowPlaying {
   sessionId: string;
   text: string;
-  // ISO string from the server; parsed to epoch ms for karaoke highlighting.
+  rawText?: string;
+  endedAt?: string | number;
   startedAt: string | number;
-  approxCharsPerSec: number;
-  playbackRate?: number;
-  // [word, startMs] tuples when the server streamed with ElevenLabs timestamps.
-  alignment?: [string, number][];
 }
 
 interface WsConfig {
@@ -108,7 +105,8 @@ const DOCK_MIN_SIZE = new LogicalSize(88, 56);
 const DOCK_AVATAR_STEP = 44;
 const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
-const DOCK_HEIGHT = 126;
+const DOCK_COMPACT_HEIGHT = 126;
+const DOCK_EXPANDED_HEIGHT = 218;
 const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
 const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
@@ -128,8 +126,8 @@ let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 let roomHeld = false;
 let nowPlaying: NowPlaying | null = null;
-let captionTimer: ReturnType<typeof setInterval> | null = null;
 let dockCaptions = localStorage.getItem(CAPTIONS_STORAGE_KEY) === "1";
+let dockSummaryExpanded = false;
 let swapOpenSessionId: string | null = null;
 let renamingSessionId: string | null = null;
 
@@ -380,6 +378,10 @@ function dockWidth(): number {
   return Math.max(agents.length, 1) * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
 }
 
+function dockHeight(): number {
+  return dockSummaryExpanded && dockCaptions && nowPlaying ? DOCK_EXPANDED_HEIGHT : DOCK_COMPACT_HEIGHT;
+}
+
 function shellHtml(content: string): string {
   return `<div class="shell">${content}</div>`;
 }
@@ -393,8 +395,9 @@ async function enterDockMode() {
     }
 
     const width = dockWidth();
+    const height = dockHeight();
     await win.setMinSize(DOCK_MIN_SIZE);
-    await win.setSize(new LogicalSize(width, DOCK_HEIGHT));
+    await win.setSize(new LogicalSize(width, height));
 
     const monitor = await currentMonitor();
     if (monitor) {
@@ -406,7 +409,7 @@ async function enterDockMode() {
       await win.setPosition(
         new LogicalPosition(
           Math.round(monitorX + (monitorWidth - width) / 2),
-          Math.round(monitorY + monitorHeight - DOCK_HEIGHT - DOCK_BOTTOM_GAP),
+          Math.round(monitorY + monitorHeight - height - DOCK_BOTTOM_GAP),
         ),
       );
     }
@@ -466,112 +469,36 @@ function renderDock() {
 
   bindHoverActions();
   bindWindowActions();
+  bindDockSummaryActions();
   bindGrantTargets();
   bindAvatars();
   bindDrag();
-  startCaptionSync();
 }
 
 function renderDockCaption(): string {
   if (!dockCaptions || !nowPlaying?.text) return "";
   const agent = agents.find((a) => a.sessionId === nowPlaying?.sessionId);
   const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
-  const align = nowPlaying.alignment;
-
-  // Karaoke mode: render each word as a span the sync loop can highlight.
-  if (align && align.length) {
-    const words = align
-      .map(
-        ([word], i) =>
-          `<span class="dock-caption-word" data-caption-word="${i}">${escapeHtml(word)}</span>`
-      )
-      .join(" ");
-    return `
-      <div class="dock-caption dock-caption-karaoke no-drag">
-        <span class="dock-caption-name">${name}</span>
-        <span class="dock-caption-track" data-caption-track>
-          <span class="dock-caption-words" data-caption-words>${words}</span>
-        </span>
-      </div>`;
-  }
-
-  // Fallback: time-paced marquee when no alignment is available.
-  const text = escapeHtml(nowPlaying.text);
-  const cps = Number.isFinite(nowPlaying.approxCharsPerSec) && nowPlaying.approxCharsPerSec > 0
-    ? nowPlaying.approxCharsPerSec
-    : 14;
-  const duration = Math.max(1.2, nowPlaying.text.length / cps);
-  const key = `${nowPlaying.sessionId}-${nowPlaying.startedAt}-${nowPlaying.text.length}`;
+  const summary = escapeHtml((nowPlaying.rawText?.trim() || nowPlaying.text).trim());
+  const expandedClass = dockSummaryExpanded ? " expanded" : "";
+  const endedClass = nowPlaying.endedAt ? " ended" : "";
   return `
-    <div class="dock-caption no-drag" data-caption-key="${escapeHtml(key)}">
+    <button
+      type="button"
+      class="dock-caption no-drag${expandedClass}${endedClass}"
+      data-summary-action="toggle"
+      aria-expanded="${dockSummaryExpanded}"
+      title="${dockSummaryExpanded ? "Collapse summary" : "Expand summary"}"
+    >
       <span class="dock-caption-name">${name}</span>
-      <span class="dock-caption-track">
-        <span class="dock-caption-text" style="--caption-duration: ${duration.toFixed(2)}s">${text}</span>
+      ${dockSummaryExpanded ? `<span class="dock-caption-close" data-summary-action="collapse" aria-hidden="true">${icons.close}</span>` : ""}
+      <span class="dock-caption-summary">
+        ${summary}
       </span>
-    </div>`;
-}
-
-function startedAtMs(np: NowPlaying): number {
-  if (typeof np.startedAt === "number") return np.startedAt;
-  const parsed = Date.parse(np.startedAt);
-  return Number.isNaN(parsed) ? Date.now() : parsed;
-}
-
-function stopCaptionSync() {
-  if (captionTimer) {
-    clearInterval(captionTimer);
-    captionTimer = null;
-  }
-}
-
-// Drive word-by-word highlighting from wall-clock elapsed vs. each word's
-// startMs, and keep the active word scrolled to center. No-op unless the dock
-// caption is showing an aligned track.
-function startCaptionSync() {
-  stopCaptionSync();
-  const np = nowPlaying;
-  if (!dockMode || !dockCaptions || !np?.alignment?.length) return;
-  const wordsEl = app.querySelector<HTMLElement>("[data-caption-words]");
-  const trackEl = app.querySelector<HTMLElement>("[data-caption-track]");
-  if (!wordsEl || !trackEl) return;
-
-  const align = np.alignment;
-  const started = startedAtMs(np);
-  const spans = Array.from(
-    wordsEl.querySelectorAll<HTMLElement>(".dock-caption-word")
-  );
-  let lastActive = -2;
-
-  const tick = () => {
-    const rate = Number.isFinite(np.playbackRate) && (np.playbackRate ?? 0) > 0 ? np.playbackRate ?? 1 : 1;
-    const elapsed = (Date.now() - started) * rate;
-    let active = -1;
-    for (let i = 0; i < align.length; i++) {
-      if (elapsed >= align[i][1]) active = i;
-      else break;
-    }
-    if (active === lastActive) return;
-    lastActive = active;
-    spans.forEach((s, i) => s.classList.toggle("active", i === active));
-    const el = spans[active];
-    if (el) {
-      const offset = Math.max(
-        0,
-        el.offsetTop + el.offsetHeight / 2 - trackEl.clientHeight / 2
-      );
-      trackEl.scrollTo({ top: offset, behavior: "smooth" });
-    }
-  };
-
-  tick();
-  captionTimer = setInterval(tick, 100);
+    </button>`;
 }
 
 function render() {
-  // The caption sync is restarted by renderDock() when applicable; clear it on
-  // every render so it never runs against stale DOM after a re-render.
-  stopCaptionSync();
-
   if (dockMode) {
     renderDock();
     return;
@@ -1542,14 +1469,33 @@ function bindWindowActions() {
       else if (action === "dock-off") void setDockMode(false);
       else if (action === "captions-toggle") {
         dockCaptions = !dockCaptions;
+        if (!dockCaptions) dockSummaryExpanded = false;
         localStorage.setItem(CAPTIONS_STORAGE_KEY, dockCaptions ? "1" : "0");
         render();
+        if (dockMode) void enterDockMode();
       }
       else if (action === "picker-open") openPicker();
       else if (action === "picker-back" && pickerOpen) closePicker();
       else if (action === "settings-open") openSettings();
       else if (action === "settings-back" && settingsOpen) closeSettings();
       else if (action === "close") void getCurrentWindow().close();
+    });
+  });
+}
+
+function bindDockSummaryActions() {
+  app.querySelectorAll<HTMLElement>("[data-summary-action]").forEach((target) => {
+    target.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+    });
+    target.addEventListener("mousedown", (e) => e.stopPropagation());
+    target.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const action = target.dataset.summaryAction;
+      dockSummaryExpanded = action === "collapse" ? false : !dockSummaryExpanded;
+      render();
+      void enterDockMode();
     });
   });
 }
@@ -1815,6 +1761,7 @@ function handleMessage(raw: string) {
     idx?: number | string;
     sections?: ShortcutSection[];
     settings?: unknown;
+    values?: unknown;
     voices?: unknown;
   };
   try {

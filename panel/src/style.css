@@ -540,7 +540,7 @@ button,
   justify-content: center;
   width: 100%;
   height: 100vh;
-  padding: 38px 6px 4px;
+  padding: 40px 6px 4px;
 }
 
 .dock-pill {
@@ -596,10 +596,10 @@ button,
   flex-direction: column;
   align-items: stretch;
   width: min(380px, calc(100vw - 20px));
-  height: 58px;
+  min-height: 58px;
   min-width: 0;
   gap: 4px;
-  padding: 7px 10px 8px;
+  padding: 8px 11px 9px;
   overflow: hidden;
   border: 1px solid rgba(178, 194, 216, 0.2);
   border-radius: 12px;
@@ -609,7 +609,20 @@ button,
   box-shadow:
     0 14px 34px rgba(0, 0, 0, 0.46),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   transform: translateX(-50%);
+}
+
+.dock-caption.ended {
+  opacity: 0.72;
+}
+
+.dock-caption.expanded {
+  max-height: 150px;
+  padding-right: 28px;
 }
 
 .dock-caption-name {
@@ -624,40 +637,44 @@ button,
   white-space: nowrap;
 }
 
-.dock-caption-track {
+.dock-caption-summary {
+  display: -webkit-box;
   min-width: 0;
-  flex: 1;
   overflow: hidden;
-  scroll-behavior: smooth;
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.dock-caption-text {
-  display: inline-block;
-  min-width: 100%;
-  padding-left: 100%;
-  animation: caption-scroll var(--caption-duration, 8s) linear both;
-  white-space: nowrap;
-}
-
-/* Karaoke: wrapped word run, scroll-positioned to keep the active word in two visible rows. */
-.dock-caption-words {
+.dock-caption.expanded .dock-caption-summary {
   display: block;
-  white-space: normal;
+  max-height: 118px;
+  overflow-y: auto;
+  padding-right: 2px;
+  -webkit-line-clamp: unset;
 }
 
-.dock-caption-word {
-  color: color-mix(in srgb, var(--text) 46%, transparent);
-  transition: color 0.1s linear;
+.dock-caption-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid rgba(178, 194, 216, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
 }
 
-.dock-caption-word.active {
-  color: #d5e8ff;
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(102, 169, 255, 0.55);
+.dock-caption-close svg {
+  width: 11px;
+  height: 11px;
 }
 
 .dock-avatars {
@@ -1679,16 +1696,6 @@ button,
       0 0 0 1px rgba(255, 255, 255, 0.08),
       0 0 18px color-mix(in srgb, var(--state) 54%, transparent);
     transform: scale(1.06);
-  }
-}
-
-@keyframes caption-scroll {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-100%);
   }
 }
 
