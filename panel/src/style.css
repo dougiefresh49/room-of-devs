@@ -36,25 +36,16 @@ body {
   user-select: none;
 }
 
-/* The window is transparent; only body paints the surface, so dock mode can
-   strip it (body.dock-window) and leave nothing but the floating pill. */
 html {
   background: transparent;
 }
 
 body {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34px),
-    radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px),
-    var(--bg);
+  background: transparent;
 }
 
 body {
   -webkit-app-region: drag;
-}
-
-body.dock-window {
-  background: transparent;
 }
 
 #app {
@@ -62,8 +53,27 @@ body.dock-window {
   flex-direction: column;
   height: 100vh;
   min-width: 0;
-  padding: 8px;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(178, 194, 216, 0.14);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34px),
+    radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px),
+    var(--bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+body.dock-window {
+  background: transparent;
 }
 
 .drag-region {
@@ -287,6 +297,22 @@ button,
   text-decoration: line-through;
 }
 
+.name-input {
+  width: 100%;
+  height: 18px;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--state) 58%, var(--border-strong));
+  border-radius: 5px;
+  background: rgba(13, 16, 21, 0.82);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  outline: 0;
+  padding: 1px 5px;
+}
+
 .badge {
   display: flex;
   align-items: center;
@@ -373,7 +399,7 @@ button,
 
 .card-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
   margin-top: 8px;
   opacity: 0.56;
@@ -476,6 +502,17 @@ button,
   border-color: rgba(238, 243, 247, 0.32);
 }
 
+.controls .hold-control.active {
+  border-color: color-mix(in srgb, var(--blue) 72%, var(--border-strong));
+  background:
+    linear-gradient(180deg, rgba(102, 169, 255, 0.22), rgba(102, 169, 255, 0.08)),
+    #172336;
+  color: #cfe4ff;
+  box-shadow:
+    0 0 14px rgba(102, 169, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .card.state-speaking {
   border-color: rgba(73, 217, 154, 0.74);
   box-shadow:
@@ -497,6 +534,7 @@ button,
 }
 
 .dock-shell {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -506,6 +544,7 @@ button,
 }
 
 .dock-pill {
+  position: relative;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -522,6 +561,85 @@ button,
     0 14px 34px rgba(0, 0, 0, 0.46),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.34);
+}
+
+.dock-caption-toggle {
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  z-index: 4;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
+
+.dock-caption-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+.dock-caption-toggle.active {
+  border-color: color-mix(in srgb, var(--blue) 70%, var(--border-strong));
+  background:
+    linear-gradient(180deg, rgba(102, 169, 255, 0.2), rgba(102, 169, 255, 0.055)),
+    #172336;
+  color: #d5e8ff;
+}
+
+.dock-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 66px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  width: min(340px, calc(100vw - 20px));
+  height: 34px;
+  min-width: 0;
+  gap: 8px;
+  padding: 7px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(178, 194, 216, 0.2);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(18, 23, 32, 0.97);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateX(-50%);
+}
+
+.dock-caption-name {
+  flex: 0 0 auto;
+  max-width: 86px;
+  overflow: hidden;
+  color: #cfe4ff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-caption-track {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 16px), transparent 100%);
+}
+
+.dock-caption-text {
+  display: inline-block;
+  min-width: 100%;
+  padding-left: 100%;
+  animation: caption-scroll var(--caption-duration, 8s) linear both;
 }
 
 .dock-avatars {
@@ -857,35 +975,60 @@ button,
 
 .persona-chips {
   display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 3px;
-  max-width: 158px;
+  flex: 0 0 144px;
+  justify-content: flex-start;
+  gap: 6px;
+  max-width: 144px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1px 1px 3px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.persona-chips:hover {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 155, 169, 0.38) transparent;
+}
+
+.persona-chips::-webkit-scrollbar {
+  height: 0;
+}
+
+.persona-chips:hover::-webkit-scrollbar {
+  height: 4px;
+}
+
+.persona-chips::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(144, 155, 169, 0.32);
 }
 
 .persona-chip {
   display: inline-flex;
   align-items: center;
+  flex-direction: column;
+  flex: 0 0 36px;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 46px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
-    var(--surface-strong);
+  gap: 2px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
   cursor: pointer;
+  scroll-snap-align: start;
   transition:
-    border-color 130ms ease,
+    color 130ms ease,
     transform 120ms ease,
-    box-shadow 130ms ease;
+    opacity 130ms ease;
 }
 
 .persona-chip:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.34);
+  color: var(--text);
   transform: translateY(-1px);
 }
 
@@ -895,18 +1038,91 @@ button,
 
 .persona-chip-av {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)),
+    var(--surface-strong);
 }
 
 .persona-chip-img {
-  width: 16px;
-  height: 16px;
+  width: 34px;
+  height: 34px;
 }
 
 .persona-chip-fallback {
-  width: 16px;
-  height: 16px;
+  width: 34px;
+  height: 34px;
+  font-size: 8px;
+}
+
+.persona-chip-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swap-popover {
+  position: absolute;
+  right: 7px;
+  bottom: 38px;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: repeat(4, 34px);
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(178, 194, 216, 0.22);
+  border-radius: 8px;
+  background: rgba(18, 23, 32, 0.98);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.swap-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 34px;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.swap-chip:hover {
+  color: var(--text);
+}
+
+.swap-chip-av {
+  width: 28px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-strong);
+}
+
+.swap-chip-img,
+.swap-chip-fallback {
+  width: 26px;
+  height: 26px;
+}
+
+.swap-chip-fallback {
   font-size: 8px;
 }
 
@@ -1001,6 +1217,16 @@ button,
       0 0 0 1px rgba(255, 255, 255, 0.08),
       0 0 18px color-mix(in srgb, var(--state) 54%, transparent);
     transform: scale(1.06);
+  }
+}
+
+@keyframes caption-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
   }
 }
 

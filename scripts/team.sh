@@ -72,6 +72,8 @@ else
     tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude
 fi
 
+tmux set-option -t "$TMUX_NAME" mouse on 2>/dev/null || true
+
 SESSION_ID=""
 # 90 attempts (~90s): fresh claude sessions can sit on first-run dialogs
 # before registering their session file. At ~15s, nudge once with Enter —

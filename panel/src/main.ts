@@ -24,6 +24,13 @@ interface AgentView {
   isTeam: boolean;
 }
 
+interface NowPlaying {
+  sessionId: string;
+  text: string;
+  startedAt: number;
+  approxCharsPerSec: number;
+}
+
 interface WsConfig {
   token: string;
   port: number;
@@ -62,10 +69,11 @@ const KILL_ARM_MS = 2000;
 const FULL_MIN_SIZE = new LogicalSize(300, 240);
 const DOCK_MIN_SIZE = new LogicalSize(88, 56);
 const DOCK_AVATAR_STEP = 44;
-const DOCK_PADDING = 28;
+const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
-const DOCK_HEIGHT = 96;
+const DOCK_HEIGHT = 126;
 const DOCK_BOTTOM_GAP = 12;
+const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let ws: WebSocket | null = null;
@@ -76,6 +84,11 @@ const killArmed = new Map<string, ReturnType<typeof setTimeout>>();
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
+let roomHeld = false;
+let nowPlaying: NowPlaying | null = null;
+let dockCaptions = localStorage.getItem(CAPTIONS_STORAGE_KEY) === "1";
+let swapOpenSessionId: string | null = null;
+let renamingSessionId: string | null = null;
 
 let pickerOpen = false;
 let pickerTab: PickerTab = "new";
@@ -97,6 +110,9 @@ const icons = {
   pause: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>`,
   stop: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg>`,
   replay: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8a4 4 0 1 1-3.2 6.4"/><path d="M7 7v5H2"/></svg>`,
+  hold: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 14c2.8.7 5.2.5 7-.6"/><path d="M14 5a6 6 0 1 0 5 9.3 5 5 0 0 1-5-9.3z"/><path d="M8 9v3"/><path d="M11 8v3"/><path d="M14 9v2.5"/></svg>`,
+  swap: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5c2 1.5 6 1.5 8 0"/><path d="M5 7.5c1.7 6 12.3 6 14 0"/><path d="M7 8v4a5 5 0 0 0 10 0V8"/><path d="M9 13h.01M15 13h.01"/><path d="m8 19-3-3 3-3"/><path d="M5 16h6"/></svg>`,
+  cc: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10 10.5a2 2 0 1 0 0 3"/><path d="M16 10.5a2 2 0 1 0 0 3"/></svg>`,
   terminal: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 8 3 3-3 3"/><path d="M12 16h5"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>`,
   power: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M7.05 7.05a7 7 0 1 0 9.9 0"/></svg>`,
   info: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>`,
@@ -133,6 +149,10 @@ function avatarSrc(agent: AgentView): string {
   return `avatars/tmnt/${character}/${variant}.png`;
 }
 
+function personaAvatarSrc(persona: Persona): string {
+  return `avatars/tmnt/${persona.avatar}/idle.png`;
+}
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -149,6 +169,10 @@ function renderCard(agent: AgentView): string {
   const killIsArmed = killArmed.has(agent.sessionId);
   const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
+  const isRenaming = renamingSessionId === agent.sessionId;
+  const nameHtml = isRenaming
+    ? `<input class="name-input no-drag" data-rename-input value="${displayName}" aria-label="Nickname" />`
+    : `<div class="name${mutedClass}" title="${safeName}" data-rename-name>${displayName}</div>`;
   const raisedChip =
     agent.state === "hand_raised"
       ? `<span class="chip raised" title="Hand raised">✋</span>`
@@ -175,7 +199,7 @@ function renderCard(agent: AgentView): string {
           <span class="avatar-fallback">${initials(agent.name)}</span>
         </div>
         <div class="card-body">
-          <div class="name${mutedClass}" title="${safeName}">${displayName}</div>
+          ${nameHtml}
           <div class="badge state-${agent.state}">
             <span class="dot"></span>
             <span class="label">${stateLabels[agent.state]}</span>
@@ -204,9 +228,31 @@ function renderCard(agent: AgentView): string {
           data-hover-action="status"
           title="Speak status"
         >${icons.info}</button>
+        <button
+          type="button"
+          class="icon-btn hover-btn"
+          data-hover-action="swap"
+          title="Swap character"
+        >${icons.swap}</button>
       </div>
+      ${swapOpenSessionId === agent.sessionId ? renderSwapPopover(agent.sessionId) : ""}
     </div>
   `;
+}
+
+function renderSwapPopover(sessionId: string): string {
+  return `
+    <div class="swap-popover no-drag" data-swap-popover data-session="${escapeHtml(sessionId)}">
+      ${PERSONAS.map((p) => `
+        <button type="button" class="swap-chip" data-swap-character="${p.name}" title="${p.label}">
+          <span class="swap-chip-av">
+            <img class="avatar swap-chip-img" src="${personaAvatarSrc(p)}" alt="" />
+            <span class="avatar-fallback swap-chip-fallback">${p.label[0]}</span>
+          </span>
+          <span>${p.label}</span>
+        </button>
+      `).join("")}
+    </div>`;
 }
 
 function renderDockAgent(agent: AgentView): string {
@@ -271,6 +317,10 @@ function dockWidth(): number {
   return Math.max(agents.length, 1) * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
 }
 
+function shellHtml(content: string): string {
+  return `<div class="shell">${content}</div>`;
+}
+
 async function enterDockMode() {
   const win = getCurrentWindow();
   try {
@@ -332,7 +382,15 @@ function renderDock() {
   app.classList.add("dock-mode");
   app.innerHTML = `
     <main class="dock-shell drag-region${connected ? "" : " disconnected"}" data-tauri-drag-region>
+      ${renderDockCaption()}
       <div class="dock-pill" data-tauri-drag-region>
+        <button
+          type="button"
+          class="icon-btn dock-caption-toggle no-drag${dockCaptions ? " active" : ""}"
+          data-window-action="captions-toggle"
+          title="${dockCaptions ? "Hide captions" : "Show captions"}"
+          aria-pressed="${dockCaptions}"
+        >${icons.cc}</button>
         <div class="dock-avatars">
           ${agents.length ? agents.map(renderDockAgent).join("") : '<span class="dock-empty">No agents</span>'}
         </div>
@@ -350,6 +408,25 @@ function renderDock() {
   bindDrag();
 }
 
+function renderDockCaption(): string {
+  if (!dockCaptions || !nowPlaying?.text) return "";
+  const agent = agents.find((a) => a.sessionId === nowPlaying?.sessionId);
+  const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
+  const text = escapeHtml(nowPlaying.text);
+  const cps = Number.isFinite(nowPlaying.approxCharsPerSec) && nowPlaying.approxCharsPerSec > 0
+    ? nowPlaying.approxCharsPerSec
+    : 14;
+  const duration = Math.max(1.2, nowPlaying.text.length / cps);
+  const key = `${nowPlaying.sessionId}-${nowPlaying.startedAt}-${nowPlaying.text.length}`;
+  return `
+    <div class="dock-caption no-drag" data-caption-key="${escapeHtml(key)}">
+      <span class="dock-caption-name">${name}</span>
+      <span class="dock-caption-track">
+        <span class="dock-caption-text" style="--caption-duration: ${duration.toFixed(2)}s">${text}</span>
+      </span>
+    </div>`;
+}
+
 function render() {
   if (dockMode) {
     renderDock();
@@ -364,7 +441,7 @@ function render() {
   app.classList.remove("dock-mode");
   document.body.classList.remove("dock-window");
   const connClass = connected ? "up" : "down";
-  app.innerHTML = `
+  app.innerHTML = shellHtml(`
     <header class="strip drag-region" data-tauri-drag-region>
       <span class="title" data-tauri-drag-region>Room</span>
       <div class="header-actions no-drag">
@@ -381,12 +458,14 @@ function render() {
       <button type="button" class="icon-btn" data-action="pause" title="Pause / resume playback">${icons.pause}</button>
       <button type="button" class="icon-btn" data-action="stop" title="Stop playback">${icons.stop}</button>
       <button type="button" class="icon-btn" data-action="replay" title="Replay last message (free)">${icons.replay}</button>
+      <button type="button" class="icon-btn hold-control${roomHeld ? " active" : ""}" data-action="hold" title="${roomHeld ? "Release the room" : "Hold the room"}" aria-pressed="${roomHeld}">${icons.hold}</button>
     </footer>
     ${toastHtml()}
-  `;
+  `);
 
   bindCards();
   bindHoverActions();
+  bindRename();
   bindControls();
   bindWindowActions();
   bindAvatars();
@@ -421,9 +500,10 @@ function personaChip(p: Persona): string {
   return `
     <button type="button" class="persona-chip" data-persona="${p.name}" data-label="${p.label}" title="Launch ${p.label}">
       <span class="persona-chip-av">
-        <img class="avatar persona-chip-img" src="avatars/tmnt/${p.avatar}/idle.png" alt="" />
+        <img class="avatar persona-chip-img" src="${personaAvatarSrc(p)}" alt="" />
         <span class="avatar-fallback persona-chip-fallback">${p.label[0]}</span>
       </span>
+      <span class="persona-chip-label">${p.label}</span>
     </button>`;
 }
 
@@ -528,7 +608,7 @@ function renderPicker() {
   const connClass = connected ? "up" : "down";
   const rows = pickerTab === "new" ? renderNewRows() : renderResumeRows();
 
-  app.innerHTML = `
+  app.innerHTML = shellHtml(`
     <header class="strip drag-region" data-tauri-drag-region>
       <div class="strip-left">
         <button type="button" class="icon-btn window-btn no-drag" data-window-action="picker-back" title="Back to room">${icons.back}</button>
@@ -549,7 +629,7 @@ function renderPicker() {
       </div>
     </main>
     ${toastHtml()}
-  `;
+  `);
 
   bindWindowActions();
   bindPickerTabs();
@@ -689,6 +769,11 @@ function bindWindowActions() {
       const action = btn.dataset.windowAction;
       if (action === "dock-on") void setDockMode(true);
       else if (action === "dock-off") void setDockMode(false);
+      else if (action === "captions-toggle") {
+        dockCaptions = !dockCaptions;
+        localStorage.setItem(CAPTIONS_STORAGE_KEY, dockCaptions ? "1" : "0");
+        render();
+      }
       else if (action === "picker-open") openPicker();
       else if (action === "picker-back") closePicker();
       else if (action === "close") void getCurrentWindow().close();
@@ -757,11 +842,13 @@ function bindAvatars() {
 
 function bindControls() {
   app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const action = btn.dataset.action;
       if (action === "pause") send({ type: "pause" });
       else if (action === "stop") send({ type: "stop" });
       else if (action === "replay") send({ type: "replay" });
+      else if (action === "hold") send({ type: "hold_room" });
     });
   });
 }
@@ -802,6 +889,9 @@ function bindHoverActions() {
           armKill(sessionId);
           render();
         }
+      } else if (action === "swap") {
+        swapOpenSessionId = swapOpenSessionId === sessionId ? null : sessionId;
+        render();
       }
     });
   });
@@ -809,6 +899,73 @@ function bindHoverActions() {
 
 function bindCards() {
   bindGrantTargets();
+  app.querySelectorAll<HTMLElement>("[data-swap-popover]").forEach((popover) => {
+    popover.addEventListener("mousedown", (e) => e.stopPropagation());
+    popover.addEventListener("click", (e) => e.stopPropagation());
+  });
+  app.querySelectorAll<HTMLButtonElement>("[data-swap-character]").forEach((btn) => {
+    const sessionEl = btn.closest<HTMLElement>("[data-session]");
+    if (!sessionEl) return;
+    const sessionId = sessionEl.dataset.session!;
+    btn.addEventListener("mousedown", (e) => e.stopPropagation());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const character = btn.dataset.swapCharacter;
+      if (!character) return;
+      send({ type: "set_voice", sessionId, character });
+      swapOpenSessionId = null;
+      render();
+    });
+  });
+}
+
+function bindRename() {
+  app.querySelectorAll<HTMLElement>("[data-rename-name]").forEach((nameEl) => {
+    const sessionEl = nameEl.closest<HTMLElement>("[data-session]");
+    if (!sessionEl) return;
+    nameEl.addEventListener("mousedown", (e) => e.stopPropagation());
+    nameEl.addEventListener("click", (e) => e.stopPropagation());
+    nameEl.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      renamingSessionId = sessionEl.dataset.session!;
+      swapOpenSessionId = null;
+      render();
+      const input = app.querySelector<HTMLInputElement>("[data-rename-input]");
+      input?.focus();
+      input?.select();
+    });
+  });
+
+  const input = app.querySelector<HTMLInputElement>("[data-rename-input]");
+  if (!input) return;
+  const sessionEl = input.closest<HTMLElement>("[data-session]");
+  if (!sessionEl) return;
+  const sessionId = sessionEl.dataset.session!;
+
+  input.addEventListener("mousedown", (e) => e.stopPropagation());
+  input.addEventListener("click", (e) => e.stopPropagation());
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      const label = input.value.trim();
+      send({ type: "set_nickname", sessionId, label });
+      renamingSessionId = null;
+      render();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      renamingSessionId = null;
+      render();
+    }
+  });
+  input.addEventListener("blur", () => {
+    if (renamingSessionId === sessionId) {
+      renamingSessionId = null;
+      render();
+    }
+  });
 }
 
 const PICKER_ERROR_TEXT: Record<string, string> = {
@@ -825,6 +982,8 @@ function handleMessage(raw: string) {
     sessionId?: string;
     dirs?: string[];
     sessions?: ResumableSession[];
+    nowPlaying?: NowPlaying | null;
+    roomHeld?: boolean;
   };
   try {
     msg = JSON.parse(raw);
@@ -834,6 +993,14 @@ function handleMessage(raw: string) {
 
   if (msg.type === "snapshot" && Array.isArray(msg.agents)) {
     agents = msg.agents;
+    roomHeld = typeof msg.roomHeld === "boolean" ? msg.roomHeld : false;
+    nowPlaying = msg.nowPlaying && typeof msg.nowPlaying.text === "string" ? msg.nowPlaying : null;
+    if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
+      swapOpenSessionId = null;
+    }
+    if (renamingSessionId && !agents.some((a) => a.sessionId === renamingSessionId)) {
+      renamingSessionId = null;
+    }
     staleSessions.clear();
     for (const sid of killArmed.keys()) {
       if (!agents.some((a) => a.sessionId === sid)) {

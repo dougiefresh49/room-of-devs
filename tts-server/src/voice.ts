@@ -58,6 +58,7 @@ type Action =
   | { kind: "unmute"; sessionId: string }
   | { kind: "clear"; sessionId: string }
   | { kind: "inject"; target: string; message: string }
+  | { kind: "slash_command"; command: string; target?: string }
   | { kind: "mood"; preset: string }
   | { kind: "hold_room"; minutes?: number }
   | { kind: "release_room" }
@@ -233,6 +234,14 @@ function resolveInjectionTarget(spoken: string): ResolveResult {
   return resolveByName(spoken, candidates);
 }
 
+function resolveDefaultInjectionTarget(): ResolveResult {
+  const map = loadTeamMap();
+  const personas = Object.keys(map).filter((k) => map[k]?.sessionId);
+  if (personas.length === 1) return { ok: personas[0] };
+  if (personas.length > 1) return { ambiguous: personas.map((p) => normalizeToken(p)) };
+  return { none: true };
+}
+
 function speak(text: string): void {
   spawnSync("say", [text], { stdio: "ignore" });
 }
@@ -403,6 +412,15 @@ export function matchGrammar(text: string): Action | null {
   m = text.match(/^(?:tell|talk to|ask|hey)\s+([\w-]+),?\s+(.+)$/);
   if (m) return { kind: "inject", target: m[1].trim(), message: m[2].trim() };
 
+  m = text.match(/^run the ([\w-]+) (?:slash )?command(?: for (.+))?$/);
+  if (m) {
+    return {
+      kind: "slash_command",
+      command: m[1],
+      target: m[2]?.trim() || undefined,
+    };
+  }
+
   return null;
 }
 
@@ -517,6 +535,26 @@ function executeAction(action: Action, dryRun: boolean): number {
         return 0;
       }
       const msg = `Can't reach ${action.target} — not running in the team room.`;
+      if (dryRun) dry("error", [msg]);
+      else speak(msg);
+      return 0;
+    }
+    case "slash_command": {
+      const message = `/${action.command}`;
+      const res = action.target
+        ? resolveInjectionTarget(action.target)
+        : resolveDefaultInjectionTarget();
+      if ("ok" in res && res.ok) {
+        return execInject(res.ok, message, dryRun);
+      }
+      if ("ambiguous" in res && res.ambiguous) {
+        const msg = `Which one? ${res.ambiguous.join(", ")}.`;
+        if (dryRun) dry("error", [msg]);
+        else speak(msg);
+        return 0;
+      }
+      const target = action.target ?? "them";
+      const msg = `Can't reach ${target} — not running in the team room.`;
       if (dryRun) dry("error", [msg]);
       else speak(msg);
       return 0;

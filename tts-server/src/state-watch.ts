@@ -10,6 +10,7 @@ import {
   STATE_DIR,
   QUEUE_DIR,
   PLAYED_DIR,
+  TTS_DIR,
   loadSessionVoices,
   loadMutedSessions,
   loadNicknames,
@@ -17,8 +18,12 @@ import {
 import { getCharacter } from "./dynamic-response.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import type { SessionState } from "./state.js";
+import type { NowPlaying } from "./audio.js";
+import { NOW_PLAYING_PATH } from "./audio.js";
 import { log } from "./logger.js";
 import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
+
+const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 
 export interface AgentView {
   sessionId: string;
@@ -31,6 +36,12 @@ export interface AgentView {
   supersededCount: number;
   muted: boolean;
   isTeam: boolean;
+}
+
+export interface PanelSnapshot {
+  agents: AgentView[];
+  nowPlaying: NowPlaying | null;
+  roomHeld: boolean;
 }
 
 interface StateFile {
@@ -151,6 +162,29 @@ export function buildSnapshot(): AgentView[] {
   return agents;
 }
 
+export function readNowPlaying(): NowPlaying | null {
+  try {
+    if (!existsSync(NOW_PLAYING_PATH)) return null;
+    const raw = JSON.parse(readFileSync(NOW_PLAYING_PATH, "utf-8")) as NowPlaying;
+    if (!raw?.sessionId || typeof raw.text !== "string") return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function isRoomHeld(): boolean {
+  return existsSync(HOLD_ROOM_PATH);
+}
+
+export function buildPanelSnapshot(): PanelSnapshot {
+  return {
+    agents: buildSnapshot(),
+    nowPlaying: readNowPlaying(),
+    roomHeld: isRoomHeld(),
+  };
+}
+
 export function subscribe(cb: NotifyCallback): () => void {
   subscribers.add(cb);
   startStateWatch();
@@ -162,7 +196,10 @@ export function subscribe(cb: NotifyCallback): () => void {
 export function startStateWatch(): void {
   if (watcher) return;
   try {
-    watcher = watch([STATE_DIR, TEAM_MAP_PATH], { ignoreInitial: true });
+    watcher = watch(
+      [STATE_DIR, TEAM_MAP_PATH, NOW_PLAYING_PATH, HOLD_ROOM_PATH],
+      { ignoreInitial: true }
+    );
     watcher.on("add", () => scheduleNotify());
     watcher.on("change", () => scheduleNotify());
     watcher.on("unlink", () => scheduleNotify());
