@@ -48,6 +48,11 @@ export interface Config {
   arcade_enabled: boolean;
   // Agent panel WebSocket port (panel-ws.ts). 0 = disabled.
   panel_port: number;
+  // Experimental: auto-hold the room while a meeting app is frontmost/recent.
+  dnd_auto: boolean;
+  dnd_apps: string[];
+  // Play a cached in-character "done" phrase after a granted item (~25% chance).
+  victory_lines: boolean;
 }
 
 const DEFAULTS: Config = {
@@ -64,6 +69,9 @@ const DEFAULTS: Config = {
   dynamic_responses: "always",
   arcade_enabled: false,
   panel_port: 4780,
+  dnd_auto: false,
+  dnd_apps: ["zoom.us", "FaceTime", "Microsoft Teams", "Webex"],
+  victory_lines: true,
 };
 
 let cachedConfig: Config | null = null;

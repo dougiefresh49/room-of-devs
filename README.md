@@ -213,6 +213,8 @@ Push-to-talk via Raycast hotkey (`scripts/raycast/push-to-talk.sh` → `voice_pt
 
 Nicknames resolve to character names: donnie/don, mikey/mike, raph/ralph, leo. Whisper prompt biasing includes live session names.
 
+Optional spoken aliases in `~/.cursor/tts/aliases.json` — whole-transcript map applied before grammar matching (`{"shut it": "stop", "who is up": "status"}`).
+
 First run: macOS will prompt for microphone access (Raycast or the shell host). Pin input via `mic_device` in config if needed.
 
 ## Team Sessions
@@ -272,6 +274,7 @@ The tool can generate dynamic notification sounds via the ElevenLabs Sound Effec
   .env                              # API keys (ELEVENLABS_API_KEY, GEMINI_API_KEY)
   config.json                       # voice, speed, playback mode, notification settings
   session_voices.json               # per-session voice overrides
+  aliases.json                      # optional spoken phrase → canonical command map
   muted_sessions.json               # sessions muted from auto-play and acks
   team_map.json                     # persona → tmux target + sessionId (written by team.sh)
   arcade_buttons.json               # USB encoder button map (written by hid.ts learn)

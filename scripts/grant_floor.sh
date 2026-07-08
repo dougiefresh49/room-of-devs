@@ -153,9 +153,9 @@ if [ "$MODE" = "drain" ]; then
         # isn't free while grant items are still queued. Only the last item lets
         # index.ts fire it, once, after the backlog is fully drained.
         if [ "$idx" -lt "$last_idx" ]; then
-            CR_SUPPRESS_DEFERRED=1 "$SCRIPTS_DIR/play_node.sh" "$f"
+            CR_SUPPRESS_DEFERRED=1 CR_GRANTED=1 "$SCRIPTS_DIR/play_node.sh" "$f"
         else
-            "$SCRIPTS_DIR/play_node.sh" "$f"
+            CR_GRANTED=1 "$SCRIPTS_DIR/play_node.sh" "$f"
         fi
         idx=$(( idx + 1 ))
     done
@@ -165,4 +165,4 @@ fi
 # Single grant: play the latest queued item (supersede keeps CC to one file).
 TARGET="${QUEUE_FILES[${#QUEUE_FILES[@]}-1]}"
 log "Granting floor to ${SHORT}: $(basename "$TARGET")"
-exec "$SCRIPTS_DIR/play_node.sh" "$TARGET"
+exec env CR_GRANTED=1 "$SCRIPTS_DIR/play_node.sh" "$TARGET"

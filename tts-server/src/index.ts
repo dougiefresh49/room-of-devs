@@ -20,15 +20,18 @@ import {
   clearProcessing,
   waitForLock,
   releaseLock,
+  acquireLock,
   stopCurrent,
   playStreamBuffer,
   type ReplayMeta,
   type PlaybackContext,
 } from "./audio.js";
+import { getPhrasesForVoice, playRandomPhrase } from "./phrases.js";
 import { seedStateOnStartup } from "./state.js";
 import { maybeFireDeferredAnnounce } from "./announce.js";
 import { startHid, stopHid } from "./hid.js";
 import { startPanelWs, stopPanelWs } from "./panel-ws.js";
+import { startDnd, stopDnd } from "./dnd.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -83,6 +86,19 @@ function shouldAddPrefix(
     return getActiveSessions().length > 1;
   }
   return false;
+}
+
+async function maybePlayVictoryLine(voiceId: string): Promise<void> {
+  if (Math.random() >= 0.25) return;
+  if (getPhrasesForVoice(voiceId, "done").length === 0) return;
+  if (!acquireLock()) return;
+  try {
+    await playRandomPhrase(voiceId, "done", "meta");
+  } catch (err: any) {
+    log("server", `Victory line skipped: ${err?.message ?? err}`);
+  } finally {
+    releaseLock();
+  }
 }
 
 async function processQueueFile(
@@ -201,6 +217,12 @@ async function processQueueFile(
     // the audio is already saved in replay/.
     if (code !== 0) {
       log("server", `Playback exited ${code} for ${name} (stopped?)`);
+    } else if (
+      process.env.CR_GRANTED === "1" &&
+      sessionId &&
+      loadConfig().victory_lines
+    ) {
+      await maybePlayVictoryLine(voiceId);
     }
     moveToPlayed(filePath);
   } catch (err: any) {
@@ -294,6 +316,9 @@ if (loadConfig().arcade_enabled) startHid();
 // Agent panel WebSocket (panel-ws.ts) — inert unless panel_port > 0.
 if (loadConfig().panel_port > 0) startPanelWs();
 
+// Experimental meeting auto-hold — inert unless dnd_auto.
+if (loadConfig().dnd_auto) startDnd();
+
 const watcher = watch(QUEUE_DIR, {
   ignoreInitial: true,
   awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
@@ -309,6 +334,7 @@ watcher.on("add", (path) => {
 process.on("SIGTERM", () => {
   log("server", "SIGTERM — shutting down");
   watcher.close();
+  stopDnd();
   stopHid();
   stopPanelWs();
   stopCurrent();
@@ -318,6 +344,7 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   log("server", "SIGINT — shutting down");
   watcher.close();
+  stopDnd();
   stopHid();
   stopPanelWs();
   stopCurrent();

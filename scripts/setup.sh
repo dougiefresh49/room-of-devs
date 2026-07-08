@@ -130,6 +130,9 @@ defaults = {
     "mic_device": ":default",
     "arcade_enabled": False,
     "panel_port": 4780,
+    "dnd_auto": False,
+    "dnd_apps": ["zoom.us", "FaceTime", "Microsoft Teams", "Webex"],
+    "victory_lines": True,
 }
 
 changed = False
@@ -189,6 +192,15 @@ else
     log "    mkdir -p $TTS_DIR/models"
     log "    curl -L -o $WHISPER_MODEL https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin"
     log "  Also requires: brew install whisper-cpp tmux"
+fi
+
+# ── 5d. Voice command aliases (optional spoken → canonical map) ───
+ALIASES_FILE="$TTS_DIR/aliases.json"
+if [ -f "$ALIASES_FILE" ]; then
+    log "Voice aliases already exist at $ALIASES_FILE"
+else
+    log "Writing default voice aliases to $ALIASES_FILE"
+    echo '{}' > "$ALIASES_FILE"
 fi
 
 # ── 6. Install hooks.json ─────────────────────────────────────────

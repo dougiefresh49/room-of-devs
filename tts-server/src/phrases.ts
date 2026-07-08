@@ -18,7 +18,7 @@ const DEFAULT_PHRASES = [
   "Let me think about that...",
 ];
 
-export type PhraseKind = "ack" | "announce" | "question";
+export type PhraseKind = "ack" | "announce" | "question" | "done";
 
 const PHRASE_SETS: Record<PhraseKind, readonly string[]> = {
   ack: DEFAULT_PHRASES,
@@ -35,10 +35,17 @@ const PHRASE_SETS: Record<PhraseKind, readonly string[]> = {
     "Need your input on something.",
     "Got a decision for you to make.",
   ],
+  done: [
+    "Nailed it.",
+    "Job's done — and done right.",
+    "Another one bites the dust.",
+    "Clean finish. Next.",
+  ],
 };
 
 function filePrefix(kind: PhraseKind): string {
-  return kind === "ack" ? "phrase_" : `${kind}_`;
+  if (kind === "ack") return "phrase_";
+  return `${kind}_`;
 }
 
 function voiceDir(voiceId: string): string {
@@ -113,7 +120,7 @@ export async function playRandomPhrase(
   return true;
 }
 
-const PHRASE_KINDS: PhraseKind[] = ["ack", "announce", "question"];
+const PHRASE_KINDS: PhraseKind[] = ["ack", "announce", "question", "done"];
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { loadEnv } = await import("./config.js");
@@ -126,7 +133,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const voiceId = process.argv[3] || config.elevenlabs_voice_id;
     const kind = (process.argv[4] as PhraseKind) || "announce";
     if (!voiceId || !PHRASE_KINDS.includes(kind)) {
-      console.error("Usage: tsx src/phrases.ts play <voiceId> <ack|announce|question>");
+      console.error("Usage: tsx src/phrases.ts play <voiceId> <ack|announce|question|done>");
       process.exit(1);
     }
     // Hold the stream lock across playback so a chime can't talk over a grant or
@@ -147,11 +154,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const voiceId = process.argv[2] || config.elevenlabs_voice_id;
   const kind = (process.argv[3] as PhraseKind) || "ack";
   if (!voiceId) {
-    console.error("Usage: tsx src/phrases.ts [voiceId] [ack|announce|question]");
+    console.error("Usage: tsx src/phrases.ts [voiceId] [ack|announce|question|done]");
     process.exit(1);
   }
   if (!PHRASE_KINDS.includes(kind)) {
-    console.error(`Invalid kind "${kind}". Use ack, announce, or question.`);
+    console.error(`Invalid kind "${kind}". Use ack, announce, question, or done.`);
     process.exit(1);
   }
   console.log(`Generating ${kind} phrases for voice: ${voiceId}`);

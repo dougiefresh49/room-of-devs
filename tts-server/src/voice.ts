@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { spawnSync } from "child_process";
 import { pathToFileURL } from "url";
@@ -16,6 +16,37 @@ import { getCharacter } from "./dynamic-response.js";
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
 const TEAM_MAP_PATH = join(TTS_DIR, "team_map.json");
+const ALIASES_PATH = join(TTS_DIR, "aliases.json");
+
+let cachedAliases: Record<string, string> | null = null;
+let aliasesMtime = 0;
+
+function loadAliases(): Record<string, string> {
+  try {
+    if (!existsSync(ALIASES_PATH)) return {};
+    const mtime = statSync(ALIASES_PATH).mtimeMs;
+    if (cachedAliases && mtime === aliasesMtime) return cachedAliases;
+
+    const raw = JSON.parse(readFileSync(ALIASES_PATH, "utf-8")) as Record<
+      string,
+      unknown
+    >;
+    const out: Record<string, string> = {};
+    for (const [spoken, canonical] of Object.entries(raw)) {
+      if (typeof canonical !== "string") continue;
+      out[normalizeTranscript(spoken)] = normalizeTranscript(canonical);
+    }
+    cachedAliases = out;
+    aliasesMtime = mtime;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function applyAliases(text: string): string {
+  return loadAliases()[text] ?? text;
+}
 
 type Action =
   | { kind: "grant"; sessionId?: string }
@@ -519,7 +550,7 @@ export function route(
     return execInject(opts.target, transcript.trim(), !!opts.dryRun);
   }
 
-  const text = normalizeTranscript(transcript);
+  const text = applyAliases(normalizeTranscript(transcript));
   const action = matchGrammar(text);
   if (!action) {
     if (opts.dryRun) return dry("unmatched", ["Didn't catch that"]);

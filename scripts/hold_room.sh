@@ -52,6 +52,8 @@ if os.environ.get("UNTIL"):
     data["until"] = int(os.environ["UNTIL"])
 if os.environ.get("PID"):
     data["pid"] = int(os.environ["PID"])
+if os.environ.get("CR_DND") == "1":
+    data["source"] = "dnd"
 p = os.environ["HOLD_FILE"]
 tmp = f"{p}.tmp.{os.getpid()}"
 with open(tmp, "w", encoding="utf-8") as f:
