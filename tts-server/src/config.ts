@@ -32,6 +32,7 @@ export interface Config {
   notifications_enabled: boolean;
   notification_sound: string;
   streaming_enabled: boolean;
+  playback_mode: "auto" | "announce" | "silent";
   streaming_session_prefix: "auto" | "always" | "never";
   played_retention_count: number;
   // Prompt-ack behavior on UserPromptSubmit:
@@ -48,6 +49,7 @@ const DEFAULTS: Config = {
   notifications_enabled: false,
   notification_sound: "random_sfx",
   streaming_enabled: false,
+  playback_mode: "auto",
   streaming_session_prefix: "auto",
   played_retention_count: 50,
   dynamic_responses: "always",
@@ -55,6 +57,7 @@ const DEFAULTS: Config = {
 
 let cachedConfig: Config | null = null;
 let configMtime = 0;
+let rawHasPlaybackMode = false;
 
 export function loadConfig(): Config {
   try {
@@ -62,12 +65,20 @@ export function loadConfig(): Config {
     if (cachedConfig && mtime === configMtime) return cachedConfig;
 
     const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
+    rawHasPlaybackMode = "playback_mode" in raw;
     cachedConfig = { ...DEFAULTS, ...raw };
     configMtime = mtime;
     return cachedConfig!;
   } catch {
+    rawHasPlaybackMode = false;
     return { ...DEFAULTS };
   }
+}
+
+export function effectivePlaybackMode(): "auto" | "announce" | "silent" {
+  const c = loadConfig();
+  if (rawHasPlaybackMode) return c.playback_mode;
+  return c.streaming_enabled ? "auto" : "silent";
 }
 
 export function loadSessionVoices(): Record<string, string> {

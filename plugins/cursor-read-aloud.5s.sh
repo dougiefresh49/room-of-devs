@@ -27,9 +27,9 @@ DEFAULT_SPEED="1.25"
 VOICE_ID=""
 NOTIFICATIONS_ON=0
 NOTIFICATION_SOUND="random_sfx"
-STREAMING_ON=0
+PLAYBACK_MODE="auto"
 if [ -f "$CONFIG" ]; then
-    # One python3 call prints all five values, one per line (perf: was 5 spawns).
+    # One python3 call prints all six values, one per line (perf: was 6 spawns).
     CONFIG_VALUES=$(python3 - "$CONFIG" 2>/dev/null <<'PY'
 import json, sys
 try:
@@ -40,7 +40,10 @@ print(c.get('default_speed', 1.25))
 print(c.get('elevenlabs_voice_id', ''))
 print(1 if c.get('notifications_enabled') is True else 0)
 print(c.get('notification_sound', 'random_sfx'))
-print(1 if c.get('streaming_enabled') is True else 0)
+mode = c.get('playback_mode')
+if mode not in ('auto', 'announce', 'silent'):
+    mode = 'auto' if c.get('streaming_enabled') is True else 'silent'
+print(mode)
 PY
     ) || CONFIG_VALUES=""
     if [ -n "$CONFIG_VALUES" ]; then
@@ -49,7 +52,7 @@ PY
             read -r VOICE_ID
             read -r NOTIFICATIONS_ON
             read -r NOTIFICATION_SOUND
-            read -r STREAMING_ON
+            read -r PLAYBACK_MODE
         } <<< "$CONFIG_VALUES"
     fi
 fi
@@ -555,15 +558,25 @@ else
     echo "Notifications: Off | bash=$SCRIPTS_DIR/set_notifications.sh param1=on terminal=false refresh=true"
 fi
 
-if [ "$STREAMING_ON" = 1 ]; then
-    if [ "$DAEMON_RUNNING" = true ]; then
-        echo "Streaming: On (server running) | bash=$SCRIPTS_DIR/set_streaming.sh param1=off terminal=false refresh=true"
+case "$PLAYBACK_MODE" in
+    auto) PLAYBACK_MODE_LABEL="Auto" ;;
+    announce) PLAYBACK_MODE_LABEL="Announce" ;;
+    silent) PLAYBACK_MODE_LABEL="Silent" ;;
+    *) PLAYBACK_MODE_LABEL="Auto" ;;
+esac
+echo "Playback: ${PLAYBACK_MODE_LABEL}"
+for mode in auto announce silent; do
+    case "$mode" in
+        auto) LABEL="Auto" ;;
+        announce) LABEL="Announce" ;;
+        silent) LABEL="Silent" ;;
+    esac
+    if [ "$mode" = "$PLAYBACK_MODE" ]; then
+        echo "--✓ ${LABEL} | bash=$SCRIPTS_DIR/set_playback_mode.sh param1=$mode terminal=false refresh=true"
     else
-        echo "Streaming: On (server stopped) | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
+        echo "--  ${LABEL} | bash=$SCRIPTS_DIR/set_playback_mode.sh param1=$mode terminal=false refresh=true"
     fi
-else
-    echo "Streaming: Off | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
-fi
+done
 
 case "$NOTIFICATION_SOUND" in
     [Nn][Oo][Nn][Ee]) NOTIFICATION_SOUND_LABEL="None (silent)" ;;
