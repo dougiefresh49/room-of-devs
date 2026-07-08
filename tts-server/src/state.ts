@@ -8,6 +8,7 @@ import {
   writeFileSync,
 } from "fs";
 import { join } from "path";
+import { pathToFileURL } from "url";
 import {
   STATE_DIR,
   QUEUE_DIR,
@@ -179,4 +180,15 @@ export function seedStateOnStartup(): void {
   } catch (err: any) {
     log("state", `seedStateOnStartup failed: ${err.message}`);
   }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const cmd = process.argv[2];
+  const sessionId = process.argv[3] ?? "";
+  if (cmd === "recompute" && sessionId) {
+    recomputeAfterPlayback(sessionId);
+    process.exit(0);
+  }
+  console.error("Usage: tsx src/state.ts recompute <sessionId>");
+  process.exit(1);
 }
