@@ -1,12 +1,24 @@
 # Arcade Button Controller — Hardware Push-to-Talk Interface
 
-*Design doc — 2026-05-21*
+*Design doc — 2026-05-21 · architecture updated 2026-07-07*
+
+---
+
+## Architecture update (2026-07-07)
+
+The architecture below evolved after a hands-on test. **Read this first — the Pi Model B path is retired.**
+
+- **Button input ships encoder-direct, no Pi at all.** The Fosiya kit's USB encoder plugged straight into the Mac enumerates as a standard HID gamepad ("Generic USB Joystick" in Game Controllers), with all 8 buttons attached (4 color + coin + 1P + 2P, plus joystick). tts-server reads it directly via `node-hid`; button-index→action mapping is discovered by a **learn mode** (press-to-name), so physical wiring never matters. This is **Phase 3a** in docs/plan-details-phase3-4.md — pure software, buildable immediately. In this mode the LEDs are encoder-powered and light on their own (no state feedback).
+- **The Raspberry Pi Model B (2011) is retired.** For the future controllable-LED phase (**Phase 3b**), a **Raspberry Pi Pico (~$5)** takes its place: native USB CDC serial (`/dev/tty.usbmodem*`, one cable for power + data — exactly the JSON-line protocol below), no Linux/SD card, no boot-time serial console to disable, no UART adapter, no 3.3V/5V hazard on the Mac link. The firmware becomes a ~100-line MicroPython/CircuitPython script instead of RPi.GPIO on Linux. Buttons stay on HID; the Pico only drives LEDs.
+- **If you follow the legacy Model B path anyway**, two things the original doc omitted will bite (details inline below at the Connection section): the UART login console must be disabled (`raspi-config`) or it garbles the JSON protocol, and the USB-TTL adapter must be 3.3V logic with GND/TX/RX only, TX↔RX crossed — a 5V TX into the Pi's RX can kill the SoC.
+
+Sections below are kept as originally written except where marked; treat Pi-specific setup as legacy reference.
 
 ---
 
 ## Overview
 
-Use existing Fosiya arcade buttons + Raspberry Pi Model B as a physical push-to-talk and session control interface for the multi-agent voice system. Each colored button maps to a character/session, with LED feedback showing session state.
+Use existing Fosiya arcade buttons as a physical push-to-talk and session control interface for the multi-agent voice system — the USB encoder connects directly to the Mac as a HID gamepad (see architecture update above; the original Raspberry Pi Model B design is legacy). Each colored button maps to a character/session, with LED feedback showing session state reserved for the Pico-based Phase 3b.
 
 ---
 
@@ -67,11 +79,11 @@ Use existing Fosiya arcade buttons + Raspberry Pi Model B as a physical push-to-
 └──────────────────────────┘          └──────────────────────────────┘
 ```
 
-**Connection:** Pi connects to Mac via USB cable. The Pi's USB port provides both power and a serial data connection. On macOS, the Pi appears as `/dev/tty.usbmodemXXXX` or `/dev/tty.usbserial-XXXX`. Communication is bidirectional JSON-line protocol over serial (115200 baud).
+**Connection (legacy — Model B path; see architecture update):** Pi connects to Mac via a USB-to-TTL serial adapter (~$6) wired to the Pi's UART pins (GPIO 14 TX / GPIO 15 RX + GND). **Correction (2026-07-06):** the Pi Model B cannot do USB gadget mode (its USB ports are host-only), so its USB port alone can't carry data to the Mac — the UART adapter is the data path, and a separate USB cable powers the Pi. On macOS the adapter appears as `/dev/tty.usbserial-XXXX`. Communication is bidirectional JSON-line protocol over serial (115200 baud). **Two mandatory safety/setup steps the legacy path requires:** (1) **3.3V logic only** — buy an FTDI-based adapter (driverless on macOS) or set the adapter's voltage jumper to 3.3V; a 5V adapter TX into the Pi's 3.3V RX can permanently damage the SoC. Wire **GND, TX, RX only**, with **TX↔RX crossed** (adapter TX → Pi RX GPIO15, adapter RX → Pi TX GPIO14) — never the 5V pin. (2) **Disable the serial login console** before first use: `sudo raspi-config` → Interface Options → Serial Port → login shell **No**, serial hardware **Yes**. On 2011-era Raspbian images the UART runs a getty by default, which answers JSON lines with login-prompt garbage. Verify with `ls /dev/tty.usb*` on the Mac before touching software. *(The Pico replacement makes all of this moot — its own USB is the serial port.)*
 
-**Why USB over WiFi:**
+**Why USB serial over WiFi:**
 - Pi Model B has no WiFi chip (would need a USB dongle, which takes the only free USB port)
-- USB is simpler: one cable for power + data, no network config, no reconnection logic
+- Serial is simpler: no network config, no reconnection logic (two cables — power + UART adapter — but zero moving parts in software)
 - Serial is lower latency than WiFi WebSocket (~1ms vs ~5-20ms)
 - More reliable — no dropped connections from WiFi interference
 - If upgrading to Pi Zero W later, can switch to WiFi without changing the message protocol
@@ -167,16 +179,16 @@ Each button has independent LED state. The Pi runs a simple async loop:
 
 ## Trade-offs & Alternatives
 
-**Pi vs USB encoder direct to Mac:**
-- USB encoder: simpler (one USB cable), but no LED control, buttons always appear as gamepad
-- Pi: individual LED control, network-based (wireless possible), more flexible, but adds a device to maintain
+**Pi vs USB encoder direct to Mac:** *(resolved 2026-07-07 — the encoder won; see architecture update)*
+- USB encoder: simpler (one USB cable), no LED control, buttons appear as gamepad — **"appears as gamepad" turned out to be a feature, not a limitation: `node-hid` reads it directly, and learn mode makes the wiring order irrelevant.** This is the shipped input path.
+- Pi: individual LED control, more flexible, but adds a device to maintain — retired for input; a Pi **Pico** covers the LED-control half only (Phase 3b)
 
-**Pi Model B (2011) limitations:**
+**Pi Model B (2011) limitations:** *(legacy — these limitations are why the Pico replaced it for Phase 3b)*
 - No built-in WiFi (needs USB dongle or Ethernet)
 - 256MB RAM (plenty for this use case)
 - Single-core 700MHz ARM (button polling + WebSocket is trivial)
 - Only 1 hardware PWM pin (GPIO 18) — software PWM for 5 LEDs may cause flicker on single-core. **Mitigation:** use a PCA9685 I2C LED driver ($3-5 breakout board) for smooth pulse/glow effects, or simplify LED states to on/off/blink only (no smooth pulsing) for the MVP
-- If it dies, a Pi Zero W ($15) is a direct upgrade with built-in WiFi + more PWM capability
+- If it dies, a Pi Zero W ($15) was the planned upgrade — moot now: the Raspberry Pi Pico (~$5) is the chosen LED controller (native USB serial, PWM on every pin, no OS)
 
 **Project Mirage / Dune comparison:**
 - Dune is a 3-button USB-C context-aware keypad for macOS ($TBD, early bird shipping May 2026). Calendar-aware, AI agent triggers, mic/camera toggles.
@@ -201,6 +213,8 @@ Each button has independent LED state. The Pi runs a simple async loop:
 ---
 
 ## Implementation Phases
+
+*(Superseded 2026-07-07: current phasing lives in docs/plan-details-phase3-4.md — Phase 3a = encoder-direct HID input, Phase 3b = Pico-driven LEDs. Phases A-D below are the original Pi plan, kept for reference; the transport experiments in A/B are unnecessary on both current paths.)*
 
 ### Phase A: Proof of Concept (1-2 hours)
 - Wire 2 buttons to Pi GPIO (one color + white)
