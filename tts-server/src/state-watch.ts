@@ -12,6 +12,7 @@ import {
   PLAYED_DIR,
   loadSessionVoices,
   loadMutedSessions,
+  loadNicknames,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { resolveVoiceId } from "./elevenlabs.js";
@@ -22,6 +23,7 @@ import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
 export interface AgentView {
   sessionId: string;
   name: string;
+  label: string;
   state: SessionState;
   raisedAt: string | null;
   character: string | null;
@@ -113,6 +115,7 @@ function countSuperseded(shortSession: string, raisedAt: string | null): number 
 export function buildSnapshot(): AgentView[] {
   const muted = new Set(loadMutedSessions());
   const teamIds = teamSessionIds();
+  const nicknames = loadNicknames();
   const agents: AgentView[] = [];
 
   try {
@@ -127,9 +130,11 @@ export function buildSnapshot(): AgentView[] {
       const voiceId = resolveVoiceId(sessionId);
       const character = voiceId ? getCharacter(voiceId) : null;
 
+      const displayName = state.name || shortSession;
       agents.push({
         sessionId,
-        name: state.name || shortSession,
+        name: displayName,
+        label: nicknames[sessionId] ?? displayName,
         state: state.state,
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,

@@ -9,6 +9,7 @@ import {
   getActiveSessions,
   loadSessionVoices,
   loadMutedSessions,
+  loadNicknames,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 
@@ -20,12 +21,13 @@ type Action =
   | { kind: "grant"; sessionId?: string }
   | { kind: "pause" }
   | { kind: "stop" }
-  | { kind: "replay" }
+  | { kind: "replay"; speed?: number }
   | { kind: "status" }
   | { kind: "mute"; sessionId: string }
   | { kind: "unmute"; sessionId: string }
   | { kind: "clear"; sessionId: string }
-  | { kind: "inject"; target: string; message: string };
+  | { kind: "inject"; target: string; message: string }
+  | { kind: "mood"; preset: string };
 
 const FLOOR_EXIT = 10;
 
@@ -77,6 +79,7 @@ export function normalizeTranscript(raw: string): string {
 interface NameCandidate {
   label: string;
   sessionId: string;
+  priority: number;
 }
 
 function loadTeamMap(): Record<string, { sessionId: string }> {
@@ -91,23 +94,28 @@ function loadTeamMap(): Record<string, { sessionId: string }> {
 function buildFloorCandidates(): NameCandidate[] {
   const out: NameCandidate[] = [];
   const seen = new Set<string>();
+  const nicknames = loadNicknames();
 
-  const add = (label: string, sessionId: string) => {
+  const add = (label: string, sessionId: string, priority: number) => {
     const key = `${normalizeToken(label)}:${sessionId}`;
     if (!label || seen.has(key)) return;
     seen.add(key);
-    out.push({ label: normalizeToken(label), sessionId });
+    out.push({ label: normalizeToken(label), sessionId, priority });
   };
 
-  for (const s of getActiveSessions()) add(s.name, s.sessionId);
+  for (const s of getActiveSessions()) {
+    const custom = nicknames[s.sessionId];
+    if (custom) add(custom, s.sessionId, 3);
+    add(s.name, s.sessionId, 1);
+  }
 
   const voices = loadSessionVoices();
   for (const [sessionId, voiceId] of Object.entries(voices)) {
     const char = getCharacter(voiceId);
     if (!char) continue;
-    add(char.name, sessionId);
+    add(char.name, sessionId, 2);
     for (const nick of NICKNAMES[normalizeToken(char.name)] ?? []) {
-      add(nick, sessionId);
+      add(nick, sessionId, 2);
     }
   }
 
@@ -145,20 +153,23 @@ type ResolveResult =
 
 function resolveByName(
   spoken: string,
-  candidates: Array<{ label: string; sessionId: string }>
+  candidates: Array<{ label: string; sessionId: string; priority?: number }>
 ): ResolveResult {
   const q = normalizeToken(spoken);
   if (!q) return { none: true };
 
   const tiers = [
-    (c: NameCandidate) => c.label === q,
-    (c: NameCandidate) => c.label.startsWith(q) || q.startsWith(c.label),
-    (c: NameCandidate) => levenshtein(c.label, q) <= 2,
+    (c: { label: string }) => c.label === q,
+    (c: { label: string }) => c.label.startsWith(q) || q.startsWith(c.label),
+    (c: { label: string }) => levenshtein(c.label, q) <= 2,
   ];
 
   for (const pred of tiers) {
     const hits = candidates.filter(pred);
-    const ids = [...new Set(hits.map((h) => h.sessionId))];
+    if (hits.length === 0) continue;
+    const maxPri = Math.max(...hits.map((h) => h.priority ?? 1));
+    const topHits = hits.filter((h) => (h.priority ?? 1) === maxPri);
+    const ids = [...new Set(topHits.map((h) => h.sessionId))];
     if (ids.length === 1) return { ok: ids[0] };
     if (ids.length > 1) {
       // Tie-break: a team_map-bound session outranks manually-voiced ones —
@@ -171,7 +182,7 @@ function resolveByName(
       );
       const teamHits = ids.filter((id) => teamIds.has(id));
       if (teamHits.length === 1) return { ok: teamHits[0] };
-      const labels = [...new Set(hits.map((h) => h.label))];
+      const labels = [...new Set(topHits.map((h) => h.label))];
       return { ambiguous: labels };
     }
   }
@@ -202,12 +213,10 @@ function runScript(name: string, args: string[]): number {
   return r.status ?? 1;
 }
 
-function runSignalReplay(): number {
-  const r = spawnSync(
-    "pnpm",
-    ["exec", "tsx", "src/signal.ts", "replay", "", "1"],
-    { cwd: SERVER_DIR, stdio: "inherit" }
-  );
+function runSignalReplay(speed?: number): number {
+  const args = ["exec", "tsx", "src/signal.ts", "replay", "", "1"];
+  if (speed != null) args.push(String(speed));
+  const r = spawnSync("pnpm", args, { cwd: SERVER_DIR, stdio: "inherit" });
   return r.status ?? 1;
 }
 
@@ -329,10 +338,16 @@ export function matchGrammar(text: string): Action | null {
   if (/^(pause|hold on|wait)$/.test(text)) return { kind: "pause" };
   if (/^(resume|continue|keep going)$/.test(text)) return { kind: "pause" };
   if (/^(stop|enough|shut up)$/.test(text)) return { kind: "stop" };
+  if (/^(say (that )?again|repeat|again) slower$/.test(text)) {
+    return { kind: "replay", speed: 0.85 };
+  }
   if (/^(say (that )?again|repeat|again)$/.test(text)) return { kind: "replay" };
   if (/^status$/.test(text) || /^who(?:'s| is) (?:up|waiting)/.test(text)) {
     return { kind: "status" };
   }
+
+  m = text.match(/^(focus|arcade|quiet|normal) mode$/);
+  if (m) return { kind: "mood", preset: m[1] };
 
   m = text.match(/^(mute|unmute)\s+(.+)$/);
   if (m) {
@@ -419,10 +434,12 @@ function executeAction(action: Action, dryRun: boolean): number {
       if (dryRun) return dry("stop", []);
       runScript("stop.sh", []);
       return FLOOR_EXIT;
-    case "replay":
-      if (dryRun) return dry("replay", ["1"]);
-      runSignalReplay();
+    case "replay": {
+      const replayArgs = action.speed != null ? ["1", String(action.speed)] : ["1"];
+      if (dryRun) return dry("replay", replayArgs);
+      runSignalReplay(action.speed);
       return FLOOR_EXIT;
+    }
     case "status": {
       const phrase = composeStatus();
       if (dryRun) return dry("status", [phrase]);
@@ -462,6 +479,10 @@ function executeAction(action: Action, dryRun: boolean): number {
       else speak(msg);
       return 0;
     }
+    case "mood":
+      if (dryRun) return dry("set_mood", [action.preset]);
+      runScript("set_mood.sh", [action.preset]);
+      return FLOOR_EXIT;
   }
 }
 
