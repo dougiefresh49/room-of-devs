@@ -6,6 +6,7 @@ import {
   PLAYED_DIR,
   FAILED_DIR,
   loadConfig,
+  effectivePlaybackMode,
   loadEnv,
   loadMutedSessions,
   lookupSessionName,
@@ -22,7 +23,10 @@ import {
   stopCurrent,
   playStreamBuffer,
   type ReplayMeta,
+  type PlaybackContext,
 } from "./audio.js";
+import { seedStateOnStartup } from "./state.js";
+import { maybeFireDeferredAnnounce } from "./announce.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -85,12 +89,15 @@ async function processQueueFile(
 ): Promise<void> {
   const name = basename(filePath);
 
-  // Streaming toggle gates the watcher's auto-play only — manual plays
+  // Playback mode gates the watcher's auto-play only — manual plays
   // ("once" mode via Play Latest / menu clicks) always go through. The item
   // stays in queue/ so it can be played manually later.
-  if (auto && !loadConfig().streaming_enabled) {
-    log("server", `Streaming off — queued without auto-play: ${name}`);
-    return;
+  if (auto) {
+    const mode = effectivePlaybackMode();
+    if (mode !== "auto") {
+      log("server", `queued without auto-play (mode=${mode}): ${name}`);
+      return;
+    }
   }
 
   if (!claimProcessing(name)) {
@@ -180,8 +187,12 @@ async function processQueueFile(
       timestamp: new Date().toISOString(),
     };
 
+    // CC items are session-bound (drive hand-raise / speaking state); Cursor
+    // and manual enqueues have no session and stay room-level "meta".
+    const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
     log("server", `Playing: ${name} (${processed.length} chars)`);
-    const code = await playStreamBuffer(stream as any, filePath, replayMeta);
+    const code = await playStreamBuffer(stream as any, filePath, ctx, replayMeta);
     // TTS succeeded and credits are spent — move to played regardless of
     // exit code. A stopped playback shouldn't leave the item re-buyable;
     // the audio is already saved in replay/.
@@ -233,6 +244,9 @@ async function drainQueue(): Promise<void> {
     }
   }
   processing = false;
+  // Floor is settling and the drain is empty — fire any deferred announce
+  // (validates hands against live state; no-op if the lock is still held).
+  maybeFireDeferredAnnounce();
 }
 
 const command = process.argv[2];
@@ -250,11 +264,22 @@ if (command === "once") {
     process.exit(1);
   }
   await processQueueFile(file);
+  // Grant / manual play settled — same deferred-announce check as the daemon
+  // drain, so a hand that deferred while this item played gets its nudge. During
+  // a multi-item drain (grant_floor.sh), CR_SUPPRESS_DEFERRED is set on every
+  // item but the last so the nudge doesn't fire between still-queued grant items.
+  if (!process.env.CR_SUPPRESS_DEFERRED) {
+    maybeFireDeferredAnnounce();
+  }
   process.exit(0);
 }
 
 mkdirSync(QUEUE_DIR, { recursive: true });
 mkdirSync(PLAYED_DIR, { recursive: true });
+
+// Reconcile per-session room state against ~/.claude/sessions so the menu/LEDs
+// reflect live sessions immediately, not an empty room until each fires a hook.
+seedStateOnStartup();
 
 log("server", `Starting — watching ${QUEUE_DIR}`);
 console.log(`tts-server watching: ${QUEUE_DIR}`);

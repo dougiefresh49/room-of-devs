@@ -9,7 +9,25 @@ import {
   loadConfig,
 } from "./config.js";
 import { log } from "./logger.js";
-import { join } from "path";
+import { setSessionState, recomputeAfterPlayback } from "./state.js";
+import { basename, join } from "path";
+
+// Every audible path declares who it belongs to: a session id for
+// session-attributed audio (queue items, dynamic acks, ask-user readouts) or
+// the literal "meta" for room-level audio (announce chimes, phrases, replay,
+// `say`). Session context sets `speaking` on start and recomputes state after
+// close; meta audio never touches session state — it only respects the lock.
+export type PlaybackContext = { sessionId: string } | "meta";
+
+function beginSessionSpeaking(ctx: PlaybackContext): void {
+  if (ctx !== "meta" && ctx.sessionId) setSessionState(ctx.sessionId, "speaking");
+}
+
+function endSessionPlayback(ctx: PlaybackContext, excludeFile?: string): void {
+  if (ctx !== "meta" && ctx.sessionId) {
+    recomputeAfterPlayback(ctx.sessionId, excludeFile);
+  }
+}
 
 const REPLAY_DIR = join(TTS_DIR, "replay");
 const MAX_REPLAY_FILES = 20;
@@ -146,7 +164,10 @@ function cleanup(): void {
   }
 }
 
-export function playFile(filePath: string): Promise<number> {
+export function playFile(
+  filePath: string,
+  ctx: PlaybackContext = "meta"
+): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
     // Replay files were saved from ElevenLabs streams, which bake in speed
@@ -157,6 +178,7 @@ export function playFile(filePath: string): Promise<number> {
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
 
+    beginSessionSpeaking(ctx);
     const child = spawn("afplay", args, { stdio: "ignore" });
     currentProcess = child;
     writePidFiles(child.pid);
@@ -167,6 +189,7 @@ export function playFile(filePath: string): Promise<number> {
       settled = true;
       if (currentProcess === child) currentProcess = null;
       removePidFiles();
+      endSessionPlayback(ctx);
       resolve(code);
     };
     child.on("error", (err) => {
@@ -231,6 +254,7 @@ function saveReplayFile(
 export function playStreamBuffer(
   audioStream: AsyncIterable<Uint8Array>,
   queueFile: string,
+  ctx: PlaybackContext = "meta",
   replayMeta?: ReplayMeta
 ): Promise<number> {
   return new Promise(async (resolve) => {
@@ -252,6 +276,7 @@ export function playStreamBuffer(
       log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elMax}x)`);
     }
 
+    beginSessionSpeaking(ctx);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -272,6 +297,10 @@ export function playStreamBuffer(
       if (saveReplay && replayChunks.length > 0) {
         saveReplayFile(replayChunks, queueFile, replayMeta);
       }
+      // The queue file being played is still in queue/ here — the daemon moves
+      // it to played/ only after this promise resolves — so exclude it from the
+      // recompute scan, or it would re-derive a phantom hand for itself.
+      endSessionPlayback(ctx, basename(queueFile));
       resolve(code);
     };
 
@@ -318,7 +347,10 @@ export function replayLast(nth = 1): Promise<number> {
   }
 }
 
-export function playMp3Buffer(buf: Buffer): Promise<number> {
+export function playMp3Buffer(
+  buf: Buffer,
+  ctx: PlaybackContext = "meta"
+): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
     // Phrase MP3s are generated once at 1.0x and reused across speed
@@ -334,6 +366,7 @@ export function playMp3Buffer(buf: Buffer): Promise<number> {
     ];
     if (speed !== 1.0) ffplayArgs.push("-af", `atempo=${speed}`);
 
+    beginSessionSpeaking(ctx);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -346,6 +379,7 @@ export function playMp3Buffer(buf: Buffer): Promise<number> {
       settled = true;
       if (currentProcess === child) currentProcess = null;
       removePidFiles();
+      endSessionPlayback(ctx);
       resolve(code);
     };
     child.on("error", (err) => {

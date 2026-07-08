@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+#
+# team.sh — Launch a persona'd Claude Code session in tmux and bind team_map.json.
+#
+# Usage: team.sh <persona> [project-dir]
+#
+set -euo pipefail
+
+TTS_DIR="${TTS_DIR:-$HOME/.cursor/tts}"
+SCRIPTS_DIR="$TTS_DIR/scripts"
+TEAM_MAP="$TTS_DIR/team_map.json"
+SESSIONS_DIR="$HOME/.claude/sessions"
+LOG_FILE="$TTS_DIR/logs/hook.log"
+CHARACTERS_JSON="$TTS_DIR/tts-server/src/characters.json"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] team: $*" >> "$LOG_FILE" 2>/dev/null || true; }
+
+PERSONA="${1:-}"
+PROJECT_DIR="${2:-$PWD}"
+
+if [ -z "$PERSONA" ]; then
+    echo "Usage: team.sh <persona> [project-dir]" >&2
+    exit 1
+fi
+
+if ! command -v tmux >/dev/null 2>&1; then
+    echo "tmux not found — install with: brew install tmux" >&2
+    exit 1
+fi
+
+TMUX_NAME="cr-${PERSONA}"
+
+mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$TEAM_MAP")"
+
+# Snapshot session filenames before launch.
+BEFORE_SNAPSHOT="$(
+    SESSIONS_DIR="$SESSIONS_DIR" python3 - <<'PY'
+import glob
+import os
+
+sessions_dir = os.environ["SESSIONS_DIR"]
+paths = glob.glob(os.path.join(sessions_dir, "*.json"))
+for path in sorted(paths):
+    print(os.path.basename(path))
+PY
+)"
+
+log "Launching $TMUX_NAME in $PROJECT_DIR"
+tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude
+
+SESSION_ID=""
+for _ in $(seq 1 30); do
+    SESSION_ID="$(
+        SESSIONS_DIR="$SESSIONS_DIR" BEFORE_SNAPSHOT="$BEFORE_SNAPSHOT" python3 - <<'PY'
+import glob
+import json
+import os
+import sys
+
+sessions_dir = os.environ["SESSIONS_DIR"]
+before = set(os.environ.get("BEFORE_SNAPSHOT", "").splitlines())
+
+for path in sorted(glob.glob(os.path.join(sessions_dir, "*.json"))):
+    base = os.path.basename(path)
+    if base in before:
+        continue
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        sid = data.get("sessionId")
+        if sid:
+            print(sid)
+            raise SystemExit(0)
+    except (OSError, json.JSONDecodeError):
+        continue
+
+raise SystemExit(1)
+PY
+    )" && break
+    SESSION_ID=""
+    sleep 1
+done
+
+if [ -z "$SESSION_ID" ]; then
+    log "Timeout binding $PERSONA — tmux session $TMUX_NAME left running"
+    say "Couldn't bind ${PERSONA} — no new session appeared"
+    exit 1
+fi
+
+TEAM_MAP="$TEAM_MAP" PERSONA="$PERSONA" TMUX_NAME="$TMUX_NAME" SESSION_ID="$SESSION_ID" python3 - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+
+path = os.environ["TEAM_MAP"]
+persona = os.environ["PERSONA"]
+tmux_name = os.environ["TMUX_NAME"]
+session_id = os.environ["SESSION_ID"]
+
+data = {}
+if os.path.isfile(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, json.JSONDecodeError):
+        data = {}
+
+data[persona] = {
+    "tmux": tmux_name,
+    "sessionId": session_id,
+    "createdAt": datetime.now(timezone.utc).isoformat(),
+}
+
+tmp = path + ".tmp"
+with open(tmp, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+os.replace(tmp, path)
+PY
+
+log "Bound $PERSONA → $SESSION_ID ($TMUX_NAME)"
+
+VOICE_ID="$(
+    CHARACTERS_JSON="$CHARACTERS_JSON" PERSONA="$PERSONA" python3 - <<'PY'
+import json
+import os
+import sys
+
+path = os.environ["CHARACTERS_JSON"]
+persona = os.environ["PERSONA"].lower()
+
+if not os.path.isfile(path):
+    raise SystemExit(1)
+
+try:
+    with open(path, encoding="utf-8") as fh:
+        chars = json.load(fh)
+except (OSError, json.JSONDecodeError):
+    raise SystemExit(1)
+
+for voice_id, entry in chars.items():
+    if not isinstance(entry, dict):
+        continue
+    name = entry.get("name", "")
+    if name.lower() == persona:
+        print(voice_id)
+        raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+)" || VOICE_ID=""
+
+if [ -n "$VOICE_ID" ]; then
+    "$SCRIPTS_DIR/set_session_voice.sh" "$SESSION_ID" "$VOICE_ID"
+    log "Assigned voice $VOICE_ID to $SESSION_ID"
+fi
+
+echo "$TMUX_NAME"
+echo "$SESSION_ID"

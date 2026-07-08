@@ -22,6 +22,14 @@ logn() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] notify: $*" >>"$LOG_FILE" 2>/dev/null || true
 }
 
+# Announce chime runs BEFORE (and independent of) the notifications gate — the
+# helper self-gates on announce mode. Announce mode without announces would be
+# no mode at all, so it must not ride on notifications_enabled.
+ANNOUNCE_SH="${TTS_DIR}/scripts/announce.sh"
+if [ -f "$ANNOUNCE_SH" ]; then
+  bash "$ANNOUNCE_SH" "$filepath" 2>/dev/null || true
+fi
+
 enabled=$(python3 - "$CONFIG" <<'PY'
 import json, sys
 
@@ -56,6 +64,7 @@ filepath, config_path, log_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
 TTS_DIR = os.path.expanduser("~/.cursor/tts")
 PLAY = os.path.join(TTS_DIR, "scripts", "play_node.sh")
+GRANT = os.path.join(TTS_DIR, "scripts", "grant_floor.sh")
 RANDOM_SFX = os.path.join(TTS_DIR, "scripts", "random_sfx.sh")
 
 
@@ -74,6 +83,16 @@ try:
         config = json.load(f)
 except (OSError, json.JSONDecodeError):
     config = {}
+
+
+# Mirror config.ts effectivePlaybackMode(): explicit key wins, else legacy map.
+def effective_mode(cfg: dict) -> str:
+    if "playback_mode" in cfg:
+        return cfg.get("playback_mode") or "auto"
+    return "auto" if cfg.get("streaming_enabled") else "silent"
+
+
+announce_mode = effective_mode(config) == "announce"
 
 # ── Load queue item ──────────────────────────────────────────────
 try:
@@ -133,8 +152,10 @@ def sound_is_random_sfx(name: str) -> bool:
 
 
 # ── Handle random_sfx: play a random sound effect ────────────────
+# In announce mode the cached announce phrase (played by announce.sh) replaces
+# the notification's sound entirely — suppress the banner SFX here.
 sfx_path = None
-if sound_is_random_sfx(notification_sound):
+if sound_is_random_sfx(notification_sound) and not announce_mode:
     try:
         r = subprocess.run(
             ["bash", RANDOM_SFX],
@@ -211,14 +232,24 @@ if tn_bin:
     log(f"notifier binary: {tn_bin}")
 
 if tn_bin:
-    execute = shlex.quote(PLAY) + " " + shlex.quote(filepath)
+    # In announce mode every surface funnels through the grant path (Decision 8):
+    # clicking the banner grants that session's floor instead of playing directly.
+    sid = (d.get("conversation_id") or "").strip()
+    if announce_mode and sid:
+        execute = shlex.quote(GRANT) + " " + shlex.quote(sid)
+    else:
+        execute = shlex.quote(PLAY) + " " + shlex.quote(filepath)
     nid = os.path.splitext(os.path.basename(filepath))[0]
 
     cmd = [tn_bin, "-group", nid]
 
-    # For random_sfx, we suppress the built-in notification sound
-    # and play the sfx separately via afplay
-    if sound_is_random_sfx(notification_sound) or sound_is_silent(notification_sound):
+    # For random_sfx / announce mode, suppress the built-in notification sound
+    # (announce mode's chime is the announce phrase; random_sfx plays via afplay).
+    if (
+        sound_is_random_sfx(notification_sound)
+        or sound_is_silent(notification_sound)
+        or announce_mode
+    ):
         pass  # no -sound flag = silent notification
     else:
         cmd += ["-sound", notification_sound]
@@ -259,7 +290,11 @@ if not tn_bin:
         f'display notification "{esc(preview)}" '
         f'with title "{esc(tt)}"'
     )
-    if not sound_is_silent(notification_sound) and not sound_is_random_sfx(notification_sound):
+    if (
+        not sound_is_silent(notification_sound)
+        and not sound_is_random_sfx(notification_sound)
+        and not announce_mode
+    ):
         script += f' sound name "{esc(osa_sound)}"'
     r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
     if r.returncode == 0:

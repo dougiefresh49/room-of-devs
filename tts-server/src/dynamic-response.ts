@@ -1,8 +1,8 @@
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
-import { loadConfig } from "./config.js";
+import { loadConfig, effectivePlaybackMode, QUEUE_DIR } from "./config.js";
 import { streamTTS } from "./elevenlabs.js";
 import {
   playStreamBuffer,
@@ -10,8 +10,11 @@ import {
   waitForLock,
   releaseLock,
   type ReplayMeta,
+  type PlaybackContext,
 } from "./audio.js";
 import { playRandomPhrase } from "./phrases.js";
+import { setSessionState } from "./state.js";
+import { deferAnnounce } from "./announce.js";
 import { log } from "./logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -105,6 +108,13 @@ export async function handleDynamicResponse(
     return false;
   }
 
+  // Paid acks (fresh Gemini + ElevenLabs) only make sense in auto mode, where
+  // the ack plays immediately. In hand-raise modes (announce/silent) audio is
+  // deferred until the floor is granted, so an ack that spent credits now would
+  // be uninvited spend — force the free cached phrase regardless of
+  // dynamic_responses="always". "off" already returned above.
+  const useCached = mode === "cached" || effectivePlaybackMode() !== "auto";
+
   // Acks are disposable: try the lock ONCE (before any Gemini call) and
   // skip entirely if playback is in progress — cheap, and doesn't talk over.
   if (!acquireLock()) {
@@ -112,11 +122,16 @@ export async function handleDynamicResponse(
     return false;
   }
 
+  // The ack is attributed to the submitting session (dynamic acks are
+  // session-bound per §2) so it flips speaking→recompute; a session-less
+  // caller stays room-level "meta".
+  const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
   try {
     const character = getCharacter(voiceId);
 
-    if (mode === "cached" || !character || !userPrompt?.trim()) {
-      return await playRandomPhrase(voiceId);
+    if (useCached || !character || !userPrompt?.trim()) {
+      return await playRandomPhrase(voiceId, "ack", ctx);
     }
 
     log("dynamic", `Generating ${character.name} response for prompt (${userPrompt.length} chars)`);
@@ -125,7 +140,7 @@ export async function handleDynamicResponse(
 
     if (!responseText) {
       log("dynamic", "Generation failed — falling back to cached phrase");
-      return await playRandomPhrase(voiceId);
+      return await playRandomPhrase(voiceId, "ack", ctx);
     }
 
     const meta: ReplayMeta = {
@@ -140,12 +155,12 @@ export async function handleDynamicResponse(
     const stream = await streamTTS(responseText, { voiceId });
     if (stream) {
       log("dynamic", `Streaming: "${responseText}"`);
-      await playStreamBuffer(stream as any, "dynamic-response", meta);
+      await playStreamBuffer(stream as any, "dynamic-response", ctx, meta);
       return true;
     }
 
     log("dynamic", "Stream failed — falling back to cached phrase");
-    return await playRandomPhrase(voiceId);
+    return await playRandomPhrase(voiceId, "ack", ctx);
   } finally {
     releaseLock();
   }
@@ -160,6 +175,36 @@ function truncateQuestion(text: string): string {
   return sentenceEnd >= 0 ? firstLine.slice(0, sentenceEnd + 1) : firstLine;
 }
 
+// Write an ask-user question into the queue with the same shape ingest uses
+// (`-cc-<shortSession>.json`, source "ask-user") so grant_floor / the daemon
+// read and synthesize it through the normal on-grant path — no second code path.
+function enqueueQuestionFile(
+  sessionId: string,
+  sessionName: string | undefined,
+  text: string
+): void {
+  try {
+    const now = Date.now();
+    const epoch = Math.floor(now / 1000);
+    const ms = String(now % 1000).padStart(3, "0");
+    const filename = `${epoch}-${ms}-cc-${sessionId.slice(0, 12)}.json`;
+    const data = {
+      text,
+      conversation_id: sessionId,
+      generation_id: "",
+      model: "claude-code",
+      timestamp: String(epoch),
+      thread_title: sessionName ?? "Claude Code",
+      spoken: false,
+      source: "ask-user",
+    };
+    writeFileSync(join(QUEUE_DIR, filename), JSON.stringify(data, null, 2));
+    log("dynamic", `Ask-user queued for grant: ${filename}`);
+  } catch (err: any) {
+    log("dynamic", `enqueueQuestionFile failed: ${err.message}`);
+  }
+}
+
 export async function handleAskUser(
   voiceId: string,
   questionText: string,
@@ -167,6 +212,41 @@ export async function handleAskUser(
   sessionName?: string
 ): Promise<boolean> {
   if (!questionText?.trim()) return false;
+
+  // Ask-user readouts are session-bound (§2) — attribute to the asking session.
+  const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
+  // Hand-raise etiquette (§3): questions are the exact uninvited audio (and
+  // credit spend) these modes exist to prevent. In every non-auto mode, don't
+  // synthesize — queue the question for the normal on-grant path and raise the
+  // hand. Granting the floor reads it. Announce additionally sounds the free
+  // cached "I've got a question" chime; silent stays quiet. Auto mode below
+  // keeps today's immediate readout unchanged.
+  const playbackMode = effectivePlaybackMode();
+  if (playbackMode !== "auto") {
+    if (sessionId) {
+      enqueueQuestionFile(sessionId, sessionName, questionText);
+      setSessionState(sessionId, "hand_raised");
+    }
+    if (playbackMode !== "announce") {
+      log("dynamic", `${playbackMode} mode — question queued for grant, hand raised, no chime`);
+      return false;
+    }
+    // The question chime is room-level "meta" (never session-bound — it must not
+    // flip this session's speaking state) and lock-aware: play only while holding
+    // the stream lock so it can't talk over a grant/auto-play, else defer the hand.
+    if (acquireLock()) {
+      try {
+        log("dynamic", "Announce mode — question chimed, hand raised, no synthesis");
+        return await playRandomPhrase(voiceId, "question", "meta");
+      } finally {
+        releaseLock();
+      }
+    }
+    if (sessionId) deferAnnounce(sessionId);
+    log("dynamic", "Announce mode — floor busy, question deferred (hand raised)");
+    return false;
+  }
 
   // Question readouts carry real content — wait for the lock rather than skip.
   await waitForLock();
@@ -185,7 +265,7 @@ export async function handleAskUser(
 
     if (!key) {
       log("dynamic", "No GEMINI_API_KEY for ask-user — reading question line only");
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
     }
 
     const config = loadConfig();
@@ -219,15 +299,15 @@ Rules:
 
       const text = response.text?.trim();
       if (!text) {
-        return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+        return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
       }
 
       meta.textPreview = text.slice(0, 120);
       log("dynamic", `Ask-user response: "${text}"`);
-      return await streamAndPlay(voiceId, text, meta);
+      return await streamAndPlay(voiceId, text, ctx, meta);
     } catch (err: any) {
       log("dynamic", `Ask-user Gemini error: ${err.message}`);
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
     }
   } finally {
     releaseLock();
@@ -237,11 +317,12 @@ Rules:
 async function streamAndPlay(
   voiceId: string,
   text: string,
+  ctx: PlaybackContext,
   meta?: ReplayMeta
 ): Promise<boolean> {
   const stream = await streamTTS(text, { voiceId });
   if (stream) {
-    await playStreamBuffer(stream as any, "ask-user-response", meta);
+    await playStreamBuffer(stream as any, "ask-user-response", ctx, meta);
     return true;
   }
   return false;

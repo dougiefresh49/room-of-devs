@@ -27,9 +27,9 @@ DEFAULT_SPEED="1.25"
 VOICE_ID=""
 NOTIFICATIONS_ON=0
 NOTIFICATION_SOUND="random_sfx"
-STREAMING_ON=0
+PLAYBACK_MODE="auto"
 if [ -f "$CONFIG" ]; then
-    # One python3 call prints all five values, one per line (perf: was 5 spawns).
+    # One python3 call prints all six values, one per line (perf: was 6 spawns).
     CONFIG_VALUES=$(python3 - "$CONFIG" 2>/dev/null <<'PY'
 import json, sys
 try:
@@ -40,7 +40,10 @@ print(c.get('default_speed', 1.25))
 print(c.get('elevenlabs_voice_id', ''))
 print(1 if c.get('notifications_enabled') is True else 0)
 print(c.get('notification_sound', 'random_sfx'))
-print(1 if c.get('streaming_enabled') is True else 0)
+mode = c.get('playback_mode')
+if mode not in ('auto', 'announce', 'silent'):
+    mode = 'auto' if c.get('streaming_enabled') is True else 'silent'
+print(mode)
 PY
     ) || CONFIG_VALUES=""
     if [ -n "$CONFIG_VALUES" ]; then
@@ -49,7 +52,7 @@ PY
             read -r VOICE_ID
             read -r NOTIFICATIONS_ON
             read -r NOTIFICATION_SOUND
-            read -r STREAMING_ON
+            read -r PLAYBACK_MODE
         } <<< "$CONFIG_VALUES"
     fi
 fi
@@ -147,6 +150,113 @@ echo "---"
 # ── Play latest (SwiftBar: ctrl+shift+p; Hammerspoon: ctrl+Play) ─
 echo "Play Latest | bash=$SCRIPTS_DIR/play_latest.sh terminal=false refresh=true shortcut=ctrl+shift+p"
 echo "Replay Last | bash=$SCRIPTS_DIR/replay.sh terminal=false refresh=true shortcut=ctrl+shift+r"
+
+# ── Raised Hands (hand-raise mode) ───────────────────────────────
+STATE_DIR="$TTS_DIR/state"
+MUTED_SESSIONS_PATH="$TTS_DIR/muted_sessions.json"
+export STATE_DIR SCRIPTS_DIR QUEUE_DIR MUTED_SESSIONS_PATH
+python3 - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+
+state_dir = os.environ.get("STATE_DIR", "")
+queue_dir = os.environ.get("QUEUE_DIR", "")
+scripts_dir = os.environ["SCRIPTS_DIR"]
+muted_path = os.environ.get("MUTED_SESSIONS_PATH", "")
+
+muted = set()
+if muted_path and os.path.isfile(muted_path):
+    try:
+        with open(muted_path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if isinstance(data, list):
+            muted = set(data)
+    except (OSError, json.JSONDecodeError):
+        pass
+
+def humanize_wait(raised_at):
+    if not raised_at:
+        return "?"
+    try:
+        then = datetime.fromisoformat(raised_at.replace("Z", "+00:00"))
+    except ValueError:
+        return "?"
+    now = datetime.now(timezone.utc)
+    secs = max(0, int((now - then).total_seconds()))
+    if secs < 60:
+        return f"{secs}s"
+    mins = secs // 60
+    if mins < 60:
+        return f"{mins}m"
+    hours = mins // 60
+    rem_m = mins % 60
+    if rem_m:
+        return f"{hours}h {rem_m}m"
+    return f"{hours}h"
+
+def queue_count_for(session_id):
+    if not queue_dir or not os.path.isdir(queue_dir):
+        return 0
+    short = session_id[:12]
+    suffix = f"-cc-{short}.json"
+    try:
+        return sum(
+            1 for name in os.listdir(queue_dir) if name.endswith(suffix)
+        )
+    except OSError:
+        return 0
+
+hands = []
+if state_dir and os.path.isdir(state_dir):
+    for fname in os.listdir(state_dir):
+        if not fname.endswith(".json"):
+            continue
+        path = os.path.join(state_dir, fname)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                s = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if s.get("state") != "hand_raised":
+            continue
+        sid = s.get("sessionId") or fname[:-5]
+        if sid in muted:
+            continue
+        raised = s.get("raisedAt") or ""
+        try:
+            sort_key = datetime.fromisoformat(raised.replace("Z", "+00:00"))
+        except ValueError:
+            sort_key = datetime.max.replace(tzinfo=timezone.utc)
+        name = (s.get("name") or sid[:12]).replace("|", "/")
+        if len(name) > 24:
+            name = name[:22] + ".."
+        hands.append((sort_key, sid, name, raised))
+
+if not hands:
+    raise SystemExit(0)
+
+hands.sort(key=lambda x: x[0])
+print(f"Raised Hands ✋ ({len(hands)}) | disabled=true size=12")
+
+for _, sid, name, raised in hands:
+    wait = humanize_wait(raised)
+    print(
+        f"✋ {name} — waiting {wait} | "
+        f"bash={scripts_dir}/grant_floor.sh param1={sid} terminal=false refresh=true"
+    )
+    qn = queue_count_for(sid)
+    if qn > 1:
+        print(
+            f"--Drain ({qn} items) | "
+            f"bash={scripts_dir}/grant_floor.sh param1=drain param2={sid} terminal=false refresh=true"
+        )
+
+print(
+    f"Go Ahead (next hand) | "
+    f"bash={scripts_dir}/grant_floor.sh terminal=false refresh=true shortcut=ctrl+shift+g"
+)
+PY
 
 echo "---"
 
@@ -555,15 +665,25 @@ else
     echo "Notifications: Off | bash=$SCRIPTS_DIR/set_notifications.sh param1=on terminal=false refresh=true"
 fi
 
-if [ "$STREAMING_ON" = 1 ]; then
-    if [ "$DAEMON_RUNNING" = true ]; then
-        echo "Streaming: On (server running) | bash=$SCRIPTS_DIR/set_streaming.sh param1=off terminal=false refresh=true"
+case "$PLAYBACK_MODE" in
+    auto) PLAYBACK_MODE_LABEL="Auto" ;;
+    announce) PLAYBACK_MODE_LABEL="Announce" ;;
+    silent) PLAYBACK_MODE_LABEL="Silent" ;;
+    *) PLAYBACK_MODE_LABEL="Auto" ;;
+esac
+echo "Playback: ${PLAYBACK_MODE_LABEL}"
+for mode in auto announce silent; do
+    case "$mode" in
+        auto) LABEL="Auto" ;;
+        announce) LABEL="Announce" ;;
+        silent) LABEL="Silent" ;;
+    esac
+    if [ "$mode" = "$PLAYBACK_MODE" ]; then
+        echo "--✓ ${LABEL} | bash=$SCRIPTS_DIR/set_playback_mode.sh param1=$mode terminal=false refresh=true"
     else
-        echo "Streaming: On (server stopped) | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
+        echo "--  ${LABEL} | bash=$SCRIPTS_DIR/set_playback_mode.sh param1=$mode terminal=false refresh=true"
     fi
-else
-    echo "Streaming: Off | bash=$SCRIPTS_DIR/set_streaming.sh param1=on terminal=false refresh=true"
-fi
+done
 
 case "$NOTIFICATION_SOUND" in
     [Nn][Oo][Nn][Ee]) NOTIFICATION_SOUND_LABEL="None (silent)" ;;

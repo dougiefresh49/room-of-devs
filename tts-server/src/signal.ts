@@ -2,6 +2,7 @@ import { loadEnv, lookupSessionName, loadMutedSessions } from "./config.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import { handleDynamicResponse, handleAskUser } from "./dynamic-response.js";
 import { replayLast } from "./audio.js";
+import { purgeSessionQueue, setSessionState } from "./state.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -20,6 +21,14 @@ const voiceId = resolveVoiceId(sessionId);
 const sessionName = (sessionId && lookupSessionName(sessionId)) || undefined;
 
 if (action === "prompt-submitted") {
+  // You just gave the agent new instructions: purge its stale pending update
+  // (supersede-consistent — moot now, still replayable in played/) BEFORE
+  // flipping to working, so the ack's post-playback recompute doesn't re-raise
+  // the hand off a queue file that no longer represents the world.
+  if (sessionId) {
+    purgeSessionQueue(sessionId);
+    setSessionState(sessionId, "working");
+  }
   log("signal", `UserPromptSubmit → dynamic response (voice=${voiceId}, prompt=${textArg.slice(0, 60)})`);
   const played = await handleDynamicResponse(voiceId, textArg, sessionId || undefined, sessionName);
   if (!played) log("signal", "No response generated — silent");

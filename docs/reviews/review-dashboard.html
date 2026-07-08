@@ -1,0 +1,398 @@
+<title>Room-of-Devs Plan — Review Dashboard</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --ink: #1a1a1a; --ink-2: #555; --ink-3: #888;
+    --line: #e3e3df; --accent: #3d5afe;
+    --critical: #c62828; --critical-bg: #fdecea;
+    --serious: #b45309; --serious-bg: #fef3e2;
+    --warning: #8a6d00; --warning-bg: #fdf6d8;
+    --neutral: #55606e; --neutral-bg: #eef1f4;
+    --ok: #1b7f4b; --ok-bg: #e6f4ec;
+    --partial: #7c5800; --partial-bg: #fdf3d0;
+    --reject: #6b4fa0; --reject-bg: #f0eaf9;
+  }
+  :root[data-theme="dark"], :root[data-theme="dark"] body { color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #16181c; --card: #1f2228; --ink: #eceff3; --ink-2: #aab2bd; --ink-3: #7a828c;
+    --line: #32363e; --accent: #7c94ff;
+    --critical: #ff8a80; --critical-bg: #3a2224;
+    --serious: #ffb74d; --serious-bg: #382b1a;
+    --warning: #e6c84a; --warning-bg: #34301a;
+    --neutral: #aab4c0; --neutral-bg: #272c33;
+    --ok: #7bd4a0; --ok-bg: #1d3328;
+    --partial: #e6c05a; --partial-bg: #322c18;
+    --reject: #c3aaf0; --reject-bg: #2b2438;
+  }}
+  :root[data-theme="dark"] {
+    --bg: #16181c; --card: #1f2228; --ink: #eceff3; --ink-2: #aab2bd; --ink-3: #7a828c;
+    --line: #32363e; --accent: #7c94ff;
+    --critical: #ff8a80; --critical-bg: #3a2224;
+    --serious: #ffb74d; --serious-bg: #382b1a;
+    --warning: #e6c84a; --warning-bg: #34301a;
+    --neutral: #aab4c0; --neutral-bg: #272c33;
+    --ok: #7bd4a0; --ok-bg: #1d3328;
+    --partial: #e6c05a; --partial-bg: #322c18;
+    --reject: #c3aaf0; --reject-bg: #2b2438;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.55 -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 32px 16px 80px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { color: var(--ink-2); margin: 0 0 24px; font-size: 14px; }
+  .flow { color: var(--ink-2); font-size: 13px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; overflow-x: auto; }
+  .flow b { color: var(--ink); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .tile .n { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .tile .l { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+  .tile .d { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 14px; }
+  .filters button { font: 12.5px/1 inherit; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); cursor: pointer; }
+  .filters button.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; }
+  .sev-blocker { color: var(--critical); background: var(--critical-bg); }
+  .sev-major   { color: var(--serious);  background: var(--serious-bg); }
+  .sev-minor   { color: var(--warning);  background: var(--warning-bg); }
+  .sev-nit     { color: var(--neutral);  background: var(--neutral-bg); }
+  .v-confirmed { color: var(--ok);      background: var(--ok-bg); }
+  .v-partial   { color: var(--partial); background: var(--partial-bg); }
+  .v-rejected  { color: var(--reject);  background: var(--reject-bg); }
+  .src { color: var(--neutral); background: var(--neutral-bg); text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+  .group-h { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-3); margin: 26px 0 10px; }
+  details.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+  details.card[open] { border-color: var(--accent); }
+  details.card > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary .id { font-weight: 700; font-size: 13px; color: var(--ink-3); min-width: 44px; }
+  details.card > summary .t { font-weight: 600; flex: 1 1 260px; }
+  .body { padding: 2px 16px 16px; border-top: 1px solid var(--line); }
+  .body h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-3); margin: 14px 0 4px; }
+  .body p { margin: 0; color: var(--ink-2); font-size: 14px; }
+  .body .ruling p { color: var(--ink); }
+  .docref { font-size: 12.5px; color: var(--ink-3); }
+  code { background: var(--neutral-bg); border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+  .disp { font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .disp.fix { color: var(--serious); }
+  .disp.impl { color: var(--neutral); }
+  .disp.none { color: var(--reject); }
+  .note { font-size: 13px; color: var(--ink-3); font-style: italic; margin-top: 24px; }
+</style>
+<div class="wrap">
+  <h1>Room-of-Devs Plan — Review Dashboard</h1>
+  <p class="sub">Multi-angle review of <code>plan-room-of-devs.md</code> + phase detail specs (rev 2) · 2026-07-07</p>
+
+  <div class="flow">
+    <b>Pipeline:</b> codex (gpt-5.x) and agy (gemini) each reviewed the 3 plan docs independently →
+    each cross-verified the other's findings → Claude (fable-5) verified contested claims against the actual code and made the final ruling on all 25 items.
+    <b>Cross-review status:</b> codex→agy complete · agy→codex did not finish (CLI timeout; codex's findings verified directly by Claude instead).
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="n">25</div><div class="l">Total findings</div><div class="d">8 gemini · 14 codex · 3 cross-review</div></div>
+    <div class="tile"><div class="n">21</div><div class="l">Confirmed</div><div class="d">fix the plan docs</div></div>
+    <div class="tile"><div class="n">3</div><div class="l">Partial</div><div class="d">core holds, detail wrong</div></div>
+    <div class="tile"><div class="n">1</div><div class="l">Rejected</div><div class="d">plan already handles it</div></div>
+    <div class="tile"><div class="n">0</div><div class="l">Architecture changes</div><div class="d">all fixes are spec-level</div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button data-f="all" class="on">All 25</button>
+    <button data-f="sev-blocker">Blocker</button>
+    <button data-f="sev-major">Major</button>
+    <button data-f="sev-minor">Minor</button>
+    <button data-f="sev-nit">Nit</button>
+    <button data-f="v-confirmed">Confirmed</button>
+    <button data-f="v-partial">Partial</button>
+    <button data-f="v-rejected">Rejected</button>
+    <button data-f="src-gemini">From gemini</button>
+    <button data-f="src-codex">From codex</button>
+  </div>
+
+  <div class="group-h">State machine &amp; hand-raise correctness</div>
+
+  <details class="card" data-tags="sev-blocker v-confirmed src-gemini">
+    <summary><span class="id">GA-1</span><span class="t">TOCTOU race in end-of-playback state recompute</span><span class="chip sev-blocker">blocker</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §2 · found by gemini</p>
+      <h4>Claim</h4><p>The recompute scans <code>queue/</code> then writes state in two steps. If a Stop hook lands in that window, the recompute overwrites a fresh <code>hand_raised</code> with <code>idle</code> — the hand badge is silently lost.</p>
+      <h4>Codex cross-verdict</h4><p>CONFIRM — atomic rename protects readers from partial JSON, not the scan-derive-write cycle itself.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b>, though blocker overstates it — the window is milliseconds and the next event self-corrects. Fix in rev 3: a post-write verification pass (re-scan queue after the rename; mismatch → rewrite) or a shared lockfile around the read-derive-write cycle. Cheap either way.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-gemini">
+    <summary><span class="id">GA-2</span><span class="t">Stale queue item resurrects after prompt injection</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §8-9 · found by gemini</p>
+      <h4>Claim</h4><p>Injecting a prompt into a session with a raised hand flips it to <code>working</code>, but the old queue file stays. After the ack plays, the recompute sees the stale file and re-raises the hand — granting it plays the <em>obsolete pre-injection</em> update.</p>
+      <h4>Codex cross-verdict</h4><p>CONFIRM — recompute prioritizes "queue file present → hand_raised" over Claude's busy status.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: <code>prompt-submitted</code> purges the session's pending queue item before writing <code>working</code> — consistent with the supersede philosophy (you just gave the agent new instructions; its old progress report is moot).</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-gemini">
+    <summary><span class="id">GA-5</span><span class="t">Deferred announce re-nags every raised hand</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §3 · found by gemini</p>
+      <h4>Claim</h4><p><code>.pending-announce</code> is a boolean flag; when the floor frees, ALL currently raised hands get announced. A hand you deliberately left up gets re-announced after every other playback — exactly the bombardment this mode exists to prevent.</p>
+      <h4>Codex cross-verdict</h4><p>CONFIRM.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> — and it's a UX-defining detail. Rev 3: the flag file stores <em>which</em> sessionIds deferred; the announce names only those (validated against current state), so an intentionally-parked hand stays quiet.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-partial src-gemini">
+    <summary><span class="id">GA-6</span><span class="t">Supersede can yank a file mid-synthesis</span><span class="chip sev-major">major</span><span class="chip v-partial">partial</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §4 · found by gemini</p>
+      <h4>Claim</h4><p>If the daemon has claimed a queue file and is mid-Gemini/ElevenLabs when a new Stop supersedes it, the file is moved out from under the daemon → crash on the post-playback rename.</p>
+      <h4>Codex cross-verdict</h4><p>PARTIAL — the race is real but the crash isn't: <code>moveToPlayed()</code> catches rename failures. Real cost is wasted synthesis + inconsistent state.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Partial — codex is right.</b> Verified: the current code catches ENOENT, so no crash; but the double-spend race is real. Rev 3: <code>ingest.ts</code> checks the <code>claimProcessing</code> marker before superseding — a claimed file is already being spoken, so skip the swap.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-3</span><span class="t">Clear/skip leaves sessions stuck in hand_raised</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §3-4 · found by codex</p>
+      <h4>Claim</h4><p>The clear scripts remove <code>.pending-announce</code> but never recompute session state — a cleared session stays <code>hand_raised</code> forever: wrong badge, blinking LED, phantom panel state.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> (verified: today's clear scripts only move files). Rev 3: clear scripts trigger a state recompute for affected sessions.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-4</span><span class="t">Playback wrapper can't know which session is speaking</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §2 · found by codex</p>
+      <h4>Claim</h4><p>The plan says a shared wrapper sets <code>speaking</code> for every audible path — but <code>playFile()</code> gets an mp3 path, <code>playMp3Buffer()</code> a raw buffer. No session identity. A generic wrapper sets the wrong session, or none, or clobbers state after a 2-second ack.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> — this also absorbs the cross-review catch that announce chimes played via bare <code>afplay</code> conflict with the wrapper model. Rev 3: explicit playback-context parameter (sessionId or "meta"); meta audio (announces, SFX, say) never touches session state.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-5</span><span class="t">Live sessions invisible until they speak</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §2 · found by codex</p>
+      <h4>Claim</h4><p>The daemon deletes state files for dead sessions on start but never seeds files for live ones — the menu/panel/LEDs show an empty room until each agent happens to fire a hook.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: on daemon start, scan <code>~/.claude/sessions</code> and seed state (<code>working</code> if busy, else <code>idle</code>; <code>hand_raised</code> if a queue file exists).</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-1</span><span class="t">Ask-user questions bypass hand-raise mode entirely</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 Phase 1 flow · found by codex</p>
+      <h4>Claim</h4><p><code>signal.ts ask-user</code> synthesizes and speaks immediately — in announce mode an agent's question still audio-bombs you and burns credits with no floor grant.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed — a real design gap, not just a bug.</b> Rev 3 decision: in announce mode, ask-user plays a cached "I've got a question" phrase (free) and raises the hand with a <code>question</code> item type; granting the floor synthesizes and reads it. Questions get announce priority styling (they block the agent) but never uninvited audio.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <div class="group-h">Announce flow &amp; credits</div>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-2</span><span class="t">Announce accidentally gated behind notifications toggle</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §3 · found by codex</p>
+      <h4>Claim</h4><p><code>notify_queued.sh</code> exits early unless <code>notifications_enabled</code> — which defaults false. Announce mode would ship silent by default.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> (verified the early-exit gate in the script). Rev 3: restructure — announce branch keys on <code>playback_mode=announce</code> and runs before/independent of the notification gate; banner keeps its own toggle.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-confirmed src-codex">
+    <summary><span class="id">CX-11</span><span class="t">Supersede silently drops distinct completed tasks</span><span class="chip sev-minor">minor</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">Decision 13 / phase1-2 §4 · found by codex</p>
+      <h4>Claim</h4><p>Supersede treats every Stop as a progress report — but if an agent finishes task A, then task B, task A's update is archived unheard. The room feels like agents drop work.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed as a real tradeoff</b> — keeping supersede (the credit story is right), but rev 3 adds a superseded-count chip in the menu/panel and makes <code>drain</code> visible whenever superseded items exist.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-confirmed src-codex">
+    <summary><span class="id">CX-12</span><span class="t">Notification click bypasses the floor-grant path</span><span class="chip sev-minor">minor</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §3 / phase3-4 §4.9 · found by codex</p>
+      <h4>Claim</h4><p>Notification <code>-execute</code> still calls <code>play_node.sh &lt;file&gt;</code> directly — skipping grant FIFO, state transitions, and lead-in.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: in announce mode the notification click calls <code>grant_floor.sh &lt;sessionId&gt;</code> — one entry point for every surface, as Decision 8 already promises.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-nit v-confirmed src-codex">
+    <summary><span class="id">CX-14</span><span class="t">Announce integration effort underestimated</span><span class="chip sev-nit">nit</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §3 · found by codex</p>
+      <h4>Claim</h4><p>"~15-line diff" ignores that <code>notify_queued.sh</code> is a python-heavy script and the announce branch must be lock-aware, mode-aware, voice-aware, and deferred-aware.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: announce becomes a small dedicated helper (shell or TS) that <code>notify_queued.sh</code> calls; estimate bumped accordingly.</p></div>
+      <div class="disp fix">→ Fix in rev 3 (estimate + structure)</div>
+    </div>
+  </details>
+
+  <div class="group-h">Voice control (PTT / STT / injection)</div>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-6</span><span class="t">PTT ducking built on a toggle that can invert</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §6 · found by codex</p>
+      <h4>Claim</h4><p><code>pause.sh</code> is a SIGSTOP/SIGCONT toggle. PTT-start on already-paused audio would <em>resume it into the microphone</em>; stale recording PIDs invert the Raycast toggle.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> (verified: pause.sh toggles). Rev 3: explicit <code>pause-if-playing</code>/<code>resume-if-ducked</code> semantics via a <code>.ptt-ducked</code> flag written only when PTT itself paused; validate recording PID liveness before choosing start-vs-stop.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-partial src-codex">
+    <summary><span class="id">CX-7</span><span class="t">ffmpeg mic capture assumptions too optimistic</span><span class="chip sev-major">major</span><span class="chip v-partial">partial</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §6 · found by codex</p>
+      <h4>Claim</h4><p><code>-i ":default"</code> isn't safe; device indexes vary and TCC mic permission can fail silently depending on the host process.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Partial</b> — <code>:default</code> is actually valid on current ffmpeg avfoundation, so the headline overstates. But the TCC-permission gotcha is real and worth the fix: rev 3 adds device discovery at setup (<code>-list_devices true</code>), a <code>mic_device</code> config key, and a documented first-run permission path. Downgraded to minor.</p></div>
+      <div class="disp fix">→ Fix in rev 3 (setup step)</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-8</span><span class="t">team.sh persona→session mapping underspecified</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §8 · found by codex</p>
+      <h4>Claim</h4><p>Session files appear asynchronously and don't encode the persona; reverse voice-lookup can bind the wrong session → buttons and voice inject into the wrong agent.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: <code>team.sh</code> writes an explicit runtime mapping file (persona → tmux target → sessionId) once it detects the new session file, with a timeout error if detection fails. Injection uses the mapping, not voice-reverse-lookup.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-partial src-gemini">
+    <summary><span class="id">GA-7</span><span class="t">Concurrent PTT invocations fight over temp files</span><span class="chip sev-minor">minor</span><span class="chip v-partial">partial</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §6 · found by gemini</p>
+      <h4>Claim</h4><p>Hardcoded <code>/tmp/ptt.wav</code> + single PID file → simultaneous button holds corrupt recordings and orphan ffmpeg processes.</p>
+      <h4>Codex cross-verdict</h4><p>PARTIAL — real for multi-button/panel holds; the Raycast toggle path naturally serializes.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Partial — agree with codex.</b> It matters exactly when Phase 3 buttons arrive (two buttons held = two recordings). Rev 3: unique per-invocation temp files keyed by PTT ID.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-rejected src-gemini">
+    <summary><span class="id">GA-8</span><span class="t">Ducking-resume undoes voice "stop"/"pause" commands</span><span class="chip sev-minor">minor</span><span class="chip v-rejected">rejected</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §6 · found by gemini</p>
+      <h4>Claim</h4><p>PTT blindly resumes ducked playback after routing, negating a routed "stop" or "pause".</p>
+      <h4>Codex cross-verdict</h4><p>REFUTE — the plan explicitly resumes only "unless the routed command itself took the floor".</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Rejected.</b> Verified in the doc: both the prose and the pseudocode already condition the resume on the routed action. Gemini misread. No change.</p></div>
+      <div class="disp none">→ No change needed</div>
+    </div>
+  </details>
+
+  <div class="group-h">Hardware &amp; serial (Phase 3)</div>
+
+  <details class="card" data-tags="sev-major v-confirmed src-gemini">
+    <summary><span class="id">GA-3</span><span class="t">Reconnect logic stacks setInterval loops</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §3.1 · found by gemini</p>
+      <h4>Claim</h4><p>The pseudocode installs <code>setInterval(scanAndConnect, 3000)</code> from every close/error event — each failure spawns another infinite interval; unplugged Pi → interval cascade.</p>
+      <h4>Codex cross-verdict</h4><p>CONFIRM.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: one persistent scheduler (single interval that no-ops while connected, or setTimeout chain). Trivial pseudocode fix, real bug if built as written.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-gemini">
+    <summary><span class="id">GA-4</span><span class="t">Pi's serial console will garbage the JSON protocol</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §3.1 · found by gemini</p>
+      <h4>Claim</h4><p>The Model B's UART runs a getty login shell by default — JSON lines become failed login attempts echoing garbage back.</p>
+      <h4>Codex cross-verdict</h4><p>PARTIAL — "defaults" slightly overstated, but the setup step is genuinely missing.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> — for a 2011 Model B running Raspbian-era images, serial console IS on by default. Rev 3 + hardware doc: explicit <code>raspi-config</code> step (disable login shell, keep UART enabled). Pairs with CX-10.</p></div>
+      <div class="disp fix">→ Fix in rev 3 + arcade doc</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-10</span><span class="t">UART electrical hazards unstated (3.3V logic)</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §3.1 · found by codex</p>
+      <h4>Claim</h4><p>A 5V adapter TX into the Pi's 3.3V RX can permanently damage the SoC; the plan says "buy an FTDI adapter" without the voltage caveat or TX/RX crossover wiring note.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> — gemini's residual-risks section flagged the same hazard independently, which is two models agreeing on a board-killer. Rev 3 + arcade doc: 3.3V-logic adapter (or jumper set to 3.3V), GND/TX/RX only, TX↔RX crossed, console disabled (GA-4).</p></div>
+      <div class="disp fix">→ Fix in rev 3 + arcade doc</div>
+    </div>
+  </details>
+
+  <div class="group-h">Panel &amp; architecture (Phase 4)</div>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">CX-9</span><span class="t">Panel secretly depends on Phase 3 internals</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §4.6 · found by codex</p>
+      <h4>Claim</h4><p>The WebSocket reuses the chokidar watcher "Phase 3 already added" — build the panel before the buttons and the dependency is broken, violating the independently-shippable principle.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: <code>state-watch.ts</code> becomes a standalone shared module speced on its own; serial and panel each subscribe to it, whichever ships first installs it.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-confirmed src-codex">
+    <summary><span class="id">CX-13</span><span class="t">Panel WebSocket commands need validation</span><span class="chip sev-minor">minor</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §4.6/§4.9 · found by codex</p>
+      <h4>Claim</h4><p>Panel-supplied JSON is spawned into scripts without schema validation or live-session checks — stale sessionIds after daemon restarts become flaky no-op clicks.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: validate message shape, resolve sessionId against live state before spawning, error event back to the panel so stale cards grey out.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <div class="group-h">Caught only by the cross-review layer</div>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">M-1</span><span class="t">Announce chime conflicts with the speaking-state model</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §2 vs §3 · found by codex while cross-reviewing gemini</p>
+      <h4>Claim</h4><p>§3 plays announce phrases via bare <code>afplay</code> in a shell script; §2 says the shared TS wrapper sets <code>speaking</code> for "every audible path". Both can't be true.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> — internal contradiction. Resolved together with CX-4: announces are meta-audio (no session state, but they do respect the playback lock via try-once).</p></div>
+      <div class="disp fix">→ Fix in rev 3 (folded into CX-4)</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-major v-confirmed src-codex">
+    <summary><span class="id">M-2</span><span class="t">clear_thread_queue.sh doesn't take a sessionId</span><span class="chip sev-major">major</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase1-2 §7 (voice "clear" command), GA-2 fix path · found by codex while cross-reviewing gemini</p>
+      <h4>Claim</h4><p>The plan repeatedly calls <code>clear_thread_queue.sh &lt;sessionId&gt;</code>, but the real script takes a urlsafe-base64 JSON grouping token (SwiftBar's format).</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed</b> (verified the script's arg parsing). Rev 3: add a session-scoped variant (<code>clear_session_queue.sh &lt;sessionId&gt;</code> or an overload flag) and reference it consistently.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <details class="card" data-tags="sev-minor v-confirmed src-codex">
+    <summary><span class="id">M-3</span><span class="t">Panel can't just read the WS token file from disk</span><span class="chip sev-minor">minor</span><span class="chip v-confirmed">confirmed</span></summary>
+    <div class="body">
+      <p class="docref">phase3-4 §4.6 · found by codex while cross-reviewing gemini</p>
+      <h4>Claim</h4><p>A WKWebView frontend can't read <code>~/.cursor/tts/panel_ws_token</code> without Tauri fs permissions or a Rust-side handoff.</p>
+      <div class="ruling"><h4>Final ruling</h4><p><b>Confirmed.</b> Rev 3: a tiny Tauri command (Rust) reads the token and hands it to the frontend at startup — ~5 lines, but it must be in the spec or the token scheme dies on first contact.</p></div>
+      <div class="disp fix">→ Fix in rev 3</div>
+    </div>
+  </details>
+
+  <p class="note">Not shown as cards: both models' residual-risk lists agree on the two inherent fragilities — tmux injection near permission dialogs, and tauri-nspanel being a third-party plugin — both already documented in the plan as accepted risks. agy's cross-review of codex's findings timed out twice (CLI issues); Claude verified codex's contested claims directly against the code instead, so every ruling above is grounded either in a second model's verdict or direct code inspection.</p>
+</div>
+<script>
+  const btns = document.querySelectorAll('#filters button');
+  const cards = document.querySelectorAll('details.card');
+  btns.forEach(b => b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const f = b.dataset.f;
+    cards.forEach(c => {
+      c.style.display = (f === 'all' || c.dataset.tags.split(' ').includes(f)) ? '' : 'none';
+    });
+  }));
+</script>

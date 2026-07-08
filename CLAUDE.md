@@ -32,6 +32,7 @@ Every queue item costs one Gemini call (`gemini-3.1-flash-lite`) and one ElevenL
 ## General preferences
 
 - Use pnpm, never npm.
+- Delegation roster: cursor-agent, codex, and Claude models only. Don't delegate to agy/Antigravity (owner call, 2026-07-07 — flaky headless behavior).
 - If asked to do too much work at once, stop and state that clearly.
 - If computer use is helpful for completing or verifying work, shell out to gpt-5.x with Codex for it (see the `codex-computer-use` skill).
 

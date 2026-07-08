@@ -9,6 +9,9 @@ set -euo pipefail
 TTS_DIR="$HOME/.cursor/tts"
 QUEUE_DIR="$TTS_DIR/queue"
 PLAYED_DIR="$TTS_DIR/played"
+STATE_DIR="$TTS_DIR/state"
+SERVER_DIR="$TTS_DIR/tts-server"
+PENDING_FILE="$TTS_DIR/.pending-announce"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] clear_thread_queue: $*" >> "$LOG_FILE" 2>/dev/null || true; }
@@ -48,6 +51,7 @@ def group_key_of(d):
 
 
 n = 0
+sids = []
 try:
     names = [x for x in os.listdir(queue_dir) if x.endswith(".json")]
 except OSError:
@@ -62,12 +66,37 @@ for name in names:
         continue
     if group_key_of(d) != key:
         continue
+    sid = (d.get("conversation_id") or "").strip()
+    if sid and sid not in sids:
+        sids.append(sid)
     shutil.move(path, os.path.join(played_dir, name))
     n += 1
 
+# First line = count; remaining lines = affected sessionIds (for recompute).
 print(n)
+for sid in sids:
+    print(sid)
 PY
 ) || exit 1
 
-log "Moved $COUNT file(s) for thread key (hashed in token)"
+COUNT_N="$(printf '%s\n' "$COUNT" | head -n1)"
+SIDS="$(printf '%s\n' "$COUNT" | tail -n +2)"
+
+# Dismissed hands must not announce themselves afterwards, and a cleared session
+# must not sit hand_raised forever: drop its .pending-announce line + recompute.
+if [ -n "$SIDS" ]; then
+    while IFS= read -r sid; do
+        [ -n "$sid" ] || continue
+        if [ -f "$PENDING_FILE" ]; then
+            grep -vxF "$sid" "$PENDING_FILE" > "$PENDING_FILE.tmp" 2>/dev/null || true
+            mv "$PENDING_FILE.tmp" "$PENDING_FILE" 2>/dev/null || rm -f "$PENDING_FILE.tmp"
+            [ -s "$PENDING_FILE" ] || rm -f "$PENDING_FILE"
+        fi
+        if [ -f "$SERVER_DIR/src/state.ts" ] && command -v pnpm >/dev/null 2>&1; then
+            (cd "$SERVER_DIR" && pnpm exec tsx src/state.ts recompute "$sid") >/dev/null 2>&1 || true
+        fi
+    done <<< "$SIDS"
+fi
+
+log "Moved $COUNT_N file(s) for thread key (hashed in token)"
 exit 0
