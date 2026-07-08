@@ -31,13 +31,22 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The window is transparent; only body paints the surface, so dock mode can
+   strip it (body.dock-window) and leave nothing but the floating pill. */
+html {
+  background: transparent;
+}
+
+body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34px),
     radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px),
     var(--bg);
-  color: var(--text);
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 body {

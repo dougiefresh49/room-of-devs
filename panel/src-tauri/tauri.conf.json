@@ -20,12 +20,15 @@
         "resizable": true,
         "decorations": false,
         "alwaysOnTop": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "transparent": true,
+        "shadow": false
       }
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
