@@ -12,7 +12,7 @@ err() { echo "[setup] ERROR: $*" >&2; }
 
 # ── 1. Create directory structure ──────────────────────────────────
 log "Creating directory structure under $TTS_DIR"
-mkdir -p "$TTS_DIR"/{queue,played,cache,scripts,logs,icons,sounds/default}
+mkdir -p "$TTS_DIR"/{queue,played,cache,scripts,logs,icons,sounds/default,ptt,models}
 
 # ── 1b. Menu bar + notification icons ─────────────────────────────
 ICON_SRC_DIR="$PROJECT_DIR/icons"
@@ -62,7 +62,8 @@ for script in \
     hook_stop.sh hook_prompt.sh hook_ask_user.sh tts-server.sh \
     set_streaming.sh set_playback_mode.sh announce.sh replay.sh \
     set_session_mute.sh set_session_voice.sh \
-    ingest_claude_code.sh fetch_credits.sh; do
+    ingest_claude_code.sh fetch_credits.sh \
+    ptt.sh voice_ptt.sh; do
     if [ -f "$PROJECT_DIR/scripts/$script" ]; then
         cp "$PROJECT_DIR/scripts/$script" "$TTS_DIR/scripts/$script"
     fi
@@ -118,6 +119,7 @@ defaults = {
     "streaming_enabled": False,
     "streaming_session_prefix": "auto",
     "played_retention_count": 50,
+    "mic_device": ":default",
 }
 
 changed = False
@@ -141,6 +143,28 @@ if changed:
         json.dump(c, f, indent=2)
         f.write("\n")
 PY
+
+# ── 5b. Mic device discovery (log only; pin via mic_device in config) ─
+if command -v ffmpeg >/dev/null 2>&1; then
+    log "Audio input devices (ffmpeg avfoundation):"
+    ffmpeg -f avfoundation -list_devices true -i "" 2>&1 | while IFS= read -r line; do
+        log "  $line"
+    done || true
+else
+    log "ffmpeg not found — skipping mic device discovery"
+fi
+
+# ── 5c. Whisper model (local STT for push-to-talk) ────────────────
+WHISPER_MODEL="$TTS_DIR/models/ggml-base.en.bin"
+if [ -f "$WHISPER_MODEL" ]; then
+    log "Whisper model present at $WHISPER_MODEL"
+else
+    log "Whisper model not found at $WHISPER_MODEL"
+    log "  Download once (~140MB):"
+    log "    mkdir -p $TTS_DIR/models"
+    log "    curl -L -o $WHISPER_MODEL https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin"
+    log "  Also requires: brew install whisper-cpp tmux"
+fi
 
 # ── 6. Install hooks.json ─────────────────────────────────────────
 HOOKS_FILE="$HOOKS_DIR/hooks.json"
