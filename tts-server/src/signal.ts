@@ -38,11 +38,14 @@ if (action === "prompt-submitted") {
   if (!played) log("signal", "No question read — silent");
 } else if (action === "replay") {
   const nth = parseInt(textArg, 10) || 1;
-  log("signal", `Replay request — playing ${nth === 1 ? "last" : `${nth}th from last`} message`);
+  const speedArg = process.argv[5];
+  const speed =
+    speedArg != null && speedArg !== "" ? parseFloat(speedArg) : undefined;
+  log("signal", `Replay request — playing ${nth === 1 ? "last" : `${nth}th from last`} message${speed != null ? ` at ${speed}x` : ""}`);
   // "Say that again" REPLACES whatever is playing — never talks over it.
   // This also keeps the playback PID files single-writer so stop.sh works.
   stopCurrent();
-  const code = await replayLast(nth);
+  const code = await replayLast(nth, speed ?? 1.0);
   if (code !== 0) log("signal", "Nothing to replay");
 } else {
   console.error(`Unknown signal: ${action}`);

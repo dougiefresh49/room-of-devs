@@ -14,6 +14,7 @@ export const SESSIONS_DIR = join(homedir(), ".claude", "sessions");
 export const CONFIG_PATH = join(TTS_DIR, "config.json");
 export const SESSION_VOICES_PATH = join(TTS_DIR, "session_voices.json");
 export const MUTED_SESSIONS_PATH = join(TTS_DIR, "muted_sessions.json");
+export const NICKNAMES_PATH = join(TTS_DIR, "nicknames.json");
 export const PHRASES_DIR = join(TTS_DIR, "sounds", "phrases");
 export const STREAM_PID_FILE = join(TTS_DIR, ".stream-playback-pid");
 // Legacy PID file read by pause.sh, media_control.sh, the SwiftBar plugin,
@@ -156,6 +157,18 @@ export function loadMutedSessions(): string[] {
     return Array.isArray(data) ? data : [];
   } catch {
     return [];
+  }
+}
+
+export function loadNicknames(): Record<string, string> {
+  try {
+    if (!existsSync(NICKNAMES_PATH)) return {};
+    const data = JSON.parse(readFileSync(NICKNAMES_PATH, "utf-8"));
+    return data && typeof data === "object" && !Array.isArray(data)
+      ? (data as Record<string, string>)
+      : {};
+  } catch {
+    return {};
   }
 }
 

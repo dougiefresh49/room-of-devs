@@ -16,6 +16,7 @@ interface AgentView {
   sessionId: string;
   character: string;
   name: string;
+  label?: string;
   state: AgentState;
   raisedCount: number;
   supersededCount: number;
@@ -146,6 +147,7 @@ function renderCard(agent: AgentView): string {
   const mutedClass = agent.muted ? " muted" : "";
   const teamOnly = !agent.isTeam;
   const killIsArmed = killArmed.has(agent.sessionId);
+  const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
   const raisedChip =
     agent.state === "hand_raised"
@@ -173,7 +175,7 @@ function renderCard(agent: AgentView): string {
           <span class="avatar-fallback">${initials(agent.name)}</span>
         </div>
         <div class="card-body">
-          <div class="name${mutedClass}" title="${safeName}">${safeName}</div>
+          <div class="name${mutedClass}" title="${safeName}">${displayName}</div>
           <div class="badge state-${agent.state}">
             <span class="dot"></span>
             <span class="label">${stateLabels[agent.state]}</span>
@@ -211,6 +213,7 @@ function renderDockAgent(agent: AgentView): string {
   const greyed = !connected || staleSessions.has(agent.sessionId);
   const teamOnly = !agent.isTeam;
   const killIsArmed = killArmed.has(agent.sessionId);
+  const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
 
   return `
@@ -222,7 +225,7 @@ function renderDockAgent(agent: AgentView): string {
         type="button"
         class="dock-avatar-btn"
         title="${safeName} - ${stateLabels[agent.state]}"
-        aria-label="${safeName}, ${stateLabels[agent.state]}"
+        aria-label="${displayName}, ${stateLabels[agent.state]}"
       >
         <span class="dock-ring">
           <img class="avatar dock-avatar" src="${avatarSrc(agent)}" alt="" />
