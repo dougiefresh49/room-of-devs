@@ -1,5 +1,6 @@
 import "./style.css";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import {
   LogicalPosition,
   LogicalSize,
@@ -47,6 +48,9 @@ const PERSONAS: Persona[] = [
   { name: "Raphael", label: "Raph", avatar: "raphael" },
   { name: "Donatello", label: "Donnie", avatar: "donatello" },
   { name: "Michelangelo", label: "Mikey", avatar: "michelangelo" },
+  { name: "Splinter", label: "Splinter", avatar: "splinter" },
+  { name: "Shredder", label: "Shredder", avatar: "shredder" },
+  { name: "Karai", label: "Karai", avatar: "karai" },
 ];
 
 type PickerTab = "new" | "resume";
@@ -79,6 +83,7 @@ let resumableList: ResumableSession[] = [];
 let toast: { kind: "launch" | "error"; text: string } | null = null;
 let pickerReturnTimer: ReturnType<typeof setTimeout> | null = null;
 let toastClearTimer: ReturnType<typeof setTimeout> | null = null;
+let browseDir: string | null = null;
 
 const stateLabels: Record<AgentState, string> = {
   working: "working",
@@ -99,6 +104,7 @@ const icons = {
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
   plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
   back: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>`,
+  folder: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h5l2 2h9a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/></svg>`,
 } as const;
 
 function send(msg: object) {
@@ -422,11 +428,53 @@ function personaChips(): string {
   return `<div class="persona-chips">${PERSONAS.map(personaChip).join("")}</div>`;
 }
 
-function renderNewRows(): string {
-  if (!knownDirsList.length) {
-    return '<p class="picker-empty">No known projects</p>';
+function renderBrowseRow(): string {
+  if (browseDir) {
+    const name = escapeHtml(basenameOf(browseDir));
+    const path = escapeHtml(prettyPath(browseDir));
+    return `
+      <div
+        class="picker-row picker-browse expanded"
+        data-dir="${escapeHtml(browseDir)}"
+        data-project="${name}"
+        data-browse-row
+      >
+        <div class="picker-row-info picker-browse-info" title="Choose a different folder">
+          <div class="picker-row-name" title="${path}">${name}</div>
+          <div class="picker-row-sub" title="${path}">${path}</div>
+        </div>
+        ${personaChips()}
+      </div>`;
   }
-  return knownDirsList
+  return `
+    <div class="picker-row picker-browse" data-browse-row role="button" tabindex="0">
+      <div class="picker-row-info">
+        <div class="picker-row-name picker-browse-label">
+          <span class="picker-browse-icon" aria-hidden="true">${icons.folder}</span>
+          <span>Start in another folder…</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function pickFolder() {
+  try {
+    const selected = await open({ directory: true, multiple: false });
+    if (selected && typeof selected === "string") {
+      browseDir = selected;
+      render();
+    }
+  } catch (err) {
+    console.error("folder picker failed:", err);
+  }
+}
+
+function renderNewRows(): string {
+  const browse = renderBrowseRow();
+  if (!knownDirsList.length) {
+    return `${browse}<p class="picker-empty">No known projects</p>`;
+  }
+  return browse + knownDirsList
     .map((dir) => {
       const name = escapeHtml(basenameOf(dir));
       const path = escapeHtml(prettyPath(dir));
@@ -502,6 +550,7 @@ function renderPicker() {
 
   bindWindowActions();
   bindPickerTabs();
+  bindBrowseRow();
   bindPickerChips();
   bindAvatars();
   bindDrag();
@@ -510,6 +559,7 @@ function renderPicker() {
 function openPicker() {
   pickerOpen = true;
   pickerTab = "new";
+  browseDir = null;
   clearToastTimers();
   toast = null;
   send({ type: "known_dirs" });
@@ -519,6 +569,7 @@ function openPicker() {
 
 function closePicker() {
   pickerOpen = false;
+  browseDir = null;
   clearToastTimers();
   toast = null;
   render();
@@ -567,6 +618,29 @@ function bindPickerTabs() {
         render();
       }
     });
+  });
+}
+
+function bindBrowseRow() {
+  const row = app.querySelector<HTMLElement>("[data-browse-row]");
+  if (!row) return;
+
+  if (browseDir) {
+    const info = row.querySelector<HTMLElement>(".picker-browse-info");
+    info?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void pickFolder();
+    });
+    return;
+  }
+
+  const openBrowse = () => void pickFolder();
+  row.addEventListener("click", openBrowse);
+  row.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openBrowse();
+    }
   });
 }
 

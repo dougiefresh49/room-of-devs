@@ -27,6 +27,7 @@ fn ws_token() -> Result<WsConfig, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_nspanel::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![ws_token])
         .setup(|app| {
             // Keep the panel out of the Dock / app switcher — it's a menu-bar

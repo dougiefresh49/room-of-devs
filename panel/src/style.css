@@ -821,18 +821,55 @@ button,
   letter-spacing: 0.02em;
 }
 
+.picker-browse {
+  cursor: pointer;
+}
+
+.picker-browse.expanded {
+  cursor: default;
+}
+
+.picker-browse-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.picker-browse-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.picker-browse-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.picker-browse-info {
+  cursor: pointer;
+}
+
 .persona-chips {
   display: flex;
   flex: 0 0 auto;
-  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px;
+  max-width: 158px;
 }
 
 .persona-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -858,19 +895,19 @@ button,
 
 .persona-chip-av {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
 }
 
 .persona-chip-img {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
 }
 
 .persona-chip-fallback {
-  width: 24px;
-  height: 24px;
-  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
 }
 
 .picker-empty {
