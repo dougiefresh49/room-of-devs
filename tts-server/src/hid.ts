@@ -205,6 +205,12 @@ function doAction(action: string): void {
       runScript("set_playback_mode.sh", [next]);
       return;
     }
+    case "hold_room": {
+      // Toggle: hold if free, release if already held.
+      const held = existsSync(join(TTS_DIR, ".hold-room.json"));
+      runScript("hold_room.sh", held ? ["off"] : []);
+      return;
+    }
     default:
       log("hid", `unknown action: ${action}`);
   }
@@ -424,7 +430,7 @@ const LEARN_ORDER: LearnSpec[] = [
   { name: "yellow", def: { character: "michelangelo" } },
   { name: "1p", def: { action: "replay" } },
   { name: "2p", def: { action: "stop" } },
-  { name: "coin", def: { action: "cycle_mode" } },
+  { name: "coin", def: { action: "cycle_mode", hold_action: "hold_room" } },
 ];
 
 const LEARN_TIMEOUT_MS = 30_000;

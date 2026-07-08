@@ -154,7 +154,8 @@ echo "Replay Last | bash=$SCRIPTS_DIR/replay.sh terminal=false refresh=true shor
 # ── Raised Hands (hand-raise mode) ───────────────────────────────
 STATE_DIR="$TTS_DIR/state"
 MUTED_SESSIONS_PATH="$TTS_DIR/muted_sessions.json"
-export STATE_DIR SCRIPTS_DIR QUEUE_DIR MUTED_SESSIONS_PATH
+NICKNAMES_PATH="$TTS_DIR/nicknames.json"
+export STATE_DIR SCRIPTS_DIR QUEUE_DIR MUTED_SESSIONS_PATH NICKNAMES_PATH
 python3 - <<'PY'
 import json
 import os
@@ -164,6 +165,17 @@ state_dir = os.environ.get("STATE_DIR", "")
 queue_dir = os.environ.get("QUEUE_DIR", "")
 scripts_dir = os.environ["SCRIPTS_DIR"]
 muted_path = os.environ.get("MUTED_SESSIONS_PATH", "")
+nicknames_path = os.environ.get("NICKNAMES_PATH", "")
+
+nicknames = {}
+if nicknames_path and os.path.isfile(nicknames_path):
+    try:
+        with open(nicknames_path, encoding="utf-8") as fh:
+            raw = json.load(fh)
+        if isinstance(raw, dict):
+            nicknames = raw
+    except (OSError, json.JSONDecodeError):
+        pass
 
 muted = set()
 if muted_path and os.path.isfile(muted_path):
@@ -229,6 +241,8 @@ if state_dir and os.path.isdir(state_dir):
         except ValueError:
             sort_key = datetime.max.replace(tzinfo=timezone.utc)
         name = (s.get("name") or sid[:12]).replace("|", "/")
+        if sid in nicknames and nicknames[sid]:
+            name = str(nicknames[sid]).replace("|", "/")
         if len(name) > 24:
             name = name[:22] + ".."
         hands.append((sort_key, sid, name, raised))
@@ -494,7 +508,17 @@ if os.path.isdir(replay_dir):
             display = display.replace("|", "/")
             if len(display) > 70:
                 display = display[:68] + ".."
-            print(f"{display} | bash=/usr/bin/afplay param1={path} terminal=false size=12")
+            print(f"{display} | size=12")
+            print(f"--▶ Replay | bash=/usr/bin/afplay param1={path} terminal=false size=12")
+            transcript = meta.get("spokenText") or meta.get("textPreview", "")
+            if transcript:
+                import textwrap
+                wrapped = textwrap.wrap(
+                    transcript.replace("\n", " ").strip(), width=60
+                )
+                for line in wrapped:
+                    safe = line.replace("|", "/")
+                    print(f"--{safe} | disabled=true")
         print("---")
 PY
 
@@ -581,12 +605,23 @@ print("Session Voices")
 
 sessions_dir = os.path.expanduser("~/.claude/sessions")
 session_voices_path = os.path.join(tts_dir, "session_voices.json")
+nicknames_path = os.path.join(tts_dir, "nicknames.json")
 
 session_voices = {}
 if os.path.isfile(session_voices_path):
     try:
         with open(session_voices_path) as f:
             session_voices = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        pass
+
+nicknames = {}
+if os.path.isfile(nicknames_path):
+    try:
+        with open(nicknames_path) as f:
+            raw = json.load(f)
+        if isinstance(raw, dict):
+            nicknames = raw
     except (OSError, json.JSONDecodeError):
         pass
 
@@ -629,7 +664,7 @@ else:
         current_voice = session_voices.get(sid, "")
         voice_label = voice_names.get(current_voice, "default") if current_voice else "default"
         is_muted = sid in muted_sessions
-        display_name = name.replace("|", "/")
+        display_name = (nicknames.get(sid) or name).replace("|", "/")
         if len(display_name) > 24:
             display_name = display_name[:22] + ".."
         mute_indicator = " [muted]" if is_muted else ""
@@ -684,6 +719,88 @@ for mode in auto announce silent; do
         echo "--  ${LABEL} | bash=$SCRIPTS_DIR/set_playback_mode.sh param1=$mode terminal=false refresh=true"
     fi
 done
+
+export MOOD_MENU_SCRIPTS="$SCRIPTS_DIR"
+export MOOD_MENU_CONFIG="$CONFIG"
+python3 - <<'PY'
+import json
+import os
+
+scripts = os.environ["MOOD_MENU_SCRIPTS"]
+config_path = os.environ.get("MOOD_MENU_CONFIG", "")
+
+presets = {
+    "focus": {
+        "playback_mode": "announce",
+        "default_speed": 1.5,
+        "notification_sound": "none",
+        "dynamic_responses": "cached",
+    },
+    "arcade": {
+        "playback_mode": "auto",
+        "default_speed": 1.5,
+        "notification_sound": "random_sfx",
+        "dynamic_responses": "always",
+    },
+    "quiet": {
+        "playback_mode": "silent",
+        "default_speed": 1.25,
+        "notification_sound": "none",
+        "dynamic_responses": "off",
+    },
+    "normal": {
+        "playback_mode": "announce",
+        "default_speed": 1.5,
+        "notification_sound": "random_sfx",
+        "dynamic_responses": "always",
+    },
+}
+
+labels = {
+    "focus": "Focus",
+    "arcade": "Arcade",
+    "quiet": "Quiet",
+    "normal": "Normal",
+}
+
+current = {}
+if config_path and os.path.isfile(config_path):
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            current = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        current = {}
+
+def matches_preset(name, bundle):
+  for key, val in bundle.items():
+    if current.get(key) != val:
+      return False
+  return True
+
+active = None
+for name, bundle in presets.items():
+    if matches_preset(name, bundle):
+        active = name
+        break
+
+print("Mood")
+if active is None:
+    print("--Custom | disabled=true size=11")
+for name in ("focus", "arcade", "quiet", "normal"):
+    mark = "✓ " if name == active else "  "
+    print(
+        f"--{mark}{labels[name]} | bash={scripts}/set_mood.sh param1={name} terminal=false refresh=true"
+    )
+PY
+
+# ── Hold the Room (panic quiet) ───────────────────────────────────
+HOLD_ROOM_FILE="$TTS_DIR/.hold-room.json"
+if [ -f "$HOLD_ROOM_FILE" ]; then
+    echo "⏸ Room Held | disabled=true"
+    echo "Release the Room | bash=$SCRIPTS_DIR/hold_room.sh param1=off terminal=false refresh=true"
+else
+    echo "Hold the Room | bash=$SCRIPTS_DIR/hold_room.sh terminal=false refresh=true"
+fi
 
 case "$NOTIFICATION_SOUND" in
     [Nn][Oo][Nn][Ee]) NOTIFICATION_SOUND_LABEL="None (silent)" ;;

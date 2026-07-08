@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 #
 # panel.sh — Launch the Room agent panel (Tauri).
-# Prefers a built .app if present; otherwise runs `pnpm tauri dev` in the background.
+# Prefers ~/.cursor/tts/Room.app, then a repo build; otherwise runs `pnpm tauri dev` in the background.
 #
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PANEL_DIR="$PROJECT_DIR/panel"
+TTS_DIR="$HOME/.cursor/tts"
+INSTALLED_APP="$TTS_DIR/Room.app"
 
 find_built_app() {
   for dir in \
@@ -25,10 +27,14 @@ find_built_app() {
   return 1
 }
 
-APP=$(find_built_app || true)
-if [ -n "$APP" ]; then
-  open "$APP"
+if [ -d "$INSTALLED_APP" ]; then
+  open "$INSTALLED_APP"
 else
-  cd "$PANEL_DIR"
-  nohup pnpm tauri dev >/dev/null 2>&1 &
+  APP=$(find_built_app || true)
+  if [ -n "$APP" ]; then
+    open "$APP"
+  else
+    cd "$PANEL_DIR"
+    nohup pnpm tauri dev >/dev/null 2>&1 &
+  fi
 fi

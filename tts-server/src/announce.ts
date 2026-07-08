@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, appendFileSync, unlinkSync } from "fs";
 import { join } from "path";
+import { pathToFileURL } from "url";
 import { spawnSync } from "child_process";
 import { TTS_DIR, STATE_DIR } from "./config.js";
 import { acquireLock, releaseLock } from "./audio.js";
@@ -118,5 +119,16 @@ export function maybeFireDeferredAnnounce(): void {
     }
   } catch (err: any) {
     log("announce", `maybeFireDeferredAnnounce failed: ${err.message}`);
+  }
+}
+
+// CLI: `tsx src/announce.ts fire` — fire any deferred hands-up nudge now. Used
+// by hold_room.sh on release so hands raised during a hold announce on lift.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (process.argv[2] === "fire") {
+    maybeFireDeferredAnnounce();
+  } else {
+    console.error("Usage: tsx src/announce.ts fire");
+    process.exit(1);
   }
 }

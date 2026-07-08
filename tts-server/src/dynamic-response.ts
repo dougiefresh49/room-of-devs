@@ -149,6 +149,7 @@ export async function handleDynamicResponse(
       sessionName,
       character: character.name,
       textPreview: responseText.slice(0, 120),
+      spokenText: responseText.slice(0, 4800),
       timestamp: new Date().toISOString(),
     };
 
@@ -260,12 +261,16 @@ export async function handleAskUser(
       sessionName,
       character: character?.name,
       textPreview: questionText.slice(0, 120),
+      spokenText: questionText.slice(0, 4800),
       timestamp: new Date().toISOString(),
     };
 
     if (!key) {
       log("dynamic", "No GEMINI_API_KEY for ask-user — reading question line only");
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
+      const spoken = truncateQuestion(questionText);
+      meta.spokenText = spoken.slice(0, 4800);
+      meta.textPreview = spoken.slice(0, 120);
+      return await streamAndPlay(voiceId, spoken, ctx, meta);
     }
 
     const config = loadConfig();
@@ -299,15 +304,22 @@ Rules:
 
       const text = response.text?.trim();
       if (!text) {
-        return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
+        const spoken = truncateQuestion(questionText);
+        meta.spokenText = spoken.slice(0, 4800);
+        meta.textPreview = spoken.slice(0, 120);
+        return await streamAndPlay(voiceId, spoken, ctx, meta);
       }
 
       meta.textPreview = text.slice(0, 120);
+      meta.spokenText = text.slice(0, 4800);
       log("dynamic", `Ask-user response: "${text}"`);
       return await streamAndPlay(voiceId, text, ctx, meta);
     } catch (err: any) {
       log("dynamic", `Ask-user Gemini error: ${err.message}`);
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
+      const spoken = truncateQuestion(questionText);
+      meta.spokenText = spoken.slice(0, 4800);
+      meta.textPreview = spoken.slice(0, 120);
+      return await streamAndPlay(voiceId, spoken, ctx, meta);
     }
   } finally {
     releaseLock();

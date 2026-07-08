@@ -69,6 +69,18 @@ if os.path.isfile(chars_path):
     except (OSError, json.JSONDecodeError):
         pass
 
+nicknames_path = os.path.join(os.path.expanduser("~"), ".cursor", "tts", "nicknames.json")
+if os.path.isfile(nicknames_path):
+    try:
+        with open(nicknames_path, encoding="utf-8") as f:
+            nicknames = json.load(f)
+        if isinstance(nicknames, dict):
+            for label in nicknames.values():
+                if label:
+                    names.append(label)
+    except (OSError, json.JSONDecodeError):
+        pass
+
 seen = set()
 unique = []
 for name in names:

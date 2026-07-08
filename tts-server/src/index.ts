@@ -186,6 +186,7 @@ async function processQueueFile(
       sessionName: item.thread_title || lookupSessionName(sessionId || "") || undefined,
       character: character?.name,
       textPreview: processed.slice(0, 120),
+      spokenText: processed,
       timestamp: new Date().toISOString(),
     };
 

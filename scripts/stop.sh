@@ -4,12 +4,13 @@
 #
 set -euo pipefail
 
-TTS_DIR="$HOME/.cursor/tts"
+TTS_DIR="${TTS_DIR:-$HOME/.cursor/tts}"
 PID_FILE="$TTS_DIR/.playback-pid"
 STREAM_PID_FILE="$TTS_DIR/.stream-playback-pid"
 PLAYBACK_FILE_REF="$TTS_DIR/.playback-file"
 PAUSED_FLAG="$TTS_DIR/.playback-paused"
 AUDIO_REF="$TTS_DIR/.playback-audio"
+PENDING_INJECT="$TTS_DIR/ptt/pending-inject.json"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] stop: $*" >> "$LOG_FILE" 2>/dev/null; }
@@ -47,3 +48,7 @@ fi
 
 # Note: .stream-lock is intentionally left alone — the owning process cleans it up.
 rm -f "$PLAYBACK_FILE_REF" "$PAUSED_FLAG" "$AUDIO_REF"
+
+# Any stop is also an abort: drop a pending (armed, not-yet-sent) injection so
+# the undo window closes when the user reaches for stop. (Pause does NOT.)
+rm -f "$PENDING_INJECT"

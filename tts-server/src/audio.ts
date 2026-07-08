@@ -166,7 +166,8 @@ function cleanup(): void {
 
 export function playFile(
   filePath: string,
-  ctx: PlaybackContext = "meta"
+  ctx: PlaybackContext = "meta",
+  speedFactor = 1.0
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
@@ -174,7 +175,8 @@ export function playFile(
     // up to the API max of 1.2x. Only the residual factor above 1.2 needs
     // applying here — using the full default_speed would over-speed them.
     const rawSpeed = config.default_speed;
-    const speed = rawSpeed > 1.2 ? +(rawSpeed / 1.2).toFixed(4) : 1.0;
+    const residual = rawSpeed > 1.2 ? +(rawSpeed / 1.2).toFixed(4) : 1.0;
+    const speed = +(residual * speedFactor).toFixed(4);
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
 
@@ -206,6 +208,7 @@ export interface ReplayMeta {
   sessionName?: string;
   character?: string;
   textPreview?: string;
+  spokenText?: string;
   timestamp: string;
 }
 
@@ -330,7 +333,7 @@ export function playStreamBuffer(
   });
 }
 
-export function replayLast(nth = 1): Promise<number> {
+export function replayLast(nth = 1, speedFactor = 1.0): Promise<number> {
   try {
     if (!existsSync(REPLAY_DIR)) return Promise.resolve(1);
     const files = readdirSync(REPLAY_DIR)
@@ -339,8 +342,8 @@ export function replayLast(nth = 1): Promise<number> {
     if (files.length === 0) return Promise.resolve(1);
     const target = files[Math.max(0, files.length - nth)];
     const filePath = join(REPLAY_DIR, target);
-    log("audio", `Replaying: ${target}`);
-    return playFile(filePath);
+    log("audio", `Replaying: ${target}${speedFactor !== 1.0 ? ` (speed×${speedFactor})` : ""}`);
+    return playFile(filePath, "meta", speedFactor);
   } catch (err: any) {
     log("audio", `Replay error: ${err.message}`);
     return Promise.resolve(1);

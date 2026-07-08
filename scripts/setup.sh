@@ -7,6 +7,13 @@ TTS_DIR="$HOME/.cursor/tts"
 HOOKS_DIR="$HOME/.cursor"
 SWIFTBAR_PLUGINS_DIR="${SWIFTBAR_PLUGINS_DIR:-$HOME/projects/Swiftbar/Plugins}"
 
+AUTOSTART=false
+for arg in "$@"; do
+    case "$arg" in
+        --autostart) AUTOSTART=true ;;
+    esac
+done
+
 log() { echo "[setup] $*"; }
 err() { echo "[setup] ERROR: $*" >&2; }
 
@@ -60,8 +67,8 @@ for script in \
     paste_voice_id.sh generate_sfx.sh random_sfx.sh cleanup_played.sh \
     build_read_aloud_notifier_app.sh \
     hook_stop.sh hook_prompt.sh hook_ask_user.sh tts-server.sh \
-    set_streaming.sh set_playback_mode.sh announce.sh replay.sh panel.sh \
-    set_session_mute.sh set_session_voice.sh \
+    set_streaming.sh set_playback_mode.sh set_mood.sh announce.sh replay.sh panel.sh \
+    set_session_mute.sh set_session_voice.sh nickname.sh \
     ingest_claude_code.sh fetch_credits.sh \
     ptt.sh voice_ptt.sh \
     team.sh inject_prompt.sh; do
@@ -209,6 +216,16 @@ else
     log "or manually copy plugins/cursor-read-aloud.5s.sh to your SwiftBar plugins folder."
 fi
 
+# ── 8b. Install built Room.app (if present) ───────────────────────
+ROOM_SRC="$PROJECT_DIR/panel/src-tauri/target/debug/bundle/macos/Room.app"
+ROOM_DST="$TTS_DIR/Room.app"
+if [ -d "$ROOM_SRC" ]; then
+    log "Installing Room.app to $ROOM_DST"
+    rsync -a --delete "$ROOM_SRC/" "$ROOM_DST/"
+else
+    log "Built Room.app not found at $ROOM_SRC (build panel first to install)"
+fi
+
 # ── 9. Fetch ElevenLabs voices ───────────────────────────────────
 log "Fetching ElevenLabs voices..."
 source "$TTS_DIR/scripts/load_env.sh" 2>/dev/null || true
@@ -250,3 +267,48 @@ log "  3. Generate phrases: cd $TTS_DIR/tts-server && pnpm run generate-phrases"
 log "  4. Enable streaming in SwiftBar menu for auto-play"
 log ""
 log "Hotkeys: SwiftBar menu — Play Latest (ctrl+shift+p), Pause/Resume (ctrl+shift+space)."
+log ""
+
+if [ "$AUTOSTART" = true ]; then
+    log "Installing autostart LaunchAgent for TTS server..."
+    PLIST="$HOME/Library/LaunchAgents/com.local.cursor-read-aloud-tts.plist"
+    mkdir -p "$HOME/Library/LaunchAgents"
+    if launchctl list 2>/dev/null | grep -q "com.local.cursor-read-aloud-tts"; then
+        launchctl unload -w "$PLIST" 2>/dev/null || true
+    fi
+    cat > "$PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.local.cursor-read-aloud-tts</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$TTS_DIR/scripts/tts-server.sh</string>
+        <string>start</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+    launchctl load -w "$PLIST"
+    log "LaunchAgent installed: $PLIST"
+
+    if [ -d "$ROOM_DST" ]; then
+        log "Adding Room.app to login items..."
+        osascript <<APPLESCRIPT
+tell application "System Events"
+    set roomPath to "$ROOM_DST"
+    repeat with li in login items
+        if path of li is roomPath then return
+    end repeat
+    make login item at end with properties {path:roomPath, hidden:false}
+end tell
+APPLESCRIPT
+        log "Room.app login item configured"
+    else
+        log "Room.app not installed — skipping login item (build panel first)"
+    fi
+fi
