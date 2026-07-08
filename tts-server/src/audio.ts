@@ -1,5 +1,13 @@
 import { spawn, ChildProcess } from "child_process";
-import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync, readdirSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+} from "fs";
 import {
   STREAM_PID_FILE,
   PLAYBACK_PID_FILE,
@@ -30,6 +38,40 @@ function endSessionPlayback(ctx: PlaybackContext, excludeFile?: string): void {
 }
 
 const REPLAY_DIR = join(TTS_DIR, "replay");
+export const NOW_PLAYING_PATH = join(TTS_DIR, ".now-playing.json");
+
+export interface NowPlaying {
+  sessionId: string;
+  text: string;
+  startedAt: string;
+  approxCharsPerSec: number;
+}
+
+function writeNowPlaying(sessionId: string, meta?: ReplayMeta): void {
+  const data: NowPlaying = {
+    sessionId,
+    text: meta?.spokenText ?? meta?.textPreview ?? "",
+    startedAt: new Date().toISOString(),
+    approxCharsPerSec: 15,
+  };
+  const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(data));
+  renameSync(tmp, NOW_PLAYING_PATH);
+}
+
+function clearNowPlaying(): void {
+  try {
+    unlinkSync(NOW_PLAYING_PATH);
+  } catch {}
+}
+
+function beginSessionPlayback(
+  ctx: PlaybackContext,
+  meta?: ReplayMeta
+): void {
+  beginSessionSpeaking(ctx);
+  if (ctx !== "meta" && ctx.sessionId) writeNowPlaying(ctx.sessionId, meta);
+}
 const MAX_REPLAY_FILES = 20;
 
 const PAUSED_FLAG = join(TTS_DIR, ".playback-paused");
@@ -159,6 +201,7 @@ function removePidFiles(): void {
 
 function cleanup(): void {
   removePidFiles();
+  clearNowPlaying();
   for (const f of [PAUSED_FLAG, AUDIO_REF, PLAYBACK_FILE_REF]) {
     try { unlinkSync(f); } catch {}
   }
@@ -167,7 +210,8 @@ function cleanup(): void {
 export function playFile(
   filePath: string,
   ctx: PlaybackContext = "meta",
-  speedFactor = 1.0
+  speedFactor = 1.0,
+  replayMeta?: ReplayMeta
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
@@ -180,7 +224,7 @@ export function playFile(
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
 
-    beginSessionSpeaking(ctx);
+    beginSessionPlayback(ctx, replayMeta);
     const child = spawn("afplay", args, { stdio: "ignore" });
     currentProcess = child;
     writePidFiles(child.pid);
@@ -191,6 +235,7 @@ export function playFile(
       settled = true;
       if (currentProcess === child) currentProcess = null;
       removePidFiles();
+      clearNowPlaying();
       endSessionPlayback(ctx);
       resolve(code);
     };
@@ -279,7 +324,7 @@ export function playStreamBuffer(
       log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elMax}x)`);
     }
 
-    beginSessionSpeaking(ctx);
+    beginSessionPlayback(ctx, replayMeta);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -352,7 +397,8 @@ export function replayLast(nth = 1, speedFactor = 1.0): Promise<number> {
 
 export function playMp3Buffer(
   buf: Buffer,
-  ctx: PlaybackContext = "meta"
+  ctx: PlaybackContext = "meta",
+  replayMeta?: ReplayMeta
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
@@ -369,7 +415,7 @@ export function playMp3Buffer(
     ];
     if (speed !== 1.0) ffplayArgs.push("-af", `atempo=${speed}`);
 
-    beginSessionSpeaking(ctx);
+    beginSessionPlayback(ctx, replayMeta);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -382,6 +428,7 @@ export function playMp3Buffer(
       settled = true;
       if (currentProcess === child) currentProcess = null;
       removePidFiles();
+      clearNowPlaying();
       endSessionPlayback(ctx);
       resolve(code);
     };

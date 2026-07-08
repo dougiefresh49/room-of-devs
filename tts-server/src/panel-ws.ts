@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { WebSocketServer, WebSocket } from "ws";
 import { loadConfig, TTS_DIR } from "./config.js";
-import { buildSnapshot, subscribe } from "./state-watch.js";
+import { buildPanelSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
 import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
 import { runStatusSay } from "./status-say.js";
@@ -18,6 +18,7 @@ const CHARACTERS_PATH = join(__dirname, "characters.json");
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
 const TOKEN_PATH = join(TTS_DIR, "panel_ws_token");
+const HOLD_ROOM_FILE = join(TTS_DIR, ".hold-room.json");
 
 export type PanelMessage =
   | { type: "grant"; sessionId: string }
@@ -31,7 +32,10 @@ export type PanelMessage =
   | { type: "list_resumable" }
   | { type: "known_dirs" }
   | { type: "spawn_session"; dir: string; persona: string }
-  | { type: "resume_session"; sessionId: string; dir: string; persona: string };
+  | { type: "resume_session"; sessionId: string; dir: string; persona: string }
+  | { type: "set_voice"; sessionId: string; character: string }
+  | { type: "set_nickname"; sessionId: string; label: string }
+  | { type: "hold_room" };
 
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;
@@ -137,22 +141,48 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
         dir: msg.dir,
         persona: msg.persona,
       };
+    case "set_voice":
+      if (
+        keys.length !== 3 ||
+        typeof msg.sessionId !== "string" ||
+        !msg.sessionId.trim() ||
+        typeof msg.character !== "string" ||
+        !msg.character.trim()
+      ) {
+        return "bad_message";
+      }
+      return { type: "set_voice", sessionId: msg.sessionId, character: msg.character };
+    case "set_nickname":
+      if (
+        keys.length !== 3 ||
+        typeof msg.sessionId !== "string" ||
+        !msg.sessionId.trim() ||
+        typeof msg.label !== "string"
+      ) {
+        return "bad_message";
+      }
+      return { type: "set_nickname", sessionId: msg.sessionId, label: msg.label };
+    case "hold_room":
+      if (keys.length !== 1) return "bad_message";
+      return { type: "hold_room" };
     default:
       return "bad_message";
   }
 }
 
 function sessionInSnapshot(sessionId: string): boolean {
-  return buildSnapshot().some((a) => a.sessionId === sessionId);
+  return buildPanelSnapshot().agents.some((a) => a.sessionId === sessionId);
 }
 
 function sendSnapshot(ws: WebSocket): void {
-  ws.send(JSON.stringify({ type: "snapshot", agents: buildSnapshot() }));
+  const snap = buildPanelSnapshot();
+  ws.send(JSON.stringify({ type: "snapshot", ...snap }));
 }
 
 function broadcastSnapshot(): void {
   if (!wss) return;
-  const payload = JSON.stringify({ type: "snapshot", agents: buildSnapshot() });
+  const snap = buildPanelSnapshot();
+  const payload = JSON.stringify({ type: "snapshot", ...snap });
   for (const client of wss.clients) {
     if (client.readyState === WebSocket.OPEN) {
       safe(() => client.send(payload));
@@ -177,20 +207,30 @@ function sendError(
 }
 
 function isKnownPersona(persona: string): boolean {
-  if (!existsSync(CHARACTERS_PATH)) return false;
+  return resolveVoiceIdForCharacter(persona) != null;
+}
+
+function resolveVoiceIdForCharacter(character: string): string | null {
+  if (!existsSync(CHARACTERS_PATH)) return null;
   try {
     const chars = JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
       string,
       { name?: string }
     >;
-    const lower = persona.toLowerCase();
-    for (const entry of Object.values(chars)) {
-      if (entry?.name?.toLowerCase() === lower) return true;
+    const lower = character.toLowerCase();
+    for (const [voiceId, entry] of Object.entries(chars)) {
+      if (entry?.name?.toLowerCase() === lower) return voiceId;
     }
   } catch {
     /* invalid characters.json */
   }
-  return false;
+  return null;
+}
+
+function sanitizeNickname(label: string): string | null {
+  const s = label.replace(/[\x00-\x1f\x7f]/g, "").trim();
+  if (!s) return null;
+  return s.slice(0, 24);
 }
 
 function isValidDir(dir: string): boolean {
@@ -268,6 +308,13 @@ function dispatch(msg: PanelMessage): void {
     case "pause":
       runScript("pause.sh", []);
       return;
+    case "hold_room":
+      if (existsSync(HOLD_ROOM_FILE)) {
+        runScript("hold_room.sh", ["off"]);
+      } else {
+        runScript("hold_room.sh", []);
+      }
+      return;
   }
 }
 
@@ -315,6 +362,39 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
       return;
     }
     spawnTeam(msg.persona, msg.dir, msg.sessionId);
+    return;
+  }
+
+  if (msg.type === "set_voice") {
+    if (!sessionInSnapshot(msg.sessionId)) {
+      sendError(ws, "stale_session", msg.sessionId);
+      return;
+    }
+    const voiceId = resolveVoiceIdForCharacter(msg.character);
+    if (!voiceId) {
+      sendError(ws, "bad_persona");
+      return;
+    }
+    runScript("set_session_voice.sh", [msg.sessionId, voiceId]);
+    return;
+  }
+
+  if (msg.type === "set_nickname") {
+    if (!sessionInSnapshot(msg.sessionId)) {
+      sendError(ws, "stale_session", msg.sessionId);
+      return;
+    }
+    const label = sanitizeNickname(msg.label);
+    if (!label) {
+      sendError(ws, "bad_message");
+      return;
+    }
+    runScript("nickname.sh", [msg.sessionId, label]);
+    return;
+  }
+
+  if (msg.type === "hold_room") {
+    dispatch(msg);
     return;
   }
 
