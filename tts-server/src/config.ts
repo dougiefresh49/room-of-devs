@@ -21,6 +21,8 @@ export const PLAYBACK_PID_FILE = join(TTS_DIR, ".playback-pid");
 export const STREAM_LOCK = join(TTS_DIR, ".stream-lock");
 export const PROCESSING_DIR = join(TTS_DIR, ".processing");
 export const FAILED_DIR = join(TTS_DIR, "failed");
+// Per-session room state, one file per session (see state.ts).
+export const STATE_DIR = join(TTS_DIR, "state");
 
 export interface Config {
   elevenlabs_voice_id: string;

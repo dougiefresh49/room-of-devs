@@ -10,6 +10,7 @@ import {
   waitForLock,
   releaseLock,
   type ReplayMeta,
+  type PlaybackContext,
 } from "./audio.js";
 import { playRandomPhrase } from "./phrases.js";
 import { log } from "./logger.js";
@@ -112,11 +113,16 @@ export async function handleDynamicResponse(
     return false;
   }
 
+  // The ack is attributed to the submitting session (dynamic acks are
+  // session-bound per §2) so it flips speaking→recompute; a session-less
+  // caller stays room-level "meta".
+  const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
   try {
     const character = getCharacter(voiceId);
 
     if (mode === "cached" || !character || !userPrompt?.trim()) {
-      return await playRandomPhrase(voiceId);
+      return await playRandomPhrase(voiceId, ctx);
     }
 
     log("dynamic", `Generating ${character.name} response for prompt (${userPrompt.length} chars)`);
@@ -125,7 +131,7 @@ export async function handleDynamicResponse(
 
     if (!responseText) {
       log("dynamic", "Generation failed — falling back to cached phrase");
-      return await playRandomPhrase(voiceId);
+      return await playRandomPhrase(voiceId, ctx);
     }
 
     const meta: ReplayMeta = {
@@ -140,12 +146,12 @@ export async function handleDynamicResponse(
     const stream = await streamTTS(responseText, { voiceId });
     if (stream) {
       log("dynamic", `Streaming: "${responseText}"`);
-      await playStreamBuffer(stream as any, "dynamic-response", meta);
+      await playStreamBuffer(stream as any, "dynamic-response", ctx, meta);
       return true;
     }
 
     log("dynamic", "Stream failed — falling back to cached phrase");
-    return await playRandomPhrase(voiceId);
+    return await playRandomPhrase(voiceId, ctx);
   } finally {
     releaseLock();
   }
@@ -168,6 +174,9 @@ export async function handleAskUser(
 ): Promise<boolean> {
   if (!questionText?.trim()) return false;
 
+  // Ask-user readouts are session-bound (§2) — attribute to the asking session.
+  const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
+
   // Question readouts carry real content — wait for the lock rather than skip.
   await waitForLock();
   try {
@@ -185,7 +194,7 @@ export async function handleAskUser(
 
     if (!key) {
       log("dynamic", "No GEMINI_API_KEY for ask-user — reading question line only");
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
     }
 
     const config = loadConfig();
@@ -219,15 +228,15 @@ Rules:
 
       const text = response.text?.trim();
       if (!text) {
-        return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+        return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
       }
 
       meta.textPreview = text.slice(0, 120);
       log("dynamic", `Ask-user response: "${text}"`);
-      return await streamAndPlay(voiceId, text, meta);
+      return await streamAndPlay(voiceId, text, ctx, meta);
     } catch (err: any) {
       log("dynamic", `Ask-user Gemini error: ${err.message}`);
-      return await streamAndPlay(voiceId, truncateQuestion(questionText), meta);
+      return await streamAndPlay(voiceId, truncateQuestion(questionText), ctx, meta);
     }
   } finally {
     releaseLock();
@@ -237,11 +246,12 @@ Rules:
 async function streamAndPlay(
   voiceId: string,
   text: string,
+  ctx: PlaybackContext,
   meta?: ReplayMeta
 ): Promise<boolean> {
   const stream = await streamTTS(text, { voiceId });
   if (stream) {
-    await playStreamBuffer(stream as any, "ask-user-response", meta);
+    await playStreamBuffer(stream as any, "ask-user-response", ctx, meta);
     return true;
   }
   return false;

@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { createHash } from "crypto";
-import { QUEUE_DIR, TTS_DIR, loadEnv, lookupSessionName } from "./config.js";
+import { QUEUE_DIR, TTS_DIR, loadEnv, lookupSessionName, loadMutedSessions } from "./config.js";
+import { setSessionState } from "./state.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -116,6 +117,13 @@ const data = {
 
 writeFileSync(filepath, JSON.stringify(data, null, 2));
 log("ingest", `Queued: ${filename} (${text.length} chars)`);
+
+// Raise the hand for this session (has an undelivered update). Mute check
+// first — muted sessions never raise hands. setSessionState keeps the existing
+// raisedAt if already raised (supersede keeps FIFO position).
+if (sessionId !== "unknown" && !loadMutedSessions().includes(sessionId)) {
+  setSessionState(sessionId, "hand_raised");
+}
 
 const { execSync } = await import("child_process");
 const scriptsDir = join(TTS_DIR, "scripts");

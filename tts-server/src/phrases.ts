@@ -3,7 +3,7 @@ import { join } from "path";
 import { pathToFileURL } from "url";
 import { PHRASES_DIR, loadConfig } from "./config.js";
 import { generateTTS } from "./elevenlabs.js";
-import { playMp3Buffer } from "./audio.js";
+import { playMp3Buffer, type PlaybackContext } from "./audio.js";
 import { log } from "./logger.js";
 import { readFileSync } from "fs";
 
@@ -65,7 +65,12 @@ export async function generatePhrases(voiceId: string): Promise<number> {
   return generated;
 }
 
-export async function playRandomPhrase(voiceId: string): Promise<boolean> {
+// Phrases are room-level "meta" by default (announce chimes, SFX fallbacks);
+// callers using a phrase AS a session-bound ack pass their session context.
+export async function playRandomPhrase(
+  voiceId: string,
+  ctx: PlaybackContext = "meta"
+): Promise<boolean> {
   const files = getPhrasesForVoice(voiceId);
   if (files.length === 0) {
     log("phrases", `No phrases cached for ${voiceId}`);
@@ -75,7 +80,7 @@ export async function playRandomPhrase(voiceId: string): Promise<boolean> {
   const pick = files[Math.floor(Math.random() * files.length)];
   log("phrases", `Playing: ${pick}`);
   const buf = readFileSync(pick);
-  await playMp3Buffer(buf);
+  await playMp3Buffer(buf, ctx);
   return true;
 }
 
