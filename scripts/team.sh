@@ -49,7 +49,14 @@ log "Launching $TMUX_NAME in $PROJECT_DIR"
 tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude
 
 SESSION_ID=""
-for _ in $(seq 1 30); do
+# 90 attempts (~90s): fresh claude sessions can sit on first-run dialogs
+# before registering their session file. At ~15s, nudge once with Enter —
+# a no-op on an empty prompt, but it dismisses blocking first-run dialogs.
+for ATTEMPT in $(seq 1 90); do
+    if [ "$ATTEMPT" -eq 15 ]; then
+        log "No session file yet — sending Enter to dismiss a possible first-run dialog"
+        tmux send-keys -t "$TMUX_NAME" Enter 2>/dev/null || true
+    fi
     SESSION_ID="$(
         SESSIONS_DIR="$SESSIONS_DIR" BEFORE_SNAPSHOT="$BEFORE_SNAPSHOT" python3 - <<'PY'
 import glob

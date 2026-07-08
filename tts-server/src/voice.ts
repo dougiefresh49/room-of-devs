@@ -161,6 +161,16 @@ function resolveByName(
     const ids = [...new Set(hits.map((h) => h.sessionId))];
     if (ids.length === 1) return { ok: ids[0] };
     if (ids.length > 1) {
+      // Tie-break: a team_map-bound session outranks manually-voiced ones —
+      // "go ahead donnie" should reach the team room's Donnie, not whichever
+      // scratch session happens to wear the same voice.
+      const teamIds = new Set(
+        Object.values(loadTeamMap())
+          .map((e) => e?.sessionId)
+          .filter(Boolean)
+      );
+      const teamHits = ids.filter((id) => teamIds.has(id));
+      if (teamHits.length === 1) return { ok: teamHits[0] };
       const labels = [...new Set(hits.map((h) => h.label))];
       return { ambiguous: labels };
     }
