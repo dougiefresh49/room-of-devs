@@ -27,6 +27,30 @@ interface WsConfig {
   port: number;
 }
 
+interface ResumableSession {
+  sessionId: string;
+  dir: string;
+  project: string;
+  mtimeMs: number;
+  sizeBytes: number;
+}
+
+interface Persona {
+  name: string;
+  label: string;
+  avatar: string;
+}
+
+// name → full character name the server + team.sh match on; avatar → asset dir.
+const PERSONAS: Persona[] = [
+  { name: "Leonardo", label: "Leo", avatar: "leonardo" },
+  { name: "Raphael", label: "Raph", avatar: "raphael" },
+  { name: "Donatello", label: "Donnie", avatar: "donatello" },
+  { name: "Michelangelo", label: "Mikey", avatar: "michelangelo" },
+];
+
+type PickerTab = "new" | "resume";
+
 const HOLD_MS = 300;
 const RECONNECT_MS = 2000;
 const KILL_ARM_MS = 2000;
@@ -48,6 +72,14 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 
+let pickerOpen = false;
+let pickerTab: PickerTab = "new";
+let knownDirsList: string[] = [];
+let resumableList: ResumableSession[] = [];
+let toast: { kind: "launch" | "error"; text: string } | null = null;
+let pickerReturnTimer: ReturnType<typeof setTimeout> | null = null;
+let toastClearTimer: ReturnType<typeof setTimeout> | null = null;
+
 const stateLabels: Record<AgentState, string> = {
   working: "working",
   hand_raised: "hand raised",
@@ -65,6 +97,8 @@ const icons = {
   dock: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="6" width="14" height="9" rx="4.5"/><path d="m8 18 4 3 4-3"/></svg>`,
   expand: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+  back: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg>`,
 } as const;
 
 function send(msg: object) {
@@ -312,6 +346,11 @@ function render() {
     return;
   }
 
+  if (pickerOpen) {
+    renderPicker();
+    return;
+  }
+
   app.classList.remove("dock-mode");
   document.body.classList.remove("dock-window");
   const connClass = connected ? "up" : "down";
@@ -320,6 +359,7 @@ function render() {
       <span class="title" data-tauri-drag-region>Room</span>
       <div class="header-actions no-drag">
         <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
+        <button type="button" class="icon-btn window-btn" data-window-action="picker-open" title="New session">${icons.plus}</button>
         <button type="button" class="icon-btn window-btn" data-window-action="dock-on" title="Dock room">${icons.dock}</button>
         <button type="button" class="icon-btn window-btn" data-window-action="close" title="Close room">${icons.close}</button>
       </div>
@@ -332,6 +372,7 @@ function render() {
       <button type="button" class="icon-btn" data-action="stop" title="Stop playback">${icons.stop}</button>
       <button type="button" class="icon-btn" data-action="replay" title="Replay last message (free)">${icons.replay}</button>
     </footer>
+    ${toastHtml()}
   `;
 
   bindCards();
@@ -340,6 +381,213 @@ function render() {
   bindWindowActions();
   bindAvatars();
   bindDrag();
+}
+
+function toastHtml(): string {
+  if (!toast) return "";
+  return `<div class="toast ${toast.kind}" role="status">${escapeHtml(toast.text)}</div>`;
+}
+
+function basenameOf(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : dir;
+}
+
+function prettyPath(dir: string): string {
+  return dir.replace(/^\/Users\/[^/]+/, "~");
+}
+
+function humanizeAge(mtimeMs: number): string {
+  const mins = Math.floor((Date.now() - mtimeMs) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function personaChip(p: Persona): string {
+  return `
+    <button type="button" class="persona-chip" data-persona="${p.name}" data-label="${p.label}" title="Launch ${p.label}">
+      <span class="persona-chip-av">
+        <img class="avatar persona-chip-img" src="avatars/tmnt/${p.avatar}/idle.png" alt="" />
+        <span class="avatar-fallback persona-chip-fallback">${p.label[0]}</span>
+      </span>
+    </button>`;
+}
+
+function personaChips(): string {
+  return `<div class="persona-chips">${PERSONAS.map(personaChip).join("")}</div>`;
+}
+
+function renderNewRows(): string {
+  if (!knownDirsList.length) {
+    return '<p class="picker-empty">No known projects</p>';
+  }
+  return knownDirsList
+    .map((dir) => {
+      const name = escapeHtml(basenameOf(dir));
+      const path = escapeHtml(prettyPath(dir));
+      return `
+        <div class="picker-row" data-dir="${escapeHtml(dir)}" data-project="${name}">
+          <div class="picker-row-info">
+            <div class="picker-row-name" title="${path}">${name}</div>
+            <div class="picker-row-sub" title="${path}">${path}</div>
+          </div>
+          ${personaChips()}
+        </div>`;
+    })
+    .join("");
+}
+
+function renderResumeRows(): string {
+  if (!resumableList.length) {
+    return '<p class="picker-empty">No resumable sessions</p>';
+  }
+  return resumableList
+    .map((s) => {
+      const project = escapeHtml(s.project || basenameOf(s.dir));
+      const age = escapeHtml(humanizeAge(s.mtimeMs));
+      const shortId = escapeHtml(s.sessionId.slice(0, 8));
+      return `
+        <div
+          class="picker-row"
+          data-dir="${escapeHtml(s.dir)}"
+          data-session="${escapeHtml(s.sessionId)}"
+          data-project="${project}"
+        >
+          <div class="picker-row-info">
+            <div class="picker-row-name" title="${escapeHtml(prettyPath(s.dir))}">${project}</div>
+            <div class="picker-row-sub">
+              <span class="picker-age">${age}</span>
+              <span class="picker-sid">${shortId}</span>
+            </div>
+          </div>
+          ${personaChips()}
+        </div>`;
+    })
+    .join("");
+}
+
+function renderPicker() {
+  app.classList.remove("dock-mode");
+  document.body.classList.remove("dock-window");
+  const connClass = connected ? "up" : "down";
+  const rows = pickerTab === "new" ? renderNewRows() : renderResumeRows();
+
+  app.innerHTML = `
+    <header class="strip drag-region" data-tauri-drag-region>
+      <div class="strip-left">
+        <button type="button" class="icon-btn window-btn no-drag" data-window-action="picker-back" title="Back to room">${icons.back}</button>
+        <span class="title" data-tauri-drag-region>New Session</span>
+      </div>
+      <div class="header-actions no-drag">
+        <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
+        <button type="button" class="icon-btn window-btn" data-window-action="close" title="Close room">${icons.close}</button>
+      </div>
+    </header>
+    <main class="picker">
+      <div class="picker-tabs no-drag" role="tablist">
+        <button type="button" class="picker-tab${pickerTab === "new" ? " active" : ""}" data-picker-tab="new" role="tab">New</button>
+        <button type="button" class="picker-tab${pickerTab === "resume" ? " active" : ""}" data-picker-tab="resume" role="tab">Resume</button>
+      </div>
+      <div class="picker-list">
+        ${rows}
+      </div>
+    </main>
+    ${toastHtml()}
+  `;
+
+  bindWindowActions();
+  bindPickerTabs();
+  bindPickerChips();
+  bindAvatars();
+  bindDrag();
+}
+
+function openPicker() {
+  pickerOpen = true;
+  pickerTab = "new";
+  clearToastTimers();
+  toast = null;
+  send({ type: "known_dirs" });
+  send({ type: "list_resumable" });
+  render();
+}
+
+function closePicker() {
+  pickerOpen = false;
+  clearToastTimers();
+  toast = null;
+  render();
+}
+
+function clearToastTimers() {
+  if (pickerReturnTimer) {
+    clearTimeout(pickerReturnTimer);
+    pickerReturnTimer = null;
+  }
+  if (toastClearTimer) {
+    clearTimeout(toastClearTimer);
+    toastClearTimer = null;
+  }
+}
+
+function showLaunchToast(text: string) {
+  clearToastTimers();
+  toast = { kind: "launch", text };
+  render();
+  pickerReturnTimer = setTimeout(() => {
+    pickerReturnTimer = null;
+    toast = null;
+    pickerOpen = false;
+    render();
+  }, 2000);
+}
+
+function showErrorToast(text: string) {
+  clearToastTimers();
+  toast = { kind: "error", text };
+  render();
+  toastClearTimer = setTimeout(() => {
+    toastClearTimer = null;
+    toast = null;
+    render();
+  }, 2600);
+}
+
+function bindPickerTabs() {
+  app.querySelectorAll<HTMLButtonElement>("[data-picker-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.pickerTab as PickerTab;
+      if (tab && tab !== pickerTab) {
+        pickerTab = tab;
+        render();
+      }
+    });
+  });
+}
+
+function bindPickerChips() {
+  app.querySelectorAll<HTMLButtonElement>(".persona-chip").forEach((chip) => {
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const persona = chip.dataset.persona;
+      const label = chip.dataset.label ?? persona ?? "";
+      const row = chip.closest<HTMLElement>("[data-dir]");
+      if (!persona || !row) return;
+      const dir = row.dataset.dir!;
+      const project = row.dataset.project ?? basenameOf(dir);
+      const sessionId = row.dataset.session;
+      if (sessionId) {
+        send({ type: "resume_session", sessionId, dir, persona });
+      } else {
+        send({ type: "spawn_session", dir, persona });
+      }
+      showLaunchToast(`launching ${label} in ${project}…`);
+    });
+  });
 }
 
 // data-tauri-drag-region needs the start-dragging permission and only covers
@@ -363,6 +611,8 @@ function bindWindowActions() {
       const action = btn.dataset.windowAction;
       if (action === "dock-on") void setDockMode(true);
       else if (action === "dock-off") void setDockMode(false);
+      else if (action === "picker-open") openPicker();
+      else if (action === "picker-back") closePicker();
       else if (action === "close") void getCurrentWindow().close();
     });
   });
@@ -483,8 +733,21 @@ function bindCards() {
   bindGrantTargets();
 }
 
+const PICKER_ERROR_TEXT: Record<string, string> = {
+  bad_dir: "Invalid project directory",
+  bad_persona: "Unknown persona",
+  bad_session: "Session no longer resumable",
+};
+
 function handleMessage(raw: string) {
-  let msg: { type: string; agents?: AgentView[]; code?: string; sessionId?: string };
+  let msg: {
+    type: string;
+    agents?: AgentView[];
+    code?: string;
+    sessionId?: string;
+    dirs?: string[];
+    sessions?: ResumableSession[];
+  };
   try {
     msg = JSON.parse(raw);
   } catch {
@@ -506,9 +769,26 @@ function handleMessage(raw: string) {
     return;
   }
 
+  if (msg.type === "known_dirs" && Array.isArray(msg.dirs)) {
+    knownDirsList = msg.dirs;
+    if (pickerOpen) render();
+    return;
+  }
+
+  if (msg.type === "resumable" && Array.isArray(msg.sessions)) {
+    resumableList = msg.sessions;
+    if (pickerOpen) render();
+    return;
+  }
+
   if (msg.type === "error" && msg.code === "stale_session" && msg.sessionId) {
     staleSessions.add(msg.sessionId);
     render();
+    return;
+  }
+
+  if (msg.type === "error" && msg.code && msg.code in PICKER_ERROR_TEXT) {
+    showErrorToast(PICKER_ERROR_TEXT[msg.code]);
   }
 }
 
