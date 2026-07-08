@@ -196,6 +196,7 @@ async function processQueueFile(
       character: character?.name,
       textPreview: processed.slice(0, 120),
       spokenText: processed,
+      rawText: item.text.slice(0, 4000),
       timestamp: new Date().toISOString(),
     };
 

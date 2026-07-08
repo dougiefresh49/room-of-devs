@@ -59,6 +59,12 @@ export interface NowPlaying {
   // Post-EL atempo factor only (1.0 when none). Speed ≤1.2 is baked into the
   // streamed audio + timestamp alignment together at synthesis time.
   playbackRate?: number;
+  // The pre-Gemini original message (what the agent actually wrote) — the
+  // panel's summary bubble shows this, not the character rewrite.
+  rawText?: string;
+  // Present once playback finished: the file lingers as "last spoken" so the
+  // bubble can keep showing the previous message until the next one starts.
+  endedAt?: string;
 }
 
 function writeNowPlaying(
@@ -71,6 +77,7 @@ function writeNowPlaying(
   const data: NowPlaying = {
     sessionId,
     text: meta?.spokenText ?? meta?.textPreview ?? "",
+    ...(meta?.rawText ? { rawText: meta.rawText } : {}),
     startedAt: startedAt ?? new Date().toISOString(),
     approxCharsPerSec: 15,
     ...(alignment && alignment.length ? { alignment } : {}),
@@ -81,10 +88,20 @@ function writeNowPlaying(
   renameSync(tmp, NOW_PLAYING_PATH);
 }
 
+// Playback over: don't delete — stamp endedAt so the panel can keep showing
+// the last message. The next playback overwrites the file.
 function clearNowPlaying(): void {
   try {
-    unlinkSync(NOW_PLAYING_PATH);
-  } catch {}
+    const cur = JSON.parse(readFileSync(NOW_PLAYING_PATH, "utf-8"));
+    if (!cur.endedAt) {
+      cur.endedAt = new Date().toISOString();
+      const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
+      writeFileSync(tmp, JSON.stringify(cur));
+      renameSync(tmp, NOW_PLAYING_PATH);
+    }
+  } catch {
+    try { unlinkSync(NOW_PLAYING_PATH); } catch {}
+  }
 }
 
 function beginSessionPlayback(
@@ -278,6 +295,8 @@ export interface ReplayMeta {
   character?: string;
   textPreview?: string;
   spokenText?: string;
+  // Pre-Gemini original text (the agent's actual words), for the summary bubble.
+  rawText?: string;
   timestamp: string;
   // Persisted word timings so replays can karaoke too (panel reads the sidecar).
   alignment?: AlignmentTuples;

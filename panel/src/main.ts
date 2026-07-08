@@ -1870,7 +1870,7 @@ function handleMessage(raw: string) {
   }
 
   if (msg.type === "settings" || msg.type === "get_settings") {
-    settings = normalizeSettings(msg.settings ?? msg);
+    settings = normalizeSettings(msg.values ?? msg.settings ?? msg);
     settingsLoaded = true;
     settingsWritable = true;
     if (settingsOpen && settingsTab === "general") render();
