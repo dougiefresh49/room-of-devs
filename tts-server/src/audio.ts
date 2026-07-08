@@ -18,7 +18,15 @@ import {
 } from "./config.js";
 import { log } from "./logger.js";
 import { setSessionState, recomputeAfterPlayback } from "./state.js";
+import type { WordTiming } from "./elevenlabs.js";
 import { basename, join } from "path";
+
+// Compact [word, startMs] tuples — what the panel highlights against.
+export type AlignmentTuples = [string, number][];
+
+function toTuples(words: WordTiming[]): AlignmentTuples {
+  return words.map((w) => [w.word, w.startMs]);
+}
 
 // Every audible path declares who it belongs to: a session id for
 // session-attributed audio (queue items, dynamic acks, ask-user readouts) or
@@ -45,14 +53,23 @@ export interface NowPlaying {
   text: string;
   startedAt: string;
   approxCharsPerSec: number;
+  // Word-level karaoke timings (ElevenLabs timestamps). When present the panel
+  // highlights the current word instead of running the time-paced marquee.
+  alignment?: AlignmentTuples;
 }
 
-function writeNowPlaying(sessionId: string, meta?: ReplayMeta): void {
+function writeNowPlaying(
+  sessionId: string,
+  meta?: ReplayMeta,
+  alignment?: AlignmentTuples,
+  startedAt?: string
+): void {
   const data: NowPlaying = {
     sessionId,
     text: meta?.spokenText ?? meta?.textPreview ?? "",
-    startedAt: new Date().toISOString(),
+    startedAt: startedAt ?? new Date().toISOString(),
     approxCharsPerSec: 15,
+    ...(alignment && alignment.length ? { alignment } : {}),
   };
   const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
   writeFileSync(tmp, JSON.stringify(data));
@@ -67,10 +84,12 @@ function clearNowPlaying(): void {
 
 function beginSessionPlayback(
   ctx: PlaybackContext,
-  meta?: ReplayMeta
+  meta?: ReplayMeta,
+  startedAt?: string
 ): void {
   beginSessionSpeaking(ctx);
-  if (ctx !== "meta" && ctx.sessionId) writeNowPlaying(ctx.sessionId, meta);
+  if (ctx !== "meta" && ctx.sessionId)
+    writeNowPlaying(ctx.sessionId, meta, undefined, startedAt);
 }
 const MAX_REPLAY_FILES = 20;
 
@@ -255,6 +274,8 @@ export interface ReplayMeta {
   textPreview?: string;
   spokenText?: string;
   timestamp: string;
+  // Persisted word timings so replays can karaoke too (panel reads the sidecar).
+  alignment?: AlignmentTuples;
 }
 
 function pruneReplayDir(): void {
@@ -303,7 +324,10 @@ export function playStreamBuffer(
   audioStream: AsyncIterable<Uint8Array>,
   queueFile: string,
   ctx: PlaybackContext = "meta",
-  replayMeta?: ReplayMeta
+  replayMeta?: ReplayMeta,
+  // When provided (timestamps path), poll accumulated word timings and thread
+  // them into .now-playing.json (live) + the replay sidecar (persisted).
+  getWords?: () => WordTiming[]
 ): Promise<number> {
   return new Promise(async (resolve) => {
     const config = loadConfig();
@@ -324,7 +348,23 @@ export function playStreamBuffer(
       log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elMax}x)`);
     }
 
-    beginSessionPlayback(ctx, replayMeta);
+    // Stable playback start for the whole session so progressive alignment
+    // updates keep the same reference point (Date.now() - startedAt).
+    const startedAt = new Date().toISOString();
+    const captioned = !!getWords && ctx !== "meta";
+    const sessionId = ctx !== "meta" ? ctx.sessionId : "";
+    let lastNpWrite = 0;
+    const pushAlignment = (force = false) => {
+      if (!captioned) return;
+      const now = Date.now();
+      if (!force && now - lastNpWrite < 300) return;
+      lastNpWrite = now;
+      try {
+        writeNowPlaying(sessionId, replayMeta, toTuples(getWords!()), startedAt);
+      } catch {}
+    };
+
+    beginSessionPlayback(ctx, replayMeta, startedAt);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -343,6 +383,7 @@ export function playStreamBuffer(
       if (currentProcess === child) currentProcess = null;
       cleanup();
       if (saveReplay && replayChunks.length > 0) {
+        if (captioned && replayMeta) replayMeta.alignment = toTuples(getWords!());
         saveReplayFile(replayChunks, queueFile, replayMeta);
       }
       // The queue file being played is still in queue/ here — the daemon moves
@@ -369,8 +410,12 @@ export function playStreamBuffer(
         if (child.stdin && !child.stdin.destroyed) {
           child.stdin.write(chunk);
         }
+        pushAlignment();
       }
       child.stdin?.end();
+      // Network stream finishes well ahead of realtime playback — flush the
+      // full alignment now so the panel has every word before audio drains.
+      pushAlignment(true);
     } catch (err: any) {
       log("audio", `Stream pipe error: ${err.message}`);
       child.kill("SIGTERM");

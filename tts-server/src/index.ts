@@ -13,7 +13,7 @@ import {
   getActiveSessions,
 } from "./config.js";
 import { processWithGemini, fallbackClean } from "./gemini.js";
-import { streamTTS, resolveVoiceId } from "./elevenlabs.js";
+import { streamTTS, streamTTSWithTimestamps, resolveVoiceId } from "./elevenlabs.js";
 import { getCharacter } from "./dynamic-response.js";
 import {
   claimProcessing,
@@ -189,13 +189,6 @@ async function processQueueFile(
 
     log("server", `Character: ${character?.name ?? "default"}, voice: ${voiceId}`);
 
-    const stream = await streamTTS(processed, { voiceId });
-    if (!stream) {
-      log("server", `Stream failed for ${name}`);
-      moveToFailed(filePath);
-      return;
-    }
-
     const replayMeta: ReplayMeta = {
       source: "queue",
       sessionId: sessionId,
@@ -210,8 +203,30 @@ async function processQueueFile(
     // and manual enqueues have no session and stay room-level "meta".
     const ctx: PlaybackContext = sessionId ? { sessionId } : "meta";
 
-    log("server", `Playing: ${name} (${processed.length} chars)`);
-    const code = await playStreamBuffer(stream as any, filePath, ctx, replayMeta);
+    // Granted readout: prefer the with-timestamps stream (same cost, free
+    // word-level alignment for karaoke captions); fall back to plain streaming
+    // if the endpoint/SDK call fails.
+    let code: number;
+    const timestamped = await streamTTSWithTimestamps(processed, { voiceId });
+    if (timestamped) {
+      log("server", `Playing+captions: ${name} (${processed.length} chars)`);
+      code = await playStreamBuffer(
+        timestamped.audio,
+        filePath,
+        ctx,
+        replayMeta,
+        timestamped.getWords
+      );
+    } else {
+      const stream = await streamTTS(processed, { voiceId });
+      if (!stream) {
+        log("server", `Stream failed for ${name}`);
+        moveToFailed(filePath);
+        return;
+      }
+      log("server", `Playing: ${name} (${processed.length} chars, no captions)`);
+      code = await playStreamBuffer(stream as any, filePath, ctx, replayMeta);
+    }
     // TTS succeeded and credits are spent — move to played regardless of
     // exit code. A stopped playback shouldn't leave the item re-buyable;
     // the audio is already saved in replay/.

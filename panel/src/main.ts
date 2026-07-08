@@ -27,8 +27,11 @@ interface AgentView {
 interface NowPlaying {
   sessionId: string;
   text: string;
-  startedAt: number;
+  // ISO string from the server; parsed to epoch ms for karaoke highlighting.
+  startedAt: string | number;
   approxCharsPerSec: number;
+  // [word, startMs] tuples when the server streamed with ElevenLabs timestamps.
+  alignment?: [string, number][];
 }
 
 interface WsConfig {
@@ -50,6 +53,20 @@ interface Persona {
   avatar: string;
 }
 
+interface ButtonConfig {
+  name: string;
+  character?: string | null;
+  action?: string | null;
+  hold_action?: string | null;
+  color?: ButtonColor | null;
+  notes?: string | null;
+}
+
+interface ShortcutSection {
+  title: string;
+  rows: [string, string][];
+}
+
 // name → full character name the server + team.sh match on; avatar → asset dir.
 const PERSONAS: Persona[] = [
   { name: "Leonardo", label: "Leo", avatar: "leonardo" },
@@ -61,7 +78,9 @@ const PERSONAS: Persona[] = [
   { name: "Karai", label: "Karai", avatar: "karai" },
 ];
 
-type PickerTab = "new" | "resume";
+type PickerTab = "new" | "resume" | "buttons" | "help";
+type ButtonColor = "white" | "blue" | "red" | "teal" | "yellow" | "green" | "black";
+type LearnMode = "rebind" | "add";
 
 const HOLD_MS = 300;
 const RECONNECT_MS = 2000;
@@ -74,6 +93,8 @@ const DOCK_EXPAND_WIDTH = 30;
 const DOCK_HEIGHT = 126;
 const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
+const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
+const LEARN_CAPTURE_MS = 15000;
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let ws: WebSocket | null = null;
@@ -86,6 +107,7 @@ let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 let roomHeld = false;
 let nowPlaying: NowPlaying | null = null;
+let captionTimer: ReturnType<typeof setInterval> | null = null;
 let dockCaptions = localStorage.getItem(CAPTIONS_STORAGE_KEY) === "1";
 let swapOpenSessionId: string | null = null;
 let renamingSessionId: string | null = null;
@@ -98,6 +120,18 @@ let toast: { kind: "launch" | "error"; text: string } | null = null;
 let pickerReturnTimer: ReturnType<typeof setTimeout> | null = null;
 let toastClearTimer: ReturnType<typeof setTimeout> | null = null;
 let browseDir: string | null = null;
+let buttonDeviceHint = "";
+let buttonMappings: Record<string, ButtonConfig> = {};
+let buttonActions: string[] = [];
+let buttonCharacters: string[] = [];
+let buttonsLoaded = false;
+let buttonsWritable = true;
+let shortcutsSections: ShortcutSection[] = [];
+let shortcutsLoaded = false;
+let shortcutsAvailable = true;
+let learnCapture:
+  | { mode: LearnMode; oldIdx?: string; armedAt: number; timer: ReturnType<typeof setTimeout> }
+  | null = null;
 
 const stateLabels: Record<AgentState, string> = {
   working: "working",
@@ -406,12 +440,33 @@ function renderDock() {
   bindGrantTargets();
   bindAvatars();
   bindDrag();
+  startCaptionSync();
 }
 
 function renderDockCaption(): string {
   if (!dockCaptions || !nowPlaying?.text) return "";
   const agent = agents.find((a) => a.sessionId === nowPlaying?.sessionId);
   const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
+  const align = nowPlaying.alignment;
+
+  // Karaoke mode: render each word as a span the sync loop can highlight.
+  if (align && align.length) {
+    const words = align
+      .map(
+        ([word], i) =>
+          `<span class="dock-caption-word" data-caption-word="${i}">${escapeHtml(word)}</span>`
+      )
+      .join(" ");
+    return `
+      <div class="dock-caption dock-caption-karaoke no-drag">
+        <span class="dock-caption-name">${name}</span>
+        <span class="dock-caption-track" data-caption-track>
+          <span class="dock-caption-words" data-caption-words>${words}</span>
+        </span>
+      </div>`;
+  }
+
+  // Fallback: time-paced marquee when no alignment is available.
   const text = escapeHtml(nowPlaying.text);
   const cps = Number.isFinite(nowPlaying.approxCharsPerSec) && nowPlaying.approxCharsPerSec > 0
     ? nowPlaying.approxCharsPerSec
@@ -427,7 +482,66 @@ function renderDockCaption(): string {
     </div>`;
 }
 
+function startedAtMs(np: NowPlaying): number {
+  if (typeof np.startedAt === "number") return np.startedAt;
+  const parsed = Date.parse(np.startedAt);
+  return Number.isNaN(parsed) ? Date.now() : parsed;
+}
+
+function stopCaptionSync() {
+  if (captionTimer) {
+    clearInterval(captionTimer);
+    captionTimer = null;
+  }
+}
+
+// Drive word-by-word highlighting from wall-clock elapsed vs. each word's
+// startMs, and keep the active word scrolled to center. No-op unless the dock
+// caption is showing an aligned track.
+function startCaptionSync() {
+  stopCaptionSync();
+  const np = nowPlaying;
+  if (!dockMode || !dockCaptions || !np?.alignment?.length) return;
+  const wordsEl = app.querySelector<HTMLElement>("[data-caption-words]");
+  const trackEl = app.querySelector<HTMLElement>("[data-caption-track]");
+  if (!wordsEl || !trackEl) return;
+
+  const align = np.alignment;
+  const started = startedAtMs(np);
+  const spans = Array.from(
+    wordsEl.querySelectorAll<HTMLElement>(".dock-caption-word")
+  );
+  let lastActive = -2;
+
+  const tick = () => {
+    const elapsed = Date.now() - started;
+    let active = -1;
+    for (let i = 0; i < align.length; i++) {
+      if (elapsed >= align[i][1]) active = i;
+      else break;
+    }
+    if (active === lastActive) return;
+    lastActive = active;
+    spans.forEach((s, i) => s.classList.toggle("active", i === active));
+    const el = spans[active];
+    if (el) {
+      const offset = Math.max(
+        0,
+        el.offsetLeft + el.offsetWidth / 2 - trackEl.clientWidth / 2
+      );
+      wordsEl.style.transform = `translateX(${-offset}px)`;
+    }
+  };
+
+  tick();
+  captionTimer = setInterval(tick, 100);
+}
+
 function render() {
+  // The caption sync is restarted by renderDock() when applicable; clear it on
+  // every render so it never runs against stale DOM after a re-render.
+  stopCaptionSync();
+
   if (dockMode) {
     renderDock();
     return;
@@ -508,7 +622,7 @@ function personaChip(p: Persona): string {
 }
 
 function personaChips(): string {
-  return `<div class="persona-chips">${PERSONAS.map(personaChip).join("")}</div>`;
+  return `<div class="persona-chips no-drag">${PERSONAS.map(personaChip).join("")}</div>`;
 }
 
 function renderBrowseRow(): string {
@@ -602,17 +716,169 @@ function renderResumeRows(): string {
     .join("");
 }
 
+function currentButtonColor(config: ButtonConfig): ButtonColor {
+  return BUTTON_COLORS.includes(config.color as ButtonColor) ? (config.color as ButtonColor) : "white";
+}
+
+function nextButtonColor(config: ButtonConfig): ButtonColor {
+  const current = currentButtonColor(config);
+  return BUTTON_COLORS[(BUTTON_COLORS.indexOf(current) + 1) % BUTTON_COLORS.length];
+}
+
+function selectedAssignment(config: ButtonConfig): string {
+  if (config.character) return `character:${config.character}`;
+  if (config.action) return `action:${config.action}`;
+  return "";
+}
+
+function renderAssignSelect(idx: string, config: ButtonConfig): string {
+  const selected = selectedAssignment(config);
+  const characterOptions = buttonCharacters
+    .map((character) => {
+      const value = `character:${character}`;
+      return `<option value="${escapeHtml(value)}"${selected === value ? " selected" : ""}>${escapeHtml(character)}</option>`;
+    })
+    .join("");
+  const actionOptions = buttonActions
+    .map((action) => {
+      const value = `action:${action}`;
+      return `<option value="${escapeHtml(value)}"${selected === value ? " selected" : ""}>${escapeHtml(action)}</option>`;
+    })
+    .join("");
+
+  return `
+    <select class="button-assign no-drag" data-button-assign="${escapeHtml(idx)}" ${buttonsWritable ? "" : "disabled"}>
+      <option value=""${selected ? "" : " selected"}>Unassigned</option>
+      <optgroup label="Characters">${characterOptions || '<option disabled>No characters</option>'}</optgroup>
+      <optgroup label="Actions">${actionOptions || '<option disabled>No actions</option>'}</optgroup>
+    </select>`;
+}
+
+function renderButtonRow(idx: string, config: ButtonConfig): string {
+  const color = currentButtonColor(config);
+  const isLearning = learnCapture?.mode === "rebind" && learnCapture.oldIdx === idx;
+  const name = config.name || `Button ${idx}`;
+  return `
+    <div class="button-row" data-button-row="${escapeHtml(idx)}">
+      <button
+        type="button"
+        class="button-color button-color-${color} no-drag"
+        data-button-color="${escapeHtml(idx)}"
+        title="Cycle color"
+        ${buttonsWritable ? "" : "disabled"}
+      ></button>
+      <div class="button-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <button
+        type="button"
+        class="button-code-chip${isLearning ? " learning" : ""} no-drag"
+        data-button-learn="${escapeHtml(idx)}"
+        ${buttonsWritable ? "" : "disabled"}
+      >${isLearning ? "press a button..." : `#${escapeHtml(idx)}`}</button>
+      ${renderAssignSelect(idx, config)}
+      <input
+        class="button-notes no-drag"
+        data-button-notes="${escapeHtml(idx)}"
+        value="${escapeHtml(config.notes ?? "")}"
+        placeholder="Notes"
+        ${buttonsWritable ? "" : "disabled"}
+      />
+      <button
+        type="button"
+        class="button-delete no-drag"
+        data-button-delete="${escapeHtml(idx)}"
+        title="Delete mapping"
+        ${buttonsWritable ? "" : "disabled"}
+      >&times;</button>
+    </div>`;
+}
+
+function sortedButtonEntries(): [string, ButtonConfig][] {
+  return Object.entries(buttonMappings).sort(([a], [b]) => Number(a) - Number(b));
+}
+
+function renderButtonsView(): string {
+  const rows = sortedButtonEntries().map(([idx, config]) => renderButtonRow(idx, config)).join("");
+  const learningAdd = learnCapture?.mode === "add";
+  const status = !connected
+    ? "Disconnected"
+    : !buttonsLoaded
+      ? "Waiting for button data"
+      : buttonsWritable
+        ? buttonDeviceHint || "Ready"
+        : "Read-only: server commands unavailable";
+
+  return `
+    <section class="button-panel">
+      <div class="panel-status">${escapeHtml(status)}</div>
+      <div class="button-list">
+        ${rows || '<p class="picker-empty">No mapped buttons</p>'}
+        <button type="button" class="button-add no-drag${learningAdd ? " learning" : ""}" data-button-add ${buttonsWritable ? "" : "disabled"}>
+          ${learningAdd ? "press a button..." : "+ Add button"}
+        </button>
+      </div>
+    </section>`;
+}
+
+function renderShortcutsView(): string {
+  if (!connected) {
+    return '<div class="shortcut-panel"><p class="picker-empty">Disconnected</p></div>';
+  }
+  if (!shortcutsAvailable) {
+    return '<div class="shortcut-panel"><p class="picker-empty">Shortcuts unavailable</p></div>';
+  }
+  if (!shortcutsLoaded) {
+    return '<div class="shortcut-panel"><p class="picker-empty">Waiting for shortcuts</p></div>';
+  }
+  if (!shortcutsSections.length) {
+    return '<div class="shortcut-panel"><p class="picker-empty">No shortcuts</p></div>';
+  }
+
+  return `
+    <div class="shortcut-panel">
+      ${shortcutsSections.map((section) => `
+        <section class="shortcut-section">
+          <h2>${escapeHtml(section.title)}</h2>
+          <div class="shortcut-table">
+            ${section.rows.map(([key, desc]) => `
+              <div class="shortcut-row">
+                <kbd>${escapeHtml(key)}</kbd>
+                <span>${escapeHtml(desc)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `).join("")}
+    </div>`;
+}
+
+function pickerTitle(): string {
+  if (pickerTab === "buttons") return "Button Mapping";
+  if (pickerTab === "help") return "Shortcuts";
+  return "New Session";
+}
+
+function pickerTabButton(tab: PickerTab, label: string): string {
+  return `<button type="button" class="picker-tab${pickerTab === tab ? " active" : ""}" data-picker-tab="${tab}" role="tab">${label}</button>`;
+}
+
 function renderPicker() {
   app.classList.remove("dock-mode");
   document.body.classList.remove("dock-window");
   const connClass = connected ? "up" : "down";
-  const rows = pickerTab === "new" ? renderNewRows() : renderResumeRows();
+  const body =
+    pickerTab === "new"
+      ? `<div class="picker-list">${renderNewRows()}</div>`
+      : pickerTab === "resume"
+        ? `<div class="picker-list">${renderResumeRows()}</div>`
+        : pickerTab === "buttons"
+          ? renderButtonsView()
+          : renderShortcutsView();
 
   app.innerHTML = shellHtml(`
     <header class="strip drag-region" data-tauri-drag-region>
       <div class="strip-left">
         <button type="button" class="icon-btn window-btn no-drag" data-window-action="picker-back" title="Back to room">${icons.back}</button>
-        <span class="title" data-tauri-drag-region>New Session</span>
+        <span class="title" data-tauri-drag-region>${pickerTitle()}</span>
       </div>
       <div class="header-actions no-drag">
         <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
@@ -621,12 +887,12 @@ function renderPicker() {
     </header>
     <main class="picker">
       <div class="picker-tabs no-drag" role="tablist">
-        <button type="button" class="picker-tab${pickerTab === "new" ? " active" : ""}" data-picker-tab="new" role="tab">New</button>
-        <button type="button" class="picker-tab${pickerTab === "resume" ? " active" : ""}" data-picker-tab="resume" role="tab">Resume</button>
+        ${pickerTabButton("new", "New")}
+        ${pickerTabButton("resume", "Resume")}
+        ${pickerTabButton("buttons", "Buttons")}
+        ${pickerTabButton("help", "Help")}
       </div>
-      <div class="picker-list">
-        ${rows}
-      </div>
+      ${body}
     </main>
     ${toastHtml()}
   `);
@@ -635,6 +901,7 @@ function renderPicker() {
   bindPickerTabs();
   bindBrowseRow();
   bindPickerChips();
+  bindButtonMapping();
   bindAvatars();
   bindDrag();
 }
@@ -653,6 +920,7 @@ function openPicker() {
 function closePicker() {
   pickerOpen = false;
   browseDir = null;
+  cancelLearnCapture();
   clearToastTimers();
   toast = null;
   render();
@@ -698,10 +966,19 @@ function bindPickerTabs() {
       const tab = btn.dataset.pickerTab as PickerTab;
       if (tab && tab !== pickerTab) {
         pickerTab = tab;
+        requestPickerTabData();
         render();
       }
     });
   });
+}
+
+function requestPickerTabData() {
+  if (pickerTab === "buttons") {
+    send({ type: "get_buttons" });
+  } else if (pickerTab === "help") {
+    send({ type: "get_shortcuts" });
+  }
 }
 
 function bindBrowseRow() {
@@ -748,6 +1025,141 @@ function bindPickerChips() {
   });
 }
 
+function cancelLearnCapture() {
+  if (!learnCapture) return;
+  clearTimeout(learnCapture.timer);
+  learnCapture = null;
+}
+
+function armLearnCapture(mode: LearnMode, oldIdx?: string) {
+  if (!buttonsWritable) return;
+  cancelLearnCapture();
+  learnCapture = {
+    mode,
+    oldIdx,
+    armedAt: Date.now(),
+    timer: setTimeout(() => {
+      learnCapture = null;
+      showErrorToast("Button capture timed out");
+    }, LEARN_CAPTURE_MS),
+  };
+  send({ type: "learn_capture" });
+  render();
+}
+
+function commitButtonPatch(idx: string, patch: Partial<ButtonConfig>) {
+  if (!buttonsWritable) return;
+  buttonMappings[idx] = { ...(buttonMappings[idx] ?? { name: `Button ${idx}` }), ...patch };
+  send({ type: "set_button", idx: Number(idx), patch });
+}
+
+function handleCapturedButton(idx: string) {
+  if (!learnCapture) return;
+  const capture = learnCapture;
+  cancelLearnCapture();
+
+  if (capture.mode === "add") {
+    const action = buttonActions[0] ?? null;
+    const patch: Partial<ButtonConfig> = {
+      name: `Button ${idx}`,
+      action,
+      character: null,
+      color: "white",
+      notes: "",
+    };
+    buttonMappings[idx] = { name: `Button ${idx}`, action, color: "white", notes: "" };
+    send({ type: "set_button", idx: Number(idx), patch });
+    render();
+    return;
+  }
+
+  const oldIdx = capture.oldIdx;
+  if (!oldIdx) return;
+  const existing = buttonMappings[oldIdx] ?? { name: `Button ${oldIdx}` };
+  buttonMappings[idx] = { ...existing };
+  send({ type: "set_button", idx: Number(idx), patch: existing });
+  if (idx !== oldIdx) {
+    delete buttonMappings[oldIdx];
+    send({ type: "remove_button", idx: Number(oldIdx) });
+  }
+  render();
+}
+
+function bindButtonMapping() {
+  if (pickerTab !== "buttons") return;
+
+  app.querySelectorAll<HTMLButtonElement>("[data-button-color]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = btn.dataset.buttonColor;
+      if (!idx) return;
+      commitButtonPatch(idx, { color: nextButtonColor(buttonMappings[idx] ?? { name: `Button ${idx}` }) });
+      render();
+    });
+  });
+
+  app.querySelectorAll<HTMLButtonElement>("[data-button-learn]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = btn.dataset.buttonLearn;
+      if (idx) armLearnCapture("rebind", idx);
+    });
+  });
+
+  const add = app.querySelector<HTMLButtonElement>("[data-button-add]");
+  add?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    armLearnCapture("add");
+  });
+
+  app.querySelectorAll<HTMLSelectElement>("[data-button-assign]").forEach((select) => {
+    select.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const idx = select.dataset.buttonAssign;
+      if (!idx) return;
+      const [kind, ...rest] = select.value.split(":");
+      const value = rest.join(":");
+      if (kind === "character" && value) {
+        commitButtonPatch(idx, { character: value, action: null });
+      } else if (kind === "action" && value) {
+        commitButtonPatch(idx, { action: value, character: null });
+      } else {
+        commitButtonPatch(idx, { action: null, character: null });
+      }
+      render();
+    });
+  });
+
+  app.querySelectorAll<HTMLInputElement>("[data-button-notes]").forEach((input) => {
+    input.addEventListener("click", (e) => e.stopPropagation());
+    input.addEventListener("blur", () => {
+      const idx = input.dataset.buttonNotes;
+      if (idx) commitButtonPatch(idx, { notes: input.value.trim() });
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      }
+    });
+  });
+
+  app.querySelectorAll<HTMLButtonElement>("[data-button-delete]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+    btn.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = btn.dataset.buttonDelete;
+      if (!idx || !buttonsWritable) return;
+      delete buttonMappings[idx];
+      send({ type: "remove_button", idx: Number(idx) });
+      render();
+    });
+  });
+}
+
 // data-tauri-drag-region needs the start-dragging permission and only covers
 // the exact element — a mousedown fallback makes the whole header reliable.
 function bindDrag() {
@@ -763,6 +1175,13 @@ function bindDrag() {
 
 function bindWindowActions() {
   app.querySelectorAll<HTMLButtonElement>("[data-window-action]").forEach((btn) => {
+    btn.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      if (btn.dataset.windowAction === "picker-back") {
+        e.preventDefault();
+        closePicker();
+      }
+    });
     btn.addEventListener("mousedown", (e) => e.stopPropagation());
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -775,7 +1194,7 @@ function bindWindowActions() {
         render();
       }
       else if (action === "picker-open") openPicker();
-      else if (action === "picker-back") closePicker();
+      else if (action === "picker-back" && pickerOpen) closePicker();
       else if (action === "close") void getCurrentWindow().close();
     });
   });
@@ -984,6 +1403,12 @@ function handleMessage(raw: string) {
     sessions?: ResumableSession[];
     nowPlaying?: NowPlaying | null;
     roomHeld?: boolean;
+    device_hint?: string;
+    buttons?: Record<string, ButtonConfig>;
+    actions?: string[];
+    characters?: string[];
+    idx?: number | string;
+    sections?: ShortcutSection[];
   };
   try {
     msg = JSON.parse(raw);
@@ -1026,6 +1451,37 @@ function handleMessage(raw: string) {
     return;
   }
 
+  if (msg.type === "buttons") {
+    buttonDeviceHint = typeof msg.device_hint === "string" ? msg.device_hint : "";
+    buttonMappings = msg.buttons && typeof msg.buttons === "object" ? msg.buttons : {};
+    buttonActions = Array.isArray(msg.actions) ? msg.actions.filter((v): v is string => typeof v === "string") : [];
+    buttonCharacters = Array.isArray(msg.characters) ? msg.characters.filter((v): v is string => typeof v === "string") : [];
+    buttonsLoaded = true;
+    buttonsWritable = true;
+    if (pickerOpen && pickerTab === "buttons") render();
+    return;
+  }
+
+  if (msg.type === "captured" && msg.idx != null) {
+    handleCapturedButton(String(msg.idx));
+    return;
+  }
+
+  if (msg.type === "shortcuts" && Array.isArray(msg.sections)) {
+    shortcutsSections = msg.sections
+      .filter((section) => section && typeof section.title === "string" && Array.isArray(section.rows))
+      .map((section) => ({
+        title: section.title,
+        rows: section.rows.filter((row): row is [string, string] =>
+          Array.isArray(row) && typeof row[0] === "string" && typeof row[1] === "string",
+        ),
+      }));
+    shortcutsLoaded = true;
+    shortcutsAvailable = true;
+    if (pickerOpen && pickerTab === "help") render();
+    return;
+  }
+
   if (msg.type === "error" && msg.code === "stale_session" && msg.sessionId) {
     staleSessions.add(msg.sessionId);
     render();
@@ -1034,6 +1490,26 @@ function handleMessage(raw: string) {
 
   if (msg.type === "error" && msg.code && msg.code in PICKER_ERROR_TEXT) {
     showErrorToast(PICKER_ERROR_TEXT[msg.code]);
+    return;
+  }
+
+  if (msg.type === "error" && msg.code === "no_device") {
+    cancelLearnCapture();
+    showErrorToast("No button device detected");
+    return;
+  }
+
+  if (msg.type === "error" && msg.code && ["unknown_command", "unsupported", "not_implemented"].includes(msg.code)) {
+    if (pickerTab === "buttons") {
+      buttonsWritable = false;
+      buttonsLoaded = true;
+      cancelLearnCapture();
+      render();
+    } else if (pickerTab === "help") {
+      shortcutsAvailable = false;
+      shortcutsLoaded = true;
+      render();
+    }
   }
 }
 
