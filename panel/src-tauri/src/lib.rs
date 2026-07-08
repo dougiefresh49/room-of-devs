@@ -43,9 +43,13 @@ pub fn run() {
             panel.set_level(NSFloatWindowLevel);
 
             // Non-activating: clicking a card never steals focus from the editor.
+            // set_style_mask REPLACES the whole mask — include Resizable or
+            // tauri.conf's `resizable: true` is silently lost.
+            #[allow(non_upper_case_globals)]
+            const NSWindowStyleMaskResizable: i32 = 1 << 3;
             #[allow(non_upper_case_globals)]
             const NSWindowStyleMaskNonActivatingPanel: i32 = 1 << 7;
-            panel.set_style_mask(NSWindowStyleMaskNonActivatingPanel);
+            panel.set_style_mask(NSWindowStyleMaskResizable | NSWindowStyleMaskNonActivatingPanel);
 
             // Visible on all Spaces, including over fullscreen apps.
             panel.set_collection_behaviour(
