@@ -272,3 +272,16 @@ button,
 .controls button:active {
   transform: scale(0.96);
 }
+
+/* Speaking: unmissable — glowing green ring + gentle pulse on the whole card */
+.card.state-speaking {
+  border-color: #34d399;
+  box-shadow: 0 0 10px 1px rgba(52, 211, 153, 0.55);
+  animation: speak-pulse 1.4s ease-in-out infinite;
+}
+@keyframes speak-pulse {
+  50% { box-shadow: 0 0 16px 4px rgba(52, 211, 153, 0.75); }
+}
+.card.state-hand_raised {
+  border-color: #60a5fa;
+}

@@ -1,5 +1,6 @@
 import "./style.css";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 type AgentState = "working" | "hand_raised" | "speaking" | "idle";
 
@@ -87,7 +88,7 @@ function renderCard(agent: AgentView): string {
 
   return `
     <button
-      class="card${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}"
+      class="card state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}"
       data-session="${agent.sessionId}"
       type="button"
     >
@@ -118,23 +119,35 @@ function escapeHtml(s: string): string {
 function render() {
   const connClass = connected ? "up" : "down";
   app.innerHTML = `
-    <header class="strip drag-region">
-      <span class="title">Room</span>
+    <header class="strip drag-region" data-tauri-drag-region>
+      <span class="title" data-tauri-drag-region>Room</span>
       <span class="conn-dot ${connClass}" title="${connected ? "Connected" : "Disconnected"}"></span>
     </header>
     <main class="cards${connected ? "" : " disconnected"}" id="cards">
       ${agents.length ? agents.map(renderCard).join("") : '<p class="empty">No agents</p>'}
     </main>
     <footer class="controls no-drag">
-      <button type="button" data-action="pause" title="Pause">⏸</button>
-      <button type="button" data-action="stop" title="Stop">⏹</button>
-      <button type="button" data-action="replay" title="Replay">🔁</button>
+      <button type="button" data-action="pause" title="Pause / resume playback">⏸</button>
+      <button type="button" data-action="stop" title="Stop playback">⏹</button>
+      <button type="button" data-action="replay" title="Replay last message (free)">🔁</button>
     </footer>
   `;
 
   bindCards();
   bindControls();
   bindAvatars();
+  bindDrag();
+}
+
+// data-tauri-drag-region needs the start-dragging permission and only covers
+// the exact element — a mousedown fallback makes the whole header reliable.
+function bindDrag() {
+  const header = app.querySelector<HTMLElement>("header.strip");
+  header?.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button, .conn-dot")) return;
+    void getCurrentWindow().startDragging();
+  });
 }
 
 function bindAvatars() {
