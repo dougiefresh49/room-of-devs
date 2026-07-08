@@ -28,6 +28,7 @@ import {
 import { seedStateOnStartup } from "./state.js";
 import { maybeFireDeferredAnnounce } from "./announce.js";
 import { startHid, stopHid } from "./hid.js";
+import { startPanelWs, stopPanelWs } from "./panel-ws.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -289,6 +290,9 @@ console.log(`tts-server watching: ${QUEUE_DIR}`);
 // by construction: a HID fault logs and drops, it never takes down playback.
 if (loadConfig().arcade_enabled) startHid();
 
+// Agent panel WebSocket (panel-ws.ts) — inert unless panel_port > 0.
+if (loadConfig().panel_port > 0) startPanelWs();
+
 const watcher = watch(QUEUE_DIR, {
   ignoreInitial: true,
   awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
@@ -305,6 +309,7 @@ process.on("SIGTERM", () => {
   log("server", "SIGTERM — shutting down");
   watcher.close();
   stopHid();
+  stopPanelWs();
   stopCurrent();
   process.exit(0);
 });
@@ -313,6 +318,7 @@ process.on("SIGINT", () => {
   log("server", "SIGINT — shutting down");
   watcher.close();
   stopHid();
+  stopPanelWs();
   stopCurrent();
   process.exit(0);
 });

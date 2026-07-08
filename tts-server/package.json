@@ -12,14 +12,18 @@
     "@elevenlabs/elevenlabs-js": "^2.25.1",
     "@google/genai": "^1.30.0",
     "chokidar": "^4.0.0",
-    "node-hid": "^3.3.0"
+    "node-hid": "^3.3.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["node-hid"]
+    "onlyBuiltDependencies": [
+      "node-hid"
+    ]
   }
 }

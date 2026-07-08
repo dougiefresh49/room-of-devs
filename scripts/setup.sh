@@ -122,6 +122,7 @@ defaults = {
     "played_retention_count": 50,
     "mic_device": ":default",
     "arcade_enabled": False,
+    "panel_port": 4780,
 }
 
 changed = False

@@ -5,7 +5,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const TTS_DIR = join(homedir(), ".cursor", "tts");
+export const TTS_DIR =
+  process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
 export const QUEUE_DIR = join(TTS_DIR, "queue");
 export const PLAYED_DIR = join(TTS_DIR, "played");
 export const LOG_FILE = join(TTS_DIR, "logs", "hook.log");
@@ -44,6 +45,8 @@ export interface Config {
   // Gate the arcade-encoder HID input (hid.ts). Inert until true — the daemon
   // only opens the device at boot when this is set.
   arcade_enabled: boolean;
+  // Agent panel WebSocket port (panel-ws.ts). 0 = disabled.
+  panel_port: number;
 }
 
 const DEFAULTS: Config = {
@@ -59,6 +62,7 @@ const DEFAULTS: Config = {
   played_retention_count: 50,
   dynamic_responses: "always",
   arcade_enabled: false,
+  panel_port: 4780,
 };
 
 let cachedConfig: Config | null = null;
