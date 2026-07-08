@@ -196,6 +196,9 @@ function doAction(action: string): void {
     case "pause":
       runScript("pause.sh", []); // SIGSTOP/SIGCONT toggle — tap to pause, tap to resume
       return;
+    case "panel":
+      runScript("panel.sh", []); // open/focus the Room widget
+      return;
     case "cycle_mode":
     case "toggle_mode": {
       const next = MODE_CYCLE[effectivePlaybackMode()] ?? "auto";
@@ -515,8 +518,22 @@ async function learn(): Promise<void> {
       resolve();
     }, 4000);
   });
-  const buttons: Record<string, ArcadeButton> = {};
-  for (const spec of LEARN_ORDER) {
+  // `learn <name>` = single-button mode: add/remap ONE button, preserving the
+  // rest of the existing mapping. Known names keep their standard role; new
+  // names default to opening the Room panel.
+  const only = process.argv[3]?.trim().toLowerCase();
+  let buttons: Record<string, ArcadeButton> = {};
+  let order: LearnSpec[] = LEARN_ORDER;
+  if (only) {
+    buttons = { ...loadArcadeButtons().buttons };
+    const known = LEARN_ORDER.find((s) => s.name === only);
+    order = [known ?? { name: only, def: { action: "panel" } }];
+    // Drop any existing index bound to this name — it's being remapped.
+    for (const [idx, b] of Object.entries(buttons)) {
+      if (b.name === only) delete buttons[idx];
+    }
+  }
+  for (const spec of order) {
     const idx = await waitButton(spec.name);
     if (idx == null) continue;
     if (buttons[String(idx)]) {

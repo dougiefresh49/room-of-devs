@@ -2,7 +2,7 @@
 #
 # team.sh — Launch a persona'd Claude Code session in tmux and bind team_map.json.
 #
-# Usage: team.sh <persona> [project-dir]
+# Usage: team.sh <persona> [project-dir] [--resume <sessionId>]
 #
 set -euo pipefail
 
@@ -16,10 +16,29 @@ CHARACTERS_JSON="$TTS_DIR/tts-server/src/characters.json"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] team: $*" >> "$LOG_FILE" 2>/dev/null || true; }
 
 PERSONA="${1:-}"
-PROJECT_DIR="${2:-$PWD}"
+shift || true
+PROJECT_DIR="$PWD"
+RESUME_ID=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --resume)
+            RESUME_ID="${2:-}"
+            if [ -z "$RESUME_ID" ]; then
+                echo "Usage: team.sh <persona> [project-dir] [--resume <sessionId>]" >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        *)
+            PROJECT_DIR="$1"
+            shift
+            ;;
+    esac
+done
 
 if [ -z "$PERSONA" ]; then
-    echo "Usage: team.sh <persona> [project-dir]" >&2
+    echo "Usage: team.sh <persona> [project-dir] [--resume <sessionId>]" >&2
     exit 1
 fi
 
@@ -45,8 +64,13 @@ for path in sorted(paths):
 PY
 )"
 
-log "Launching $TMUX_NAME in $PROJECT_DIR"
-tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude
+if [ -n "$RESUME_ID" ]; then
+    log "Launching $TMUX_NAME in $PROJECT_DIR (resume $RESUME_ID)"
+    tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude --resume "$RESUME_ID"
+else
+    log "Launching $TMUX_NAME in $PROJECT_DIR"
+    tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" claude
+fi
 
 SESSION_ID=""
 # 90 attempts (~90s): fresh claude sessions can sit on first-run dialogs
