@@ -151,6 +151,113 @@ echo "---"
 echo "Play Latest | bash=$SCRIPTS_DIR/play_latest.sh terminal=false refresh=true shortcut=ctrl+shift+p"
 echo "Replay Last | bash=$SCRIPTS_DIR/replay.sh terminal=false refresh=true shortcut=ctrl+shift+r"
 
+# ── Raised Hands (hand-raise mode) ───────────────────────────────
+STATE_DIR="$TTS_DIR/state"
+MUTED_SESSIONS_PATH="$TTS_DIR/muted_sessions.json"
+export STATE_DIR SCRIPTS_DIR QUEUE_DIR MUTED_SESSIONS_PATH
+python3 - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+
+state_dir = os.environ.get("STATE_DIR", "")
+queue_dir = os.environ.get("QUEUE_DIR", "")
+scripts_dir = os.environ["SCRIPTS_DIR"]
+muted_path = os.environ.get("MUTED_SESSIONS_PATH", "")
+
+muted = set()
+if muted_path and os.path.isfile(muted_path):
+    try:
+        with open(muted_path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if isinstance(data, list):
+            muted = set(data)
+    except (OSError, json.JSONDecodeError):
+        pass
+
+def humanize_wait(raised_at):
+    if not raised_at:
+        return "?"
+    try:
+        then = datetime.fromisoformat(raised_at.replace("Z", "+00:00"))
+    except ValueError:
+        return "?"
+    now = datetime.now(timezone.utc)
+    secs = max(0, int((now - then).total_seconds()))
+    if secs < 60:
+        return f"{secs}s"
+    mins = secs // 60
+    if mins < 60:
+        return f"{mins}m"
+    hours = mins // 60
+    rem_m = mins % 60
+    if rem_m:
+        return f"{hours}h {rem_m}m"
+    return f"{hours}h"
+
+def queue_count_for(session_id):
+    if not queue_dir or not os.path.isdir(queue_dir):
+        return 0
+    short = session_id[:12]
+    suffix = f"-cc-{short}.json"
+    try:
+        return sum(
+            1 for name in os.listdir(queue_dir) if name.endswith(suffix)
+        )
+    except OSError:
+        return 0
+
+hands = []
+if state_dir and os.path.isdir(state_dir):
+    for fname in os.listdir(state_dir):
+        if not fname.endswith(".json"):
+            continue
+        path = os.path.join(state_dir, fname)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                s = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if s.get("state") != "hand_raised":
+            continue
+        sid = s.get("sessionId") or fname[:-5]
+        if sid in muted:
+            continue
+        raised = s.get("raisedAt") or ""
+        try:
+            sort_key = datetime.fromisoformat(raised.replace("Z", "+00:00"))
+        except ValueError:
+            sort_key = datetime.max.replace(tzinfo=timezone.utc)
+        name = (s.get("name") or sid[:12]).replace("|", "/")
+        if len(name) > 24:
+            name = name[:22] + ".."
+        hands.append((sort_key, sid, name, raised))
+
+if not hands:
+    raise SystemExit(0)
+
+hands.sort(key=lambda x: x[0])
+print(f"Raised Hands ✋ ({len(hands)}) | disabled=true size=12")
+
+for _, sid, name, raised in hands:
+    wait = humanize_wait(raised)
+    print(
+        f"✋ {name} — waiting {wait} | "
+        f"bash={scripts_dir}/grant_floor.sh param1={sid} terminal=false refresh=true"
+    )
+    qn = queue_count_for(sid)
+    if qn > 1:
+        print(
+            f"--Drain ({qn} items) | "
+            f"bash={scripts_dir}/grant_floor.sh param1=drain param2={sid} terminal=false refresh=true"
+        )
+
+print(
+    f"Go Ahead (next hand) | "
+    f"bash={scripts_dir}/grant_floor.sh terminal=false refresh=true shortcut=ctrl+shift+g"
+)
+PY
+
 echo "---"
 
 # ── Now Playing / Agent Messages / Recent Playback ───────────────

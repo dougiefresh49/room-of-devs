@@ -52,7 +52,8 @@ fi
 log "Installing scripts to $TTS_DIR/scripts/"
 for script in \
     ingest.sh play_node.sh stop.sh pause.sh play_latest.sh media_control.sh \
-    restart.sh quit.sh set_speed.sh clear_queue.sh clear_thread_queue.sh \
+    restart.sh quit.sh set_speed.sh clear_queue.sh clear_thread_queue.sh clear_session_queue.sh \
+    grant_floor.sh \
     set_listening.sh enqueue_manual.sh set_voice.sh \
     notify_queued.sh set_notifications.sh set_notification_sound.sh \
     clean_text.py fetch_voices.py load_env.sh \

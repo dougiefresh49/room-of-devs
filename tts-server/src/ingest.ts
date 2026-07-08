@@ -1,7 +1,23 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+} from "fs";
 import { join } from "path";
 import { createHash } from "crypto";
-import { QUEUE_DIR, TTS_DIR, loadEnv, lookupSessionName, loadMutedSessions } from "./config.js";
+import {
+  QUEUE_DIR,
+  PLAYED_DIR,
+  STATE_DIR,
+  TTS_DIR,
+  loadEnv,
+  lookupSessionName,
+  loadMutedSessions,
+} from "./config.js";
+import { isProcessing } from "./audio.js";
 import { setSessionState } from "./state.js";
 import { log } from "./logger.js";
 
@@ -57,6 +73,43 @@ function isDuplicate(text: string, shortSession: string): boolean {
   return false;
 }
 
+function isHandRaised(sessionId: string): boolean {
+  try {
+    const p = join(STATE_DIR, `${sessionId}.json`);
+    if (!existsSync(p)) return false;
+    const data = JSON.parse(readFileSync(p, "utf-8")) as { state?: string };
+    return data.state === "hand_raised";
+  } catch {
+    return false;
+  }
+}
+
+// Supersede-on-arrival: a raised hand holds only the latest update. Archive
+// the previous queue file unless it's mid-synthesis (live claimProcessing marker).
+function supersedePendingQueue(shortSession: string, sessionId: string): void {
+  if (sessionId === "unknown" || !isHandRaised(sessionId)) return;
+  const suffix = `-cc-${shortSession}.json`;
+  try {
+    if (!existsSync(QUEUE_DIR)) return;
+    mkdirSync(PLAYED_DIR, { recursive: true });
+    for (const f of readdirSync(QUEUE_DIR)) {
+      if (!f.endsWith(suffix)) continue;
+      if (isProcessing(f)) {
+        log("ingest", `Skipping supersede of ${f} — mid-synthesis`);
+        continue;
+      }
+      try {
+        renameSync(join(QUEUE_DIR, f), join(PLAYED_DIR, f));
+        log("ingest", `Superseded: ${f} → played/`);
+      } catch (err: any) {
+        log("ingest", `Supersede move failed for ${f}: ${err.message}`);
+      }
+    }
+  } catch (err: any) {
+    log("ingest", `supersedePendingQueue failed: ${err.message}`);
+  }
+}
+
 let payload: HookPayload = {};
 try {
   const stdin = readFileSync(0, "utf-8").trim();
@@ -101,6 +154,7 @@ const filename = `${epoch}-${ms}-cc-${shortSession}.json`;
 const filepath = join(QUEUE_DIR, filename);
 
 mkdirSync(QUEUE_DIR, { recursive: true });
+supersedePendingQueue(shortSession, sessionId);
 
 const sessionName = lookupSessionName(sessionId) ?? "Claude Code";
 
