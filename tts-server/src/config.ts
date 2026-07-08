@@ -108,6 +108,9 @@ export interface ArcadeButton {
   name: string;
   character?: string;
   action?: string;
+  // Optional distinct action for a long press (≥ HOLD_MS). Without it, a held
+  // action button just fires `action` on release.
+  hold_action?: string;
 }
 
 export interface ArcadeButtons {

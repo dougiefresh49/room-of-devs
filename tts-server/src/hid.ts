@@ -201,6 +201,9 @@ function doAction(action: string): void {
     case "stop":
       runScript("stop.sh", []);
       return;
+    case "pause":
+      runScript("pause.sh", []); // SIGSTOP/SIGCONT toggle — tap to pause, tap to resume
+      return;
     case "cycle_mode":
     case "toggle_mode": {
       const next = MODE_CYCLE[effectivePlaybackMode()] ?? "auto";
@@ -271,9 +274,11 @@ function handleHoldStart(idx: number): void {
 function handleHoldEnd(idx: number): void {
   const btn = buttonFor(idx);
   if (!btn) return;
-  // Character buttons close the PTT capture. Action buttons have no hold
-  // semantic — a long press still fires the action on release.
+  // Character buttons close the PTT capture. Action buttons fire their
+  // hold_action when one is configured (e.g. tap 2P = pause, hold 2P = stop);
+  // otherwise a long press still fires the tap action on release.
   if (btn.character) characterHold(btn.character, "stop");
+  else if (btn.hold_action) doAction(btn.hold_action);
   else if (btn.action) doAction(btn.action);
 }
 
