@@ -16,11 +16,21 @@ import {
   effectivePlaybackMode,
   type ArcadeButton,
   type ArcadeButtons,
+  type StickDirection,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { log } from "./logger.js";
 import { loadTeamMap } from "./team-map.js";
 import { runStatusSay } from "./status-say.js";
+import {
+  TRIAGE_IDLE_MS,
+  clearTriageFocus,
+  focusAfterDismiss,
+  nextTriageFocus,
+  readTriageFocus,
+  writeTriageFocus,
+  type HandEntry,
+} from "./triage.js";
 
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
@@ -124,6 +134,7 @@ function runSignalReplay(): void {
 interface StateSnapshot {
   state?: string;
   updatedAt?: string;
+  raisedAt?: string;
 }
 
 function readState(sessionId: string): StateSnapshot | null {
@@ -176,6 +187,114 @@ function resolveCharacterSession(character: string): string | null {
 function buttonFor(idx: number): ArcadeButton | null {
   const cfg = loadArcadeButtons();
   return cfg.buttons[String(idx)] ?? null;
+}
+
+function isGrantNextButton(btn: ArcadeButton | null): boolean {
+  return !!btn && (btn.action === "grant_next" || btn.name === "white");
+}
+
+// White (grant_next) held → stick flicks snap the panel instead of triage.
+// If a stick flick happens during the hold, suppress the white button's own
+// press/hold action on release; a plain tap still grants.
+let whitePhysicallyDown = false;
+let whiteStickUsed = false;
+
+const STICK_COOLDOWN_MS = 200;
+const stickCooldownUntil = new Map<StickDirection, number>();
+
+let triageIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+function bumpTriageIdle(): void {
+  if (triageIdleTimer) clearTimeout(triageIdleTimer);
+  triageIdleTimer = setTimeout(() => {
+    triageIdleTimer = null;
+    clearTriageFocus();
+  }, TRIAGE_IDLE_MS);
+}
+
+function listRaisedHands(): HandEntry[] {
+  const hands: HandEntry[] = [];
+  try {
+    if (!existsSync(STATE_DIR)) return hands;
+    for (const f of readdirSync(STATE_DIR)) {
+      if (!f.endsWith(".json")) continue;
+      const sessionId = f.slice(0, -5);
+      const st = readState(sessionId);
+      if (!st || st.state !== "hand_raised") continue;
+      const raisedAt = st.raisedAt ?? st.updatedAt ?? "";
+      hands.push({ sessionId, raisedAt });
+    }
+  } catch (err: any) {
+    log("hid", `listRaisedHands failed: ${err?.message ?? err}`);
+  }
+  return hands;
+}
+
+const SNAP_CORNER: Record<StickDirection, "bl" | "br" | "tr" | "bc"> = {
+  left: "bl",
+  right: "br",
+  up: "tr",
+  down: "bc",
+};
+
+function handleStick(dir: StickDirection): void {
+  const now = Date.now();
+  const until = stickCooldownUntil.get(dir) ?? 0;
+  if (now < until) return;
+  stickCooldownUntil.set(dir, now + STICK_COOLDOWN_MS);
+
+  if (whitePhysicallyDown) {
+    whiteStickUsed = true;
+    // Dynamic import avoids a circular init with panel-ws (which imports hid).
+    void import("./panel-ws.js")
+      .then((m) => m.broadcastPanel({ type: "snap", corner: SNAP_CORNER[dir] }))
+      .catch(() => {});
+    log("hid", `stick ${dir} → snap ${SNAP_CORNER[dir]}`);
+    return;
+  }
+
+  const hands = listRaisedHands();
+  if (dir === "left" || dir === "right") {
+    if (hands.length === 0) return;
+    const next = nextTriageFocus(hands, readTriageFocus(), dir);
+    if (!next) return;
+    writeTriageFocus(next);
+    bumpTriageIdle();
+    log("hid", `triage focus → ${next.slice(0, 12)} (${dir})`);
+    return;
+  }
+
+  const focus = readTriageFocus();
+  if (!focus) {
+    log("hid", `stick ${dir} ignored — no triage focus`);
+    return;
+  }
+
+  if (dir === "down") {
+    log("hid", `triage grant → ${focus.slice(0, 12)}`);
+    runScript("grant_floor.sh", [focus]);
+    clearTriageFocus();
+    if (triageIdleTimer) {
+      clearTimeout(triageIdleTimer);
+      triageIdleTimer = null;
+    }
+    return;
+  }
+
+  // up = dismiss focused hand, advance to next if any
+  log("hid", `triage dismiss → ${focus.slice(0, 12)}`);
+  runScript("clear_session_queue.sh", [focus]);
+  const next = focusAfterDismiss(hands, focus);
+  if (next) {
+    writeTriageFocus(next);
+    bumpTriageIdle();
+  } else {
+    clearTriageFocus();
+    if (triageIdleTimer) {
+      clearTimeout(triageIdleTimer);
+      triageIdleTimer = null;
+    }
+  }
 }
 
 const MODE_CYCLE: Record<string, string> = {
@@ -279,6 +398,11 @@ function characterHold(character: string, phase: "start" | "stop"): void {
 function handlePress(idx: number): void {
   const btn = buttonFor(idx);
   if (!btn) return;
+  if (btn.stick) return; // stick edges are handled on DOWN only
+  if (isGrantNextButton(btn) && whiteStickUsed) {
+    whiteStickUsed = false;
+    return; // stick flick during hold → suppress grant
+  }
   if (btn.character) {
     if (noteTripleTap(idx)) {
       tapTimes.delete(idx);
@@ -295,12 +419,18 @@ function handlePress(idx: number): void {
 
 function handleHoldStart(idx: number): void {
   const btn = buttonFor(idx);
-  if (btn?.character) characterHold(btn.character, "start");
+  if (!btn || btn.stick) return;
+  if (isGrantNextButton(btn) && whiteStickUsed) return;
+  if (btn.character) characterHold(btn.character, "start");
 }
 
 function handleHoldEnd(idx: number): void {
   const btn = buttonFor(idx);
-  if (!btn) return;
+  if (!btn || btn.stick) return;
+  if (isGrantNextButton(btn) && whiteStickUsed) {
+    whiteStickUsed = false;
+    return;
+  }
   // Character buttons close the PTT capture. Action buttons fire their
   // hold_action when one is configured (e.g. tap 2P = pause, hold 2P = stop);
   // otherwise a long press still fires the tap action on release.
@@ -375,6 +505,24 @@ function onEdge(edge: Edge, idx: number): void {
     return;
   }
 
+  const btn = buttonFor(idx);
+
+  // Stick directions: DOWN edges only (cooldown inside handleStick).
+  if (btn?.stick) {
+    if (edge === "down") safe(() => handleStick(btn.stick!));
+    return;
+  }
+
+  // Track white / grant_next physical hold for stick-modifier corner snap.
+  if (isGrantNextButton(btn)) {
+    if (edge === "down") {
+      whitePhysicallyDown = true;
+      whiteStickUsed = false;
+    } else {
+      whitePhysicallyDown = false;
+    }
+  }
+
   if (edge === "down") {
     if (pending.has(idx)) return; // ignore repeat-downs for a held button
     const p: Pending = {
@@ -399,6 +547,12 @@ function clearPending(): void {
   for (const p of pending.values()) clearTimeout(p.timer);
   pending.clear();
   suppressPress.clear();
+  whitePhysicallyDown = false;
+  whiteStickUsed = false;
+  if (triageIdleTimer) {
+    clearTimeout(triageIdleTimer);
+    triageIdleTimer = null;
+  }
   if (captureArmed) {
     clearTimeout(captureArmed.timer);
     captureArmed = null;
@@ -488,6 +642,7 @@ export function stopHid(): void {
 interface LearnSpec {
   name: string;
   def: Omit<ArcadeButton, "name">;
+  prompt?: string;
 }
 
 const LEARN_ORDER: LearnSpec[] = [
@@ -500,6 +655,31 @@ const LEARN_ORDER: LearnSpec[] = [
   { name: "2p", def: { action: "stop" } },
   { name: "coin", def: { action: "cycle_mode", hold_action: "hold_room" } },
 ];
+
+const STICK_LEARN_ORDER: LearnSpec[] = [
+  {
+    name: "stick_left",
+    def: { stick: "left" },
+    prompt: "push the stick LEFT and release",
+  },
+  {
+    name: "stick_right",
+    def: { stick: "right" },
+    prompt: "push the stick RIGHT and release",
+  },
+  {
+    name: "stick_up",
+    def: { stick: "up" },
+    prompt: "push the stick UP and release",
+  },
+  {
+    name: "stick_down",
+    def: { stick: "down" },
+    prompt: "push the stick DOWN and release",
+  },
+];
+
+const ALL_LEARN_SPECS = [...LEARN_ORDER, ...STICK_LEARN_ORDER];
 
 const LEARN_TIMEOUT_MS = 30_000;
 
@@ -540,12 +720,13 @@ async function learn(): Promise<void> {
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-  const waitButton = (name: string): Promise<number | null> =>
+  const waitInput = (spec: LearnSpec): Promise<number | null> =>
     new Promise((resolve) => {
       let done = false;
-      process.stdout.write(
-        `Press the ${name.toUpperCase()} button now (or 's' + Enter to skip)... `
-      );
+      const label = spec.prompt
+        ? `${spec.prompt} (or 's' + Enter to skip)... `
+        : `Press the ${spec.name.toUpperCase()} button now (or 's' + Enter to skip)... `;
+      process.stdout.write(label);
       const finish = (v: number | null) => {
         if (done) return;
         done = true;
@@ -571,7 +752,7 @@ async function learn(): Promise<void> {
       };
     });
 
-  console.log("Learn mode — map each physical button to its HID index.");
+  console.log("Learn mode — map each physical button / stick direction to its HID index.");
   console.log("Calibrating: DON'T touch the buttons or joystick for 2 seconds...");
   await new Promise<void>((resolve) => {
     const poll = setInterval(() => {
@@ -591,18 +772,25 @@ async function learn(): Promise<void> {
   // names default to opening the Room panel.
   const only = process.argv[3]?.trim().toLowerCase();
   let buttons: Record<string, ArcadeButton> = {};
-  let order: LearnSpec[] = LEARN_ORDER;
+  let order: LearnSpec[] = ALL_LEARN_SPECS;
   if (only) {
     buttons = { ...loadArcadeButtons().buttons };
-    const known = LEARN_ORDER.find((s) => s.name === only);
+    const known = ALL_LEARN_SPECS.find((s) => s.name === only);
     order = [known ?? { name: only, def: { action: "panel" } }];
     // Drop any existing index bound to this name — it's being remapped.
     for (const [idx, b] of Object.entries(buttons)) {
       if (b.name === only) delete buttons[idx];
     }
+  } else {
+    console.log("\n── Buttons ──");
   }
+  let stickSectionStarted = false;
   for (const spec of order) {
-    const idx = await waitButton(spec.name);
+    if (!only && STICK_LEARN_ORDER.some((s) => s.name === spec.name) && !stickSectionStarted) {
+      stickSectionStarted = true;
+      console.log("\n── Stick ──");
+    }
+    const idx = await waitInput(spec);
     if (idx == null) continue;
     if (buttons[String(idx)]) {
       console.log(
@@ -640,7 +828,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       process.exit(1);
     });
   } else {
-    console.error("Usage: tsx src/hid.ts learn");
+    console.error("Usage: tsx src/hid.ts learn [name]");
     process.exit(1);
   }
 }

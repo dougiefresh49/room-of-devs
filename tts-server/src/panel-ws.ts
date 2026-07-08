@@ -603,6 +603,17 @@ function broadcastSnapshot(): void {
   }
 }
 
+/** Broadcast an arbitrary JSON message to all connected panel clients. No-op if WS off. */
+export function broadcastPanel(msg: object): void {
+  if (!wss) return;
+  const payload = JSON.stringify(msg);
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      safe(() => client.send(payload));
+    }
+  }
+}
+
 function sendError(
   ws: WebSocket,
   code:

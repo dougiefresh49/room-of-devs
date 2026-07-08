@@ -32,7 +32,25 @@ const KEYBOARD_HOTKEYS: Array<[string, string]> = [
   ["Ctrl+Shift+Space", "Stop playback"],
 ];
 
+const JOYSTICK_ROWS: Array<[string, string]> = [
+  ["Stick left / right", "Cycle triage focus through raised hands (oldest first)"],
+  ["Stick down", "Grant floor to the focused hand"],
+  ["Stick up", "Dismiss (clear queue) the focused hand; advance focus"],
+  ["White + stick", "Snap panel to corner (left→bl, right→br, up→tr, down→bc)"],
+];
+
 function describeButton(btn: ArcadeButton): string {
+  if (btn.stick) {
+    const snap =
+      btn.stick === "left"
+        ? "bl"
+        : btn.stick === "right"
+          ? "br"
+          : btn.stick === "up"
+            ? "tr"
+            : "bc";
+    return `Stick ${btn.stick} → triage cycle / grant / dismiss; White+stick → snap panel ${snap}`;
+  }
   if (btn.character) {
     const who = btn.character;
     const hold = `Hold → push-to-talk to ${who}`;
@@ -68,6 +86,7 @@ export function buildShortcutsPayload(): { type: "shortcuts"; sections: Shortcut
     sections: [
       { title: "Voice commands", rows: VOICE_GRAMMAR_ROWS },
       { title: "Keyboard hotkeys", rows: KEYBOARD_HOTKEYS },
+      { title: "Joystick", rows: JOYSTICK_ROWS },
       { title: "Arcade buttons", rows: buildButtonRows() },
     ],
   };

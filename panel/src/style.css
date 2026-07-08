@@ -526,6 +526,22 @@ button,
   animation: ring-pulse 1.4s ease-in-out infinite;
 }
 
+/* Joystick triage focus — brighter than state rings */
+.card.triage-focus {
+  border-color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 0 18px rgba(255, 255, 255, 0.35),
+    0 8px 22px var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.card.triage-focus::before {
+  background: #fff;
+  opacity: 1;
+  width: 3px;
+}
+
 #app.dock-mode {
   justify-content: flex-end;
   padding: 0;
@@ -836,6 +852,15 @@ button,
 .dock-agent.state-hand_raised .dock-ring,
 .dock-agent.state-speaking .dock-ring {
   animation: dock-ring-pulse 1.25s ease-in-out infinite;
+}
+
+.dock-agent.triage-focus .dock-ring {
+  border-color: #fff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    0 0 16px rgba(255, 255, 255, 0.55),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+  animation: none;
 }
 
 /* Update badge: raised-hand / queued count pinned to the avatar's corner. */

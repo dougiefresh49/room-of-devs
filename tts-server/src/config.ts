@@ -125,6 +125,8 @@ export const ARCADE_NAMED_COLORS = [
 
 export type ArcadeNamedColor = (typeof ARCADE_NAMED_COLORS)[number];
 
+export type StickDirection = "left" | "right" | "up" | "down";
+
 export interface ArcadeButton {
   name: string;
   character?: string;
@@ -132,6 +134,8 @@ export interface ArcadeButton {
   // Optional distinct action for a long press (≥ HOLD_MS). Without it, a held
   // action button just fires `action` on release.
   hold_action?: string;
+  // Analog stick direction (learned like a button — full deflection edges).
+  stick?: StickDirection;
   // Panel UI tint — named arcade colors or a hex string (#rgb / #rrggbb).
   color?: string;
   notes?: string;

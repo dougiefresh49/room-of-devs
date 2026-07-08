@@ -22,6 +22,7 @@ import type { NowPlaying } from "./audio.js";
 import { NOW_PLAYING_PATH } from "./audio.js";
 import { log } from "./logger.js";
 import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
+import { TRIAGE_PATH, readTriageFocus } from "./triage.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 
@@ -42,6 +43,7 @@ export interface PanelSnapshot {
   agents: AgentView[];
   nowPlaying: NowPlaying | null;
   roomHeld: boolean;
+  triageFocus: string | null;
 }
 
 interface StateFile {
@@ -182,6 +184,7 @@ export function buildPanelSnapshot(): PanelSnapshot {
     agents: buildSnapshot(),
     nowPlaying: readNowPlaying(),
     roomHeld: isRoomHeld(),
+    triageFocus: readTriageFocus(),
   };
 }
 
@@ -197,7 +200,7 @@ export function startStateWatch(): void {
   if (watcher) return;
   try {
     watcher = watch(
-      [STATE_DIR, TEAM_MAP_PATH, NOW_PLAYING_PATH, HOLD_ROOM_PATH],
+      [STATE_DIR, TEAM_MAP_PATH, NOW_PLAYING_PATH, HOLD_ROOM_PATH, TRIAGE_PATH],
       { ignoreInitial: true }
     );
     watcher.on("add", () => scheduleNotify());

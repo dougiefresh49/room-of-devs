@@ -127,6 +127,7 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 let roomHeld = false;
+let triageFocus: string | null = null;
 let nowPlaying: NowPlaying | null = null;
 let dockCaptions = localStorage.getItem(CAPTIONS_STORAGE_KEY) === "1";
 let dockSummaryExpanded = false;
@@ -251,7 +252,7 @@ function renderCard(agent: AgentView): string {
 
   return `
     <div
-      class="card state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}"
+      class="card state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}"
       data-session="${agent.sessionId}"
       role="button"
       tabindex="0"
@@ -327,7 +328,7 @@ function renderDockAgent(agent: AgentView): string {
 
   return `
     <div
-      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}"
+      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}"
       data-session="${agent.sessionId}"
     >
       <button
@@ -434,6 +435,39 @@ async function exitDockMode() {
     }
   } catch (err) {
     console.error("failed to exit dock mode:", err);
+  }
+}
+
+type SnapCorner = "bl" | "br" | "bc" | "tr";
+const SNAP_MARGIN = 12;
+
+async function snapToCorner(corner: SnapCorner) {
+  const win = getCurrentWindow();
+  try {
+    const monitor = await currentMonitor();
+    if (!monitor) return;
+    const scale = await win.scaleFactor();
+    const size = await win.outerSize();
+    const width = size.width / scale;
+    const height = size.height / scale;
+    const monitorX = monitor.position.x / scale;
+    const monitorY = monitor.position.y / scale;
+    const monitorWidth = monitor.size.width / scale;
+    const monitorHeight = monitor.size.height / scale;
+
+    let x = monitorX + SNAP_MARGIN;
+    let y = monitorY + SNAP_MARGIN;
+    if (corner === "br" || corner === "tr") {
+      x = monitorX + monitorWidth - width - SNAP_MARGIN;
+    } else if (corner === "bc") {
+      x = monitorX + (monitorWidth - width) / 2;
+    }
+    if (corner === "bl" || corner === "br" || corner === "bc") {
+      y = monitorY + monitorHeight - height - SNAP_MARGIN;
+    }
+    await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
+  } catch (err) {
+    console.error("failed to snap panel:", err);
   }
 }
 
@@ -1762,6 +1796,8 @@ function handleMessage(raw: string) {
     sessions?: ResumableSession[];
     nowPlaying?: NowPlaying | null;
     roomHeld?: boolean;
+    triageFocus?: string | null;
+    corner?: string;
     device_hint?: string;
     buttons?: Record<string, ButtonConfig>;
     actions?: string[];
@@ -1781,6 +1817,10 @@ function handleMessage(raw: string) {
   if (msg.type === "snapshot" && Array.isArray(msg.agents)) {
     agents = msg.agents;
     roomHeld = typeof msg.roomHeld === "boolean" ? msg.roomHeld : false;
+    triageFocus =
+      typeof msg.triageFocus === "string" && msg.triageFocus.trim()
+        ? msg.triageFocus
+        : null;
     nowPlaying = msg.nowPlaying && typeof msg.nowPlaying.text === "string" ? msg.nowPlaying : null;
     if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
       swapOpenSessionId = null;
@@ -1798,6 +1838,14 @@ function handleMessage(raw: string) {
     }
     render();
     if (dockMode) void enterDockMode();
+    return;
+  }
+
+  if (msg.type === "snap" && typeof msg.corner === "string") {
+    const c = msg.corner;
+    if (c === "bl" || c === "br" || c === "bc" || c === "tr") {
+      void snapToCorner(c);
+    }
     return;
   }
 
