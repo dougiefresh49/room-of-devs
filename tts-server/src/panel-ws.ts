@@ -3,9 +3,9 @@ import { randomBytes } from "crypto";
 import { chmodSync, existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { WebSocketServer, WebSocket } from "ws";
-import { loadConfig, TTS_DIR, loadArcadeButtons, saveArcadeButtons, isValidArcadeColor, type ArcadeButton, type ArcadeButtons } from "./config.js";
+import { loadConfig, TTS_DIR, CONFIG_PATH, loadArcadeButtons, saveArcadeButtons, isValidArcadeColor, effectivePlaybackMode, type ArcadeButton, type ArcadeButtons } from "./config.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
 import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
@@ -21,6 +21,45 @@ const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
 const TOKEN_PATH = join(TTS_DIR, "panel_ws_token");
 const HOLD_ROOM_FILE = join(TTS_DIR, ".hold-room.json");
+const VOICES_CACHE_PATH = join(TTS_DIR, "cache", "voices.json");
+const LISTENING_FLAG = join(TTS_DIR, "listening.enabled");
+
+const MOOD_PRESETS: Record<
+  string,
+  {
+    playback_mode: string;
+    default_speed: number;
+    notification_sound: string;
+    dynamic_responses: string;
+  }
+> = {
+  focus: {
+    playback_mode: "announce",
+    default_speed: 1.5,
+    notification_sound: "none",
+    dynamic_responses: "cached",
+  },
+  arcade: {
+    playback_mode: "auto",
+    default_speed: 1.5,
+    notification_sound: "random_sfx",
+    dynamic_responses: "always",
+  },
+  quiet: {
+    playback_mode: "silent",
+    default_speed: 1.25,
+    notification_sound: "none",
+    dynamic_responses: "off",
+  },
+  normal: {
+    playback_mode: "announce",
+    default_speed: 1.5,
+    notification_sound: "random_sfx",
+    dynamic_responses: "always",
+  },
+};
+
+const VALID_SPEEDS = new Set([0.75, 1.0, 1.1, 1.15, 1.2, 1.25, 1.5, 2.0]);
 
 export type PanelMessage =
   | { type: "grant"; sessionId: string }
@@ -42,7 +81,10 @@ export type PanelMessage =
   | { type: "set_button"; idx: number; patch: ButtonPatch }
   | { type: "remove_button"; idx: number }
   | { type: "learn_capture" }
-  | { type: "get_shortcuts" };
+  | { type: "get_shortcuts" }
+  | { type: "get_settings" }
+  | { type: "set_setting"; key: string; value: unknown }
+  | { type: "list_voices" };
 
 export type ButtonPatch = {
   name?: string;
@@ -66,12 +108,32 @@ function safe(fn: () => void): void {
   }
 }
 
+function scriptEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, TTS_DIR };
+}
+
 function runScript(name: string, args: string[]): void {
   try {
-    const child = spawn(join(SCRIPTS_DIR, name), args, { stdio: "ignore" });
+    const child = spawn(join(SCRIPTS_DIR, name), args, {
+      stdio: "ignore",
+      env: scriptEnv(),
+    });
     child.on("error", (e) => log("panel-ws", `${name} spawn error: ${e.message}`));
   } catch (err: any) {
     log("panel-ws", `${name} spawn failed: ${err?.message ?? err}`);
+  }
+}
+
+function runScriptSync(name: string, args: string[]): boolean {
+  try {
+    const result = spawnSync(join(SCRIPTS_DIR, name), args, {
+      stdio: "ignore",
+      env: scriptEnv(),
+    });
+    return result.status === 0;
+  } catch (err: any) {
+    log("panel-ws", `${name} sync spawn failed: ${err?.message ?? err}`);
+    return false;
   }
 }
 
@@ -229,6 +291,165 @@ function sendButtons(ws: WebSocket): void {
   ws.send(JSON.stringify(buildButtonsMessage()));
 }
 
+function loadCharactersMap(): Record<string, { name?: string }> {
+  if (!existsSync(CHARACTERS_PATH)) return {};
+  try {
+    return JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
+      string,
+      { name?: string }
+    >;
+  } catch {
+    return {};
+  }
+}
+
+function loadVoicesCache(): { voice_id: string; name: string }[] {
+  if (!existsSync(VOICES_CACHE_PATH)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(VOICES_CACHE_PATH, "utf-8"));
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+function resolveDefaultVoiceName(voiceId: string): string | null {
+  if (!voiceId) return null;
+  const chars = loadCharactersMap();
+  if (chars[voiceId]?.name) return chars[voiceId].name!;
+  const match = loadVoicesCache().find((v) => v.voice_id === voiceId);
+  return match?.name ?? null;
+}
+
+function isListeningEnabled(): boolean {
+  if (!existsSync(LISTENING_FLAG)) return true;
+  try {
+    const v = readFileSync(LISTENING_FLAG, "utf-8").trim().toLowerCase();
+    return v !== "0" && v !== "false" && v !== "off";
+  } catch {
+    return true;
+  }
+}
+
+function resolveMood(): string {
+  let raw: Record<string, unknown> = {};
+  try {
+    if (existsSync(CONFIG_PATH)) {
+      raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
+    }
+  } catch {
+    /* invalid config */
+  }
+  for (const [name, preset] of Object.entries(MOOD_PRESETS)) {
+    if (Object.entries(preset).every(([k, v]) => raw[k] === v)) return name;
+  }
+  return "custom";
+}
+
+export function buildSettingsValues(): Record<string, unknown> {
+  const cfg = loadConfig();
+  const voiceId = cfg.elevenlabs_voice_id;
+  return {
+    default_speed: cfg.default_speed,
+    playback_mode: effectivePlaybackMode(),
+    mood: resolveMood(),
+    notifications_enabled: cfg.notifications_enabled,
+    notification_sound: cfg.notification_sound,
+    dynamic_responses: cfg.dynamic_responses,
+    default_voice_id: voiceId,
+    default_voice_name: resolveDefaultVoiceName(voiceId),
+    room_held: existsSync(HOLD_ROOM_FILE),
+    listening: isListeningEnabled(),
+  };
+}
+
+export function buildSettingsMessage(): { type: "settings"; values: Record<string, unknown> } {
+  return { type: "settings", values: buildSettingsValues() };
+}
+
+function sendSettings(ws: WebSocket): void {
+  ws.send(JSON.stringify(buildSettingsMessage()));
+}
+
+export function buildListVoicesMessage(): {
+  type: "list_voices";
+  voices: { voiceId: string; name: string; character: string | null }[];
+} {
+  const chars = loadCharactersMap();
+  const voices = loadVoicesCache()
+    .slice(0, 40)
+    .map((v) => ({
+      voiceId: v.voice_id,
+      name: v.name,
+      character: chars[v.voice_id]?.name ?? null,
+    }));
+  return { type: "list_voices", voices };
+}
+
+function parseBoolSetting(value: unknown): boolean | "bad_message" {
+  if (value === true || value === "on" || value === "true" || value === 1) return true;
+  if (value === false || value === "off" || value === "false" || value === 0) return false;
+  return "bad_message";
+}
+
+function setDynamicResponses(value: string): boolean {
+  try {
+    const raw = existsSync(CONFIG_PATH)
+      ? JSON.parse(readFileSync(CONFIG_PATH, "utf-8"))
+      : {};
+    raw.dynamic_responses = value;
+    writeFileSync(CONFIG_PATH, JSON.stringify(raw, null, 2) + "\n");
+    return true;
+  } catch (err: any) {
+    log("panel-ws", `set dynamic_responses failed: ${err?.message ?? err}`);
+    return false;
+  }
+}
+
+function isKnownVoiceId(voiceId: string): boolean {
+  if (loadCharactersMap()[voiceId]) return true;
+  return loadVoicesCache().some((v) => v.voice_id === voiceId);
+}
+
+function applySetSetting(key: string, value: unknown): boolean {
+  switch (key) {
+    case "speed": {
+      const n = typeof value === "number" ? value : Number(value);
+      if (!Number.isFinite(n) || !VALID_SPEEDS.has(n)) return false;
+      return runScriptSync("set_speed.sh", [String(n)]);
+    }
+    case "playback_mode":
+      if (value !== "auto" && value !== "announce" && value !== "silent") return false;
+      return runScriptSync("set_playback_mode.sh", [String(value)]);
+    case "mood":
+      if (typeof value !== "string" || !(value in MOOD_PRESETS)) return false;
+      return runScriptSync("set_mood.sh", [value]);
+    case "notifications_enabled": {
+      const b = parseBoolSetting(value);
+      if (b === "bad_message") return false;
+      return runScriptSync("set_notifications.sh", [b ? "on" : "off"]);
+    }
+    case "notification_sound":
+      if (typeof value !== "string" || !value.trim()) return false;
+      return runScriptSync("set_notification_sound.sh", [value.trim()]);
+    case "dynamic_responses":
+      if (value !== "always" && value !== "cached" && value !== "off") return false;
+      return setDynamicResponses(value);
+    case "default_voice":
+      if (typeof value !== "string" || !value.trim() || !isKnownVoiceId(value.trim())) {
+        return false;
+      }
+      return runScriptSync("set_voice.sh", [value.trim()]);
+    case "listening": {
+      const b = parseBoolSetting(value);
+      if (b === "bad_message") return false;
+      return runScriptSync("set_listening.sh", [b ? "on" : "off"]);
+    }
+    default:
+      return false;
+  }
+}
+
 export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message" {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return "bad_message";
   const msg = raw as Record<string, unknown>;
@@ -320,8 +541,16 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
     case "get_buttons":
     case "get_shortcuts":
     case "learn_capture":
+    case "get_settings":
+    case "list_voices":
       if (keys.length !== 1) return "bad_message";
       return { type: msg.type };
+    case "set_setting": {
+      if (keys.length !== 3 || typeof msg.key !== "string" || !msg.key.trim()) {
+        return "bad_message";
+      }
+      return { type: "set_setting", key: msg.key.trim(), value: msg.value };
+    }
     case "set_button": {
       if (keys.length !== 3) return "bad_message";
       if (typeof msg.idx !== "number" || !Number.isInteger(msg.idx) || msg.idx < 0) {
@@ -515,6 +744,25 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
 
   if (msg.type === "get_shortcuts") {
     ws.send(JSON.stringify(buildShortcutsPayload()));
+    return;
+  }
+
+  if (msg.type === "get_settings") {
+    sendSettings(ws);
+    return;
+  }
+
+  if (msg.type === "list_voices") {
+    ws.send(JSON.stringify(buildListVoicesMessage()));
+    return;
+  }
+
+  if (msg.type === "set_setting") {
+    if (!applySetSetting(msg.key, msg.value)) {
+      sendError(ws, "bad_message");
+      return;
+    }
+    sendSettings(ws);
     return;
   }
 

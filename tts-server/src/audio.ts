@@ -56,13 +56,17 @@ export interface NowPlaying {
   // Word-level karaoke timings (ElevenLabs timestamps). When present the panel
   // highlights the current word instead of running the time-paced marquee.
   alignment?: AlignmentTuples;
+  // Post-EL atempo factor only (1.0 when none). Speed ≤1.2 is baked into the
+  // streamed audio + timestamp alignment together at synthesis time.
+  playbackRate?: number;
 }
 
 function writeNowPlaying(
   sessionId: string,
   meta?: ReplayMeta,
   alignment?: AlignmentTuples,
-  startedAt?: string
+  startedAt?: string,
+  playbackRate = 1.0
 ): void {
   const data: NowPlaying = {
     sessionId,
@@ -70,6 +74,7 @@ function writeNowPlaying(
     startedAt: startedAt ?? new Date().toISOString(),
     approxCharsPerSec: 15,
     ...(alignment && alignment.length ? { alignment } : {}),
+    ...(playbackRate !== 1.0 ? { playbackRate } : { playbackRate: 1.0 }),
   };
   const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
   writeFileSync(tmp, JSON.stringify(data));
@@ -276,6 +281,8 @@ export interface ReplayMeta {
   timestamp: string;
   // Persisted word timings so replays can karaoke too (panel reads the sidecar).
   alignment?: AlignmentTuples;
+  // Post-EL atempo factor for karaoke sync (see playStreamBuffer tempoRate).
+  playbackRate?: number;
 }
 
 function pruneReplayDir(): void {
@@ -360,7 +367,7 @@ export function playStreamBuffer(
       if (!force && now - lastNpWrite < 300) return;
       lastNpWrite = now;
       try {
-        writeNowPlaying(sessionId, replayMeta, toTuples(getWords!()), startedAt);
+        writeNowPlaying(sessionId, replayMeta, toTuples(getWords!()), startedAt, tempoRate);
       } catch {}
     };
 
@@ -383,7 +390,10 @@ export function playStreamBuffer(
       if (currentProcess === child) currentProcess = null;
       cleanup();
       if (saveReplay && replayChunks.length > 0) {
-        if (captioned && replayMeta) replayMeta.alignment = toTuples(getWords!());
+        if (captioned && replayMeta) {
+          replayMeta.alignment = toTuples(getWords!());
+          replayMeta.playbackRate = tempoRate;
+        }
         saveReplayFile(replayChunks, queueFile, replayMeta);
       }
       // The queue file being played is still in queue/ here — the daemon moves
