@@ -882,7 +882,11 @@ async function learn(): Promise<void> {
       process.stdout.write(prompt);
 
       const baselines = ldiff.axisBaselines();
-      const candidates = ldiff.axisCandidates();
+      // Digital (microswitch) sticks idle rock-steady, so calibration never
+      // flags their axis bytes as candidates — sample EVERY byte instead,
+      // baselined from the pre-push report (a 127 default would false-positive
+      // on bytes that legitimately idle elsewhere, e.g. the hat at 0x0f).
+      const baseSnapshot = latestBuf ? Buffer.from(latestBuf) : null;
       const start = Date.now();
       const peakAbs = new Map<number, number>();
       const peakSigned = new Map<number, number>();
@@ -891,12 +895,9 @@ async function learn(): Promise<void> {
         if (skipped) break;
         await sleep(20);
         if (!latestBuf) continue;
-        const bytes =
-          candidates.length > 0
-            ? candidates
-            : [...Array(latestBuf.length).keys()];
+        const bytes = [...Array(latestBuf.length).keys()];
         for (const byte of bytes) {
-          const base = baselines.get(byte) ?? 127;
+          const base = baselines.get(byte) ?? baseSnapshot?.[byte] ?? 127;
           const v = latestBuf[byte] ?? base;
           const signed = v - base;
           const abs = Math.abs(signed);
@@ -949,7 +950,7 @@ async function learn(): Promise<void> {
       await sleep(40);
       if (!latestBuf) continue;
       const v = latestBuf[result.byte] ?? 127;
-      const base = baselines.get(result.byte) ?? 127;
+      const base = baselines.get(result.byte) ?? 127; // release gate tolerates either idle model via the REARM window below
       if (
         Math.abs(v - base) < 20 ||
         (v >= STICK_REARM_LO && v <= STICK_REARM_HI)
