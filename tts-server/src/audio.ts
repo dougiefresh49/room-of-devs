@@ -211,6 +211,9 @@ export function releaseLock(): void {
 
 export function stopCurrent(): void {
   if (currentProcess && !currentProcess.killed) {
+    // A paused (SIGSTOPped) player never receives SIGTERM — resume first,
+    // or the close event never fires and the session wedges on "speaking".
+    currentProcess.kill("SIGCONT");
     currentProcess.kill("SIGTERM");
     currentProcess = null;
   }
@@ -219,7 +222,10 @@ export function stopCurrent(): void {
   for (const pidFile of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
     try {
       const pid = Number(readFileSync(pidFile, "utf-8").trim());
-      if (pid > 0) process.kill(pid, "SIGTERM");
+      if (pid > 0) {
+        process.kill(pid, "SIGCONT");
+        process.kill(pid, "SIGTERM");
+      }
     } catch {}
   }
   cleanup();

@@ -21,6 +21,9 @@ stopped=false
 if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE" 2>/dev/null || true)
     if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        # A paused (SIGSTOPped) player can't handle SIGTERM — resume it first
+        # or the kill queues forever and the daemon wedges on "speaking".
+        kill -CONT "$PID" 2>/dev/null || true
         kill "$PID" 2>/dev/null || true
         log "Stopped playback (PID $PID)"
         stopped=true
@@ -32,12 +35,17 @@ fi
 if [ -f "$STREAM_PID_FILE" ]; then
     SPID=$(cat "$STREAM_PID_FILE" 2>/dev/null || true)
     if [ -n "$SPID" ] && kill -0 "$SPID" 2>/dev/null; then
+        kill -CONT "$SPID" 2>/dev/null || true
         kill "$SPID" 2>/dev/null || true
         log "Stopped stream playback (PID $SPID)"
         stopped=true
     fi
     rm -f "$STREAM_PID_FILE"
 fi
+
+# Stray-pkill below can't resume first, so belt-and-suspenders: CONT any
+# suspended ffplay ours might be among before the TERM sweep.
+pkill -CONT -f "ffplay.*cursor-tts-stream" 2>/dev/null || true
 
 # Kill any stray ffplay processes from streaming
 pkill -f "ffplay.*cursor-tts-stream" 2>/dev/null && stopped=true || true
