@@ -453,7 +453,6 @@ async function snapToCorner(corner: SnapCorner) {
     // into the void once. outerSize/monitor rects are already physical.
     const size = await win.outerSize();
     const pos = await win.outerPosition();
-    const margin = Math.round(SNAP_MARGIN * (monitor.scaleFactor || 1));
     const rect = (m: typeof monitor) => ({
       x: m.position.x,
       y: m.position.y,
