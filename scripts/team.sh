@@ -192,5 +192,24 @@ if [ -n "$VOICE_ID" ]; then
     log "Assigned voice $VOICE_ID to $SESSION_ID"
 fi
 
+# Seed the room card now — the session's first hook is otherwise the only
+# thing that creates a state file, so a freshly spawned agent is invisible
+# in the panel ("launching…" then nothing) until someone talks to it.
+STATE_DIR="$TTS_DIR/state"
+mkdir -p "$STATE_DIR"
+python3 - "$STATE_DIR/$SESSION_ID.json" "$SESSION_ID" "$(basename "$PROJECT_DIR")" <<'PY'
+import json, sys, datetime, os
+path, sid, name = sys.argv[1:4]
+if not os.path.exists(path):
+    tmp = f"{path}.tmp.{os.getpid()}"
+    with open(tmp, "w") as f:
+        json.dump({"sessionId": sid, "name": name, "state": "idle",
+                   "raisedAt": None,
+                   "updatedAt": datetime.datetime.now(datetime.timezone.utc)
+                       .isoformat().replace("+00:00", "Z")}, f)
+    os.replace(tmp, path)
+PY
+log "Seeded room card for $SESSION_ID ($(basename "$PROJECT_DIR"))"
+
 echo "$TMUX_NAME"
 echo "$SESSION_ID"
