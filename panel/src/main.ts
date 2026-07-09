@@ -442,67 +442,62 @@ async function exitDockMode() {
 type SnapCorner = "bl" | "br" | "bc" | "tr";
 const SNAP_MARGIN = 12;
 
-function cornerTarget(
-  corner: SnapCorner,
-  mon: { x: number; y: number; w: number; h: number },
-  width: number,
-  height: number
-): { x: number; y: number } {
-  let x = mon.x + SNAP_MARGIN;
-  let y = mon.y + SNAP_MARGIN;
-  if (corner === "br" || corner === "tr") x = mon.x + mon.w - width - SNAP_MARGIN;
-  else if (corner === "bc") x = mon.x + (mon.w - width) / 2;
-  if (corner === "bl" || corner === "br" || corner === "bc") {
-    y = mon.y + mon.h - height - SNAP_MARGIN;
-  }
-  return { x, y };
-}
 
 async function snapToCorner(corner: SnapCorner) {
   const win = getCurrentWindow();
   try {
     const monitor = await currentMonitor();
     if (!monitor) return;
-    const scale = await win.scaleFactor();
+    // ALL math in physical pixels — monitors can have different scale
+    // factors, and mixing logical conversions across them threw the window
+    // into the void once. outerSize/monitor rects are already physical.
     const size = await win.outerSize();
     const pos = await win.outerPosition();
-    const width = size.width / scale;
-    const height = size.height / scale;
-    const curX = pos.x / scale;
-    const curY = pos.y / scale;
-    const toRect = (m: { position: { x: number; y: number }; size: { width: number; height: number } }) => ({
-      x: m.position.x / scale,
-      y: m.position.y / scale,
-      w: m.size.width / scale,
-      h: m.size.height / scale,
+    const margin = Math.round(SNAP_MARGIN * (monitor.scaleFactor || 1));
+    const rect = (m: typeof monitor) => ({
+      x: m.position.x,
+      y: m.position.y,
+      w: m.size.width,
+      h: m.size.height,
+      margin: Math.round(SNAP_MARGIN * (m.scaleFactor || 1)),
     });
 
-    let mon = toRect(monitor);
-    let target = cornerTarget(corner, mon, width, height);
+    const target = (m: ReturnType<typeof rect>) => {
+      let x = m.x + m.margin;
+      let y = m.y + m.margin;
+      if (corner === "br" || corner === "tr") x = m.x + m.w - size.width - m.margin;
+      else if (corner === "bc") x = m.x + Math.round((m.w - size.width) / 2);
+      if (corner !== "tr") y = m.y + m.h - size.height - m.margin;
+      return { x, y };
+    };
 
-    // Already parked at this corner? A repeat flick means "keep going" —
-    // jump to the adjacent monitor in that horizontal direction (bl = left,
-    // br/tr = right; bc has no horizontal intent).
-    const atTarget =
-      Math.abs(curX - target.x) < 24 && Math.abs(curY - target.y) < 24;
+    let mon = rect(monitor);
+    let t = target(mon);
+
+    // Repeat flick at an occupied corner = hop to the adjacent monitor.
+    const atTarget = Math.abs(pos.x - t.x) < 32 && Math.abs(pos.y - t.y) < 32;
     if (atTarget && corner !== "bc") {
       const wantLeft = corner === "bl";
-      const monitors = (await availableMonitors()).map(toRect);
-      const candidates = monitors.filter((m) =>
+      const rects = (await availableMonitors()).map(rect);
+      const candidates = rects.filter((m) =>
         wantLeft ? m.x + m.w <= mon.x + 1 : m.x >= mon.x + mon.w - 1
       );
       if (candidates.length) {
-        candidates.sort((a, b) =>
-          wantLeft ? b.x - a.x : a.x - b.x
-        );
+        candidates.sort((a, b) => (wantLeft ? b.x - a.x : a.x - b.x));
         mon = candidates[0];
-        target = cornerTarget(corner, mon, width, height);
+        t = target(mon);
       }
     }
 
-    await win.setPosition(
-      new LogicalPosition(Math.round(target.x), Math.round(target.y))
+    // Safety clamp: the target's top-left must sit inside SOME monitor, or
+    // the window becomes unfindable. Fall back to the current monitor.
+    const all = (await availableMonitors()).map(rect);
+    const visible = all.some(
+      (m) => t.x >= m.x - 8 && t.x < m.x + m.w && t.y >= m.y - 8 && t.y < m.y + m.h
     );
+    if (!visible) t = target(rect(monitor));
+
+    await win.setPosition(new PhysicalPosition(Math.round(t.x), Math.round(t.y)));
   } catch (err) {
     console.error("failed to snap panel:", err);
   }
