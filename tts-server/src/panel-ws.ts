@@ -68,6 +68,7 @@ export type PanelMessage =
   | { type: "kill_team"; sessionId: string }
   | { type: "status_say"; sessionId: string }
   | { type: "replay" }
+  | { type: "restart" }
   | { type: "stop" }
   | { type: "pause" }
   | { type: "list_resumable" }
@@ -491,6 +492,7 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
       }
       return { type: msg.type, sessionId: msg.sessionId };
     case "replay":
+    case "restart":
     case "stop":
     case "pause":
     case "list_resumable":
@@ -726,6 +728,9 @@ function dispatch(msg: PanelMessage): void {
       return;
     case "replay":
       runSignalReplay();
+      return;
+    case "restart":
+      runScript("restart.sh", []);
       return;
     case "stop":
       runScript("stop.sh", []);

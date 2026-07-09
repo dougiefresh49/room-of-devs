@@ -102,6 +102,7 @@ type LearnMode = "rebind" | "add";
 const HOLD_MS = 300;
 const RECONNECT_MS = 2000;
 const KILL_ARM_MS = 2000;
+const DOCK_HOVER_LEAVE_MS = 250;
 const FULL_MIN_SIZE = new LogicalSize(300, 240);
 const DOCK_MIN_SIZE = new LogicalSize(88, 56);
 const DOCK_AVATAR_STEP = 44;
@@ -132,6 +133,8 @@ let triageFocus: string | null = null;
 let nowPlaying: NowPlaying | null = null;
 let dockCaptions = localStorage.getItem(CAPTIONS_STORAGE_KEY) === "1";
 let dockSummaryExpanded = false;
+let dockHoverSessionId: string | null = null;
+let dockHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
 let swapOpenSessionId: string | null = null;
 let renamingSessionId: string | null = null;
 
@@ -311,7 +314,7 @@ function positionSwapPopover() {
   const pop = app.querySelector<HTMLElement>("[data-swap-popover]");
   if (!pop || !swapOpenSessionId) return;
   const btn = app.querySelector<HTMLElement>(
-    `.card[data-session="${CSS.escape(swapOpenSessionId)}"] [data-hover-action="swap"]`
+    `[data-session="${CSS.escape(swapOpenSessionId)}"] [data-hover-action="swap"]`
   );
   if (!btn) return;
   const r = btn.getBoundingClientRect();
@@ -347,10 +350,34 @@ function renderDockAgent(agent: AgentView): string {
   const killIsArmed = killArmed.has(agent.sessionId);
   const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
+  const hoverClass = dockHoverSessionId === agent.sessionId ? " hover-intent" : "";
+  const liveActions =
+    agent.state === "speaking"
+      ? `
+        <span class="dock-action-divider" aria-hidden="true"></span>
+        <button
+          type="button"
+          class="icon-btn hover-btn dock-live-btn"
+          data-hover-action="pause"
+          title="Pause audio"
+        >${icons.pause}</button>
+        <button
+          type="button"
+          class="icon-btn hover-btn dock-live-btn"
+          data-hover-action="stop"
+          title="Stop audio"
+        >${icons.stop}</button>
+        <button
+          type="button"
+          class="icon-btn hover-btn dock-live-btn"
+          data-hover-action="restart"
+          title="Restart audio"
+        >${icons.replay}</button>`
+      : "";
 
   return `
     <div
-      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}"
+      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${hoverClass}"
       data-session="${agent.sessionId}"
     >
       <button
@@ -386,6 +413,13 @@ function renderDockAgent(agent: AgentView): string {
           data-hover-action="status"
           title="Speak status"
         >${icons.info}</button>
+        <button
+          type="button"
+          class="icon-btn hover-btn"
+          data-hover-action="swap"
+          title="Swap character"
+        >${icons.swap}</button>
+        ${liveActions}
       </div>
     </div>
   `;
@@ -555,10 +589,14 @@ function renderDock() {
           ${icons.expand}
         </button>
       </div>
+      ${swapOpenSessionId ? renderSwapPopover(swapOpenSessionId) : ""}
     </main>
   `;
 
+  bindDockHoverIntent();
   bindHoverActions();
+  bindSwapPopover();
+  positionSwapPopover();
   bindWindowActions();
   bindDockSummaryActions();
   bindGrantTargets();
@@ -1694,6 +1732,12 @@ function bindHoverActions() {
         send({ type: "focus_terminal", sessionId });
       } else if (action === "status") {
         send({ type: "status_say", sessionId });
+      } else if (action === "pause") {
+        send({ type: "pause" });
+      } else if (action === "stop") {
+        send({ type: "stop" });
+      } else if (action === "restart") {
+        send({ type: "restart" });
       } else if (action === "kill") {
         if (killArmed.has(sessionId)) {
           const timer = killArmed.get(sessionId)!;
@@ -1712,8 +1756,39 @@ function bindHoverActions() {
   });
 }
 
-function bindCards() {
-  bindGrantTargets();
+function bindDockHoverIntent() {
+  const clearPendingHide = () => {
+    if (!dockHoverHideTimer) return;
+    clearTimeout(dockHoverHideTimer);
+    dockHoverHideTimer = null;
+  };
+
+  app.querySelectorAll<HTMLElement>(".dock-agent").forEach((agentEl) => {
+    const sessionId = agentEl.dataset.session;
+    if (!sessionId) return;
+
+    agentEl.addEventListener("mouseenter", () => {
+      clearPendingHide();
+      dockHoverSessionId = sessionId;
+      app.querySelectorAll<HTMLElement>(".dock-agent.hover-intent").forEach((el) => {
+        if (el !== agentEl) el.classList.remove("hover-intent");
+      });
+      agentEl.classList.add("hover-intent");
+    });
+
+    agentEl.addEventListener("mouseleave", () => {
+      clearPendingHide();
+      dockHoverHideTimer = setTimeout(() => {
+        dockHoverHideTimer = null;
+        if (dockHoverSessionId !== sessionId) return;
+        dockHoverSessionId = null;
+        agentEl.classList.remove("hover-intent");
+      }, DOCK_HOVER_LEAVE_MS);
+    });
+  });
+}
+
+function bindSwapPopover() {
   app.querySelectorAll<HTMLElement>("[data-swap-popover]").forEach((popover) => {
     popover.addEventListener("mousedown", (e) => e.stopPropagation());
     popover.addEventListener("click", (e) => e.stopPropagation());
@@ -1732,6 +1807,11 @@ function bindCards() {
       render();
     });
   });
+}
+
+function bindCards() {
+  bindGrantTargets();
+  bindSwapPopover();
 }
 
 function bindRename() {

@@ -798,6 +798,18 @@ button,
   flex: 0 0 38px;
 }
 
+.dock-agent::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  z-index: 2;
+  display: block;
+  width: 116px;
+  height: 14px;
+  transform: translateX(-50%);
+}
+
 .dock-agent.disconnected {
   opacity: 0.48;
   filter: grayscale(0.65);
@@ -887,8 +899,9 @@ button,
   left: 50%;
   bottom: calc(100% + 8px);
   z-index: 3;
-  display: flex;
-  width: 82px;
+  display: grid;
+  grid-template-columns: repeat(4, 22px);
+  width: max-content;
   padding: 5px;
   gap: 4px;
   border: 1px solid rgba(178, 194, 216, 0.2);
@@ -906,7 +919,8 @@ button,
 }
 
 .dock-agent:hover .dock-actions,
-.dock-agent:focus-within .dock-actions {
+.dock-agent:focus-within .dock-actions,
+.dock-agent.hover-intent .dock-actions {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, 0);
@@ -921,6 +935,28 @@ button,
 .dock-actions .icon-btn svg {
   width: 13px;
   height: 13px;
+}
+
+.dock-action-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 1px 1px;
+  background: rgba(88, 214, 141, 0.32);
+}
+
+.dock-actions .dock-live-btn {
+  border-color: rgba(88, 214, 141, 0.36);
+  background:
+    linear-gradient(180deg, rgba(88, 214, 141, 0.18), rgba(88, 214, 141, 0.055)),
+    rgba(15, 38, 28, 0.9);
+  color: #c9f6d9;
+}
+
+.dock-actions .dock-live-btn:hover {
+  border-color: rgba(88, 214, 141, 0.62);
+  background:
+    linear-gradient(180deg, rgba(88, 214, 141, 0.26), rgba(88, 214, 141, 0.08)),
+    rgba(18, 48, 34, 0.94);
 }
 
 .dock-expand {
