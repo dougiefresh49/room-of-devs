@@ -101,7 +101,9 @@ type LearnMode = "rebind" | "add";
 
 const HOLD_MS = 300;
 const RECONNECT_MS = 2000;
-const KILL_ARM_MS = 2000;
+// Confirm window for the end-session button. 2s proved too short in practice:
+// a second click after disarm silently re-arms, which reads as "does nothing".
+const KILL_ARM_MS = 8000;
 const DOCK_HOVER_LEAVE_MS = 250;
 const FULL_MIN_SIZE = new LogicalSize(300, 240);
 const DOCK_MIN_SIZE = new LogicalSize(88, 56);
