@@ -300,12 +300,33 @@ function renderCard(agent: AgentView): string {
           title="Swap character"
         >${icons.swap}</button>
       </div>
-      ${swapOpenSessionId === agent.sessionId ? renderSwapPopover(agent.sessionId) : ""}
     </div>
   `;
 }
 
+// The popover renders at app level (cards clip via overflow + hover transform
+// creates a containing block) and is positioned from its button's rect —
+// above when there's room, below otherwise, clamped to the viewport.
+function positionSwapPopover() {
+  const pop = app.querySelector<HTMLElement>("[data-swap-popover]");
+  if (!pop || !swapOpenSessionId) return;
+  const btn = app.querySelector<HTMLElement>(
+    `.card[data-session="${CSS.escape(swapOpenSessionId)}"] [data-hover-action="swap"]`
+  );
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  pop.style.position = "fixed";
+  const w = pop.offsetWidth || 180;
+  const h = pop.offsetHeight || 120;
+  let left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+  let top = r.top - h - 6;
+  if (top < 8) top = Math.min(r.bottom + 6, window.innerHeight - h - 8);
+  pop.style.left = `${Math.round(left)}px`;
+  pop.style.top = `${Math.round(top)}px`;
+}
+
 function renderSwapPopover(sessionId: string): string {
+
   return `
     <div class="swap-popover no-drag" data-swap-popover data-session="${escapeHtml(sessionId)}">
       ${PERSONAS.map((p) => `
@@ -610,10 +631,12 @@ function render() {
       <button type="button" class="icon-btn" data-action="replay" title="Replay last message (free)">${icons.replay}</button>
       <button type="button" class="icon-btn hold-control${roomHeld ? " active" : ""}" data-action="hold" title="${roomHeld ? "Release the room" : "Hold the room"}" aria-pressed="${roomHeld}">${icons.hold}</button>
     </footer>
+    ${swapOpenSessionId ? renderSwapPopover(swapOpenSessionId) : ""}
     ${toastHtml()}
   `);
 
   bindCards();
+  positionSwapPopover();
   bindHoverActions();
   bindRename();
   bindControls();

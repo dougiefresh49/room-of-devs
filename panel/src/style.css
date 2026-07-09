@@ -1223,10 +1223,8 @@ button,
 }
 
 .swap-popover {
-  position: absolute;
-  right: 7px;
-  bottom: 38px;
-  z-index: 8;
+  position: fixed;
+  z-index: 40;
   display: grid;
   grid-template-columns: repeat(4, 34px);
   gap: 6px;
