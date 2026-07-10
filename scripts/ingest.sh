@@ -80,6 +80,13 @@ def _workspace_matches_header(header: dict, root: str) -> bool:
     return root in fs_path or root in external
 
 
+# Titles are cosmetic; Cursor's live DBs get locked hard at IDE shutdown, and a
+# hook still waiting on them holds the "Closing the window is taking a bit
+# longer" dialog open. Read-only + a short busy timeout means we give up fast.
+def _connect_ro(path: str) -> sqlite3.Connection:
+    return sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=0.3)
+
+
 def _lookup_global_composer_headers(cid: str, root: str) -> str:
     """Newer Cursor: titles live in globalStorage composer.composerHeaders (allComposers)."""
     gdb = os.path.expanduser(
@@ -88,7 +95,7 @@ def _lookup_global_composer_headers(cid: str, root: str) -> str:
     if not os.path.isfile(gdb):
         return ""
     try:
-        conn = sqlite3.connect(gdb)
+        conn = _connect_ro(gdb)
         cur = conn.cursor()
         cur.execute(
             "SELECT value FROM ItemTable WHERE key = 'composer.composerHeaders'"
@@ -135,7 +142,13 @@ def _lookup_workspace_storage(cid: str, root: str) -> str:
     )
     if not os.path.isdir(ws_storage):
         return ""
+    # ~100 workspace dirs on a lived-in machine; hard-cap the whole sweep so a
+    # shutdown-locked batch of DBs can't stack timeouts into a visible hang.
+    deadline = time.time() + 2.0
     for ws_dir in os.listdir(ws_storage):
+        if time.time() > deadline:
+            log("Title scan hit 2s deadline — giving up")
+            return ""
         ws_json = os.path.join(ws_storage, ws_dir, "workspace.json")
         db_path = os.path.join(ws_storage, ws_dir, "state.vscdb")
         if not os.path.isfile(ws_json) or not os.path.isfile(db_path):
@@ -151,7 +164,7 @@ def _lookup_workspace_storage(cid: str, root: str) -> str:
             continue
 
         try:
-            conn = sqlite3.connect(db_path)
+            conn = _connect_ro(db_path)
             cur = conn.cursor()
             cur.execute(
                 "SELECT value FROM ItemTable WHERE key = 'composer.composerData'"
@@ -176,25 +189,30 @@ safe_cid = "".join(ch for ch in conversation_id if ch.isalnum() or ch in "-_")[:
 cache_file = os.path.join(titles_cache_dir, f"{safe_cid}.txt")
 
 thread_title = ""
+cache_hit = False
 try:
+    st = os.stat(cache_file)
     with open(cache_file, encoding="utf-8") as f:
         thread_title = f.read().strip()
+    # An empty cache file is a remembered miss — honor it for 10 minutes so an
+    # untitled thread doesn't re-run the workspaceStorage sweep every response.
+    if thread_title or (time.time() - st.st_mtime) < 600:
+        cache_hit = True
 except OSError:
     pass
 
-if not thread_title:
+if not cache_hit:
     thread_title = _lookup_workspace_storage(conversation_id, workspace_root)
     if not thread_title:
         # Migrated Cursor: workspace composer.composerData keeps only
         # selectedComposerIds; titles are in global composer.composerHeaders.
         thread_title = _lookup_global_composer_headers(conversation_id, workspace_root)
-    if thread_title:
-        try:
-            os.makedirs(titles_cache_dir, exist_ok=True)
-            with open(cache_file, "w", encoding="utf-8") as f:
-                f.write(thread_title)
-        except OSError:
-            pass
+    try:
+        os.makedirs(titles_cache_dir, exist_ok=True)
+        with open(cache_file, "w", encoding="utf-8") as f:
+            f.write(thread_title)
+    except OSError:
+        pass
 
 display_title = thread_title
 if len(display_title) > 40:
