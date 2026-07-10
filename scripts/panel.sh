@@ -11,6 +11,12 @@ PANEL_DIR="$PROJECT_DIR/panel"
 TTS_DIR="$HOME/.cursor/tts"
 INSTALLED_APP="$TTS_DIR/Room.app"
 
+# The panel is a WebSocket client of the tts-server daemon — without it the
+# Room opens disconnected and empty. Idempotent: no-ops when already running.
+if [ -x "$TTS_DIR/scripts/tts-server.sh" ]; then
+    bash "$TTS_DIR/scripts/tts-server.sh" start >/dev/null 2>&1 || true
+fi
+
 find_built_app() {
   for dir in \
     "$PANEL_DIR/src-tauri/target/release/bundle/macos" \
