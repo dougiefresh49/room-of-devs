@@ -245,21 +245,93 @@ function scheduleReconnect() {
 }
 
 type MouthFrame = "idle" | "speaking" | "mouth-mid" | "mouth-closed";
+type MessageMood = "excited" | "confused" | "neutral";
+type MoodFamily = "excited" | "confused";
+type ExpressionsManifest = Record<string, Partial<Record<MoodFamily, string>>>;
 
 const MOUTH_FLAP_MS = 120;
 const MOUTH_GAP_IDLE_MS = 180;
 const MOUTH_LAST_WORD_CAP_MS = 900;
 const MOUTH_FALLBACK_FLAP_MS = 140;
 const LIPSYNC_TICK_MS = 70;
+const BLINK_MS = 130;
+const BLINK_MIN_GAP_MS = 3500;
+const BLINK_MAX_GAP_MS = 7000;
+const BLINK_TICK_MS = 100;
 
 const mouthMidReady = new Map<string, boolean>();
 const mouthClosedReady = new Map<string, boolean>();
+const blinkReady = new Map<string, boolean>();
+/** `${character}:${expr}:${frame}` → loaded successfully */
+const exprFrameReady = new Map<string, boolean>();
+const moodBySummary = new Map<string, MessageMood>();
+let expressionsManifest: ExpressionsManifest = {};
 let lipsyncTimer: ReturnType<typeof setInterval> | null = null;
 let lipsyncAnchor: { startedAt: string | number; t0: number } | null = null;
 let lipsyncSessionKey: string | null = null;
+let blinkTimer: ReturnType<typeof setInterval> | null = null;
+/** sessionId → wall time when the current blink frame should end */
+const blinkUntil = new Map<string, number>();
+/** sessionId → wall time of next blink attempt */
+const nextBlinkAt = new Map<string, number>();
+
+const EXCITED_RE = /\b(awesome|amazing|perfect|crushed|nailed|shipped it|boom)\b/i;
+const CONFUSED_RE = /\b(hmm|not sure|strange|weird|unexpected|can't figure|confused)\b/i;
+const ALL_CAPS_WORD_RE = /\b[A-Z]{4,}\b/;
+
+function classifyMood(text: string): MessageMood {
+  const bangs = (text.match(/!/g) ?? []).length;
+  const ques = (text.match(/\?/g) ?? []).length;
+  if (bangs >= 2 || ALL_CAPS_WORD_RE.test(text) || EXCITED_RE.test(text)) return "excited";
+  if (ques > bangs || CONFUSED_RE.test(text)) return "confused";
+  return "neutral";
+}
+
+function ensureMoodCached(np: NowPlaying) {
+  if (np.kind === "ack") return;
+  const key = summaryKey(np);
+  if (!moodBySummary.has(key)) {
+    moodBySummary.set(key, classifyMood(np.rawText ?? np.text));
+  }
+}
+
+function exprFrameKey(
+  character: string,
+  expr: string,
+  frame: "speaking" | "mouth-mid" | "mouth-closed"
+): string {
+  return `${character}:${expr}:${frame}`;
+}
+
+function isExprSetReady(character: string, expr: string): boolean {
+  return (
+    exprFrameReady.get(exprFrameKey(character, expr, "speaking")) === true &&
+    exprFrameReady.get(exprFrameKey(character, expr, "mouth-mid")) === true &&
+    exprFrameReady.get(exprFrameKey(character, expr, "mouth-closed")) === true
+  );
+}
+
+/** Expression-set prefix for the live non-ack message, or null → neutral frames. */
+function activeExprPrefix(character: string): string | null {
+  if (!nowPlaying || nowPlaying.endedAt || nowPlaying.kind === "ack") return null;
+  ensureMoodCached(nowPlaying);
+  const mood = moodBySummary.get(summaryKey(nowPlaying));
+  if (!mood || mood === "neutral") return null;
+  const expr = expressionsManifest[character]?.[mood];
+  if (!expr || !isExprSetReady(character, expr)) return null;
+  return expr;
+}
 
 function avatarFrameSrc(character: string, frame: MouthFrame): string {
+  if (frame !== "idle") {
+    const expr = activeExprPrefix(character);
+    if (expr) return `avatars/tmnt/${character}/${expr}-${frame}.png`;
+  }
   return `avatars/tmnt/${character}/${frame}.png`;
+}
+
+function blinkFrameSrc(character: string): string {
+  return `avatars/tmnt/${character}/blink.png`;
 }
 
 function hasMouthMid(character: string): boolean {
@@ -270,27 +342,70 @@ function hasMouthClosed(character: string): boolean {
   return mouthClosedReady.get(character) === true;
 }
 
+function hasBlink(character: string): boolean {
+  return blinkReady.get(character) === true;
+}
+
 // Word-gap / paused frame: closed mouth with the TALKING face (idle's relaxed
 // eyes strobe against the wide-eyed speaking frames — the "blinking" bug).
 function gapFrame(character: string): MouthFrame {
-  return hasMouthClosed(character) ? "mouth-closed" : "idle";
+  if (activeExprPrefix(character) || hasMouthClosed(character)) return "mouth-closed";
+  return "idle";
+}
+
+function preloadNeutralFrames(character: string) {
+  // Neutral idle/speaking: warm cache only (no readiness gate — always assumed).
+  for (const frame of ["idle", "speaking"] as const) {
+    const img = new Image();
+    img.src = `avatars/tmnt/${character}/${frame}.png`;
+  }
+  const mid = new Image();
+  mid.onload = () => mouthMidReady.set(character, true);
+  mid.onerror = () => mouthMidReady.set(character, false);
+  mid.src = `avatars/tmnt/${character}/mouth-mid.png`;
+  const closed = new Image();
+  closed.onload = () => mouthClosedReady.set(character, true);
+  closed.onerror = () => mouthClosedReady.set(character, false);
+  closed.src = `avatars/tmnt/${character}/mouth-closed.png`;
+  const blink = new Image();
+  blink.onload = () => blinkReady.set(character, true);
+  blink.onerror = () => blinkReady.set(character, false);
+  blink.src = blinkFrameSrc(character);
+}
+
+function preloadExpressionFrames() {
+  for (const [character, moods] of Object.entries(expressionsManifest)) {
+    if (!moods || typeof moods !== "object") continue;
+    for (const expr of Object.values(moods)) {
+      if (typeof expr !== "string" || !expr) continue;
+      for (const frame of ["speaking", "mouth-mid", "mouth-closed"] as const) {
+        const key = exprFrameKey(character, expr, frame);
+        const img = new Image();
+        img.onload = () => exprFrameReady.set(key, true);
+        img.onerror = () => exprFrameReady.set(key, false);
+        img.src = `avatars/tmnt/${character}/${expr}-${frame}.png`;
+      }
+    }
+  }
 }
 
 function preloadAvatarFrames() {
   const chars = new Set<string>(["default", ...PERSONAS.map((p) => p.avatar)]);
-  for (const character of chars) {
-    for (const frame of ["idle", "speaking"] as const) {
-      const img = new Image();
-      img.src = avatarFrameSrc(character, frame);
-    }
-    const mid = new Image();
-    mid.onload = () => mouthMidReady.set(character, true);
-    mid.onerror = () => mouthMidReady.set(character, false);
-    mid.src = avatarFrameSrc(character, "mouth-mid");
-    const closed = new Image();
-    closed.onload = () => mouthClosedReady.set(character, true);
-    closed.onerror = () => mouthClosedReady.set(character, false);
-    closed.src = avatarFrameSrc(character, "mouth-closed");
+  for (const character of chars) preloadNeutralFrames(character);
+  void loadExpressionsManifest();
+  startBlinkScheduler();
+}
+
+async function loadExpressionsManifest() {
+  try {
+    const res = await fetch("avatars/tmnt/expressions.json");
+    if (!res.ok) return;
+    const data: unknown = await res.json();
+    if (!data || typeof data !== "object" || Array.isArray(data)) return;
+    expressionsManifest = data as ExpressionsManifest;
+    preloadExpressionFrames();
+  } catch {
+    // Missing/404/invalid → neutral-only; art lands independently.
   }
 }
 
@@ -361,7 +476,7 @@ function alignmentAudioMs(np: NowPlaying): number {
 function flapFrame(audioMs: number, periodMs: number, character: string): MouthFrame {
   const open = Math.floor(audioMs / periodMs) % 2 === 0;
   if (open) return "speaking";
-  if (hasMouthMid(character)) return "mouth-mid";
+  if (activeExprPrefix(character) || hasMouthMid(character)) return "mouth-mid";
   return gapFrame(character);
 }
 
@@ -423,6 +538,10 @@ function applyLipsyncFrame() {
     stopLipsyncLoop();
     return;
   }
+  // Don't stomp an in-flight natural blink (paused/gap blinks are intentional).
+  const until = blinkUntil.get(sessionId);
+  if (until != null && performance.now() < until) return;
+
   const character = (agent.character ?? "default").toLowerCase();
   // Single source of truth (includes the paused freeze) — the guppy bug was
   // this loop calling pickMouthFrame directly and skipping the paused check.
@@ -439,6 +558,7 @@ function syncLipsyncLoop() {
     lipsyncAnchor = null;
     return;
   }
+  ensureMoodCached(nowPlaying);
   const key = `${nowPlaying.sessionId}:${nowPlaying.startedAt}`;
   if (lipsyncSessionKey !== key) {
     lipsyncSessionKey = key;
@@ -448,6 +568,83 @@ function syncLipsyncLoop() {
     lipsyncTimer = setInterval(applyLipsyncFrame, LIPSYNC_TICK_MS);
   }
   applyLipsyncFrame();
+}
+
+function randomBlinkGapMs(): number {
+  return BLINK_MIN_GAP_MS + Math.random() * (BLINK_MAX_GAP_MS - BLINK_MIN_GAP_MS);
+}
+
+function scheduleNextBlink(sessionId: string, from = performance.now()) {
+  nextBlinkAt.set(sessionId, from + randomBlinkGapMs());
+}
+
+/** Mid-word / open-mouth flaps — blink would strobe against speaking frames. */
+function isMidWordMouth(agent: AgentView): boolean {
+  if (!isLipsyncActive(agent.sessionId)) return false;
+  const frame = currentMouthFrame(agent);
+  return frame === "speaking" || frame === "mouth-mid";
+}
+
+function setAvatarSrc(sessionId: string, src: string) {
+  app.querySelectorAll<HTMLImageElement>(`[data-avatar-session="${CSS.escape(sessionId)}"]`).forEach((img) => {
+    if (img.getAttribute("src") !== src) img.src = src;
+  });
+}
+
+function restoreAvatarAfterBlink(agent: AgentView) {
+  setAvatarSrc(agent.sessionId, avatarSrc(agent));
+}
+
+function applyBlinkTick() {
+  const now = performance.now();
+  const visible = new Set<string>();
+  app.querySelectorAll<HTMLImageElement>("[data-avatar-session]").forEach((img) => {
+    const sid = img.dataset.avatarSession;
+    if (sid) visible.add(sid);
+  });
+
+  for (const sessionId of [...blinkUntil.keys()]) {
+    if (!visible.has(sessionId)) {
+      blinkUntil.delete(sessionId);
+      continue;
+    }
+    const until = blinkUntil.get(sessionId)!;
+    if (now < until) continue;
+    blinkUntil.delete(sessionId);
+    scheduleNextBlink(sessionId, now);
+    const agent = agents.find((a) => a.sessionId === sessionId);
+    if (agent) restoreAvatarAfterBlink(agent);
+  }
+
+  for (const sessionId of visible) {
+    if (blinkUntil.has(sessionId)) continue;
+    const agent = agents.find((a) => a.sessionId === sessionId);
+    if (!agent) continue;
+    const character = (agent.character ?? "default").toLowerCase();
+    if (!hasBlink(character)) continue;
+    if (!nextBlinkAt.has(sessionId)) scheduleNextBlink(sessionId, now);
+    if (now < nextBlinkAt.get(sessionId)!) continue;
+    if (isMidWordMouth(agent)) {
+      // Defer — don't burn the interval while the mouth is open.
+      nextBlinkAt.set(sessionId, now + 200);
+      continue;
+    }
+    blinkUntil.set(sessionId, now + BLINK_MS);
+    setAvatarSrc(sessionId, blinkFrameSrc(character));
+  }
+
+  // Drop schedules for agents that left the room.
+  for (const sessionId of [...nextBlinkAt.keys()]) {
+    if (!agents.some((a) => a.sessionId === sessionId) && !visible.has(sessionId)) {
+      nextBlinkAt.delete(sessionId);
+      blinkUntil.delete(sessionId);
+    }
+  }
+}
+
+function startBlinkScheduler() {
+  if (blinkTimer) return;
+  blinkTimer = setInterval(applyBlinkTick, BLINK_TICK_MS);
 }
 
 function personaAvatarSrc(persona: Persona): string {
@@ -509,7 +706,7 @@ function renderCard(agent: AgentView): string {
           <div class="chips">${raisedChip}${queueChip}${supersededChip}</div>
         </div>
       </div>
-      <div class="card-actions actions-${mode === "live" ? 3 : 4}" aria-label="Agent actions">
+      <div class="card-actions actions-${mode === "live" ? 3 : 5}" aria-label="Agent actions">
         ${actionButtonsHtml(agent, mode)}
       </div>
     </div>
@@ -626,6 +823,12 @@ function actionButtonsHtml(agent: AgentView, mode: ActionClusterMode): string {
         <button
           type="button"
           class="icon-btn hover-btn"
+          data-hover-action="replay_session"
+          title="Replay their last message"
+        >${icons.replay}</button>
+        <button
+          type="button"
+          class="icon-btn hover-btn"
           data-hover-action="swap"
           title="Swap character"
         >${icons.swap}</button>`;
@@ -639,6 +842,7 @@ function renderDockAgent(agent: AgentView): string {
   const greyed = !connected || staleSessions.has(agent.sessionId);
   const displayName = escapeHtml(agent.label ?? agent.name);
   const hoverClass = dockHoverSessionId === agent.sessionId ? " hover-intent" : "";
+  const mode = actionClusterMode(agent.sessionId);
 
   return `
     <div
@@ -657,8 +861,8 @@ function renderDockAgent(agent: AgentView): string {
         </span>
         ${agent.raisedCount > 0 ? `<span class="dock-badge" title="${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting">${agent.raisedCount}</span>` : ""}
       </button>
-      <div class="dock-actions" aria-label="Agent actions">
-        ${dockActionButtons(agent)}
+      <div class="dock-actions actions-${mode === "live" ? 3 : 5}" aria-label="Agent actions">
+        ${dockActionButtons(agent, mode)}
       </div>
     </div>
   `;
@@ -2114,6 +2318,8 @@ function bindHoverActions() {
         send({ type: "replay" });
       } else if (action === "replay_slower") {
         send({ type: "replay_slower" });
+      } else if (action === "replay_session") {
+        send({ type: "replay_session", sessionId });
       } else if (action === "kill") {
         if (killArmed.has(sessionId)) {
           const timer = killArmed.get(sessionId)!;
@@ -2345,6 +2551,7 @@ function handleMessage(raw: string) {
         ? msg.triageFocus
         : null;
     nowPlaying = msg.nowPlaying && typeof msg.nowPlaying.text === "string" ? msg.nowPlaying : null;
+    if (nowPlaying) ensureMoodCached(nowPlaying);
     syncPendingGrant();
     if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
       swapOpenSessionId = null;

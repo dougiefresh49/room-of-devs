@@ -586,7 +586,7 @@ button,
 
 .card-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 5px;
   margin-top: 8px;
   opacity: 0.56;
@@ -598,6 +598,10 @@ button,
 
 .card-actions.actions-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card-actions.actions-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .card:hover .card-actions,
@@ -1101,7 +1105,7 @@ button,
   bottom: calc(100% + 8px);
   z-index: 3;
   display: grid;
-  grid-template-columns: repeat(4, 22px);
+  grid-template-columns: repeat(5, 22px);
   width: max-content;
   padding: 5px;
   gap: 4px;
@@ -1117,6 +1121,10 @@ button,
   transition:
     opacity 130ms ease,
     transform 130ms ease;
+}
+
+.dock-actions.actions-3 {
+  grid-template-columns: repeat(3, 22px);
 }
 
 .dock-agent:hover,
