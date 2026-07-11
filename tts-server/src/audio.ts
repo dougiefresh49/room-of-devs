@@ -14,6 +14,7 @@ import {
   STREAM_LOCK,
   PROCESSING_DIR,
   TTS_DIR,
+  STATE_DIR,
   loadConfig,
 } from "./config.js";
 import { log } from "./logger.js";
@@ -29,10 +30,11 @@ function toTuples(words: WordTiming[]): AlignmentTuples {
 }
 
 // Every audible path declares who it belongs to: a session id for
-// session-attributed audio (queue items, dynamic acks, ask-user readouts) or
-// the literal "meta" for room-level audio (announce chimes, phrases, replay,
-// `say`). Session context sets `speaking` on start and recomputes state after
-// close; meta audio never touches session state — it only respects the lock.
+// session-attributed audio (queue items, dynamic acks, ask-user readouts,
+// session-attributed replay) or the literal "meta" for room-level audio
+// (announce chimes, phrases, orphan/legacy replay, `say`). Session context
+// sets `speaking` on start and recomputes state after close; meta audio
+// never touches session state — it only respects the lock.
 export type PlaybackContext = { sessionId: string } | "meta";
 
 function beginSessionSpeaking(ctx: PlaybackContext): void {
@@ -107,11 +109,14 @@ function clearNowPlaying(): void {
 function beginSessionPlayback(
   ctx: PlaybackContext,
   meta?: ReplayMeta,
-  startedAt?: string
+  startedAt?: string,
+  // Rate actually applied to this playback (afplay -r / ffplay atempo), not
+  // a sidecar's original rate — the panel maps wall time via this factor.
+  playbackRate = 1.0
 ): void {
   beginSessionSpeaking(ctx);
   if (ctx !== "meta" && ctx.sessionId)
-    writeNowPlaying(ctx.sessionId, meta, undefined, startedAt);
+    writeNowPlaying(ctx.sessionId, meta, meta?.alignment, startedAt, playbackRate);
 }
 const MAX_REPLAY_FILES = 20;
 
@@ -271,7 +276,7 @@ export function playFile(
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
 
-    beginSessionPlayback(ctx, replayMeta);
+    beginSessionPlayback(ctx, replayMeta, undefined, speed);
     const child = spawn("afplay", args, { stdio: "ignore" });
     currentProcess = child;
     writePidFiles(child.pid);
@@ -396,7 +401,7 @@ export function playStreamBuffer(
       } catch {}
     };
 
-    beginSessionPlayback(ctx, replayMeta, startedAt);
+    beginSessionPlayback(ctx, replayMeta, startedAt, tempoRate);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
@@ -468,7 +473,28 @@ export function replayLast(nth = 1, speedFactor = 1.0): Promise<number> {
     const target = files[Math.max(0, files.length - nth)];
     const filePath = join(REPLAY_DIR, target);
     log("audio", `Replaying: ${target}${speedFactor !== 1.0 ? ` (speed×${speedFactor})` : ""}`);
-    return playFile(filePath, "meta", speedFactor);
+
+    // Session-attributed when the sidecar names a still-alive session; otherwise
+    // meta (orphan/corrupt/missing sidecar — same as pre-attribution behavior).
+    let ctx: PlaybackContext = "meta";
+    let meta: ReplayMeta | undefined;
+    try {
+      const sidecarPath = filePath.replace(/\.mp3$/, ".json");
+      if (existsSync(sidecarPath)) {
+        const parsed = JSON.parse(readFileSync(sidecarPath, "utf-8")) as ReplayMeta;
+        meta = parsed;
+        if (
+          parsed.sessionId &&
+          existsSync(join(STATE_DIR, `${parsed.sessionId}.json`))
+        ) {
+          ctx = { sessionId: parsed.sessionId };
+        }
+      }
+    } catch {
+      meta = undefined;
+    }
+
+    return playFile(filePath, ctx, speedFactor, meta);
   } catch (err: any) {
     log("audio", `Replay error: ${err.message}`);
     return Promise.resolve(1);
@@ -495,7 +521,7 @@ export function playMp3Buffer(
     ];
     if (speed !== 1.0) ffplayArgs.push("-af", `atempo=${speed}`);
 
-    beginSessionPlayback(ctx, replayMeta);
+    beginSessionPlayback(ctx, replayMeta, undefined, speed);
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });

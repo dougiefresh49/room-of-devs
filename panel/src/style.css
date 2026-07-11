@@ -146,6 +146,14 @@ button,
   border-radius: 6px;
 }
 
+.window-btn.active {
+  border-color: rgba(102, 169, 255, 0.55);
+  background:
+    linear-gradient(180deg, rgba(102, 169, 255, 0.22), rgba(102, 169, 255, 0.08)),
+    #172336;
+  color: #cfe4ff;
+}
+
 .window-btn svg {
   width: 13px;
   height: 13px;
@@ -163,6 +171,132 @@ button,
   padding: 1px 1px 3px;
   scrollbar-width: thin;
   scrollbar-color: rgba(144, 155, 169, 0.42) transparent;
+  container-type: inline-size;
+  container-name: room-cards;
+}
+
+.room-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+}
+
+.room-body .cards {
+  min-width: 0;
+}
+
+.room-summary-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 190px;
+  width: 190px;
+  min-height: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(178, 194, 216, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28px),
+    rgba(14, 18, 26, 0.92);
+  overflow: hidden;
+}
+
+.room-summary-pane.ended {
+  opacity: 0.62;
+}
+
+.room-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.room-summary-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.room-summary-dismiss {
+  width: 20px;
+  height: 18px;
+  border-radius: 5px;
+  flex: 0 0 auto;
+}
+
+.room-summary-dismiss svg {
+  width: 11px;
+  height: 11px;
+}
+
+.room-summary-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  color: #d5dde7;
+  font-size: 11.5px;
+  line-height: 1.45;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 155, 169, 0.42) transparent;
+}
+
+.room-summary-body p {
+  margin: 0 0 0.55em;
+}
+
+.room-summary-body p:last-child,
+.room-summary-body ul:last-child,
+.room-summary-body ol:last-child,
+.room-summary-body blockquote:last-child,
+.room-summary-body pre:last-child {
+  margin-bottom: 0;
+}
+
+.room-summary-empty {
+  margin: auto 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.room-summary-body .md-heading {
+  margin: 0.7em 0 0.35em;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.room-summary-body .md-heading:first-child {
+  margin-top: 0;
+}
+
+.room-summary-body .md-h1 { font-size: 13px; }
+.room-summary-body .md-h2 { font-size: 12.5px; }
+.room-summary-body .md-h3 { font-size: 12px; }
+
+.room-summary-body ul,
+.room-summary-body ol {
+  margin: 0 0 0.55em;
+  padding-left: 1.15em;
+}
+
+.room-summary-body li {
+  margin: 0.15em 0;
+}
+
+.room-summary-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
 }
 
 .cards::-webkit-scrollbar {
@@ -246,12 +380,34 @@ button,
   height: 42px;
   flex: 0 0 42px;
   transform-origin: 50% 50%;
-  transition: transform 180ms ease-out;
+  transition:
+    transform 180ms ease-out,
+    width 220ms ease,
+    height 220ms ease,
+    flex-basis 220ms ease;
 }
 
 .avatar-wrap.speaking-pop {
   transform: scale(1.18);
   z-index: 2;
+}
+
+.card.speaking-grow .avatar-wrap {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+}
+
+.card.speaking-grow .avatar,
+.card.speaking-grow .avatar-fallback {
+  width: 64px;
+  height: 64px;
+}
+
+@container room-cards (min-width: 320px) {
+  .card.speaking-grow {
+    grid-column: span 2;
+  }
 }
 
 .avatar-wrap::after {
@@ -262,6 +418,25 @@ button,
   border-radius: 50%;
   opacity: 0.58;
   pointer-events: none;
+}
+
+.avatar-wrap.grant-loading::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(73, 217, 154, 0.15) 8%,
+    rgba(73, 217, 154, 0.9) 22%,
+    transparent 38%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  animation: grant-sweep 1.2s linear infinite;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .avatar {
@@ -419,6 +594,10 @@ button,
   transition:
     opacity 140ms ease,
     transform 140ms ease;
+}
+
+.card-actions.actions-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .card:hover .card-actions,
@@ -1907,6 +2086,21 @@ button,
   flex: 0 0 auto;
 }
 
+.spotlight-col.spotlight-enter {
+  animation: spotlight-enter 240ms ease-out;
+}
+
+@keyframes spotlight-enter {
+  from {
+    transform: translateY(26px) scale(0.55);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 .spotlight-actions {
   display: flex;
   align-items: center;
@@ -1942,6 +2136,7 @@ button,
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow: visible;
 }
 
 .spotlight-ring.live {
@@ -1949,6 +2144,78 @@ button,
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.45),
     0 0 18px rgba(73, 217, 154, 0.45);
+}
+
+.spotlight-ring.loading::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(73, 217, 154, 0.15) 8%,
+    rgba(73, 217, 154, 0.95) 22%,
+    transparent 38%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  animation: grant-sweep 1.2s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes grant-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.replay-slower-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+}
+
+.replay-slower-icon svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.replay-slower-label {
+  position: absolute;
+  right: -7px;
+  bottom: -5px;
+  color: currentColor;
+  font-size: 6.5px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.spotlight-actions .replay-slower-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.spotlight-actions .replay-slower-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.spotlight-actions .replay-slower-label {
+  right: -8px;
+  bottom: -4px;
+  font-size: 5.5px;
 }
 
 .spotlight-avatar {

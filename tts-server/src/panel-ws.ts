@@ -69,6 +69,7 @@ export type PanelMessage =
   | { type: "kill_team"; sessionId: string }
   | { type: "status_say"; sessionId: string }
   | { type: "replay" }
+  | { type: "replay_slower" }
   | { type: "restart" }
   | { type: "stop" }
   | { type: "pause" }
@@ -139,13 +140,11 @@ function runScriptSync(name: string, args: string[]): boolean {
   }
 }
 
-function runSignalReplay(): void {
+function runSignalReplay(speed?: number): void {
   try {
-    const child = spawn(
-      "pnpm",
-      ["exec", "tsx", "src/signal.ts", "replay", "", "1"],
-      { cwd: SERVER_DIR, stdio: "ignore" }
-    );
+    const args = ["exec", "tsx", "src/signal.ts", "replay", "", "1"];
+    if (speed != null) args.push(String(speed));
+    const child = spawn("pnpm", args, { cwd: SERVER_DIR, stdio: "ignore" });
     child.on("error", (e) => log("panel-ws", `signal replay spawn error: ${e.message}`));
   } catch (err: any) {
     log("panel-ws", `signal replay spawn failed: ${err?.message ?? err}`);
@@ -493,6 +492,7 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
       }
       return { type: msg.type, sessionId: msg.sessionId };
     case "replay":
+    case "replay_slower":
     case "restart":
     case "stop":
     case "pause":
@@ -733,6 +733,9 @@ function dispatch(msg: PanelMessage): void {
       return;
     case "replay":
       runSignalReplay();
+      return;
+    case "replay_slower":
+      runSignalReplay(0.8);
       return;
     case "restart":
       runScript("restart.sh", []);
