@@ -264,7 +264,8 @@ const mouthClosedReady = new Map<string, boolean>();
 const blinkReady = new Map<string, boolean>();
 /** `${character}:${expr}:${frame}` → loaded successfully */
 const exprFrameReady = new Map<string, boolean>();
-const moodBySummary = new Map<string, MessageMood>();
+type MoodSegment = { fromWord: number; mood: MessageMood };
+const moodSegmentsBySummary = new Map<string, MoodSegment[]>();
 let expressionsManifest: ExpressionsManifest = {};
 let lipsyncTimer: ReturnType<typeof setInterval> | null = null;
 let lipsyncAnchor: { startedAt: string | number; t0: number } | null = null;
@@ -287,12 +288,66 @@ function classifyMood(text: string): MessageMood {
   return "neutral";
 }
 
-function ensureMoodCached(np: NowPlaying) {
-  if (np.kind === "ack") return;
-  const key = summaryKey(np);
-  if (!moodBySummary.has(key)) {
-    moodBySummary.set(key, classifyMood(np.rawText ?? np.text));
+// Sentence-level mood: character rewrites (Mikey!) are wall-to-wall "!", so a
+// whole-message classification pins the excited face for the full duration —
+// classify per sentence and map segments onto the word alignment instead.
+function classifySentence(sent: string): MessageMood {
+  const bangs = (sent.match(/!/g) ?? []).length;
+  const ques = (sent.match(/\?/g) ?? []).length;
+  if (bangs >= 2 || ALL_CAPS_WORD_RE.test(sent) || EXCITED_RE.test(sent)) return "excited";
+  if ((ques > 0 && ques >= bangs) || CONFUSED_RE.test(sent)) return "confused";
+  return "neutral";
+}
+
+function buildMoodSegments(np: NowPlaying): MoodSegment[] {
+  // Segment the SPOKEN text — that's what the word alignment indexes into.
+  const text = (np.text ?? "").trim();
+  if (!text) return [{ fromWord: 0, mood: "neutral" }];
+  const sentences = text.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) ?? [text];
+  const segs: MoodSegment[] = [];
+  let word = 0;
+  for (const sent of sentences) {
+    const n = sent.trim().split(/\s+/).filter(Boolean).length;
+    if (!n) continue;
+    segs.push({ fromWord: word, mood: classifySentence(sent) });
+    word += n;
   }
+  return segs.length ? segs : [{ fromWord: 0, mood: classifyMood(text) }];
+}
+
+function moodSegments(np: NowPlaying): MoodSegment[] {
+  const key = summaryKey(np);
+  let segs = moodSegmentsBySummary.get(key);
+  if (!segs) {
+    segs = buildMoodSegments(np);
+    moodSegmentsBySummary.set(key, segs);
+  }
+  return segs;
+}
+
+function currentWordIndex(np: NowPlaying): number {
+  const al = np.alignment;
+  if (!al?.length) return 0;
+  const ms = alignmentAudioMs(np);
+  let idx = 0;
+  for (let i = 0; i < al.length; i++) {
+    if (al[i][1] <= ms) idx = i;
+    else break;
+  }
+  return idx;
+}
+
+function moodAtNow(np: NowPlaying): MessageMood {
+  if (np.kind === "ack") return "neutral";
+  const segs = moodSegments(np);
+  if (segs.length === 1 || !np.alignment?.length) return segs[0].mood;
+  const w = currentWordIndex(np);
+  let mood = segs[0].mood;
+  for (const seg of segs) {
+    if (seg.fromWord <= w) mood = seg.mood;
+    else break;
+  }
+  return mood;
 }
 
 function exprFrameKey(
@@ -314,9 +369,10 @@ function isExprSetReady(character: string, expr: string): boolean {
 /** Expression-set prefix for the live non-ack message, or null → neutral frames. */
 function activeExprPrefix(character: string): string | null {
   if (!nowPlaying || nowPlaying.endedAt || nowPlaying.kind === "ack") return null;
-  ensureMoodCached(nowPlaying);
-  const mood = moodBySummary.get(summaryKey(nowPlaying));
-  if (!mood || mood === "neutral") return null;
+  // Paused characters drop back to a neutral face — they're waiting, not emoting.
+  if (playbackPaused) return null;
+  const mood = moodAtNow(nowPlaying);
+  if (mood === "neutral") return null;
   const expr = expressionsManifest[character]?.[mood];
   if (!expr || !isExprSetReady(character, expr)) return null;
   return expr;
@@ -558,7 +614,7 @@ function syncLipsyncLoop() {
     lipsyncAnchor = null;
     return;
   }
-  ensureMoodCached(nowPlaying);
+  if (nowPlaying.kind !== "ack") moodSegments(nowPlaying);
   const key = `${nowPlaying.sessionId}:${nowPlaying.startedAt}`;
   if (lipsyncSessionKey !== key) {
     lipsyncSessionKey = key;
@@ -2551,7 +2607,7 @@ function handleMessage(raw: string) {
         ? msg.triageFocus
         : null;
     nowPlaying = msg.nowPlaying && typeof msg.nowPlaying.text === "string" ? msg.nowPlaying : null;
-    if (nowPlaying) ensureMoodCached(nowPlaying);
+    if (nowPlaying && nowPlaying.kind !== "ack") moodSegments(nowPlaying);
     syncPendingGrant();
     if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
       swapOpenSessionId = null;
