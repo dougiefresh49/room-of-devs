@@ -36,6 +36,10 @@ body {
   user-select: none;
 }
 
+html:has(body.dock-window) {
+  overflow: visible;
+}
+
 html {
   background: transparent;
 }
@@ -74,6 +78,7 @@ body {
 
 body.dock-window {
   background: transparent;
+  overflow: visible;
 }
 
 .drag-region {
@@ -240,6 +245,13 @@ button,
   width: 42px;
   height: 42px;
   flex: 0 0 42px;
+  transform-origin: 50% 50%;
+  transition: transform 180ms ease-out;
+}
+
+.avatar-wrap.speaking-pop {
+  transform: scale(1.18);
+  z-index: 2;
 }
 
 .avatar-wrap::after {
@@ -547,6 +559,7 @@ button,
   padding: 0;
   gap: 0;
   background: transparent;
+  overflow: visible;
 }
 
 .dock-shell {
@@ -557,6 +570,7 @@ button,
   width: 100%;
   height: 100vh;
   padding: 40px 6px 4px;
+  overflow: visible;
 }
 
 .dock-pill {
@@ -568,6 +582,7 @@ button,
   height: 54px;
   padding: 7px 8px 7px 10px;
   gap: 8px;
+  overflow: visible;
   border: 1px solid rgba(178, 194, 216, 0.2);
   border-radius: 999px;
   background:
@@ -789,6 +804,7 @@ button,
   align-items: center;
   gap: 6px;
   min-width: 0;
+  overflow: visible;
 }
 
 .dock-agent {
@@ -797,6 +813,12 @@ button,
   width: 38px;
   height: 38px;
   flex: 0 0 38px;
+  overflow: visible;
+  z-index: 0;
+}
+
+.dock-agent.speaking-pop {
+  z-index: 5;
 }
 
 .dock-agent::before {
@@ -843,6 +865,12 @@ button,
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.06),
     0 0 12px color-mix(in srgb, var(--state) 34%, transparent);
+  transform-origin: 50% 100%;
+  transition: transform 180ms ease-out;
+}
+
+.dock-ring.speaking-pop {
+  transform: scale(1.6) translateY(-7px);
 }
 
 .dock-avatar {
@@ -865,6 +893,10 @@ button,
 .dock-agent.state-hand_raised .dock-ring,
 .dock-agent.state-speaking .dock-ring {
   animation: dock-ring-pulse 1.25s ease-in-out infinite;
+}
+
+.dock-agent.speaking-pop .dock-ring {
+  animation: none;
 }
 
 .dock-agent.triage-focus .dock-ring {

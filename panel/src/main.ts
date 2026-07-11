@@ -32,6 +32,10 @@ interface NowPlaying {
   rawText?: string;
   endedAt?: string | number;
   startedAt: string | number;
+  // Word-level karaoke timings from ElevenLabs: [word, startMs][].
+  alignment?: [string, number][];
+  // Post-EL atempo factor (1.0 when none). Content timeline = wall * rate.
+  playbackRate?: number;
 }
 
 interface WsConfig {
@@ -111,7 +115,8 @@ const DOCK_AVATAR_STEP = 44;
 const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
 const DOCK_EXPANDED_WIDTH = 520;
-const DOCK_COMPACT_HEIGHT = 126;
+// +14px headroom so dock speaking-pop (scale 1.6 + translateY -7) clears the window.
+const DOCK_COMPACT_HEIGHT = 140;
 const DOCK_EXPANDED_HEIGHT = 218;
 const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
@@ -206,6 +211,7 @@ function send(msg: object) {
 
 function setConnected(up: boolean) {
   connected = up;
+  if (!up) stopLipsyncLoop();
   render();
 }
 
@@ -217,10 +223,145 @@ function scheduleReconnect() {
   }, RECONNECT_MS);
 }
 
+type MouthFrame = "idle" | "speaking" | "mouth-mid";
+
+const MOUTH_FLAP_MS = 120;
+const MOUTH_GAP_IDLE_MS = 180;
+const MOUTH_LAST_WORD_CAP_MS = 900;
+const MOUTH_FALLBACK_FLAP_MS = 140;
+const LIPSYNC_TICK_MS = 70;
+
+const mouthMidReady = new Map<string, boolean>();
+let lipsyncTimer: ReturnType<typeof setInterval> | null = null;
+let lipsyncAnchor: { startedAt: string | number; t0: number } | null = null;
+let lipsyncSessionKey: string | null = null;
+
+function avatarFrameSrc(character: string, frame: MouthFrame): string {
+  return `avatars/tmnt/${character}/${frame}.png`;
+}
+
+function hasMouthMid(character: string): boolean {
+  return mouthMidReady.get(character) === true;
+}
+
+function preloadAvatarFrames() {
+  const chars = new Set<string>(["default", ...PERSONAS.map((p) => p.avatar)]);
+  for (const character of chars) {
+    for (const frame of ["idle", "speaking"] as const) {
+      const img = new Image();
+      img.src = avatarFrameSrc(character, frame);
+    }
+    const mid = new Image();
+    mid.onload = () => mouthMidReady.set(character, true);
+    mid.onerror = () => mouthMidReady.set(character, false);
+    mid.src = avatarFrameSrc(character, "mouth-mid");
+  }
+}
+
+function isLipsyncActive(sessionId?: string): boolean {
+  if (!connected || !nowPlaying || nowPlaying.endedAt) return false;
+  if (!agents.some((a) => a.sessionId === nowPlaying!.sessionId)) return false;
+  if (sessionId != null && nowPlaying.sessionId !== sessionId) return false;
+  return true;
+}
+
+/** Single source of truth: wall clock → alignment timeline (atempo-aware). */
+function alignmentAudioMs(np: NowPlaying): number {
+  if (!lipsyncAnchor || lipsyncAnchor.startedAt !== np.startedAt) {
+    lipsyncAnchor = { startedAt: np.startedAt, t0: performance.now() };
+  }
+  const wallMs = performance.now() - lipsyncAnchor.t0;
+  const rate = typeof np.playbackRate === "number" && np.playbackRate > 0 ? np.playbackRate : 1;
+  // atempo speeds content vs wall — multiply (not divide) so lookups track heard audio.
+  return wallMs * rate;
+}
+
+function flapFrame(audioMs: number, periodMs: number, character: string): MouthFrame {
+  const open = Math.floor(audioMs / periodMs) % 2 === 0;
+  if (open) return "speaking";
+  return hasMouthMid(character) ? "mouth-mid" : "idle";
+}
+
+function pickMouthFrame(audioMs: number, alignment: [string, number][] | undefined, character: string): MouthFrame {
+  if (!alignment?.length) {
+    return flapFrame(audioMs, MOUTH_FALLBACK_FLAP_MS, character);
+  }
+
+  let spanStart = -1;
+  let spanEnd = -1;
+  for (let i = 0; i < alignment.length; i++) {
+    const start = alignment[i][1];
+    const end = i + 1 < alignment.length ? alignment[i + 1][1] : start + MOUTH_LAST_WORD_CAP_MS;
+    if (audioMs >= start && audioMs < end) {
+      spanStart = start;
+      spanEnd = end;
+      break;
+    }
+  }
+  if (spanStart < 0) return "idle";
+
+  // Gap ≥ 180ms between word starts → idle after the initial articulation window.
+  if (spanEnd - spanStart >= MOUTH_GAP_IDLE_MS && audioMs - spanStart >= MOUTH_GAP_IDLE_MS) {
+    return "idle";
+  }
+  return flapFrame(audioMs, MOUTH_FLAP_MS, character);
+}
+
+function currentMouthFrame(agent: AgentView): MouthFrame {
+  if (!isLipsyncActive(agent.sessionId) || !nowPlaying) {
+    return agent.state === "speaking" ? "speaking" : "idle";
+  }
+  const character = (agent.character ?? "default").toLowerCase();
+  return pickMouthFrame(alignmentAudioMs(nowPlaying), nowPlaying.alignment, character);
+}
+
 function avatarSrc(agent: AgentView): string {
   const character = (agent.character ?? "default").toLowerCase();
-  const variant = agent.state === "speaking" ? "speaking" : "idle";
-  return `avatars/tmnt/${character}/${variant}.png`;
+  return avatarFrameSrc(character, currentMouthFrame(agent));
+}
+
+function stopLipsyncLoop() {
+  if (lipsyncTimer) {
+    clearInterval(lipsyncTimer);
+    lipsyncTimer = null;
+  }
+  lipsyncSessionKey = null;
+}
+
+function applyLipsyncFrame() {
+  if (!isLipsyncActive() || !nowPlaying) {
+    stopLipsyncLoop();
+    return;
+  }
+  const sessionId = nowPlaying.sessionId;
+  const agent = agents.find((a) => a.sessionId === sessionId);
+  if (!agent) {
+    stopLipsyncLoop();
+    return;
+  }
+  const character = (agent.character ?? "default").toLowerCase();
+  const frame = pickMouthFrame(alignmentAudioMs(nowPlaying), nowPlaying.alignment, character);
+  const src = avatarFrameSrc(character, frame);
+  app.querySelectorAll<HTMLImageElement>(`[data-avatar-session="${CSS.escape(sessionId)}"]`).forEach((img) => {
+    if (img.getAttribute("src") !== src) img.src = src;
+  });
+}
+
+function syncLipsyncLoop() {
+  if (!isLipsyncActive() || !nowPlaying) {
+    stopLipsyncLoop();
+    lipsyncAnchor = null;
+    return;
+  }
+  const key = `${nowPlaying.sessionId}:${nowPlaying.startedAt}`;
+  if (lipsyncSessionKey !== key) {
+    lipsyncSessionKey = key;
+    lipsyncAnchor = { startedAt: nowPlaying.startedAt, t0: performance.now() };
+  }
+  if (!lipsyncTimer) {
+    lipsyncTimer = setInterval(applyLipsyncFrame, LIPSYNC_TICK_MS);
+  }
+  applyLipsyncFrame();
 }
 
 function personaAvatarSrc(persona: Persona): string {
@@ -244,6 +385,7 @@ function renderCard(agent: AgentView): string {
   const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
   const isRenaming = renamingSessionId === agent.sessionId;
+  const speakingPop = isLipsyncActive(agent.sessionId);
   const nameHtml = isRenaming
     ? `<input class="name-input no-drag" data-rename-input value="${displayName}" aria-label="Nickname" />`
     : `<div class="name${mutedClass}" title="${safeName}" data-rename-name>${displayName}</div>`;
@@ -268,8 +410,8 @@ function renderCard(agent: AgentView): string {
       tabindex="0"
     >
       <div class="card-main">
-        <div class="avatar-wrap">
-          <img class="avatar" src="${avatarSrc(agent)}" alt="" />
+        <div class="avatar-wrap${speakingPop ? " speaking-pop" : ""}">
+          <img class="avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
           <span class="avatar-fallback">${initials(agent.name)}</span>
         </div>
         <div class="card-body">
@@ -356,6 +498,7 @@ function renderDockAgent(agent: AgentView): string {
   const killIsArmed = killArmed.has(agent.sessionId);
   const displayName = escapeHtml(agent.label ?? agent.name);
   const hoverClass = dockHoverSessionId === agent.sessionId ? " hover-intent" : "";
+  const speakingPop = isLipsyncActive(agent.sessionId);
   const liveActions =
     agent.state === "speaking"
       ? `
@@ -382,7 +525,7 @@ function renderDockAgent(agent: AgentView): string {
 
   return `
     <div
-      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${hoverClass}"
+      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${hoverClass}${speakingPop ? " speaking-pop" : ""}"
       data-session="${agent.sessionId}"
     >
       <button
@@ -391,8 +534,8 @@ function renderDockAgent(agent: AgentView): string {
         title="${displayName} - ${stateLabels[agent.state]}"
         aria-label="${displayName}, ${stateLabels[agent.state]}"
       >
-        <span class="dock-ring">
-          <img class="avatar dock-avatar" src="${avatarSrc(agent)}" alt="" />
+        <span class="dock-ring${speakingPop ? " speaking-pop" : ""}">
+          <img class="avatar dock-avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
           <span class="avatar-fallback dock-fallback">${initials(agent.name)}</span>
         </span>
         ${agent.raisedCount > 0 ? `<span class="dock-badge" title="${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting">${agent.raisedCount}</span>` : ""}
@@ -639,16 +782,19 @@ function renderDockCaption(): string {
 function render() {
   if (dockMode) {
     renderDock();
+    syncLipsyncLoop();
     return;
   }
 
   if (pickerOpen) {
     renderPicker();
+    syncLipsyncLoop();
     return;
   }
 
   if (settingsOpen) {
     renderSettings();
+    syncLipsyncLoop();
     return;
   }
 
@@ -687,6 +833,7 @@ function render() {
   bindWindowActions();
   bindAvatars();
   bindDrag();
+  syncLipsyncLoop();
 }
 
 function toastHtml(): string {
@@ -2119,4 +2266,5 @@ async function connect() {
 }
 
 render();
+preloadAvatarFrames();
 connect();
