@@ -565,11 +565,13 @@ button,
 .dock-shell {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
   width: 100%;
   height: 100vh;
-  padding: 40px 6px 4px;
+  padding: 8px 6px 4px;
   overflow: visible;
 }
 
@@ -619,14 +621,12 @@ button,
 }
 
 .dock-caption {
-  position: absolute;
-  left: 50%;
-  bottom: 66px;
-  z-index: 2;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: min(380px, calc(100vw - 20px));
+  width: auto;
+  min-width: 0;
   min-height: 58px;
   min-width: 0;
   gap: 4px;
@@ -645,7 +645,9 @@ button,
   cursor: pointer;
   font: inherit;
   text-align: left;
-  transform: translateX(-50%);
+  flex: 1 1 auto;
+  align-self: stretch;
+  max-height: 100%;
 }
 
 .dock-caption.ended {
@@ -653,8 +655,7 @@ button,
 }
 
 .dock-caption.expanded {
-  width: min(520px, calc(100vw - 20px));
-  max-height: 150px;
+  max-height: 100%;
   padding-right: 28px;
 }
 
@@ -817,10 +818,6 @@ button,
   z-index: 0;
 }
 
-.dock-agent.speaking-pop {
-  z-index: 5;
-}
-
 .dock-agent::before {
   content: "";
   position: absolute;
@@ -869,10 +866,6 @@ button,
   transition: transform 180ms ease-out;
 }
 
-.dock-ring.speaking-pop {
-  transform: scale(1.6) translateY(-7px);
-}
-
 .dock-avatar {
   width: 30px;
   height: 30px;
@@ -893,10 +886,6 @@ button,
 .dock-agent.state-hand_raised .dock-ring,
 .dock-agent.state-speaking .dock-ring {
   animation: dock-ring-pulse 1.25s ease-in-out infinite;
-}
-
-.dock-agent.speaking-pop .dock-ring {
-  animation: none;
 }
 
 .dock-agent.triage-focus .dock-ring {
@@ -949,6 +938,11 @@ button,
   transition:
     opacity 130ms ease,
     transform 130ms ease;
+}
+
+.dock-agent:hover,
+.dock-agent.hover-intent {
+  z-index: 9;
 }
 
 .dock-agent:hover .dock-actions,
@@ -1890,4 +1884,88 @@ button,
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* ── Speaker spotlight: big avatar + always-on actions + bubble, above the pill ── */
+
+.dock-spotlight {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  width: min(508px, calc(100vw - 16px));
+  max-width: 100%;
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow: visible;
+}
+
+.spotlight-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.spotlight-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid rgba(178, 194, 216, 0.2);
+  border-radius: 999px;
+  background: rgba(18, 23, 32, 0.97);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.spotlight-actions .hover-btn {
+  width: 22px;
+  height: 22px;
+}
+
+.spotlight-actions .icon-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.spotlight-ring {
+  position: relative;
+  display: block;
+  width: 68px;
+  height: 68px;
+  border: 2.5px solid var(--grey);
+  border-radius: 50%;
+  padding: 3px;
+  background: rgba(13, 16, 21, 0.85);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.spotlight-ring.live {
+  border-color: var(--green);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(73, 217, 154, 0.45);
+}
+
+.spotlight-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.spotlight-fallback {
+  position: absolute;
+  inset: 3px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #27313f;
+  font-size: 16px;
+  font-weight: 700;
 }

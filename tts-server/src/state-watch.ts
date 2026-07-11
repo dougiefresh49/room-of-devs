@@ -146,11 +146,20 @@ export function buildSnapshot(): AgentView[] {
       const character = voiceId ? getCharacter(voiceId) : null;
 
       const displayName = state.name || shortSession;
+      // A killed turn (usage limit, crash) never fires the Stop hook, so
+      // "working" can stick forever. Hooks refresh updatedAt on every prompt
+      // and stop; a working state untouched for 90+ min is presented as idle
+      // (display-only demotion — the file is left alone for late hooks).
+      let shownState = state.state;
+      if (shownState === "working") {
+        const age = Date.now() - new Date(state.updatedAt).getTime();
+        if (Number.isFinite(age) && age > 90 * 60 * 1000) shownState = "idle";
+      }
       agents.push({
         sessionId,
         name: displayName,
         label: nicknames[sessionId] ?? displayName,
-        state: state.state,
+        state: shownState,
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,
         raisedCount: countQueued(shortSession),

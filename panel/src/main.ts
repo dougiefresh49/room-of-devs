@@ -115,9 +115,10 @@ const DOCK_AVATAR_STEP = 44;
 const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
 const DOCK_EXPANDED_WIDTH = 520;
-// +14px headroom so dock speaking-pop (scale 1.6 + translateY -7) clears the window.
-const DOCK_COMPACT_HEIGHT = 140;
-const DOCK_EXPANDED_HEIGHT = 218;
+const DOCK_COMPACT_HEIGHT = 126;
+// Speaker spotlight row (big avatar + always-on actions + bubble) above the pill.
+const DOCK_SPOTLIGHT_HEIGHT = 236;
+const DOCK_SPOTLIGHT_EXPANDED = 300;
 const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
 const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
@@ -492,13 +493,9 @@ function renderSwapPopover(sessionId: string): string {
     </div>`;
 }
 
-function renderDockAgent(agent: AgentView): string {
-  const greyed = !connected || staleSessions.has(agent.sessionId);
+function dockActionButtons(agent: AgentView): string {
   const teamOnly = !agent.isTeam;
   const killIsArmed = killArmed.has(agent.sessionId);
-  const displayName = escapeHtml(agent.label ?? agent.name);
-  const hoverClass = dockHoverSessionId === agent.sessionId ? " hover-intent" : "";
-  const speakingPop = isLipsyncActive(agent.sessionId);
   const liveActions =
     agent.state === "speaking"
       ? `
@@ -522,26 +519,7 @@ function renderDockAgent(agent: AgentView): string {
           title="Restart audio"
         >${icons.replay}</button>`
       : "";
-
-  return `
-    <div
-      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${hoverClass}${speakingPop ? " speaking-pop" : ""}"
-      data-session="${agent.sessionId}"
-    >
-      <button
-        type="button"
-        class="dock-avatar-btn"
-        title="${displayName} - ${stateLabels[agent.state]}"
-        aria-label="${displayName}, ${stateLabels[agent.state]}"
-      >
-        <span class="dock-ring${speakingPop ? " speaking-pop" : ""}">
-          <img class="avatar dock-avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
-          <span class="avatar-fallback dock-fallback">${initials(agent.name)}</span>
-        </span>
-        ${agent.raisedCount > 0 ? `<span class="dock-badge" title="${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting">${agent.raisedCount}</span>` : ""}
-      </button>
-      <div class="dock-actions" aria-label="Agent actions">
-        <button
+  return `<button
           type="button"
           class="icon-btn hover-btn${teamOnly ? " disabled" : ""}"
           data-hover-action="focus"
@@ -567,7 +545,33 @@ function renderDockAgent(agent: AgentView): string {
           data-hover-action="swap"
           title="Swap character"
         >${icons.swap}</button>
-        ${liveActions}
+        ${liveActions}`;
+}
+
+function renderDockAgent(agent: AgentView): string {
+  const greyed = !connected || staleSessions.has(agent.sessionId);
+  const displayName = escapeHtml(agent.label ?? agent.name);
+  const hoverClass = dockHoverSessionId === agent.sessionId ? " hover-intent" : "";
+
+  return `
+    <div
+      class="dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${hoverClass}"
+      data-session="${agent.sessionId}"
+    >
+      <button
+        type="button"
+        class="dock-avatar-btn"
+        title="${displayName} - ${stateLabels[agent.state]}"
+        aria-label="${displayName}, ${stateLabels[agent.state]}"
+      >
+        <span class="dock-ring">
+          <img class="avatar dock-avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
+          <span class="avatar-fallback dock-fallback">${initials(agent.name)}</span>
+        </span>
+        ${agent.raisedCount > 0 ? `<span class="dock-badge" title="${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting">${agent.raisedCount}</span>` : ""}
+      </button>
+      <div class="dock-actions" aria-label="Agent actions">
+        ${dockActionButtons(agent)}
       </div>
     </div>
   `;
@@ -581,15 +585,31 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// The speaker spotlight replaces both the centered caption bubble and the
+// in-pill scale-pop: while someone speaks (or their last summary lingers),
+// a dedicated row above the pill holds a big flapping avatar, an always-on
+// action row, and the bubble to its right — nothing overlaps the pill or the
+// hover clusters anymore.
+function dockSpotlight(): { agent?: AgentView; live: boolean; bubble: boolean } | null {
+  const np = nowPlaying;
+  if (!np) return null;
+  const agent = agents.find((a) => a.sessionId === np.sessionId);
+  const live = !np.endedAt && !!agent && connected;
+  const bubble =
+    dockCaptions && !!np.text && dockSummaryDismissedKey !== summaryKey(np);
+  if (!live && !bubble) return null;
+  return { agent, live, bubble };
+}
+
 function dockWidth(): number {
   const compactWidth = Math.max(agents.length, 1) * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
-  return dockSummaryExpanded && dockCaptions && nowPlaying
-    ? Math.max(compactWidth, DOCK_EXPANDED_WIDTH)
-    : compactWidth;
+  return dockSpotlight() ? Math.max(compactWidth, DOCK_EXPANDED_WIDTH) : compactWidth;
 }
 
 function dockHeight(): number {
-  return dockSummaryExpanded && dockCaptions && nowPlaying ? DOCK_EXPANDED_HEIGHT : DOCK_COMPACT_HEIGHT;
+  const spot = dockSpotlight();
+  if (!spot) return DOCK_COMPACT_HEIGHT;
+  return dockSummaryExpanded ? DOCK_SPOTLIGHT_EXPANDED : DOCK_SPOTLIGHT_HEIGHT;
 }
 
 function shellHtml(content: string): string {
@@ -721,7 +741,7 @@ function renderDock() {
   app.classList.add("dock-mode");
   app.innerHTML = `
     <main class="dock-shell drag-region${connected ? "" : " disconnected"}" data-tauri-drag-region>
-      ${renderDockCaption()}
+      ${renderDockSpotlight()}
       <div class="dock-pill" data-tauri-drag-region>
         <button
           type="button"
@@ -752,31 +772,52 @@ function renderDock() {
   bindDrag();
 }
 
-function renderDockCaption(): string {
-  if (!dockCaptions || !nowPlaying?.text) return "";
-  if (dockSummaryDismissedKey === summaryKey(nowPlaying)) return "";
-  const agent = agents.find((a) => a.sessionId === nowPlaying?.sessionId);
-  const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
-  const rawSummary = (nowPlaying.rawText?.trim() || nowPlaying.text).trim();
-  const summary = dockSummaryExpanded
-    ? renderMarkdown(rawSummary)
-    : escapeHtml(stripMarkdown(rawSummary));
-  const expandedClass = dockSummaryExpanded ? " expanded" : "";
-  const endedClass = nowPlaying.endedAt ? " ended" : "";
-  return `
-    <button
-      type="button"
-      class="dock-caption no-drag${expandedClass}${endedClass}"
-      data-summary-action="toggle"
-      aria-expanded="${dockSummaryExpanded}"
-      title="${dockSummaryExpanded ? "Collapse summary" : "Expand summary"}"
-    >
-      <span class="dock-caption-name">${name}</span>
-      <span class="dock-caption-close" data-summary-action="dismiss" title="Dismiss" aria-hidden="true">${icons.close}</span>
-      <span class="dock-caption-summary">
-        ${summary}
-      </span>
-    </button>`;
+function renderDockSpotlight(): string {
+  const spot = dockSpotlight();
+  if (!spot || !nowPlaying) return "";
+  const { agent, live, bubble } = spot;
+
+  let column = "";
+  if (agent) {
+    const character = escapeHtml((agent.character ?? "default").toLowerCase());
+    column = `
+      <div class="spotlight-col no-drag" data-session="${agent.sessionId}">
+        <div class="spotlight-actions" aria-label="Speaker actions">
+          ${dockActionButtons(agent)}
+        </div>
+        <span class="spotlight-ring${live ? " live" : ""}" data-character="${character}">
+          <img class="avatar spotlight-avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
+          <span class="avatar-fallback spotlight-fallback">${initials(agent.name)}</span>
+        </span>
+      </div>`;
+  }
+
+  let bubbleHtml = "";
+  if (bubble) {
+    const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
+    const rawSummary = (nowPlaying.rawText?.trim() || nowPlaying.text).trim();
+    const summary = dockSummaryExpanded
+      ? renderMarkdown(rawSummary)
+      : escapeHtml(stripMarkdown(rawSummary));
+    const expandedClass = dockSummaryExpanded ? " expanded" : "";
+    const endedClass = nowPlaying.endedAt ? " ended" : "";
+    bubbleHtml = `
+      <button
+        type="button"
+        class="dock-caption no-drag${expandedClass}${endedClass}"
+        data-summary-action="toggle"
+        aria-expanded="${dockSummaryExpanded}"
+        title="${dockSummaryExpanded ? "Collapse summary" : "Expand summary"}"
+      >
+        <span class="dock-caption-name">${name}</span>
+        <span class="dock-caption-close" data-summary-action="dismiss" title="Dismiss" aria-hidden="true">${icons.close}</span>
+        <span class="dock-caption-summary">
+          ${summary}
+        </span>
+      </button>`;
+  }
+
+  return `<div class="dock-spotlight">${column}${bubbleHtml}</div>`;
 }
 
 function render() {
