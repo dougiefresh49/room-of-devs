@@ -469,12 +469,29 @@ export function playStreamBuffer(
   });
 }
 
-export function replayLast(nth = 1, speedFactor = 1.0): Promise<number> {
+export function replayLast(
+  nth = 1,
+  speedFactor = 1.0,
+  forSessionId?: string
+): Promise<number> {
   try {
     if (!existsSync(REPLAY_DIR)) return Promise.resolve(1);
-    const files = readdirSync(REPLAY_DIR)
+    let files = readdirSync(REPLAY_DIR)
       .filter((f) => f.endsWith(".mp3"))
       .sort();
+    // Per-member replay: keep only files whose sidecar names this session.
+    if (forSessionId) {
+      files = files.filter((f) => {
+        try {
+          const sc = JSON.parse(
+            readFileSync(join(REPLAY_DIR, f.replace(/\.mp3$/, ".json")), "utf-8")
+          );
+          return sc?.sessionId === forSessionId;
+        } catch {
+          return false;
+        }
+      });
+    }
     if (files.length === 0) return Promise.resolve(1);
     const target = files[Math.max(0, files.length - nth)];
     const filePath = join(REPLAY_DIR, target);

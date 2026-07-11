@@ -424,7 +424,9 @@ function applyLipsyncFrame() {
     return;
   }
   const character = (agent.character ?? "default").toLowerCase();
-  const frame = pickMouthFrame(alignmentAudioMs(nowPlaying), nowPlaying.alignment, character);
+  // Single source of truth (includes the paused freeze) — the guppy bug was
+  // this loop calling pickMouthFrame directly and skipping the paused check.
+  const frame = currentMouthFrame(agent);
   const src = avatarFrameSrc(character, frame);
   app.querySelectorAll<HTMLImageElement>(`[data-avatar-session="${CSS.escape(sessionId)}"]`).forEach((img) => {
     if (img.getAttribute("src") !== src) img.src = src;

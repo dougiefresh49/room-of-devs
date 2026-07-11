@@ -45,7 +45,9 @@ if (action === "prompt-submitted") {
   // "Say that again" REPLACES whatever is playing — never talks over it.
   // This also keeps the playback PID files single-writer so stop.sh works.
   stopCurrent();
-  const code = await replayLast(nth, speed ?? 1.0);
+  // Optional argv[6]: replay the latest message from one specific session.
+  const forSession = process.argv[6] || undefined;
+  const code = await replayLast(nth, speed ?? 1.0, forSession);
   if (code !== 0) log("signal", "Nothing to replay");
 } else {
   console.error(`Unknown signal: ${action}`);
