@@ -145,6 +145,7 @@ export async function handleDynamicResponse(
 
     const meta: ReplayMeta = {
       source: "dynamic-response",
+      kind: "ack",
       sessionId,
       sessionName,
       character: character.name,

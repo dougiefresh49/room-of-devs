@@ -27,6 +27,7 @@ import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
 import { TRIAGE_PATH, readTriageFocus } from "./triage.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
+const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
 
 export interface AgentView {
   sessionId: string;
@@ -46,6 +47,8 @@ export interface PanelSnapshot {
   nowPlaying: NowPlaying | null;
   roomHeld: boolean;
   triageFocus: string | null;
+  // pause.sh's SIGSTOP flag — panel freezes the mouth and shows resume.
+  paused: boolean;
 }
 
 interface StateFile {
@@ -196,6 +199,7 @@ export function buildPanelSnapshot(): PanelSnapshot {
     nowPlaying: readNowPlaying(),
     roomHeld: isRoomHeld(),
     triageFocus: readTriageFocus(),
+    paused: existsSync(PAUSED_FLAG_PATH),
   };
 }
 
@@ -224,6 +228,7 @@ export function startStateWatch(): void {
         // old character until an unrelated state change comes along.
         SESSION_VOICES_PATH,
         NICKNAMES_PATH,
+        PAUSED_FLAG_PATH,
       ].map((p) => basename(p))
     );
     const relevant = (path: string) =>

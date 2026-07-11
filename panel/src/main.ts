@@ -36,6 +36,9 @@ interface NowPlaying {
   alignment?: [string, number][];
   // Post-EL atempo factor (1.0 when none). Content timeline = wall * rate.
   playbackRate?: number;
+  // "ack" = short prompt acknowledgment: mouth flaps in place, but no
+  // spotlight / card growth / live controls — acks don't take the stage.
+  kind?: "ack" | "update";
 }
 
 interface WsConfig {
@@ -149,6 +152,8 @@ let dockSummaryExpanded = false;
 // Bubble the user ✕-ed away; keyed per message so the next one re-appears.
 let dockSummaryDismissedKey: string | null = null;
 // Optimistic grant: spotlight/card loading until audio starts (or timeout).
+let playbackPaused = false;
+let pausedAtWall = 0;
 let pendingGrantSessionId: string | null = null;
 let pendingGrantAt = 0;
 /** nowPlaying key at grant click — keep loading while that same message is still live. */
@@ -199,6 +204,7 @@ const stateLabels: Record<AgentState, string> = {
 
 const icons = {
   pause: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>`,
   stop: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg>`,
   replay: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8a4 4 0 1 1-3.2 6.4"/><path d="M7 7v5H2"/></svg>`,
   // Replay glyph + 0.8× badge — reads as "again, slower".
@@ -238,7 +244,7 @@ function scheduleReconnect() {
   }, RECONNECT_MS);
 }
 
-type MouthFrame = "idle" | "speaking" | "mouth-mid";
+type MouthFrame = "idle" | "speaking" | "mouth-mid" | "mouth-closed";
 
 const MOUTH_FLAP_MS = 120;
 const MOUTH_GAP_IDLE_MS = 180;
@@ -247,6 +253,7 @@ const MOUTH_FALLBACK_FLAP_MS = 140;
 const LIPSYNC_TICK_MS = 70;
 
 const mouthMidReady = new Map<string, boolean>();
+const mouthClosedReady = new Map<string, boolean>();
 let lipsyncTimer: ReturnType<typeof setInterval> | null = null;
 let lipsyncAnchor: { startedAt: string | number; t0: number } | null = null;
 let lipsyncSessionKey: string | null = null;
@@ -257,6 +264,16 @@ function avatarFrameSrc(character: string, frame: MouthFrame): string {
 
 function hasMouthMid(character: string): boolean {
   return mouthMidReady.get(character) === true;
+}
+
+function hasMouthClosed(character: string): boolean {
+  return mouthClosedReady.get(character) === true;
+}
+
+// Word-gap / paused frame: closed mouth with the TALKING face (idle's relaxed
+// eyes strobe against the wide-eyed speaking frames — the "blinking" bug).
+function gapFrame(character: string): MouthFrame {
+  return hasMouthClosed(character) ? "mouth-closed" : "idle";
 }
 
 function preloadAvatarFrames() {
@@ -270,6 +287,10 @@ function preloadAvatarFrames() {
     mid.onload = () => mouthMidReady.set(character, true);
     mid.onerror = () => mouthMidReady.set(character, false);
     mid.src = avatarFrameSrc(character, "mouth-mid");
+    const closed = new Image();
+    closed.onload = () => mouthClosedReady.set(character, true);
+    closed.onerror = () => mouthClosedReady.set(character, false);
+    closed.src = avatarFrameSrc(character, "mouth-closed");
   }
 }
 
@@ -280,8 +301,12 @@ function isLipsyncActive(sessionId?: string): boolean {
   return true;
 }
 
+function isStageWorthy(sessionId?: string): boolean {
+  return isLipsyncActive(sessionId) && nowPlaying?.kind !== "ack";
+}
+
 function isSessionLive(sessionId: string): boolean {
-  return isLipsyncActive(sessionId);
+  return isStageWorthy(sessionId);
 }
 
 function clearPendingGrant() {
@@ -297,7 +322,7 @@ function syncPendingGrant() {
     clearPendingGrant();
     return;
   }
-  if (!nowPlaying || nowPlaying.endedAt) return;
+  if (!nowPlaying || nowPlaying.endedAt || nowPlaying.kind === "ack") return;
   // Same live message as when the user clicked — still waiting for the grant.
   if (summaryKey(nowPlaying) === pendingGrantBaselineKey) return;
   clearPendingGrant();
@@ -336,7 +361,8 @@ function alignmentAudioMs(np: NowPlaying): number {
 function flapFrame(audioMs: number, periodMs: number, character: string): MouthFrame {
   const open = Math.floor(audioMs / periodMs) % 2 === 0;
   if (open) return "speaking";
-  return hasMouthMid(character) ? "mouth-mid" : "idle";
+  if (hasMouthMid(character)) return "mouth-mid";
+  return gapFrame(character);
 }
 
 function pickMouthFrame(audioMs: number, alignment: [string, number][] | undefined, character: string): MouthFrame {
@@ -355,11 +381,11 @@ function pickMouthFrame(audioMs: number, alignment: [string, number][] | undefin
       break;
     }
   }
-  if (spanStart < 0) return "idle";
+  if (spanStart < 0) return gapFrame(character);
 
   // Gap ≥ 180ms between word starts → idle after the initial articulation window.
   if (spanEnd - spanStart >= MOUTH_GAP_IDLE_MS && audioMs - spanStart >= MOUTH_GAP_IDLE_MS) {
-    return "idle";
+    return gapFrame(character);
   }
   return flapFrame(audioMs, MOUTH_FLAP_MS, character);
 }
@@ -369,6 +395,7 @@ function currentMouthFrame(agent: AgentView): MouthFrame {
     return agent.state === "speaking" ? "speaking" : "idle";
   }
   const character = (agent.character ?? "default").toLowerCase();
+  if (playbackPaused) return gapFrame(character);
   return pickMouthFrame(alignmentAudioMs(nowPlaying), nowPlaying.alignment, character);
 }
 
@@ -440,9 +467,8 @@ function renderCard(agent: AgentView): string {
   const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
   const isRenaming = renamingSessionId === agent.sessionId;
-  const speakingPop = isLipsyncActive(agent.sessionId);
   const pending = pendingGrantSessionId === agent.sessionId;
-  const grow = speakingPop || pending;
+  const grow = isStageWorthy(agent.sessionId) || pending;
   const mode = actionClusterMode(agent.sessionId);
   const nameHtml = isRenaming
     ? `<input class="name-input no-drag" data-rename-input value="${displayName}" aria-label="Nickname" />`
@@ -468,7 +494,7 @@ function renderCard(agent: AgentView): string {
       tabindex="0"
     >
       <div class="card-main">
-        <div class="avatar-wrap${grow ? "" : speakingPop ? " speaking-pop" : ""}${pending ? " grant-loading" : ""}">
+        <div class="avatar-wrap${pending ? " grant-loading" : ""}">
           <img class="avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
           <span class="avatar-fallback">${initials(agent.name)}</span>
         </div>
@@ -532,8 +558,8 @@ function actionButtonsHtml(agent: AgentView, mode: ActionClusterMode): string {
           type="button"
           class="icon-btn hover-btn dock-live-btn"
           data-hover-action="pause"
-          title="Pause audio"
-        >${icons.pause}</button>
+          title="${playbackPaused ? "Resume audio" : "Pause audio"}"
+        >${playbackPaused ? icons.play : icons.pause}</button>
         <button
           type="button"
           class="icon-btn hover-btn dock-live-btn"
@@ -663,7 +689,7 @@ function dockSpotlight(): {
   }
 
   const np = nowPlaying;
-  if (!np) return null;
+  if (!np || np.kind === "ack") return null;
   const agent = agents.find((a) => a.sessionId === np.sessionId);
   const live = !np.endedAt && !!agent && connected;
   const bubble =
@@ -962,7 +988,7 @@ function render() {
       ${roomSummaryPane ? renderRoomSummaryPane() : ""}
     </div>
     <footer class="controls no-drag">
-      <button type="button" class="icon-btn" data-action="pause" title="Pause / resume playback">${icons.pause}</button>
+      <button type="button" class="icon-btn${playbackPaused ? " paused-indicator" : ""}" data-action="pause" title="${playbackPaused ? "Resume playback" : "Pause playback"}">${playbackPaused ? icons.play : icons.pause}</button>
       <button type="button" class="icon-btn" data-action="stop" title="Stop playback">${icons.stop}</button>
       <button type="button" class="icon-btn" data-action="replay" title="Replay last message (free)">${icons.replay}</button>
       <button type="button" class="icon-btn hold-control${roomHeld ? " active" : ""}" data-action="hold" title="${roomHeld ? "Release the room" : "Hold the room"}" aria-pressed="${roomHeld}">${icons.hold}</button>
@@ -2278,6 +2304,7 @@ function handleMessage(raw: string) {
     sessions?: ResumableSession[];
     nowPlaying?: NowPlaying | null;
     roomHeld?: boolean;
+    paused?: boolean;
     triageFocus?: string | null;
     corner?: string;
     device_hint?: string;
@@ -2299,6 +2326,18 @@ function handleMessage(raw: string) {
   if (msg.type === "snapshot" && Array.isArray(msg.agents)) {
     agents = msg.agents;
     roomHeld = typeof msg.roomHeld === "boolean" ? msg.roomHeld : false;
+    const nowPaused = msg.paused === true;
+    if (nowPaused !== playbackPaused) {
+      if (nowPaused) {
+        pausedAtWall = performance.now();
+      } else if (lipsyncAnchor && pausedAtWall) {
+        // SIGSTOP froze the audio but not the wall clock — push the anchor
+        // forward by the paused span so the mouth stays in sync on resume.
+        lipsyncAnchor.t0 += performance.now() - pausedAtWall;
+      }
+      playbackPaused = nowPaused;
+      pausedAtWall = nowPaused ? pausedAtWall : 0;
+    }
     triageFocus =
       typeof msg.triageFocus === "string" && msg.triageFocus.trim()
         ? msg.triageFocus

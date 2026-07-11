@@ -67,6 +67,9 @@ export interface NowPlaying {
   // Present once playback finished: the file lingers as "last spoken" so the
   // bubble can keep showing the previous message until the next one starts.
   endedAt?: string;
+  // "ack" = short prompt acknowledgment — the panel keeps it off the stage
+  // (no spotlight/card growth); absent/"update" = full treatment.
+  kind?: "ack" | "update";
 }
 
 function writeNowPlaying(
@@ -83,6 +86,7 @@ function writeNowPlaying(
     startedAt: startedAt ?? new Date().toISOString(),
     approxCharsPerSec: 15,
     ...(alignment && alignment.length ? { alignment } : {}),
+    ...(meta?.kind ? { kind: meta.kind } : {}),
     ...(playbackRate !== 1.0 ? { playbackRate } : { playbackRate: 1.0 }),
   };
   const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
@@ -313,6 +317,8 @@ export interface ReplayMeta {
   alignment?: AlignmentTuples;
   // Post-EL atempo factor for karaoke sync (see playStreamBuffer tempoRate).
   playbackRate?: number;
+  // "ack" keeps short prompt acknowledgments off the panel's stage.
+  kind?: "ack" | "update";
 }
 
 function pruneReplayDir(): void {

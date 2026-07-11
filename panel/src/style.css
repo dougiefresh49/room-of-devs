@@ -2236,3 +2236,10 @@ button,
   font-size: 16px;
   font-weight: 700;
 }
+
+/* Paused: footer resume button glows so the frozen room is explained. */
+.icon-btn.paused-indicator {
+  border-color: rgba(73, 217, 154, 0.55);
+  color: var(--green);
+  box-shadow: 0 0 10px rgba(73, 217, 154, 0.3);
+}
