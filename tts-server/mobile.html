@@ -19,6 +19,8 @@
       --idle: #6b7280;
       --danger: #ef4444;
       --karaoke: #ffe566;
+      --accent: #3ecf8e;
+      --player-h: 118px;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -29,7 +31,12 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       min-height: 100%;
     }
-    body { padding: 12px 12px 96px; }
+    body {
+      padding: 12px 12px calc(var(--player-h) + env(safe-area-inset-bottom) + 16px);
+    }
+    body.player-hidden {
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
     header {
       display: flex;
       flex-wrap: wrap;
@@ -52,11 +59,34 @@
       flex-shrink: 0;
     }
     .dot.live { background: var(--speaking); }
-    .actions {
+    .mac-cluster {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      align-items: center;
+      gap: 6px;
       width: 100%;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      opacity: 0.72;
+    }
+    .mac-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-right: 2px;
+    }
+    .mac-cluster button {
+      min-height: 36px;
+      min-width: 36px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      background: var(--surface);
+      border-color: #3a3f4a;
+      color: var(--muted);
     }
     button {
       min-height: 44px;
@@ -96,6 +126,11 @@
       background: var(--surface2);
       object-fit: cover;
       flex-shrink: 0;
+    }
+    .avatar.sm {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
     }
     .spotlight .avatar { width: 88px; height: 88px; }
     .meta { flex: 1; min-width: 0; }
@@ -146,15 +181,215 @@
       margin-top: 12px;
     }
     .card-actions button { flex: 1; }
-    #sheet {
+
+    .messages {
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .messages-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .messages-header h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      flex: 1;
+    }
+    .messages-header button {
+      min-height: 36px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+    }
+    .msg-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-weight: 500;
+      min-height: 56px;
+    }
+    .msg-row.playing {
+      border-color: #3a5a42;
+      background: #151c18;
+    }
+    .msg-body { flex: 1; min-width: 0; }
+    .msg-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .msg-name {
+      font-weight: 650;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-ago {
+      font-size: 0.72rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .msg-preview {
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .unheard {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .unheard.hidden { visibility: hidden; }
+
+    #player {
       display: none;
       position: fixed;
       left: 0; right: 0; bottom: 0;
+      z-index: 25;
+      background: #12151c;
+      border-top: 1px solid var(--border);
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -8px 28px rgba(0,0,0,0.4);
+    }
+    #player.on { display: block; }
+    .player-now {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      min-height: 22px;
+    }
+    .player-now-btn {
+      flex: 1;
+      min-width: 0;
+      min-height: 28px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 560;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-latest {
+      flex-shrink: 0;
+      min-height: 32px;
+      min-width: auto;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      background: var(--surface2);
+    }
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 32px;
+    }
+    .time.end { text-align: right; }
+    .progress {
+      flex: 1;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--surface2);
+      position: relative;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .player-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+    }
+    .player-controls button {
+      min-width: 48px;
+      min-height: 48px;
+      font-size: 1.15rem;
+      border-radius: 12px;
+      background: var(--surface2);
+    }
+    .player-controls #btn-pp {
+      min-width: 56px;
+      min-height: 56px;
+      background: #2a3a2e;
+      border-color: #3a5a42;
+      font-size: 1.25rem;
+    }
+
+    #new-pill {
+      display: none;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(var(--player-h) + env(safe-area-inset-bottom) + 8px);
+      z-index: 26;
+      min-height: 36px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #2a3a2e;
+      border: 1px solid #3a5a42;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      white-space: nowrap;
+    }
+    #new-pill.on { display: block; }
+    body.player-hidden #new-pill {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+
+    #sheet {
+      display: none;
+      position: fixed;
+      left: 0; right: 0;
+      bottom: calc(var(--player-h) + env(safe-area-inset-bottom));
       background: #151820;
       border-top: 1px solid var(--border);
       border-radius: 16px 16px 0 0;
-      padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
-      max-height: 42vh;
+      padding: 14px;
+      max-height: 38vh;
       overflow: auto;
       z-index: 20;
       box-shadow: 0 -8px 32px rgba(0,0,0,0.45);
@@ -170,7 +405,7 @@
     #toast {
       position: fixed;
       left: 50%;
-      bottom: 28px;
+      bottom: calc(var(--player-h) + env(safe-area-inset-bottom) + 12px);
       transform: translateX(-50%);
       background: #2a2e36;
       color: var(--text);
@@ -183,28 +418,61 @@
       z-index: 30;
       white-space: nowrap;
     }
+    body.player-hidden #toast {
+      bottom: calc(28px + env(safe-area-inset-bottom));
+    }
     #toast.show { opacity: 1; }
     .empty {
       color: var(--muted);
       text-align: center;
       padding: 32px 12px;
     }
+    .messages .empty { padding: 16px 12px; font-size: 0.9rem; }
   </style>
 </head>
-<body>
+<body class="player-hidden">
   <header>
     <h1>Room of Devs</h1>
     <div id="conn" class="dot" title="connection"></div>
-    <div class="actions">
-      <button type="button" id="btn-pause" title="Pause">⏸ Pause</button>
-      <button type="button" id="btn-stop" title="Stop">⏹ Stop</button>
-      <button type="button" id="btn-hold" title="Hold room">✋ Hold</button>
-      <button type="button" id="btn-last" class="primary" title="Play last on phone">▶ Last</button>
+    <div class="mac-cluster" aria-label="Mac audio controls">
+      <span class="mac-label">Mac audio:</span>
+      <button type="button" id="btn-pause" title="Pause Mac playback">⏸</button>
+      <button type="button" id="btn-stop" title="Stop Mac playback">⏹</button>
+      <button type="button" id="btn-hold" title="Hold room">✋</button>
     </div>
   </header>
 
   <section id="spotlight" class="spotlight" aria-live="polite"></section>
   <section id="members"></section>
+
+  <section class="messages" id="messages-section">
+    <div class="messages-header">
+      <h2>Messages</h2>
+      <button type="button" id="btn-catchup" class="primary" style="display:none">Catch up</button>
+    </div>
+    <div id="messages"></div>
+  </section>
+
+  <button type="button" id="new-pill">▶ New message</button>
+
+  <div id="player">
+    <div class="player-now">
+      <button type="button" class="player-now-btn" id="btn-now" title="Toggle lyrics">—</button>
+      <button type="button" class="btn-latest" id="btn-latest" style="display:none" title="Play newest">⤒ Latest</button>
+    </div>
+    <div class="progress-row">
+      <span class="time" id="time-elapsed">0:00</span>
+      <div class="progress" id="progress" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+      <span class="time end" id="time-total">0:00</span>
+    </div>
+    <div class="player-controls">
+      <button type="button" id="btn-prev" title="Previous (newer)">⏮</button>
+      <button type="button" id="btn-pp" title="Play/Pause">▶</button>
+      <button type="button" id="btn-next" title="Next (older)">⏭</button>
+    </div>
+  </div>
 
   <div id="sheet">
     <p class="title">Playing on phone</p>
@@ -219,17 +487,33 @@
   const conn = $("conn");
   const spotlight = $("spotlight");
   const members = $("members");
+  const messagesEl = $("messages");
   const sheet = $("sheet");
   const sheetKaraoke = $("sheet-karaoke");
   const audio = $("audio");
   const toastEl = $("toast");
+  const player = $("player");
+  const progressFill = $("progress-fill");
+  const btnCatchup = $("btn-catchup");
+  const newPill = $("new-pill");
+  const btnLatest = $("btn-latest");
+  const btnPp = $("btn-pp");
+  const btnNow = $("btn-now");
+
+  const LISTENED_KEY = "mobile_listened_files";
 
   let snapshot = { agents: [], nowPlaying: null, roomHeld: false, paused: false };
   let charactersPayload = { characters: {}, sessionVoices: {} };
   let karaokeTimer = null;
-  let phoneKaraokeTimer = null;
   let phoneMeta = null;
   let toastTimer = null;
+  let replayList = [];
+  let currentIndex = -1;
+  let catchUpMode = false;
+  let catchUpQueue = [];
+  let lastNowPlayingKey = null;
+  let knownFiles = new Set();
+  let pendingNewEntry = null;
 
   function toast(msg) {
     toastEl.textContent = msg;
@@ -238,13 +522,57 @@
     toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
   }
 
+  function loadListened() {
+    try {
+      const raw = localStorage.getItem(LISTENED_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveListened(set) {
+    try {
+      localStorage.setItem(LISTENED_KEY, JSON.stringify([...set]));
+    } catch {
+      /* ignore quota */
+    }
+  }
+
+  let listened = loadListened();
+
+  function pruneListened(list) {
+    const files = new Set((list || []).map((e) => e.file).filter(Boolean));
+    let changed = false;
+    for (const f of [...listened]) {
+      if (!files.has(f)) {
+        listened.delete(f);
+        changed = true;
+      }
+    }
+    if (changed) saveListened(listened);
+  }
+
+  function markListened(file) {
+    if (!file || listened.has(file)) return;
+    listened.add(file);
+    saveListened(listened);
+    renderMessages();
+    updateCatchupBtn();
+  }
+
   async function postAction(body) {
     const res = await fetch("/action", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) toast("Action failed");
+    if (!res.ok) {
+      toast("Action failed");
+      return false;
+    }
+    return true;
   }
 
   function escapeHtml(s) {
@@ -268,6 +596,55 @@
 
   function avatarSrc(character, frame) {
     return `/avatars/tmnt/${encodeURIComponent(character)}/${frame}.png`;
+  }
+
+  function entryCharacter(entry) {
+    if (entry?.character) return String(entry.character).toLowerCase();
+    if (entry?.sessionId) {
+      const agent = (snapshot.agents || []).find((a) => a.sessionId === entry.sessionId);
+      if (agent) return avatarDir(agent);
+    }
+    return "default";
+  }
+
+  function entryName(entry) {
+    if (entry?.sessionName) return entry.sessionName;
+    if (entry?.sessionId) {
+      const agent = (snapshot.agents || []).find((a) => a.sessionId === entry.sessionId);
+      if (agent) return agent.label || agent.name || entry.sessionId.slice(0, 8);
+    }
+    return entry?.character || "Unknown";
+  }
+
+  function entryPreview(entry) {
+    const t = entry?.textPreview || entry?.spokenText || "";
+    return t.length > 60 ? t.slice(0, 60) + "…" : t;
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return "";
+    const t = Date.parse(ts);
+    if (!Number.isFinite(t)) return "";
+    const sec = Math.max(0, Math.floor((Date.now() - t) / 1000));
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 48) return `${hr}h ago`;
+    const days = Math.floor(hr / 24);
+    return `${days}d ago`;
+  }
+
+  function fmtTime(sec) {
+    if (!Number.isFinite(sec) || sec < 0) return "0:00";
+    const s = Math.floor(sec);
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${r < 10 ? "0" : ""}${r}`;
+  }
+
+  function isPhoneIdle() {
+    return !audio.src || audio.paused || audio.ended;
   }
 
   function isSpotlightActive(np) {
@@ -380,20 +757,141 @@
       .join("");
   }
 
+  function unheardCount() {
+    return (replayList || []).filter(
+      (e) => e.file && !listened.has(e.file) && e.kind !== "ack"
+    ).length;
+  }
+
+  function updateCatchupBtn() {
+    const n = unheardCount();
+    if (catchUpMode) {
+      btnCatchup.style.display = "";
+      btnCatchup.textContent = "Stop catch-up";
+      return;
+    }
+    if (n > 0) {
+      btnCatchup.style.display = "";
+      btnCatchup.textContent = `Catch up (${n})`;
+    } else {
+      btnCatchup.style.display = "none";
+    }
+  }
+
+  function renderMessages() {
+    if (!replayList.length) {
+      messagesEl.innerHTML = `<div class="empty">No messages yet</div>`;
+      updateCatchupBtn();
+      return;
+    }
+    messagesEl.innerHTML = replayList
+      .map((entry, i) => {
+        const character = entryCharacter(entry);
+        const name = entryName(entry);
+        const preview = entryPreview(entry);
+        const ago = timeAgo(entry.timestamp);
+        const heard = listened.has(entry.file);
+        const playing = i === currentIndex && phoneMeta;
+        return `
+          <button type="button" class="msg-row${playing ? " playing" : ""}" data-msg-idx="${i}">
+            <img class="avatar sm" src="${avatarSrc(character, "idle")}" alt=""
+              onerror="this.src='${avatarSrc("default", "idle")}'" />
+            <div class="msg-body">
+              <div class="msg-top">
+                <span class="msg-name">${escapeHtml(name)}</span>
+                <span class="msg-ago">${escapeHtml(ago)}</span>
+              </div>
+              <div class="msg-preview">${escapeHtml(preview)}</div>
+            </div>
+            <span class="unheard${heard ? " hidden" : ""}" aria-label="unheard"></span>
+          </button>`;
+      })
+      .join("");
+    updateCatchupBtn();
+  }
+
+  function updatePlayerChrome() {
+    const hasTrack = !!(phoneMeta && audio.src);
+    if (hasTrack) {
+      player.classList.add("on");
+      document.body.classList.remove("player-hidden");
+    } else {
+      player.classList.remove("on");
+      document.body.classList.add("player-hidden");
+    }
+
+    const name = phoneMeta ? entryName(phoneMeta) : "";
+    const preview = phoneMeta ? entryPreview(phoneMeta) : "";
+    btnNow.textContent = hasTrack ? `${name} · ${preview}` : "—";
+    btnPp.textContent = !audio.paused && !audio.ended ? "⏸" : "▶";
+
+    const newest = replayList[0];
+    const showLatest =
+      hasTrack && newest && phoneMeta?.file && newest.file !== phoneMeta.file;
+    btnLatest.style.display = showLatest ? "" : "none";
+
+    $("btn-prev").disabled = currentIndex <= 0;
+    $("btn-next").disabled =
+      currentIndex < 0 || currentIndex >= replayList.length - 1;
+
+    updateProgress();
+  }
+
+  /** Prefer media duration; fall back to last alignment ms (streamed MP3 often lacks Content-Length). */
+  function trackDurationSec() {
+    const d = audio.duration;
+    if (Number.isFinite(d) && d > 0) return d;
+    const alignment = phoneMeta?.alignment;
+    if (Array.isArray(alignment) && alignment.length) {
+      let maxMs = 0;
+      for (const row of alignment) {
+        const ms = row?.[1];
+        if (typeof ms === "number" && ms > maxMs) maxMs = ms;
+      }
+      if (maxMs > 0) return maxMs / 1000 + 0.4;
+    }
+    return 0;
+  }
+
+  function updateProgress() {
+    const dur = trackDurationSec();
+    const cur = audio.currentTime || 0;
+    const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+    progressFill.style.width = `${pct}%`;
+    $("time-elapsed").textContent = fmtTime(cur);
+    $("time-total").textContent = dur > 0 ? fmtTime(dur) : "0:00";
+    $("progress").setAttribute("aria-valuenow", String(Math.round(pct)));
+  }
+
+  function checkListenedProgress() {
+    if (!phoneMeta?.file) return;
+    const dur = trackDurationSec();
+    const cur = audio.currentTime || 0;
+    if (dur > 0 && cur / dur >= 0.8) {
+      markListened(phoneMeta.file);
+    }
+  }
+
   function render() {
     renderSpotlight();
     renderMembers();
-    $("btn-hold").textContent = snapshot.roomHeld ? "✋ Unhold" : "✋ Hold";
+    $("btn-hold").textContent = snapshot.roomHeld ? "✋" : "✋";
+    $("btn-hold").title = snapshot.roomHeld ? "Release room" : "Hold room";
+    renderMessages();
+    updatePlayerChrome();
   }
 
   function tickKaraoke() {
     updateSpotKaraoke();
     if (phoneMeta && !audio.paused) updatePhoneKaraoke();
+    if (phoneMeta && !audio.paused) {
+      updateProgress();
+      checkListenedProgress();
+    }
   }
 
   function updatePhoneKaraoke() {
     if (!phoneMeta) return;
-    // audio.currentTime is media-timeline seconds (alignment is media-ms).
     const elapsed = (audio.currentTime || 0) * 1000;
     const alignment = phoneMeta.alignment;
     const text = phoneMeta.spokenText || phoneMeta.textPreview || "";
@@ -414,32 +912,82 @@
     }
   }
 
-  async function playReplayEntry(entry) {
+  async function fetchReplayList() {
+    const res = await fetch("/replay-list");
+    if (!res.ok) throw new Error("replay-list failed");
+    return await res.json();
+  }
+
+  async function refreshReplayList({ detectNew } = {}) {
+    try {
+      const list = await fetchReplayList();
+      const prevKnown = knownFiles;
+      pruneListened(list);
+      replayList = Array.isArray(list) ? list : [];
+
+      if (phoneMeta?.file) {
+        const idx = replayList.findIndex((e) => e.file === phoneMeta.file);
+        currentIndex = idx;
+      }
+
+      const newFiles = replayList.filter((e) => e.file && !prevKnown.has(e.file));
+      knownFiles = new Set(replayList.map((e) => e.file).filter(Boolean));
+
+      if (detectNew && newFiles.length && isPhoneIdle()) {
+        pendingNewEntry = newFiles[0];
+        newPill.classList.add("on");
+      }
+
+      renderMessages();
+      updatePlayerChrome();
+    } catch {
+      /* keep prior list */
+    }
+  }
+
+  async function playReplayEntry(entry, { fromCatchUp } = {}) {
     if (!entry?.file) {
       toast("No replay");
       return;
     }
+    if (!fromCatchUp) {
+      catchUpMode = false;
+      catchUpQueue = [];
+      updateCatchupBtn();
+    }
+    const idx = replayList.findIndex((e) => e.file === entry.file);
+    currentIndex = idx;
     phoneMeta = entry;
-    sheet.classList.add("open");
+    pendingNewEntry = null;
+    newPill.classList.remove("on");
     sheetKaraoke.textContent = entry.spokenText || entry.textPreview || "";
     audio.src = `/replay-audio/${encodeURIComponent(entry.file)}`;
     audio.playbackRate =
       entry.playbackRate && entry.playbackRate > 0 ? entry.playbackRate : 1;
+    updatePlayerChrome();
+    renderMessages();
     try {
       await audio.play();
+      updatePlayerChrome();
     } catch {
       toast("Tap again to play");
+      updatePlayerChrome();
     }
   }
 
+  async function playAtIndex(i, opts) {
+    if (i < 0 || i >= replayList.length) return;
+    await playReplayEntry(replayList[i], opts);
+  }
+
   async function playForSession(sessionId) {
-    const res = await fetch("/replay-list");
-    if (!res.ok) {
+    try {
+      await refreshReplayList();
+    } catch {
       toast("Replay list failed");
       return;
     }
-    const list = await res.json();
-    const entry = (list || []).find((e) => e.sessionId === sessionId);
+    const entry = (replayList || []).find((e) => e.sessionId === sessionId);
     if (!entry) {
       toast("No replay for this member");
       return;
@@ -447,18 +995,53 @@
     await playReplayEntry(entry);
   }
 
-  async function playLast() {
-    const res = await fetch("/replay-list");
-    if (!res.ok) {
-      toast("Replay list failed");
-      return;
+  async function playLatest() {
+    if (!replayList.length) {
+      try {
+        await refreshReplayList();
+      } catch {
+        toast("Replay list failed");
+        return;
+      }
     }
-    const list = await res.json();
-    if (!list?.length) {
+    if (!replayList.length) {
       toast("No replays yet");
       return;
     }
-    await playReplayEntry(list[0]);
+    await playReplayEntry(replayList[0]);
+  }
+
+  function stopCatchUp() {
+    catchUpMode = false;
+    catchUpQueue = [];
+    updateCatchupBtn();
+  }
+
+  async function startCatchUp() {
+    const unheard = [...replayList]
+      .filter((e) => e.file && !listened.has(e.file) && e.kind !== "ack")
+      .reverse(); // oldest → newest
+    if (!unheard.length) {
+      toast("Nothing to catch up");
+      return;
+    }
+    catchUpMode = true;
+    catchUpQueue = unheard;
+    updateCatchupBtn();
+    const next = catchUpQueue.shift();
+    await playReplayEntry(next, { fromCatchUp: true });
+  }
+
+  async function onTrackEnded() {
+    if (phoneMeta?.file) markListened(phoneMeta.file);
+    if (catchUpMode && catchUpQueue.length) {
+      const next = catchUpQueue.shift();
+      await playReplayEntry(next, { fromCatchUp: true });
+      return;
+    }
+    if (catchUpMode) stopCatchUp();
+    updatePlayerChrome();
+    renderMessages();
   }
 
   members.addEventListener("click", (ev) => {
@@ -473,18 +1056,108 @@
     if (grantId) postAction({ type: "grant", sessionId: grantId });
   });
 
-  $("btn-pause").addEventListener("click", () => postAction({ type: "pause" }));
-  $("btn-stop").addEventListener("click", () => postAction({ type: "stop" }));
-  $("btn-hold").addEventListener("click", () => postAction({ type: "hold_room" }));
-  $("btn-last").addEventListener("click", () => playLast());
+  messagesEl.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const row = t.closest("[data-msg-idx]");
+    if (!row) return;
+    const idx = Number(row.getAttribute("data-msg-idx"));
+    if (!Number.isFinite(idx)) return;
+    playAtIndex(idx);
+  });
+
+  $("btn-pause").addEventListener("click", async () => {
+    const wasPaused = !!snapshot.paused;
+    const ok = await postAction({ type: "pause" });
+    if (ok) toast(wasPaused ? "Mac playback resumed" : "Mac playback paused");
+  });
+  $("btn-stop").addEventListener("click", async () => {
+    const ok = await postAction({ type: "stop" });
+    if (ok) toast("Mac playback stopped");
+  });
+  $("btn-hold").addEventListener("click", async () => {
+    const wasHeld = !!snapshot.roomHeld;
+    const ok = await postAction({ type: "hold_room" });
+    if (ok) toast(wasHeld ? "Room released" : "Room held");
+  });
+
+  btnCatchup.addEventListener("click", () => {
+    if (catchUpMode) {
+      stopCatchUp();
+      audio.pause();
+      updatePlayerChrome();
+      return;
+    }
+    startCatchUp();
+  });
+
+  btnPp.addEventListener("click", async () => {
+    if (!audio.src) {
+      await playLatest();
+      return;
+    }
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        toast("Tap again to play");
+      }
+    } else {
+      audio.pause();
+    }
+    updatePlayerChrome();
+  });
+
+  $("btn-prev").addEventListener("click", () => {
+    if (currentIndex > 0) playAtIndex(currentIndex - 1);
+  });
+  $("btn-next").addEventListener("click", () => {
+    if (currentIndex >= 0 && currentIndex < replayList.length - 1) {
+      playAtIndex(currentIndex + 1);
+    }
+  });
+
+  btnLatest.addEventListener("click", () => playLatest());
+
+  btnNow.addEventListener("click", () => {
+    if (!phoneMeta) return;
+    sheet.classList.toggle("open");
+    if (sheet.classList.contains("open")) updatePhoneKaraoke();
+  });
+
+  newPill.addEventListener("click", () => {
+    if (pendingNewEntry) playReplayEntry(pendingNewEntry);
+  });
+
+  $("progress").addEventListener("click", (ev) => {
+    const dur = trackDurationSec();
+    if (dur <= 0) return;
+    const rect = $("progress").getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+    try {
+      audio.currentTime = frac * dur;
+    } catch {
+      /* some streams reject seeks until buffered */
+    }
+    updateProgress();
+    checkListenedProgress();
+  });
 
   audio.addEventListener("ended", () => {
-    sheet.classList.remove("open");
-    phoneMeta = null;
+    onTrackEnded();
   });
-  audio.addEventListener("pause", () => {
-    if (audio.ended || !audio.src) sheet.classList.remove("open");
+  audio.addEventListener("play", () => updatePlayerChrome());
+  audio.addEventListener("pause", () => updatePlayerChrome());
+  audio.addEventListener("timeupdate", () => {
+    updateProgress();
+    checkListenedProgress();
   });
+  audio.addEventListener("loadedmetadata", () => updateProgress());
+
+  function nowPlayingKey(np) {
+    if (!np) return null;
+    return `${np.sessionId || ""}|${np.startedAt || ""}|${(np.text || "").slice(0, 40)}`;
+  }
 
   function connectSse() {
     const es = new EventSource("/events");
@@ -492,8 +1165,17 @@
     es.onerror = () => conn.classList.remove("live");
     es.onmessage = (ev) => {
       try {
-        snapshot = JSON.parse(ev.data);
+        const next = JSON.parse(ev.data);
+        const prevKey = lastNowPlayingKey;
+        const nextKey = nowPlayingKey(next.nowPlaying);
+        snapshot = next;
         render();
+        if (nextKey && nextKey !== prevKey) {
+          lastNowPlayingKey = nextKey;
+          refreshReplayList({ detectNew: true });
+        } else if (!nextKey) {
+          lastNowPlayingKey = null;
+        }
       } catch {
         /* ignore */
       }
@@ -510,6 +1192,12 @@
       if (charsRes.ok) charactersPayload = await charsRes.json();
     } catch {
       /* SSE will fill in */
+    }
+    lastNowPlayingKey = nowPlayingKey(snapshot.nowPlaying);
+    try {
+      await refreshReplayList();
+    } catch {
+      /* empty until later */
     }
     render();
     connectSse();
