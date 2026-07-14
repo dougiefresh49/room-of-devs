@@ -428,6 +428,89 @@
       padding: 32px 12px;
     }
     .messages .empty { padding: 16px 12px; font-size: 0.9rem; }
+
+    /* Native hidden attribute must win over section display rules. */
+    [hidden] { display: none !important; }
+
+    .card-member-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .btn-hide-dev {
+      flex: 0 0 auto;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 560;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-hide-dev:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .hidden-devs { margin: -4px 0 14px; }
+    .hidden-devs:not([hidden]) { display: block; }
+    .hidden-devs-toggle {
+      display: block;
+      width: 100%;
+      min-height: 44px;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 560;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .hidden-devs-toggle::after {
+      content: "▾";
+      float: right;
+      transition: transform 0.15s ease;
+    }
+    .hidden-devs-toggle[aria-expanded="true"]::after {
+      transform: rotate(180deg);
+    }
+    .hidden-devs-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      padding: 8px;
+    }
+    .hidden-devs-list[hidden] { display: none; }
+    .hidden-dev-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+    }
+    .hidden-dev-row + .hidden-dev-row {
+      border-top: 1px solid var(--border);
+    }
+    .hidden-dev-identity {
+      flex: 1;
+      min-width: 0;
+    }
+    .hidden-dev-label {
+      font-weight: 650;
+      word-break: break-word;
+    }
+    .hidden-dev-name {
+      font-size: 0.8rem;
+      color: var(--muted);
+      word-break: break-word;
+    }
+    .btn-show-dev {
+      flex: 0 0 auto;
+      min-width: 44px;
+      min-height: 44px;
+    }
   </style>
 </head>
 <body class="player-hidden">
@@ -444,6 +527,12 @@
 
   <section id="spotlight" class="spotlight" aria-live="polite"></section>
   <section id="members"></section>
+
+  <section id="hidden-devs" class="hidden-devs" hidden>
+    <button type="button" id="btn-hidden-devs" class="hidden-devs-toggle"
+      aria-expanded="false" aria-controls="hidden-devs-list">0 hidden</button>
+    <div id="hidden-devs-list" class="hidden-devs-list" hidden></div>
+  </section>
 
   <section class="messages" id="messages-section">
     <div class="messages-header">
@@ -499,29 +588,95 @@
   const btnLatest = $("btn-latest");
   const btnPp = $("btn-pp");
   const btnNow = $("btn-now");
+  const hiddenDevs = $("hidden-devs");
+  const btnHiddenDevs = $("btn-hidden-devs");
+  const hiddenDevsList = $("hidden-devs-list");
 
   const LISTENED_KEY = "mobile_listened_files";
+  const HIDDEN_DEVS_KEY = "mobile_hidden_dev_names_v1";
+  const INITIAL_HIDDEN_DEV_NAMES = ["job-search-2026"];
 
   let snapshot = { agents: [], nowPlaying: null, roomHeld: false, paused: false };
   let charactersPayload = { characters: {}, sessionVoices: {} };
   let karaokeTimer = null;
   let phoneMeta = null;
   let toastTimer = null;
+  let allReplayList = [];
   let replayList = [];
-  // Quick-hide: devs in this list disappear from the room view and the
-  // Messages section (session stays alive — this is display-only).
-  const HIDDEN_DEVS = ["job-search-2026"];
-  function isHidden(name) {
-    return !!name && HIDDEN_DEVS.includes(String(name));
+
+  // Persistent hide list keyed by raw agent.name (survives session restarts;
+  // label is a mutable nickname, sessionId churns). INITIAL_HIDDEN_DEV_NAMES is
+  // a one-time migration seed applied only when the storage key is absent.
+  function loadHiddenDevNames() {
+    const seed = () => {
+      const set = new Set(INITIAL_HIDDEN_DEV_NAMES);
+      try {
+        localStorage.setItem(HIDDEN_DEVS_KEY, JSON.stringify([...set].sort()));
+      } catch {
+        /* ignore quota */
+      }
+      return set;
+    };
+    let raw;
+    try {
+      raw = localStorage.getItem(HIDDEN_DEVS_KEY);
+    } catch {
+      return new Set(INITIAL_HIDDEN_DEV_NAMES);
+    }
+    if (raw === null) return seed();
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return seed();
+    }
+    if (!Array.isArray(parsed)) return seed();
+    const norm = parsed
+      .filter((v) => typeof v === "string")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    return new Set(norm);
   }
+
+  function saveHiddenDevNames() {
+    try {
+      localStorage.setItem(
+        HIDDEN_DEVS_KEY,
+        JSON.stringify([...hiddenDevNames].sort())
+      );
+    } catch {
+      toast("Could not save hidden devs");
+    }
+  }
+
+  let hiddenDevNames = loadHiddenDevNames();
+
+  function isHiddenDevName(name) {
+    const n = String(name || "").trim();
+    return !!n && hiddenDevNames.has(n);
+  }
+
+  function agentRawName(agent) {
+    return String(agent?.name || "").trim();
+  }
+
+  function agentForSession(sessionId) {
+    return (snapshot.agents || []).find((a) => a.sessionId === sessionId);
+  }
+
+  function entryRawName(entry) {
+    const sn = String(entry?.sessionName || "").trim();
+    if (sn) return sn;
+    return agentRawName(agentForSession(entry?.sessionId));
+  }
+
+  function isReplayEntryHidden(entry) {
+    return isHiddenDevName(entryRawName(entry));
+  }
+
   function visibleAgents() {
-    return (snapshot.agents || []).filter((a) => !isHidden(a.label || a.name));
-  }
-  function hiddenSessionIds() {
-    return new Set(
-      (snapshot.agents || [])
-        .filter((a) => isHidden(a.label || a.name))
-        .map((a) => a.sessionId)
+    return (snapshot.agents || []).filter(
+      (a) => !isHiddenDevName(agentRawName(a))
     );
   }
   let currentIndex = -1;
@@ -746,9 +901,16 @@
           agent.state === "hand_raised"
             ? `<button type="button" class="grant" data-grant="${escapeHtml(agent.sessionId)}">Grant</button>`
             : "";
+        const rawName = agentRawName(agent);
+        const displayName = agent.label || agent.name;
+        const hideBtn = rawName
+          ? `<button type="button" class="btn-hide-dev" data-hide-dev="${escapeHtml(
+              rawName
+            )}" aria-label="Hide ${escapeHtml(displayName)}">Hide</button>`
+          : "";
         return `
           <article class="card" data-session="${escapeHtml(agent.sessionId)}">
-            <div class="row">
+            <div class="row card-member-row">
               <div style="position:relative">
                 <img class="avatar" src="${avatarSrc(character, frame)}" alt=""
                   onerror="this.src='${avatarSrc("default", frame)}'" />
@@ -761,6 +923,7 @@
                 )}</span>
                 <div class="chips">${queueChip}${mutedChip}${raisedBadge}</div>
               </div>
+              ${hideBtn}
             </div>
             <div class="card-actions">
               <button type="button" class="primary" data-play="${escapeHtml(
@@ -769,6 +932,43 @@
               ${grantBtn}
             </div>
           </article>`;
+      })
+      .join("");
+  }
+
+  function renderHiddenDevs() {
+    const names = [...hiddenDevNames].sort((a, b) => a.localeCompare(b));
+    const count = names.length;
+    if (!count) {
+      hiddenDevs.hidden = true;
+      hiddenDevsList.hidden = true;
+      hiddenDevsList.innerHTML = "";
+      btnHiddenDevs.setAttribute("aria-expanded", "false");
+      return;
+    }
+    hiddenDevs.hidden = false;
+    btnHiddenDevs.textContent = count === 1 ? "1 hidden" : `${count} hidden`;
+    hiddenDevsList.innerHTML = names
+      .map((rawName) => {
+        const agent = (snapshot.agents || []).find(
+          (a) => agentRawName(a) === rawName
+        );
+        let label = rawName;
+        let sub = "";
+        if (agent) {
+          label = agent.label || agent.name || rawName;
+          if (String(label) !== rawName) sub = rawName;
+        }
+        return `
+          <div class="hidden-dev-row">
+            <div class="hidden-dev-identity">
+              <div class="hidden-dev-label">${escapeHtml(label)}</div>
+              ${sub ? `<div class="hidden-dev-name">${escapeHtml(sub)}</div>` : ""}
+            </div>
+            <button type="button" class="btn-show-dev" data-show-dev="${escapeHtml(
+              rawName
+            )}" aria-label="Show ${escapeHtml(label)}">Show</button>
+          </div>`;
       })
       .join("");
   }
@@ -891,6 +1091,7 @@
   function render() {
     renderSpotlight();
     renderMembers();
+    renderHiddenDevs();
     $("btn-hold").textContent = snapshot.roomHeld ? "✋" : "✋";
     $("btn-hold").title = snapshot.roomHeld ? "Release room" : "Hold room";
     renderMessages();
@@ -934,20 +1135,28 @@
     return await res.json();
   }
 
+  function applyReplayVisibility() {
+    replayList = allReplayList.filter((entry) => !isReplayEntryHidden(entry));
+    if (phoneMeta?.file) {
+      currentIndex = replayList.findIndex((e) => e.file === phoneMeta.file);
+    } else {
+      currentIndex = -1;
+    }
+    const visibleFiles = new Set(replayList.map((e) => e.file).filter(Boolean));
+    catchUpQueue = catchUpQueue.filter((e) => e.file && visibleFiles.has(e.file));
+    if (pendingNewEntry && !visibleFiles.has(pendingNewEntry.file)) {
+      pendingNewEntry = null;
+      newPill.classList.remove("on");
+    }
+  }
+
   async function refreshReplayList({ detectNew } = {}) {
     try {
       const list = await fetchReplayList();
       const prevKnown = knownFiles;
       pruneListened(list);
-      const hiddenIds = hiddenSessionIds();
-      replayList = (Array.isArray(list) ? list : []).filter(
-        (e) => !hiddenIds.has(e.sessionId) && !isHidden(e.sessionName)
-      );
-
-      if (phoneMeta?.file) {
-        const idx = replayList.findIndex((e) => e.file === phoneMeta.file);
-        currentIndex = idx;
-      }
+      allReplayList = Array.isArray(list) ? list : [];
+      applyReplayVisibility();
 
       const newFiles = replayList.filter((e) => e.file && !prevKnown.has(e.file));
       knownFiles = new Set(replayList.map((e) => e.file).filter(Boolean));
@@ -967,6 +1176,10 @@
   async function playReplayEntry(entry, { fromCatchUp } = {}) {
     if (!entry?.file) {
       toast("No replay");
+      return;
+    }
+    if (isReplayEntryHidden(entry)) {
+      toast("That dev is hidden");
       return;
     }
     if (!fromCatchUp) {
@@ -1053,6 +1266,9 @@
 
   async function onTrackEnded() {
     if (phoneMeta?.file) markListened(phoneMeta.file);
+    if (catchUpMode) {
+      catchUpQueue = catchUpQueue.filter((e) => !isReplayEntryHidden(e));
+    }
     if (catchUpMode && catchUpQueue.length) {
       const next = catchUpQueue.shift();
       await playReplayEntry(next, { fromCatchUp: true });
@@ -1063,9 +1279,77 @@
     renderMessages();
   }
 
+  function memberCard(sessionId) {
+    if (!sessionId) return null;
+    return (
+      [...members.querySelectorAll("[data-session]")].find(
+        (el) => el.getAttribute("data-session") === sessionId
+      ) || null
+    );
+  }
+
+  function clearPhonePlayback() {
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    phoneMeta = null;
+    currentIndex = -1;
+    sheet.classList.remove("open");
+    sheetKaraoke.innerHTML = "";
+    stopCatchUp();
+  }
+
+  function setDevHidden(rawName, hidden) {
+    const name = String(rawName || "").trim();
+    if (!name) return;
+    if (hiddenDevNames.has(name) === hidden) return; // already correct
+
+    // Resolve a display name from the current snapshot before mutating.
+    const matchedAgent = (snapshot.agents || []).find(
+      (a) => agentRawName(a) === name
+    );
+    const displayName = matchedAgent?.label || matchedAgent?.name || name;
+
+    if (hidden) hiddenDevNames.add(name);
+    else hiddenDevNames.delete(name);
+    saveHiddenDevNames();
+
+    if (hidden) {
+      if (phoneMeta && entryRawName(phoneMeta) === name) {
+        clearPhonePlayback();
+      } else if (catchUpMode) {
+        catchUpQueue = catchUpQueue.filter((e) => !isReplayEntryHidden(e));
+      }
+    }
+
+    applyReplayVisibility();
+    // Realign known files with the visible list so a later SSE refresh cannot
+    // raise a stale "New message" pill for just-restored history.
+    knownFiles = new Set(replayList.map((e) => e.file).filter(Boolean));
+    render();
+    toast(hidden ? `Hidden ${displayName}` : `Showing ${displayName}`);
+
+    if (hidden) {
+      if (!hiddenDevs.hidden) btnHiddenDevs.focus();
+    } else {
+      const card = memberCard(matchedAgent?.sessionId);
+      if (card) {
+        card.setAttribute("tabindex", "-1");
+        card.focus();
+      } else if (!hiddenDevs.hidden) {
+        btnHiddenDevs.focus();
+      }
+    }
+  }
+
   members.addEventListener("click", (ev) => {
     const t = ev.target;
     if (!(t instanceof HTMLElement)) return;
+    const hideBtn = t.closest("[data-hide-dev]");
+    if (hideBtn) {
+      setDevHidden(hideBtn.getAttribute("data-hide-dev"), true);
+      return;
+    }
     const playId = t.getAttribute("data-play");
     if (playId) {
       playForSession(playId);
@@ -1073,6 +1357,21 @@
     }
     const grantId = t.getAttribute("data-grant");
     if (grantId) postAction({ type: "grant", sessionId: grantId });
+  });
+
+  btnHiddenDevs.addEventListener("click", () => {
+    const expanded = btnHiddenDevs.getAttribute("aria-expanded") === "true";
+    const next = !expanded;
+    btnHiddenDevs.setAttribute("aria-expanded", String(next));
+    hiddenDevsList.hidden = !next;
+  });
+
+  hiddenDevsList.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const btn = t.closest("[data-show-dev]");
+    if (!btn) return;
+    setDevHidden(btn.getAttribute("data-show-dev"), false);
   });
 
   messagesEl.addEventListener("click", (ev) => {
