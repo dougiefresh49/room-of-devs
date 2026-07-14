@@ -508,6 +508,22 @@
   let phoneMeta = null;
   let toastTimer = null;
   let replayList = [];
+  // Quick-hide: devs in this list disappear from the room view and the
+  // Messages section (session stays alive — this is display-only).
+  const HIDDEN_DEVS = ["job-search-2026"];
+  function isHidden(name) {
+    return !!name && HIDDEN_DEVS.includes(String(name));
+  }
+  function visibleAgents() {
+    return (snapshot.agents || []).filter((a) => !isHidden(a.label || a.name));
+  }
+  function hiddenSessionIds() {
+    return new Set(
+      (snapshot.agents || [])
+        .filter((a) => isHidden(a.label || a.name))
+        .map((a) => a.sessionId)
+    );
+  }
   let currentIndex = -1;
   let catchUpMode = false;
   let catchUpQueue = [];
@@ -706,7 +722,7 @@
   }
 
   function renderMembers() {
-    const agents = snapshot.agents || [];
+    const agents = visibleAgents();
     if (!agents.length) {
       members.innerHTML = `<div class="empty">No agents in the room</div>`;
       return;
@@ -923,7 +939,10 @@
       const list = await fetchReplayList();
       const prevKnown = knownFiles;
       pruneListened(list);
-      replayList = Array.isArray(list) ? list : [];
+      const hiddenIds = hiddenSessionIds();
+      replayList = (Array.isArray(list) ? list : []).filter(
+        (e) => !hiddenIds.has(e.sessionId) && !isHidden(e.sessionName)
+      );
 
       if (phoneMeta?.file) {
         const idx = replayList.findIndex((e) => e.file === phoneMeta.file);
