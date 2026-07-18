@@ -263,6 +263,13 @@ async function handleRequest(
     return;
   }
 
+  // Browsers request this unprompted; 404 shows as a console error on the page.
+  if (method === "GET" && path === "/favicon.ico") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (method === "GET" && path === "/snapshot") {
     sendJson(res, 200, buildPanelSnapshot());
     return;
