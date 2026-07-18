@@ -65,7 +65,9 @@
       min-height: 44px;
       min-width: 44px;
       padding: 0 10px;
-      font-size: 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1;
       background: transparent;
       border: 1px solid var(--border);
@@ -130,6 +132,50 @@
     button:disabled { opacity: 0.4; cursor: default; }
     button.accent { background: #2a3a2e; border-color: #3a5a42; color: #d4ffe4; }
     button.ghost { background: transparent; border-color: var(--border); color: var(--muted); }
+
+    /* ---------------- Icons (lucide-style inline SVG) ---------------- */
+    .icon {
+      width: 22px;
+      height: 22px;
+      display: inline-block;
+      vertical-align: middle;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .icon.filled { fill: currentColor; stroke: none; }
+    .icon.lg { width: 28px; height: 28px; }
+    .icon.sm { width: 18px; height: 18px; }
+
+    /* ---------------- Header device toggle (§A1) ---------------- */
+    .dev-toggle {
+      display: inline-flex;
+      align-items: stretch;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .dev-seg {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      color: var(--muted);
+    }
+    .dev-seg + .dev-seg { border-left: 1px solid var(--border); }
+    .dev-seg.active { background: #2a3a2e; color: var(--accent); }
+    .dev-seg .icon { width: 20px; height: 20px; }
 
     /* ---------------- Cards ---------------- */
     .card {
@@ -275,6 +321,23 @@
       padding: 6px 12px;
       font-size: 0.82rem;
     }
+    /* Inline clear confirm (§C5) */
+    .clear-confirm {
+      margin-bottom: 10px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .clear-confirm-text {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .clear-confirm-actions { display: flex; gap: 8px; }
+    .clear-confirm-actions button { min-height: 40px; flex: 1; }
     .msg-row {
       display: flex;
       align-items: center;
@@ -349,7 +412,7 @@
       box-shadow: 0 4px 16px rgba(0,0,0,0.35);
       white-space: nowrap;
     }
-    #new-pill.on { display: block; }
+    #new-pill.on { display: inline-flex; align-items: center; gap: 6px; }
     body.player-hidden #new-pill {
       bottom: calc(16px + env(safe-area-inset-bottom));
     }
@@ -393,33 +456,51 @@
       gap: 6px;
       min-width: 0;
     }
+    .mini-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--surface2);
+      pointer-events: none;
+    }
+    .mini-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+    }
     .mini-device {
-      font-size: 0.72rem;
-      font-weight: 650;
+      display: inline-flex;
+      align-items: center;
       color: var(--muted);
       flex-shrink: 0;
     }
     .mini-device.mac { color: var(--accent); }
+    .mini-device .icon { width: 16px; height: 16px; }
     .mini-preview {
       font-size: 0.78rem;
       color: var(--muted);
       overflow: hidden;
       white-space: nowrap;
+      text-overflow: ellipsis;
       min-width: 0;
       flex: 1;
     }
-    .mini-preview .inner { display: inline-block; }
-    .mini-preview.scroll .inner { animation: marquee 14s linear infinite; }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     #mini-pp {
       flex-shrink: 0;
       min-width: 48px;
       min-height: 48px;
-      font-size: 1.15rem;
-      border-radius: 12px;
-      background: #2a3a2e;
-      border-color: #3a5a42;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: #0d1a12;
     }
+    #mini-pp .icon { width: 22px; height: 22px; }
 
     /* ---------------- Expanded player ---------------- */
     #expanded {
@@ -448,20 +529,21 @@
       align-self: flex-start;
       min-width: 44px;
       min-height: 44px;
-      font-size: 1.4rem;
-      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: transparent;
       border: none;
       color: var(--muted);
       padding: 0 6px;
     }
     .exp-avatar {
-      width: min(56vw, 240px);
-      height: min(56vw, 240px);
+      width: min(42vw, 176px);
+      height: min(42vw, 176px);
       border-radius: 20px;
       object-fit: cover;
       background: var(--surface2);
-      margin: 8px auto 16px;
+      margin: 4px auto 14px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.4);
     }
     .exp-name {
@@ -471,29 +553,67 @@
       margin-bottom: 12px;
       word-break: break-word;
     }
+    .exp-status {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    /* Transcript | Message tab toggle (§C3) */
+    .exp-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      justify-content: center;
+    }
+    .exp-tab {
+      min-height: 40px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .exp-tab.active { border-color: var(--accent); color: var(--text); }
+    .exp-content {
+      flex: 0 1 auto;
+      margin-bottom: 16px;
+      max-height: 30vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    #exp-message {
+      line-height: 1.55;
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     .exp-device-row {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
     .seg {
-      min-height: 40px;
-      padding: 8px 14px;
+      min-height: 44px;
+      padding: 8px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       border-radius: 999px;
-      background: var(--surface2);
+      background: transparent;
       border: 1px solid var(--border);
       color: var(--muted);
       font-size: 0.82rem;
       font-weight: 600;
     }
-    .seg.active { background: #2a3a2e; border-color: #3a5a42; color: #d4ffe4; }
-    #exp-karaoke {
-      flex: 0 1 auto;
-      margin-bottom: 16px;
-      max-height: 30vh;
-      overflow-y: auto;
-    }
+    .seg .icon { width: 18px; height: 18px; }
+    .seg.active { border-color: var(--accent); color: var(--text); }
+    .seg.active.source-mac { border-color: var(--speaking); color: var(--speaking); }
     .progress-row {
       display: flex;
       align-items: center;
@@ -534,23 +654,32 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
       margin-bottom: 16px;
     }
+    /* Ghost/borderless transport icon buttons (§C1) */
     .player-controls button {
       min-width: 52px;
       min-height: 52px;
-      font-size: 1.2rem;
-      border-radius: 14px;
-      background: var(--surface2);
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      color: var(--text);
     }
+    .player-controls button:disabled { color: var(--muted); opacity: 0.4; }
+    .player-controls button .icon { width: 26px; height: 26px; }
+    /* Only the central play/pause is a filled accent circle (Spotify) */
     .player-controls #btn-pp {
       min-width: 64px;
       min-height: 64px;
-      background: #2a3a2e;
-      border-color: #3a5a42;
-      font-size: 1.35rem;
+      background: var(--accent);
+      color: #0d1a12;
     }
+    .player-controls #btn-pp .icon { width: 30px; height: 30px; }
     #exp-reply-wrap { margin-top: auto; }
 
     /* ---------------- Session picker ---------------- */
@@ -571,9 +700,11 @@
       padding: 14px 16px calc(18px + env(safe-area-inset-bottom));
       max-height: 82vh;
       overflow-y: auto;
+      overscroll-behavior: contain;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    body.picker-open { overflow: hidden; }
     .picker-sheet.open { transform: translateY(0); }
     .picker-sheet[hidden] { display: none; }
     .picker-tabs {
@@ -597,18 +728,44 @@
       letter-spacing: 0.05em;
       margin: 4px 0 8px;
     }
-    #picker-personas { margin-bottom: 14px; }
-    .persona-chip {
-      min-height: 40px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 600;
+    #picker-personas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
     }
-    .persona-chip.active { background: #2a3a2e; border-color: #3a5a42; color: #d4ffe4; }
+    /* Avatar-image persona chips (§C6) */
+    .persona-chip {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-height: 44px;
+      padding: 2px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      width: 60px;
+    }
+    .persona-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--surface2);
+      border: 2px solid transparent;
+      box-sizing: content-box;
+    }
+    .persona-chip.active .persona-avatar { border-color: var(--accent); }
+    .persona-chip.active { color: var(--text); }
+    .persona-cap {
+      font-size: 0.7rem;
+      font-weight: 600;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .picker-row {
       display: block;
       width: 100%;
@@ -723,17 +880,40 @@
   </style>
 </head>
 <body class="player-hidden">
+  <!-- Icon symbols (lucide-style outline; used via <svg class="icon"><use href="#i-…"/></svg>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+      <symbol id="i-skip-back" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></symbol>
+      <symbol id="i-skip-forward" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></symbol>
+      <symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+      <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+      <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+      <symbol id="i-more-vertical" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    </defs>
+  </svg>
+
   <header>
     <div class="titlebar">
       <h1>Room of Devs</h1>
+      <div class="dev-toggle" id="header-device" role="group" aria-label="Output device">
+        <button type="button" class="dev-seg" data-device="mac" title="Mac output" aria-label="Play on Mac"><svg class="icon"><use href="#i-laptop"/></svg></button>
+        <button type="button" class="dev-seg" data-device="phone" title="This phone output" aria-label="Play on this phone"><svg class="icon"><use href="#i-smartphone"/></svg></button>
+      </div>
       <div id="conn" class="dot" title="connection"></div>
-      <button type="button" id="btn-new" class="icon-btn" title="New session" aria-label="New session">＋</button>
-      <button type="button" id="btn-overflow" class="icon-btn" title="More" aria-label="More">⋮</button>
+      <button type="button" id="btn-new" class="icon-btn" title="New session" aria-label="New session"><svg class="icon"><use href="#i-plus"/></svg></button>
+      <button type="button" id="btn-overflow" class="icon-btn" title="More" aria-label="More"><svg class="icon"><use href="#i-more-vertical"/></svg></button>
     </div>
-    <button type="button" id="held-pill" class="held-pill" hidden>Room held ✋ — tap to resume</button>
+    <button type="button" id="held-pill" class="held-pill" hidden>Room held — tap to resume</button>
   </header>
 
   <div id="overflow-menu" class="menu" hidden>
+    <button type="button" id="mi-catchup" class="menu-item" hidden>Catch up</button>
     <button type="button" id="mi-hold" class="menu-item">Hold room</button>
   </div>
 
@@ -749,39 +929,50 @@
     <div class="messages-header">
       <h2>Messages</h2>
       <button type="button" id="btn-clear" class="ghost" style="display:none">Clear</button>
-      <button type="button" id="btn-catchup" class="accent" style="display:none">Catch up</button>
+    </div>
+    <div id="clear-confirm" class="clear-confirm" hidden>
+      <span class="clear-confirm-text">Hide all from this list? Audio files stay on the Mac.</span>
+      <div class="clear-confirm-actions">
+        <button type="button" id="btn-clear-confirm" class="accent">Confirm</button>
+        <button type="button" id="btn-clear-cancel" class="ghost">Cancel</button>
+      </div>
     </div>
     <div id="messages"></div>
   </section>
 
-  <button type="button" id="new-pill">▶ New message</button>
+  <button type="button" id="new-pill"><svg class="icon filled sm"><use href="#i-play"/></svg> New message</button>
 
   <!-- Docked mini-player -->
   <div id="mini">
+    <div class="mini-progress"><div id="mini-progress-fill" class="mini-progress-fill"></div></div>
     <button type="button" class="mini-tap" id="mini-tap" title="Expand">
       <img id="mini-avatar" class="avatar sm" alt="" />
       <div class="mini-body">
         <div id="mini-name" class="mini-name">—</div>
         <div class="mini-sub">
           <span id="mini-device" class="mini-device"></span>
-          <span id="mini-preview" class="mini-preview"><span class="inner"></span></span>
+          <span id="mini-preview" class="mini-preview"></span>
         </div>
       </div>
     </button>
-    <button type="button" id="mini-pp" title="Play/Pause">▶</button>
+    <button type="button" id="mini-pp" title="Play/Pause"><svg class="icon filled"><use href="#i-play"/></svg></button>
   </div>
 
   <!-- Full-screen expanded player -->
   <div id="expanded" aria-hidden="true">
     <div class="exp-grab" id="exp-grab"></div>
-    <button type="button" id="exp-collapse" class="exp-collapse" aria-label="Collapse">⌄</button>
+    <button type="button" id="exp-collapse" class="exp-collapse" aria-label="Collapse"><svg class="icon lg"><use href="#i-chevron-down"/></svg></button>
     <img id="exp-avatar" class="exp-avatar" alt="" />
     <div id="exp-name" class="exp-name"></div>
-    <div class="exp-device-row" id="exp-device-row">
-      <button type="button" class="seg" data-device="mac">Mac · Room</button>
-      <button type="button" class="seg" data-device="phone">This phone</button>
+    <div id="exp-status" class="exp-status" hidden></div>
+    <div class="exp-tabs" id="exp-tabs" role="tablist">
+      <button type="button" class="exp-tab active" data-exptab="transcript">Transcript</button>
+      <button type="button" class="exp-tab" data-exptab="message">Message</button>
     </div>
-    <div id="exp-karaoke" class="karaoke"></div>
+    <div class="exp-content">
+      <div id="exp-karaoke" class="karaoke"></div>
+      <div id="exp-message" hidden></div>
+    </div>
     <div class="progress-row">
       <span class="time" id="time-elapsed">0:00</span>
       <div class="progress" id="progress" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -790,10 +981,15 @@
       <span class="time end" id="time-total">0:00</span>
     </div>
     <div class="player-controls">
-      <button type="button" id="btn-prev" title="Previous (newer)">⏮</button>
-      <button type="button" id="btn-stop" title="Stop" hidden>⏹</button>
-      <button type="button" id="btn-pp" title="Play/Pause">▶</button>
-      <button type="button" id="btn-next" title="Next (older)">⏭</button>
+      <button type="button" id="btn-restart" title="Restart" aria-label="Restart"><svg class="icon"><use href="#i-rotate-ccw"/></svg></button>
+      <button type="button" id="btn-prev" title="Previous (newer)" aria-label="Previous"><svg class="icon"><use href="#i-skip-back"/></svg></button>
+      <button type="button" id="btn-stop" title="Stop" aria-label="Stop" hidden><svg class="icon"><use href="#i-x"/></svg></button>
+      <button type="button" id="btn-pp" title="Play/Pause" aria-label="Play or pause"><svg class="icon filled"><use href="#i-play"/></svg></button>
+      <button type="button" id="btn-next" title="Next (older)" aria-label="Next"><svg class="icon"><use href="#i-skip-forward"/></svg></button>
+    </div>
+    <div class="exp-device-row" id="exp-device-row">
+      <button type="button" class="seg" data-device="mac"><svg class="icon"><use href="#i-laptop"/></svg><span>Mac · Room</span></button>
+      <button type="button" class="seg" data-device="phone"><svg class="icon"><use href="#i-smartphone"/></svg><span>This phone</span></button>
     </div>
     <div id="exp-reply-wrap"></div>
   </div>
@@ -836,7 +1032,6 @@
   const expDeviceRow = $("exp-device-row");
   const expReplyWrap = $("exp-reply-wrap");
   const progressFill = $("progress-fill");
-  const btnCatchup = $("btn-catchup");
   const btnClear = $("btn-clear");
   const newPill = $("new-pill");
   const btnPp = $("btn-pp");
@@ -852,6 +1047,15 @@
   const pickerBackdrop = $("picker-backdrop");
   const pickerPersonas = $("picker-personas");
   const pickerList = $("picker-list");
+  const miniProgressFill = $("mini-progress-fill");
+  const expMessage = $("exp-message");
+  const expKaraokeEl = $("exp-karaoke");
+  const expStatus = $("exp-status");
+  const expTabs = $("exp-tabs");
+  const btnRestart = $("btn-restart");
+  const headerDevice = $("header-device");
+  const miCatchup = $("mi-catchup");
+  const clearConfirm = $("clear-confirm");
 
   const LISTENED_KEY = "mobile_listened_files";
   const CLEARED_KEY = "mobile_cleared_files";
@@ -872,6 +1076,19 @@
   let phonePendingTap = false; // file loaded but autoplay rejected — needs a tap
   let audioUnlocked = false;
   let lastPhonePauseAt = 0;    // remembered position when mac-live pre-empted us
+
+  // Expanded player: Transcript | Message tab (§C3).
+  let expTab = "transcript";
+  // Seek to apply once a freshly-loaded replay reports its duration.
+  let pendingSeekSec = 0;
+  // Live handoff (§A3): awaiting the mac→phone replay record after a stop.
+  let handoffAwait = null;     // { offsetSec, sessionId, startedAt, character, name }
+  let handoffTimer = null;
+
+  // Inline SVG icon markup for template strings.
+  function iconHtml(id, extra) {
+    return `<svg class="icon${extra ? " " + extra : ""}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  }
 
   // Catch-up / messages
   let catchUpMode = false;
@@ -895,8 +1112,14 @@
   function setOutput(v) {
     outputPref = v === "phone" ? "phone" : "mac";
     try { localStorage.setItem(OUTPUT_KEY, outputPref); } catch { /* quota */ }
+    renderHeaderDevice();
     renderMembers();
     renderExpandedChrome();
+  }
+  function renderHeaderDevice() {
+    for (const seg of headerDevice.querySelectorAll(".dev-seg")) {
+      seg.classList.toggle("active", seg.getAttribute("data-device") === outputPref);
+    }
   }
 
   // Reply drafts survive member re-renders (Wispr Flow keyboard needs a stable field).
@@ -1209,20 +1432,12 @@
   /* ============================================================
      §2  UNIFIED PLAYER (mini + expanded)
      ============================================================ */
-  let lastMarqueeText = null;
-  function setMarquee(text) {
-    if (text === lastMarqueeText) return;
-    lastMarqueeText = text;
-    miniPreview.classList.remove("scroll");
-    miniPreview.innerHTML = `<span class="inner">${escapeHtml(text)}</span>`;
-    const inner = miniPreview.firstChild;
-    requestAnimationFrame(() => {
-      if (inner && inner.scrollWidth > miniPreview.clientWidth + 6) {
-        inner.innerHTML =
-          `${escapeHtml(text)}&nbsp;&nbsp;&nbsp;&nbsp;${escapeHtml(text)}`;
-        miniPreview.classList.add("scroll");
-      }
-    });
+  // Static one-line preview — CSS handles ellipsis, no marquee/karaoke (§C2).
+  let lastPreviewText = null;
+  function setMiniPreview(text) {
+    if (text === lastPreviewText) return;
+    lastPreviewText = text;
+    miniPreview.textContent = text || "";
   }
 
   // Player "subject" = who + what the player is currently about.
@@ -1249,17 +1464,36 @@
         sessionId: e.sessionId || null,
       };
     }
+    // Handoff in flight (mac stopped, phone file not yet arrived): keep the
+    // player visible with the moving-over subject.
+    if (handoffAwait) {
+      return {
+        character: handoffAwait.character,
+        name: handoffAwait.name,
+        preview: "Moving to this phone…",
+        sessionId: handoffAwait.sessionId,
+      };
+    }
     return null;
   }
 
+  // Returns the icon id ("play" | "pause") for the current transport state.
   function ppIcon() {
     const ps = computePlayerState();
-    if (ps.kind === "mac-live") return snapshot.paused ? "▶" : "⏸";
+    if (ps.kind === "mac-live") return snapshot.paused ? "play" : "pause";
     if (ps.kind === "phone-replay") {
-      if (phonePendingTap) return "▶";
-      return !audio.paused && !audio.ended ? "⏸" : "▶";
+      if (phonePendingTap) return "play";
+      return !audio.paused && !audio.ended ? "pause" : "play";
     }
-    return "▶";
+    return "play";
+  }
+  let lastPpIcon = null;
+  function renderPpButtons() {
+    const id = ppIcon();
+    if (id === lastPpIcon) return;
+    lastPpIcon = id;
+    miniPp.innerHTML = iconHtml(id, "filled");
+    btnPp.innerHTML = iconHtml(id, "filled");
   }
 
   function renderMiniChrome() {
@@ -1271,26 +1505,50 @@
     } else {
       mini.classList.remove("on");
       document.body.classList.add("player-hidden");
-      lastMarqueeText = null;
+      lastPreviewText = null;
       return;
     }
     const ps = computePlayerState();
-    const frame = ps.kind === "mac-live" ? "speaking" : "idle";
+    const macl = ps.kind === "mac-live";
+    const frame = macl ? "speaking" : "idle";
     miniName.textContent = subject.name;
     miniAvatar.onerror = () => {
       miniAvatar.onerror = null;
       miniAvatar.src = avatarSrc("default", frame);
     };
     setImg(miniAvatar, avatarSrc(subject.character, frame));
-    if (ps.kind === "mac-live") {
-      miniDevice.textContent = "Mac";
-      miniDevice.classList.add("mac");
-    } else {
-      miniDevice.textContent = "Phone";
-      miniDevice.classList.remove("mac");
+    // Device glyph: laptop (Mac, accent) / smartphone (phone).
+    if (miniDevice.dataset.macl !== String(macl)) {
+      miniDevice.dataset.macl = String(macl);
+      miniDevice.innerHTML = iconHtml(macl ? "laptop" : "smartphone");
     }
-    setMarquee(subject.preview || "");
-    miniPp.textContent = ppIcon();
+    miniDevice.classList.toggle("mac", macl);
+    setMiniPreview(subject.preview || "");
+    renderPpButtons();
+    updatePlayerProgress();
+  }
+
+  function subjectMessageText(ps) {
+    if (ps.kind === "mac-live") return ps.nowPlaying.text || "";
+    if (ps.kind === "phone-replay") {
+      const e = ps.entry;
+      return e.rawText || e.spokenText || e.textPreview || "";
+    }
+    return "";
+  }
+
+  function renderExpandedContent() {
+    const transcript = expTab === "transcript";
+    for (const t of expTabs.querySelectorAll(".exp-tab")) {
+      t.classList.toggle("active", t.getAttribute("data-exptab") === expTab);
+    }
+    expKaraokeEl.hidden = !transcript;
+    expMessage.hidden = transcript;
+    if (transcript) {
+      updateExpandedKaraoke();
+    } else {
+      expMessage.textContent = subjectMessageText(computePlayerState());
+    }
   }
 
   function renderExpandedChrome() {
@@ -1301,7 +1559,9 @@
       closeExpanded();
       return;
     }
-    const expFrame = ps.kind === "mac-live" ? "speaking" : "idle";
+    const macl = ps.kind === "mac-live";
+    const phone = ps.kind === "phone-replay";
+    const expFrame = macl ? "speaking" : "idle";
     expAvatar.onerror = () => {
       expAvatar.onerror = null;
       expAvatar.src = avatarSrc("default", expFrame);
@@ -1309,18 +1569,27 @@
     setImg(expAvatar, avatarSrc(subject.character, expFrame));
     expName.textContent = subject.name;
 
-    // Device row reflects output preference.
+    // Handoff status line (mac→phone in flight).
+    expStatus.hidden = !handoffAwait;
+    if (handoffAwait) expStatus.textContent = "Moving to this phone…";
+
+    // Device row reflects the ACTUAL current source (green when Mac). While a
+    // handoff to phone is in flight, phone is the destination source.
+    const sourceDevice = macl ? "mac" : "phone";
     for (const seg of expDeviceRow.querySelectorAll(".seg")) {
-      seg.classList.toggle("active", seg.getAttribute("data-device") === outputPref);
+      const dev = seg.getAttribute("data-device");
+      const active = dev === sourceDevice;
+      seg.classList.toggle("active", active);
+      seg.classList.toggle("source-mac", active && dev === "mac");
     }
 
-    // Transport visibility by kind.
-    const phone = ps.kind === "phone-replay";
-    const macl = ps.kind === "mac-live";
+    // Transport visibility by kind: restart/prev/next are phone-only; stop is
+    // mac-only; play/pause always shown.
+    btnRestart.hidden = !phone;
     btnPrev.hidden = !phone;
     btnNext.hidden = !phone;
     btnStop.hidden = !macl;
-    btnPp.textContent = ppIcon();
+    renderPpButtons();
     $("progress").classList.toggle("seekable", phone);
 
     if (phone) {
@@ -1330,7 +1599,7 @@
 
     renderExpandedReply(subject);
     updatePlayerProgress();
-    updateExpandedKaraoke();
+    renderExpandedContent();
   }
 
   let lastExpReplyAgent = null;
@@ -1361,6 +1630,7 @@
     }
     const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
     progressFill.style.width = `${pct}%`;
+    miniProgressFill.style.width = `${pct}%`;
     $("time-elapsed").textContent = fmtTime(cur);
     $("time-total").textContent = dur > 0 ? fmtTime(dur) : "0:00";
     $("progress").setAttribute("aria-valuenow", String(Math.round(pct)));
@@ -1422,7 +1692,12 @@
         renderPlayer();
         return;
       }
+      // Strict toggle — NEVER reload the source (§C4). Resuming a paused track
+      // continues from currentTime; only an already-ended track rewinds to 0.
       if (audio.paused) {
+        if (audio.ended) {
+          try { audio.currentTime = 0; } catch { /* not seekable */ }
+        }
         try { await audio.play(); } catch { toast("Tap again to play"); }
       } else {
         audio.pause();
@@ -1432,6 +1707,15 @@
     }
     // none → play latest replay
     playLatest();
+  }
+
+  // Restart button (§C4): the ONLY explicit rewind that isn't track-end.
+  async function restartTrack() {
+    if (computePlayerState().kind !== "phone-replay") return;
+    phonePendingTap = false;
+    try { audio.currentTime = 0; } catch { /* not seekable */ }
+    try { await audio.play(); } catch { toast("Tap again to play"); }
+    renderPlayer();
   }
 
   async function transportStop() {
@@ -1477,7 +1761,7 @@
     return !audio.src || audio.paused || audio.ended;
   }
 
-  async function playReplayEntry(entry, { fromCatchUp, gated = true } = {}) {
+  async function playReplayEntry(entry, { fromCatchUp, gated = true, seekSec = 0 } = {}) {
     if (!entry?.file) {
       toast("No replay");
       return;
@@ -1500,6 +1784,7 @@
     phoneMeta = entry;
     pendingNewEntry = null;
     newPill.classList.remove("on");
+    pendingSeekSec = Number.isFinite(seekSec) && seekSec > 0 ? seekSec : 0;
     audio.muted = false;
     audio.src = `/replay-audio/${encodeURIComponent(entry.file)}`;
     audio.playbackRate =
@@ -1606,6 +1891,109 @@
     updateBars();
   }
 
+  // Like clearPhonePlayback but keeps the sheet open — mac-live takes the
+  // player via SSE right after a phone→mac handoff.
+  function clearLocalForHandoff() {
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    phoneMeta = null;
+    currentIndex = -1;
+    phonePendingTap = false;
+    renderPlayer();
+    renderMessages();
+    updateBars();
+  }
+
+  /* ============================================================
+     §A3  Live device handoff (Spotify pause-at-position model)
+     ============================================================ */
+  function cancelHandoff(msg) {
+    clearTimeout(handoffTimer);
+    handoffAwait = null;
+    expStatus.hidden = true;
+    renderPlayer();
+    if (msg) toast(msg);
+  }
+
+  // Mac speaking → this phone. Capture position, stop the Mac, then play the
+  // saved replay locally (seeked) once SSE delivers endedAt + replayFile.
+  function beginMacToPhone() {
+    const ps = computePlayerState();
+    if (ps.kind !== "mac-live") return;
+    const np = ps.nowPlaying;
+    const rate = np.playbackRate && np.playbackRate > 0 ? np.playbackRate : 1;
+    // Contract (§A3): offset = macElapsedMs/1000/playbackRate.
+    const offsetSec = macElapsedMs(np) / 1000 / rate;
+    const agent = agentForSession(np.sessionId);
+    primeAudio(); // unlock <audio> inside this tap so a later play() works
+    handoffAwait = {
+      offsetSec,
+      sessionId: np.sessionId,
+      startedAt: np.startedAt,
+      character: agent ? avatarDir(agent) : "default",
+      name: agent ? agent.label || agent.name : String(np.sessionId || "").slice(0, 8),
+    };
+    clearTimeout(handoffTimer);
+    handoffTimer = setTimeout(() => cancelHandoff("Couldn't move playback"), 15000);
+    postAction({ type: "stop" }).then((r) => {
+      if (!r) cancelHandoff("Couldn't move playback");
+    });
+    renderPlayer();
+  }
+
+  function checkMacToPhoneHandoff() {
+    if (!handoffAwait) return;
+    const np = snapshot.nowPlaying;
+    if (!np || !np.replayFile || !np.endedAt) return;
+    const sameSession = !handoffAwait.sessionId || np.sessionId === handoffAwait.sessionId;
+    const sameStart =
+      !handoffAwait.startedAt || !np.startedAt || np.startedAt === handoffAwait.startedAt;
+    if (!sameSession || !sameStart) return;
+    const { offsetSec } = handoffAwait;
+    const file = np.replayFile;
+    clearTimeout(handoffTimer);
+    handoffAwait = null;
+    expStatus.hidden = true;
+    playHandoffFile(file, np, offsetSec);
+  }
+
+  async function playHandoffFile(file, np, offsetSec) {
+    let entry = null;
+    try {
+      await refreshReplayList();
+      entry =
+        replayList.find((e) => e.file === file) ||
+        allReplayList.find((e) => e.file === file);
+    } catch { /* fall through */ }
+    if (!entry) {
+      entry = {
+        file,
+        sessionId: np.sessionId,
+        alignment: np.alignment,
+        spokenText: np.text,
+        textPreview: np.text,
+        playbackRate: np.playbackRate,
+      };
+    }
+    await playReplayEntry(entry, { gated: false, seekSec: offsetSec });
+  }
+
+  // This phone → Mac. Pause locally, ask the Mac to play the same replay from
+  // the current offset; on refusal, stay paused.
+  function beginPhoneToMac() {
+    if (!phoneMeta?.file) return;
+    audio.pause();
+    const file = phoneMeta.file;
+    const offsetSec = audio.currentTime || 0;
+    lastPhonePauseAt = offsetSec;
+    renderPlayer();
+    postAction({ type: "play_replay", file, offsetSec }).then((r) => {
+      if (r) clearLocalForHandoff();
+      else toast("Mac is busy");
+    });
+  }
+
   /* ============================================================
      Arbitration: pause phone audio when mac-live begins
      ============================================================ */
@@ -1631,7 +2019,7 @@
           placeholder="Reply to ${escapeHtml(displayName)}…">${escapeHtml(draft)}</textarea>
         <div class="reply-actions">
           <button type="button" class="ghost" data-reply-cancel="${escapeHtml(agent.sessionId)}">Cancel</button>
-          <button type="button" class="accent grow" data-reply-send="${escapeHtml(agent.sessionId)}">Send</button>
+          <button type="button" class="accent grow" data-reply-send="${escapeHtml(agent.sessionId)}">${iconHtml("send", "sm")} Send</button>
         </div>
       </div>`;
   }
@@ -1678,7 +2066,7 @@
           const sub = outputPref === "phone" ? "on this phone" : "on Mac";
           primary = `<button type="button" class="accent grow read-update" data-grant="${escapeHtml(
             agent.sessionId
-          )}">▶ Read update<span class="sub">${sub}</span></button>`;
+          )}">${iconHtml("play", "filled sm")} Read update<span class="sub">${sub}</span></button>`;
         } else if (!speaking) {
           primary = `<button type="button" class="ghost grow" data-replay="${escapeHtml(
             agent.sessionId
@@ -1887,14 +2275,15 @@
 
   function updateBars() {
     const n = unheardCount();
+    // Catch up moved to the ⋮ overflow menu (§C5).
     if (catchUpMode) {
-      btnCatchup.style.display = "";
-      btnCatchup.textContent = "Stop catch-up";
+      miCatchup.hidden = false;
+      miCatchup.textContent = "Stop catch-up";
     } else if (n > 0) {
-      btnCatchup.style.display = "";
-      btnCatchup.textContent = `Catch up (${n})`;
+      miCatchup.hidden = false;
+      miCatchup.textContent = `Catch up (${n} unheard)`;
     } else {
-      btnCatchup.style.display = "none";
+      miCatchup.hidden = true;
     }
     btnClear.style.display = replayList.length ? "" : "none";
   }
@@ -2041,6 +2430,7 @@
   function renderHeader() {
     heldPill.hidden = !snapshot.roomHeld;
     $("mi-hold").textContent = snapshot.roomHeld ? "Release room" : "Hold room";
+    renderHeaderDevice();
   }
 
   function render() {
@@ -2085,6 +2475,7 @@
   async function openPicker() {
     picker.hidden = false;
     pickerBackdrop.hidden = false;
+    document.body.classList.add("picker-open"); // lock background scroll (§C6)
     requestAnimationFrame(() => picker.classList.add("open"));
     pickerList.innerHTML = `<div class="empty">Loading…</div>`;
     pickerPersonas.innerHTML = "";
@@ -2104,6 +2495,7 @@
   function closePicker() {
     picker.classList.remove("open");
     pickerBackdrop.hidden = true;
+    document.body.classList.remove("picker-open");
     setTimeout(() => { picker.hidden = true; }, 260);
   }
   function renderPicker() {
@@ -2111,12 +2503,15 @@
     const personas = Array.isArray(pickerData.personas) ? pickerData.personas : [];
     pickerPersonas.innerHTML = personas.length
       ? personas
-          .map(
-            (p) =>
-              `<button type="button" class="persona-chip${
-                p === pickerPersona ? " active" : ""
-              }" data-persona="${escapeHtml(p)}">${escapeHtml(p)}</button>`
-          )
+          .map((p) => {
+            const char = String(p).toLowerCase();
+            return `<button type="button" class="persona-chip${
+              p === pickerPersona ? " active" : ""
+            }" data-persona="${escapeHtml(p)}">` +
+              `<img class="persona-avatar" src="${avatarSrc(char, "idle")}" alt="" ` +
+              `onerror="this.onerror=null;this.src='${avatarSrc("default", "idle")}'" />` +
+              `<span class="persona-cap">${escapeHtml(p)}</span></button>`;
+          })
           .join("")
       : `<span class="chip">default</span>`;
 
@@ -2126,7 +2521,13 @@
 
     if (pickerTab === "new") {
       const dirs = Array.isArray(pickerData.dirs) ? pickerData.dirs : [];
-      pickerList.innerHTML = dirs.length
+      const spawnRow = (dir, label) =>
+        `<button type="button" class="picker-row" data-spawn-dir="${escapeHtml(
+          dir
+        )}"><div class="picker-row-label">${escapeHtml(
+          label
+        )}</div><div class="picker-row-sub">${escapeHtml(dir)}</div></button>`;
+      let html = dirs.length
         ? dirs
             .map((d) => {
               const dir = typeof d === "string" ? d : d?.dir || d?.path || "";
@@ -2134,14 +2535,25 @@
                 (typeof d === "object" && (d.label || d.name)) ||
                 dir.split("/").filter(Boolean).pop() ||
                 dir;
-              return `<button type="button" class="picker-row" data-spawn-dir="${escapeHtml(
-                dir
-              )}"><div class="picker-row-label">${escapeHtml(
-                label
-              )}</div><div class="picker-row-sub">${escapeHtml(dir)}</div></button>`;
+              return spawnRow(dir, label);
             })
             .join("")
         : `<div class="empty">No known directories</div>`;
+      // All projects — every dir under ~/projects (§C6). Degrades if absent.
+      const projectsDirs = Array.isArray(pickerData.projectsDirs)
+        ? pickerData.projectsDirs
+        : [];
+      if (projectsDirs.length) {
+        html += `<div class="picker-section-label">All projects</div>`;
+        html += projectsDirs
+          .map((p) => {
+            const dir = p?.dir || "";
+            const label = p?.name || dir.split("/").filter(Boolean).pop() || dir;
+            return dir ? spawnRow(dir, label) : "";
+          })
+          .join("");
+      }
+      pickerList.innerHTML = html;
     } else {
       const rs = Array.isArray(pickerData.resumable) ? pickerData.resumable : [];
       pickerList.innerHTML = rs.length
@@ -2316,8 +2728,9 @@
     }
   });
 
-  // Messages bars.
-  btnCatchup.addEventListener("click", () => {
+  // Catch up — lives in the ⋮ overflow menu now (§C5).
+  miCatchup.addEventListener("click", () => {
+    overflowMenu.hidden = true;
     if (catchUpMode) {
       stopCatchUp();
       audio.pause();
@@ -2326,7 +2739,22 @@
     }
     startCatchUp();
   });
-  btnClear.addEventListener("click", () => clearMessages());
+
+  // Clear → inline confirm (§C5).
+  function showClearConfirm() {
+    clearConfirm.hidden = false;
+    btnClear.style.display = "none";
+  }
+  function hideClearConfirm() {
+    clearConfirm.hidden = true;
+    updateBars(); // restores the Clear button when there are messages
+  }
+  btnClear.addEventListener("click", () => showClearConfirm());
+  $("btn-clear-confirm").addEventListener("click", () => {
+    clearMessages();
+    hideClearConfirm();
+  });
+  $("btn-clear-cancel").addEventListener("click", () => hideClearConfirm());
 
   // Mini player.
   miniPp.addEventListener("click", (ev) => { ev.stopPropagation(); transportPlayPause(); });
@@ -2343,12 +2771,45 @@
       playAtIndex(currentIndex + 1);
     }
   });
+  btnRestart.addEventListener("click", () => restartTrack());
   $("exp-collapse").addEventListener("click", () => closeExpanded());
-  expDeviceRow.addEventListener("click", (ev) => {
+
+  // Transcript | Message tab toggle (§C3).
+  expTabs.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const tab = t.closest("[data-exptab]");
+    if (!tab) return;
+    expTab = tab.getAttribute("data-exptab");
+    renderExpandedContent();
+  });
+
+  // Header device toggle (§A1): output preference before playback.
+  headerDevice.addEventListener("click", (ev) => {
     const t = ev.target;
     if (!(t instanceof HTMLElement)) return;
     const seg = t.closest("[data-device]");
     if (seg) setOutput(seg.getAttribute("data-device"));
+  });
+
+  // Expanded device row (§A2/A3): live handoff when a track is loaded,
+  // otherwise a preference mirror.
+  expDeviceRow.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const seg = t.closest("[data-device]");
+    if (!seg) return;
+    const dev = seg.getAttribute("data-device");
+    const ps = computePlayerState();
+    if (ps.kind === "mac-live") {
+      if (dev === "phone") beginMacToPhone();
+      return; // tapping the current source is a no-op
+    }
+    if (ps.kind === "phone-replay") {
+      if (dev === "mac") beginPhoneToMac();
+      return;
+    }
+    setOutput(dev); // no track loaded — just the preference toggle
   });
 
   // Progress seek (phone-replay only).
@@ -2394,7 +2855,17 @@
     updatePlayerProgress();
     checkListenedProgress();
   });
-  audio.addEventListener("loadedmetadata", () => updatePlayerProgress());
+  audio.addEventListener("loadedmetadata", () => {
+    // Apply a pending handoff seek once the file's duration is known.
+    if (pendingSeekSec > 0) {
+      const target = pendingSeekSec;
+      pendingSeekSec = 0;
+      const dur = audio.duration;
+      const clamped = Number.isFinite(dur) && dur > 0 ? Math.min(target, dur - 0.1) : target;
+      try { audio.currentTime = Math.max(0, clamped); } catch { /* not seekable */ }
+    }
+    updatePlayerProgress();
+  });
 
   // Picker wiring.
   pickerBackdrop.addEventListener("click", () => closePicker());
@@ -2449,6 +2920,9 @@
         const nextKey = nowPlayingKey(next.nowPlaying);
         snapshot = next;
         render();
+        // Live handoff (§A3): fires on the endedAt+replayFile frame, which
+        // does NOT change nowPlayingKey — check it every frame.
+        if (handoffAwait) checkMacToPhoneHandoff();
         if (nextKey && nextKey !== prevKey) {
           lastNowPlayingKey = nextKey;
           refreshReplayList({ detectNew: true });
