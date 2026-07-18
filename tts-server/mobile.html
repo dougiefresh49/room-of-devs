@@ -1922,9 +1922,9 @@
     const ps = computePlayerState();
     if (ps.kind !== "mac-live") return;
     const np = ps.nowPlaying;
-    const rate = np.playbackRate && np.playbackRate > 0 ? np.playbackRate : 1;
-    // Contract (§A3): offset = macElapsedMs/1000/playbackRate.
-    const offsetSec = macElapsedMs(np) / 1000 / rate;
+    // macElapsedMs already returns natural-file ms (wall time × atempo rate),
+    // and audio.currentTime seeks in natural-file seconds — no rate division.
+    const offsetSec = macElapsedMs(np) / 1000;
     const agent = agentForSession(np.sessionId);
     primeAudio(); // unlock <audio> inside this tap so a later play() works
     handoffAwait = {
