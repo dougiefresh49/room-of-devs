@@ -1806,6 +1806,10 @@ function renderPicker() {
         ${pickerTabButton("new", "New")}
         ${pickerTabButton("resume", "Resume")}
       </div>
+      <div class="picker-flags no-drag">
+        <label class="picker-flag"><input type="checkbox" data-spawn-flag="${SPAWN_FLAG_SKIP_PERMS}" ${spawnFlagChecked(SPAWN_FLAG_SKIP_PERMS) ? "checked" : ""}> Skip permission prompts</label>
+        <label class="picker-flag"><input type="checkbox" data-spawn-flag="${SPAWN_FLAG_REMOTE}" ${spawnFlagChecked(SPAWN_FLAG_REMOTE) ? "checked" : ""}> Remote control (Claude app)</label>
+      </div>
       ${body}
     </main>
     ${toastHtml()}
@@ -1813,6 +1817,7 @@ function renderPicker() {
 
   bindWindowActions();
   bindPickerTabs();
+  bindSpawnFlags();
   bindBrowseRow();
   bindPickerChips();
   bindButtonMapping();
@@ -2019,6 +2024,28 @@ function bindBrowseRow() {
   });
 }
 
+// Picker launch-flag toggles — persisted, default both on.
+const SPAWN_FLAG_SKIP_PERMS = "panel_flag_skip_perms";
+const SPAWN_FLAG_REMOTE = "panel_flag_remote";
+
+function spawnFlagChecked(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+function bindSpawnFlags() {
+  app.querySelectorAll<HTMLInputElement>("[data-spawn-flag]").forEach((box) => {
+    box.addEventListener("change", () => {
+      try {
+        localStorage.setItem(box.dataset.spawnFlag!, box.checked ? "1" : "0");
+      } catch { /* ignore */ }
+    });
+  });
+}
+
 function bindPickerChips() {
   app.querySelectorAll<HTMLButtonElement>(".persona-chip").forEach((chip) => {
     chip.addEventListener("click", (e) => {
@@ -2030,10 +2057,14 @@ function bindPickerChips() {
       const dir = row.dataset.dir!;
       const project = row.dataset.project ?? basenameOf(dir);
       const sessionId = row.dataset.session;
+      const flags = {
+        skipPermissions: spawnFlagChecked(SPAWN_FLAG_SKIP_PERMS),
+        remoteControl: spawnFlagChecked(SPAWN_FLAG_REMOTE),
+      };
       if (sessionId) {
-        send({ type: "resume_session", sessionId, dir, persona });
+        send({ type: "resume_session", sessionId, dir, persona, ...flags });
       } else {
-        send({ type: "spawn_session", dir, persona });
+        send({ type: "spawn_session", dir, persona, ...flags });
       }
       showLaunchToast(`launching ${label} in ${project}…`);
     });

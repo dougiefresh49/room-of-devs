@@ -769,6 +769,24 @@
       letter-spacing: 0.05em;
       margin: 4px 0 8px;
     }
+    .picker-flags {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .picker-flag {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .picker-flag input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
     #picker-personas {
       display: flex;
       flex-wrap: wrap;
@@ -1044,6 +1062,11 @@
     </div>
     <div class="picker-section-label">Persona</div>
     <div id="picker-personas" class="chips"></div>
+    <div class="picker-section-label">Launch flags</div>
+    <div class="picker-flags">
+      <label class="picker-flag"><input type="checkbox" id="flag-skip-perms" checked> Skip permission prompts</label>
+      <label class="picker-flag"><input type="checkbox" id="flag-remote" checked> Remote control (Claude app)</label>
+    </div>
     <div id="picker-list"></div>
   </div>
 
@@ -3432,6 +3455,22 @@
     updatePlayerProgress();
   });
 
+  // Picker launch-flag checkboxes — persisted, default both on.
+  const FLAG_KEYS = { "flag-skip-perms": "mobile_flag_skip_perms", "flag-remote": "mobile_flag_remote" };
+  for (const [id, key] of Object.entries(FLAG_KEYS)) {
+    const box = $(id);
+    box.checked = localStorage.getItem(key) !== "0";
+    box.addEventListener("change", () => {
+      try { localStorage.setItem(key, box.checked ? "1" : "0"); } catch {}
+    });
+  }
+  function launchFlags() {
+    return {
+      skipPermissions: $("flag-skip-perms").checked,
+      remoteControl: $("flag-remote").checked,
+    };
+  }
+
   // Picker wiring.
   pickerBackdrop.addEventListener("click", () => closePicker());
   picker.addEventListener("click", (ev) => {
@@ -3444,7 +3483,7 @@
     const spawn = t.closest("[data-spawn-dir]");
     if (spawn) {
       const dir = spawn.getAttribute("data-spawn-dir");
-      const body = { type: "spawn_session", dir };
+      const body = { type: "spawn_session", dir, ...launchFlags() };
       if (pickerPersona) body.persona = pickerPersona;
       postAction(body).then((r) => {
         toast(r ? "Starting session…" : "Couldn't start session");
@@ -3456,7 +3495,7 @@
     if (resume) {
       const sessionId = resume.getAttribute("data-resume-id");
       const dir = resume.getAttribute("data-resume-dir");
-      const body = { type: "resume_session", sessionId, dir };
+      const body = { type: "resume_session", sessionId, dir, ...launchFlags() };
       if (pickerPersona) body.persona = pickerPersona;
       postAction(body).then((r) => {
         toast(r ? "Resuming session…" : "Couldn't resume session");

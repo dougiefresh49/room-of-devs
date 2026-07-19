@@ -98,16 +98,24 @@ for path in sorted(paths):
 PY
 )"
 
-# --remote-control: every team session is also reachable from the Claude
-# mobile app — backup channel when voice reply isn't working.
+# Launch flags — picker checkboxes arrive as env (default on when unset):
+#   CR_SKIP_PERMISSIONS=0 → prompt for permissions instead of skipping
+#   CR_REMOTE_CONTROL=0   → no Claude-mobile-app remote control channel
+CLAUDE_ARGS=()
+if [ "${CR_SKIP_PERMISSIONS:-1}" = "1" ]; then
+    CLAUDE_ARGS+=(--dangerously-skip-permissions)
+fi
+if [ "${CR_REMOTE_CONTROL:-1}" = "1" ]; then
+    CLAUDE_ARGS+=(--remote-control "$TMUX_NAME")
+fi
 if [ -n "$RESUME_ID" ]; then
-    log "Launching $TMUX_NAME in $PROJECT_DIR (resume $RESUME_ID)"
+    log "Launching $TMUX_NAME in $PROJECT_DIR (resume $RESUME_ID; flags: ${CLAUDE_ARGS[*]:-none})"
     tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" \
-        claude --dangerously-skip-permissions --remote-control "$TMUX_NAME" --resume "$RESUME_ID"
+        claude ${CLAUDE_ARGS[@]+"${CLAUDE_ARGS[@]}"} --resume "$RESUME_ID"
 else
-    log "Launching $TMUX_NAME in $PROJECT_DIR"
+    log "Launching $TMUX_NAME in $PROJECT_DIR (flags: ${CLAUDE_ARGS[*]:-none})"
     tmux new-session -d -s "$TMUX_NAME" -c "$PROJECT_DIR" \
-        claude --dangerously-skip-permissions --remote-control "$TMUX_NAME"
+        claude ${CLAUDE_ARGS[@]+"${CLAUDE_ARGS[@]}"}
 fi
 
 tmux set-option -t "$TMUX_NAME" mouse on 2>/dev/null || true

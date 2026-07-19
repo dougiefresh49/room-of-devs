@@ -1222,6 +1222,26 @@ button,
   background: var(--surface);
 }
 
+.picker-flags {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 16px;
+  padding: 6px 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.picker-flag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.picker-flag input[type="checkbox"] {
+  accent-color: var(--accent, #4ade80);
+}
+
 .picker-tab {
   flex: 1;
   height: 24px;

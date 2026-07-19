@@ -78,8 +78,8 @@ export type PanelMessage =
   | { type: "pause" }
   | { type: "list_resumable" }
   | { type: "known_dirs" }
-  | { type: "spawn_session"; dir: string; persona: string }
-  | { type: "resume_session"; sessionId: string; dir: string; persona: string }
+  | { type: "spawn_session"; dir: string; persona: string; remoteControl?: boolean; skipPermissions?: boolean }
+  | { type: "resume_session"; sessionId: string; dir: string; persona: string; remoteControl?: boolean; skipPermissions?: boolean }
   | { type: "set_voice"; sessionId: string; character: string }
   | { type: "set_nickname"; sessionId: string; label: string }
   | { type: "hold_room" }
@@ -617,24 +617,33 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
     }
     case "spawn_session":
       if (
-        keys.length !== 3 ||
+        keys.length < 3 ||
+        keys.length > 5 ||
         typeof msg.dir !== "string" ||
         !msg.dir.trim() ||
         typeof msg.persona !== "string" ||
-        !msg.persona.trim()
+        !msg.persona.trim() ||
+        !validSpawnFlags(msg)
       ) {
         return "bad_message";
       }
-      return { type: "spawn_session", dir: msg.dir, persona: msg.persona };
+      return {
+        type: "spawn_session",
+        dir: msg.dir,
+        persona: msg.persona,
+        ...spawnFlags(msg),
+      };
     case "resume_session":
       if (
-        keys.length !== 4 ||
+        keys.length < 4 ||
+        keys.length > 6 ||
         typeof msg.sessionId !== "string" ||
         !msg.sessionId.trim() ||
         typeof msg.dir !== "string" ||
         !msg.dir.trim() ||
         typeof msg.persona !== "string" ||
-        !msg.persona.trim()
+        !msg.persona.trim() ||
+        !validSpawnFlags(msg)
       ) {
         return "bad_message";
       }
@@ -643,6 +652,7 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
         sessionId: msg.sessionId,
         dir: msg.dir,
         persona: msg.persona,
+        ...spawnFlags(msg),
       };
     case "set_voice":
       if (
@@ -829,12 +839,41 @@ function personaBusyReason(persona: string): string | null {
   return null;
 }
 
-function spawnTeam(persona: string, dir: string, resumeSessionId?: string): void {
+/** Launch-flag toggles from the picker; undefined = default on. */
+export interface SpawnOpts {
+  remoteControl?: boolean;
+  skipPermissions?: boolean;
+}
+
+function validSpawnFlags(msg: Record<string, unknown>): boolean {
+  return (
+    (msg.remoteControl === undefined || typeof msg.remoteControl === "boolean") &&
+    (msg.skipPermissions === undefined || typeof msg.skipPermissions === "boolean")
+  );
+}
+
+function spawnFlags(msg: Record<string, unknown>): SpawnOpts {
+  return {
+    ...(typeof msg.remoteControl === "boolean" ? { remoteControl: msg.remoteControl } : {}),
+    ...(typeof msg.skipPermissions === "boolean" ? { skipPermissions: msg.skipPermissions } : {}),
+  };
+}
+
+function spawnTeam(
+  persona: string,
+  dir: string,
+  resumeSessionId?: string,
+  opts: SpawnOpts = {}
+): void {
   const key = persona.toLowerCase();
   pendingPersonas.add(key);
   const args = resumeSessionId
     ? [persona, dir, "--resume", resumeSessionId]
     : [persona, dir];
+  const extraEnv = {
+    CR_REMOTE_CONTROL: opts.remoteControl === false ? "0" : "1",
+    CR_SKIP_PERMISSIONS: opts.skipPermissions === false ? "0" : "1",
+  };
   runScriptCaptured("team.sh", args, (code, stderrTail) => {
     pendingPersonas.delete(key);
     if (code === 0) return;
@@ -845,7 +884,7 @@ function spawnTeam(persona: string, dir: string, resumeSessionId?: string): void
         : `Couldn't start ${persona}: ${detail}`;
     log("panel-ws", `team.sh failed for ${persona}: ${detail}`);
     emitNotice(msg);
-  });
+  }, extraEnv);
 }
 
 export type SpawnValidateResult =
@@ -856,7 +895,11 @@ export type SpawnValidateResult =
   | "persona_busy";
 
 /** Shared by WS handleMessage and mobile dispatchPanelAction. */
-export function validateAndSpawn(dir: string, persona: string): SpawnValidateResult {
+export function validateAndSpawn(
+  dir: string,
+  persona: string,
+  opts: SpawnOpts = {}
+): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
   const canon = resolvePersonaName(persona);
   if (!canon) return "bad_persona";
@@ -865,7 +908,7 @@ export function validateAndSpawn(dir: string, persona: string): SpawnValidateRes
     emitNotice(busy);
     return "persona_busy";
   }
-  spawnTeam(canon, dir);
+  spawnTeam(canon, dir, undefined, opts);
   return "ok";
 }
 
@@ -873,7 +916,8 @@ export function validateAndSpawn(dir: string, persona: string): SpawnValidateRes
 export function validateAndResume(
   sessionId: string,
   dir: string,
-  persona: string
+  persona: string,
+  opts: SpawnOpts = {}
 ): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
   const canon = resolvePersonaName(persona);
@@ -884,7 +928,7 @@ export function validateAndResume(
     emitNotice(busy);
     return "persona_busy";
   }
-  spawnTeam(canon, dir, sessionId);
+  spawnTeam(canon, dir, sessionId, opts);
   return "ok";
 }
 
@@ -1032,10 +1076,10 @@ export function dispatchPanelAction(raw: unknown): boolean {
   if (!MOBILE_ACTION_TYPES.has(msg.type)) return false;
 
   if (msg.type === "spawn_session") {
-    return validateAndSpawn(msg.dir, msg.persona) === "ok";
+    return validateAndSpawn(msg.dir, msg.persona, spawnFlags(msg)) === "ok";
   }
   if (msg.type === "resume_session") {
-    return validateAndResume(msg.sessionId, msg.dir, msg.persona) === "ok";
+    return validateAndResume(msg.sessionId, msg.dir, msg.persona, spawnFlags(msg)) === "ok";
   }
   if (msg.type === "play_replay") {
     // Missing file or stream lock held → 400. Free path (no synthesis).
@@ -1150,7 +1194,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "spawn_session") {
-    const result = validateAndSpawn(msg.dir, msg.persona);
+    const result = validateAndSpawn(msg.dir, msg.persona, spawnFlags(msg));
     if (result !== "ok") {
       const message =
         result === "persona_busy"
@@ -1163,7 +1207,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "resume_session") {
-    const result = validateAndResume(msg.sessionId, msg.dir, msg.persona);
+    const result = validateAndResume(msg.sessionId, msg.dir, msg.persona, spawnFlags(msg));
     if (result !== "ok") {
       const message =
         result === "persona_busy"
