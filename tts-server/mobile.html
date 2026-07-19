@@ -1096,6 +1096,7 @@
   let macActionPending = false; // stop/play_replay round-trip in flight
   let macScrubbing = false;    // dragging the progress bar in a mac state
   let phoneLoading = false;    // replay file loading into <audio>
+  let phoneLoadGen = 0;        // generation counter — stale play() rejections
   const grantPending = new Map(); // sessionId → timeout id ("Working…" state)
 
   // Inline SVG icon markup for template strings.
@@ -1595,9 +1596,12 @@
       closeExpanded();
       return;
     }
-    const macl = ps.kind === "mac-live";
+    // Mac-owned covers paused-on-Mac too — the device row must keep showing
+    // Mac as the source (so "This phone" reads as a transfer), and stop/
+    // restart stay available. Speaking animation is live-only.
+    const macl = ps.kind === "mac-live" || ps.kind === "mac-paused";
     const phone = ps.kind === "phone-replay";
-    const expFrame = macl ? "speaking" : "idle";
+    const expFrame = ps.kind === "mac-live" ? "speaking" : "idle";
     expAvatar.onerror = () => {
       expAvatar.onerror = null;
       expAvatar.src = avatarSrc("default", expFrame);
@@ -1619,14 +1623,17 @@
       seg.classList.toggle("source-mac", active && dev === "mac");
     }
 
-    // Transport visibility by kind: restart/prev/next are phone-only; stop is
-    // mac-only; play/pause always shown.
-    btnRestart.hidden = !phone;
+    // Transport visibility: prev/next are phone-only; restart works for both
+    // planes (mac restart = play_replay at 0); stop is mac-owned; play/pause
+    // always shown. Mac progress is seekable once replayFile exists.
+    btnRestart.hidden = !phone && !macl;
     btnPrev.hidden = !phone;
     btnNext.hidden = !phone;
     btnStop.hidden = !macl;
     renderPpButtons();
-    $("progress").classList.toggle("seekable", phone);
+    const macSeekable =
+      macl && !!(ps.kind === "mac-paused" || ps.nowPlaying?.replayFile);
+    $("progress").classList.toggle("seekable", phone || macSeekable);
 
     if (phone) {
       btnPrev.disabled = currentIndex <= 0;
@@ -1734,14 +1741,26 @@
     });
   }
 
+  // play_replay right after a stop can 400 while the old player's lock is
+  // still releasing (stop returns when the script SPAWNS, not when the kill
+  // lands). Retry briefly instead of surfacing a bogus "Mac is busy".
+  async function postPlayReplayRetrying(file, offsetSec, tries = 6) {
+    for (let i = 0; i < tries; i++) {
+      const r = await postAction({ type: "play_replay", file, offsetSec });
+      if (r) return true;
+      await new Promise((res) => setTimeout(res, 400));
+    }
+    return false;
+  }
+
   function macResume() {
     if (!macPaused || macActionPending) return;
     macActionPending = true;
     const { file, offsetSec } = macPaused;
     renderPlayer();
-    postAction({ type: "play_replay", file, offsetSec }).then((r) => {
+    postPlayReplayRetrying(file, offsetSec).then((ok) => {
       macActionPending = false;
-      if (r) macPaused = null;
+      if (ok) macPaused = null;
       else toast("Mac is busy");
       renderPlayer();
     });
@@ -1772,13 +1791,12 @@
         renderPlayer();
         return;
       }
-      postAction({
-        type: "play_replay",
-        file: np.replayFile,
-        offsetSec: macPaused ? macPaused.offsetSec : targetSec,
-      }).then((r2) => {
+      postPlayReplayRetrying(
+        np.replayFile,
+        macPaused ? macPaused.offsetSec : targetSec
+      ).then((ok) => {
         macActionPending = false;
-        if (r2) macPaused = null;
+        if (ok) macPaused = null;
         else toast("Mac is busy");
         renderPlayer();
       });
@@ -1911,12 +1929,19 @@
       toast("Mac is speaking — stop it first");
       return;
     }
+    // A Mac stop/seek round-trip is in flight — the Mac may still be audible
+    // for a beat; don't start a second audio plane under it.
+    if (gated && macActionPending) {
+      toast("One sec…");
+      return;
+    }
     if (!fromCatchUp) {
       catchUpMode = false;
       catchUpQueue = [];
     }
     phonePendingTap = false;
     phoneLoading = true; // spinner until 'playing' (or pending-tap/error)
+    const loadGen = ++phoneLoadGen; // stale-load guard (rapid track switches)
     macPaused = null; // starting phone playback supersedes a Mac pause
     currentIndex = replayList.findIndex((e) => e.file === entry.file);
     phoneMeta = entry;
@@ -1933,10 +1958,14 @@
     try {
       await audio.play();
     } catch {
-      // Autoplay rejected — surface a tap-to-play affordance.
-      phonePendingTap = true;
-      phoneLoading = false;
-      toast("Ready — tap to play");
+      // Autoplay rejected — but only if this is still the CURRENT load. A
+      // rapid track switch aborts the old play() (AbortError), which must not
+      // mislabel the new track "Ready — tap to play".
+      if (loadGen === phoneLoadGen) {
+        phonePendingTap = true;
+        phoneLoading = false;
+        toast("Ready — tap to play");
+      }
     }
     renderPlayer();
   }
@@ -2187,6 +2216,12 @@
         const character = avatarDir(agent);
         const speaking = agent.state === "speaking";
         const frame = speaking ? "speaking" : "idle";
+        // Grant landed (any transition away from hand_raised, incl. speaking)
+        // — drop the "Working…" pending so the next raise gets a live button.
+        if (agent.state !== "hand_raised" && grantPending.has(agent.sessionId)) {
+          clearTimeout(grantPending.get(agent.sessionId));
+          grantPending.delete(agent.sessionId);
+        }
         const injectable = isInjectable(agent);
         const displayName = agent.label || agent.name;
         const rawName = agentRawName(agent);
@@ -2226,11 +2261,6 @@
             )}">${iconHtml("play", "filled sm")} Read update<span class="sub">${sub}</span></button>`;
           }
         } else if (!speaking) {
-          // State moved past hand_raised — the grant landed; drop the pending.
-          if (grantPending.has(agent.sessionId)) {
-            clearTimeout(grantPending.get(agent.sessionId));
-            grantPending.delete(agent.sessionId);
-          }
           primary = `<button type="button" class="ghost grow" data-replay="${escapeHtml(
             agent.sessionId
           )}">Replay last</button>`;
