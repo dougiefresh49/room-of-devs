@@ -66,7 +66,7 @@ for script in \
     clean_text.py fetch_voices.py load_env.sh \
     paste_voice_id.sh generate_sfx.sh random_sfx.sh cleanup_played.sh \
     build_read_aloud_notifier_app.sh \
-    hook_stop.sh hook_prompt.sh hook_ask_user.sh tts-server.sh mobile_url.sh \
+    hook_stop.sh hook_prompt.sh hook_ask_user.sh hook_session_end.sh tts-server.sh mobile_url.sh \
     set_streaming.sh set_playback_mode.sh set_mood.sh announce.sh replay.sh panel.sh \
     set_session_mute.sh set_session_voice.sh nickname.sh \
     ingest_claude_code.sh fetch_credits.sh \
@@ -215,6 +215,84 @@ if [ -f "$HOOKS_FILE" ]; then
 else
     log "Installing hooks.json to $HOOKS_FILE"
     cp "$PROJECT_DIR/config/hooks.json" "$HOOKS_FILE"
+fi
+
+# ── 6b. Merge SessionEnd into ~/.claude/settings.json (idempotent) ─
+# Cursor hooks live in hooks.json (above). Claude Code hooks live here.
+# Safe JSON merge — preserves unrelated keys; no-ops if already registered.
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+SESSION_END_HOOK="$TTS_DIR/scripts/hook_session_end.sh"
+MERGE_RESULT="$(
+CLAUDE_SETTINGS="$CLAUDE_SETTINGS" SESSION_END_HOOK="$SESSION_END_HOOK" python3 - <<'PY'
+import json
+import os
+
+path = os.environ["CLAUDE_SETTINGS"]
+hook_script = os.environ["SESSION_END_HOOK"]
+entry = {
+    "type": "command",
+    "command": "bash",
+    "args": [hook_script],
+}
+
+def is_our_hook(h):
+    if not isinstance(h, dict):
+        return False
+    if h.get("command") == "bash" and h.get("args") == [hook_script]:
+        return True
+    cmd = h.get("command")
+    return isinstance(cmd, str) and hook_script in cmd
+
+data = {}
+if os.path.isfile(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, json.JSONDecodeError):
+        data = {}
+
+hooks = data.get("hooks")
+if not isinstance(hooks, dict):
+    hooks = {}
+    data["hooks"] = hooks
+
+groups = hooks.get("SessionEnd")
+if not isinstance(groups, list):
+    groups = []
+    hooks["SessionEnd"] = groups
+
+found = False
+for group in groups:
+    if not isinstance(group, dict):
+        continue
+    inner = group.get("hooks")
+    if not isinstance(inner, list):
+        continue
+    if any(is_our_hook(h) for h in inner):
+        found = True
+        break
+
+if found:
+    print("exists")
+else:
+    groups.append({"hooks": [entry]})
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    tmp = f"{path}.tmp.{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2)
+        fh.write("\n")
+    os.replace(tmp, path)
+    print("added")
+PY
+)"
+if [ "$MERGE_RESULT" = "added" ]; then
+    log "Added SessionEnd hook to $CLAUDE_SETTINGS"
+elif [ "$MERGE_RESULT" = "exists" ]; then
+    log "SessionEnd hook already registered in $CLAUDE_SETTINGS"
+else
+    log "SessionEnd merge skipped/failed (result=${MERGE_RESULT:-empty})"
 fi
 
 # ── 8. Install SwiftBar plugin ─────────────────────────────────────

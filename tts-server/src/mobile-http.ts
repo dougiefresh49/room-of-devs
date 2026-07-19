@@ -19,7 +19,7 @@ import { basename, dirname, join, resolve, sep } from "path";
 import { fileURLToPath } from "url";
 import { loadConfig, TTS_DIR, SESSION_VOICES_PATH } from "./config.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
-import { dispatchPanelAction, handleReplyAction } from "./panel-ws.js";
+import { dispatchPanelAction, handleReplyAction, onNotice } from "./panel-ws.js";
 import { pickerPayload } from "./session-catalog.js";
 import { log } from "./logger.js";
 
@@ -39,6 +39,9 @@ function replayDir(): string {
 let httpServer: Server | null = null;
 let token = "";
 const sseUnsubs = new Set<() => void>();
+/** Live SSE response streams — used to push typed notice events. */
+const sseClients = new Set<ServerResponse>();
+let noticeUnsub: (() => void) | null = null;
 
 function safe(fn: () => void): void {
   try {
@@ -46,6 +49,19 @@ function safe(fn: () => void): void {
   } catch (err: any) {
     log("mobile-http", `handler error: ${err?.message ?? err}`);
   }
+}
+
+function writeSse(res: ServerResponse, payload: unknown): void {
+  try {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  } catch {
+    /* client gone */
+  }
+}
+
+function broadcastSseNotice(message: string): void {
+  const payload = { type: "notice", message };
+  for (const res of sseClients) writeSse(res, payload);
 }
 
 function tokensEqual(a: string, b: string): boolean {
@@ -290,14 +306,9 @@ async function handleRequest(
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     });
-    const writeSnap = () => {
-      try {
-        res.write(`data: ${JSON.stringify(buildPanelSnapshot())}\n\n`);
-      } catch {
-        /* client gone */
-      }
-    };
+    const writeSnap = () => writeSse(res, buildPanelSnapshot());
     writeSnap();
+    sseClients.add(res);
     const unsub = subscribe(() => safe(writeSnap));
     sseUnsubs.add(unsub);
     const heartbeat = setInterval(() => {
@@ -311,6 +322,7 @@ async function handleRequest(
       clearInterval(heartbeat);
       unsub();
       sseUnsubs.delete(unsub);
+      sseClients.delete(res);
     };
     req.on("close", cleanup);
     req.on("error", cleanup);
@@ -426,6 +438,10 @@ export function startMobileHttp(portOverride?: number): void {
 
   token = loadOrCreateToken();
 
+  if (!noticeUnsub) {
+    noticeUnsub = onNotice((msg) => broadcastSseNotice(msg.message));
+  }
+
   httpServer = createServer((req, res) => {
     safe(() => {
       handleRequest(req, res).catch((err: any) => {
@@ -458,6 +474,11 @@ export function stopMobileHttp(): void {
     }
   }
   sseUnsubs.clear();
+  sseClients.clear();
+  if (noticeUnsub) {
+    noticeUnsub();
+    noticeUnsub = null;
+  }
   if (httpServer) {
     httpServer.close();
     httpServer = null;

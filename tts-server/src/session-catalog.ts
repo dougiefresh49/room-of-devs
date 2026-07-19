@@ -180,6 +180,41 @@ export function listPersonas(): string[] {
   }
 }
 
+/** Live registry: sessionId → claude process pid (for room-card liveness). */
+export function registryPidBySessionId(): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!existsSync(LIVE_SESSIONS_DIR)) return out;
+  for (const name of readdirSync(LIVE_SESSIONS_DIR)) {
+    if (!name.endsWith(".json")) continue;
+    try {
+      const data = JSON.parse(readFileSync(join(LIVE_SESSIONS_DIR, name), "utf-8")) as {
+        sessionId?: unknown;
+        pid?: unknown;
+      };
+      if (typeof data.sessionId !== "string" || !data.sessionId) continue;
+      const pid =
+        typeof data.pid === "number" && Number.isFinite(data.pid)
+          ? data.pid
+          : Number(name.slice(0, -5));
+      if (!Number.isFinite(pid) || pid <= 0) continue;
+      out.set(data.sessionId, pid);
+    } catch {
+      /* skip */
+    }
+  }
+  return out;
+}
+
+/** True if the process is still alive (signal 0). */
+export function isPidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Non-hidden directories directly under ~/projects (mobile "All projects"). */
 export function listProjectsDirs(): { name: string; dir: string }[] {
   const root = join(homedir(), "projects");

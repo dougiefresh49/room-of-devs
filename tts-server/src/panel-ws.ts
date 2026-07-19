@@ -6,10 +6,10 @@ import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
 import { WebSocketServer, WebSocket } from "ws";
 import { loadConfig, TTS_DIR, CONFIG_PATH, loadArcadeButtons, saveArcadeButtons, isValidArcadeColor, effectivePlaybackMode, type ArcadeButton, type ArcadeButtons } from "./config.js";
-import { buildPanelSnapshot, subscribe } from "./state-watch.js";
+import { buildPanelSnapshot, buildSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
-import { isTeamSession, tmuxForSession, removeSessionFromTeamMap } from "./team-map.js";
-import { removeSessionState, purgeSessionQueue } from "./state.js";
+import { isTeamSession, tmuxForSession, removeSessionFromTeamMap, loadTeamMap } from "./team-map.js";
+import { purgeSessionQueue, cleanupSession } from "./state.js";
 import { runStatusSay } from "./status-say.js";
 import { knownDirs, isResumableSession, listResumable } from "./session-catalog.js";
 import { HID_ACTIONS, captureNextPress, isCaptureReady } from "./hid.js";
@@ -106,6 +106,28 @@ let wss: WebSocketServer | null = null;
 let unsub: (() => void) | null = null;
 let token = "";
 
+/** In-flight spawn reservations — persona lowercased. Cleared on child exit. */
+const pendingPersonas = new Set<string>();
+
+type NoticeSink = (msg: { type: "notice"; message: string }) => void;
+const noticeSinks = new Set<NoticeSink>();
+
+/** Mobile SSE (and others) can subscribe to typed notice events. */
+export function onNotice(cb: NoticeSink): () => void {
+  noticeSinks.add(cb);
+  return () => {
+    noticeSinks.delete(cb);
+  };
+}
+
+export function emitNotice(message: string): void {
+  const msg = { type: "notice" as const, message };
+  broadcastPanel(msg);
+  for (const sink of noticeSinks) {
+    safe(() => sink(msg));
+  }
+}
+
 function safe(fn: () => void): void {
   try {
     fn();
@@ -131,6 +153,42 @@ function runScript(
     child.on("error", (e) => log("panel-ws", `${name} spawn error: ${e.message}`));
   } catch (err: any) {
     log("panel-ws", `${name} spawn failed: ${err?.message ?? err}`);
+  }
+}
+
+/** Fire-and-forget with exit code + stderr tail for spawn failure notices. */
+function runScriptCaptured(
+  name: string,
+  args: string[],
+  onDone: (code: number | null, stderrTail: string) => void,
+  extraEnv?: Record<string, string>
+): void {
+  try {
+    const child = spawn(join(SCRIPTS_DIR, name), args, {
+      stdio: ["ignore", "ignore", "pipe"],
+      env: { ...scriptEnv(), ...extraEnv },
+    });
+    const chunks: Buffer[] = [];
+    let total = 0;
+    child.stderr?.on("data", (c: Buffer) => {
+      const buf = Buffer.isBuffer(c) ? c : Buffer.from(c);
+      chunks.push(buf);
+      total += buf.length;
+      while (total > 8_000 && chunks.length > 1) {
+        total -= chunks.shift()!.length;
+      }
+    });
+    child.on("error", (e) => {
+      log("panel-ws", `${name} spawn error: ${e.message}`);
+      onDone(null, e.message);
+    });
+    child.on("close", (code) => {
+      const stderrTail = Buffer.concat(chunks).toString("utf-8").trim().slice(-500);
+      onDone(code, stderrTail);
+    });
+  } catch (err: any) {
+    log("panel-ws", `${name} spawn failed: ${err?.message ?? err}`);
+    onDone(null, String(err?.message ?? err));
   }
 }
 
@@ -683,11 +741,15 @@ function sendError(
     | "bad_dir"
     | "bad_persona"
     | "bad_session"
+    | "persona_busy"
+    | "stale_tmux"
     | "no_device",
-  sessionId?: string
+  sessionId?: string,
+  message?: string
 ): void {
   const err: Record<string, string> = { type: "error", code };
   if (sessionId) err.sessionId = sessionId;
+  if (message) err.message = message;
   ws.send(JSON.stringify(err));
 }
 
@@ -726,20 +788,84 @@ function isValidDir(dir: string): boolean {
   }
 }
 
+function resolvePersonaName(persona: string): string | null {
+  const lower = persona.trim().toLowerCase();
+  for (const name of listCharacterNames()) {
+    if (name.toLowerCase() === lower) return name;
+  }
+  return null;
+}
+
+function tmuxExists(tmuxName: string): boolean {
+  try {
+    return spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], { stdio: "ignore" })
+      .status === 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Persona already live in room / team_map / pending / tmux — sync reject. */
+function personaBusyReason(persona: string): string | null {
+  const key = persona.toLowerCase();
+  if (pendingPersonas.has(key)) {
+    return `${persona} is already in the room`;
+  }
+  for (const agent of buildSnapshot()) {
+    if (agent.character?.toLowerCase() === key) {
+      return `${persona} is already in the room`;
+    }
+  }
+  const team = loadTeamMap();
+  for (const [p, entry] of Object.entries(team)) {
+    if (p.toLowerCase() !== key) continue;
+    if (entry?.tmux && tmuxExists(entry.tmux)) {
+      return `${persona} is already in the room`;
+    }
+  }
+  if (tmuxExists(`cr-${persona}`)) {
+    return `${persona} is already in the room`;
+  }
+  return null;
+}
+
 function spawnTeam(persona: string, dir: string, resumeSessionId?: string): void {
+  const key = persona.toLowerCase();
+  pendingPersonas.add(key);
   const args = resumeSessionId
     ? [persona, dir, "--resume", resumeSessionId]
     : [persona, dir];
-  runScript("team.sh", args);
+  runScriptCaptured("team.sh", args, (code, stderrTail) => {
+    pendingPersonas.delete(key);
+    if (code === 0) return;
+    const detail = stderrTail.split("\n").filter(Boolean).pop() || `exit ${code ?? "?"}`;
+    const msg =
+      code === 2
+        ? `${persona} is already in the room`
+        : `Couldn't start ${persona}: ${detail}`;
+    log("panel-ws", `team.sh failed for ${persona}: ${detail}`);
+    emitNotice(msg);
+  });
 }
 
-export type SpawnValidateResult = "ok" | "bad_dir" | "bad_persona" | "bad_session";
+export type SpawnValidateResult =
+  | "ok"
+  | "bad_dir"
+  | "bad_persona"
+  | "bad_session"
+  | "persona_busy";
 
 /** Shared by WS handleMessage and mobile dispatchPanelAction. */
 export function validateAndSpawn(dir: string, persona: string): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
-  if (!isKnownPersona(persona)) return "bad_persona";
-  spawnTeam(persona, dir);
+  const canon = resolvePersonaName(persona);
+  if (!canon) return "bad_persona";
+  const busy = personaBusyReason(canon);
+  if (busy) {
+    emitNotice(busy);
+    return "persona_busy";
+  }
+  spawnTeam(canon, dir);
   return "ok";
 }
 
@@ -750,9 +876,15 @@ export function validateAndResume(
   persona: string
 ): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
-  if (!isKnownPersona(persona)) return "bad_persona";
+  const canon = resolvePersonaName(persona);
+  if (!canon) return "bad_persona";
   if (!isResumableSession(sessionId)) return "bad_session";
-  spawnTeam(persona, dir, sessionId);
+  const busy = personaBusyReason(canon);
+  if (busy) {
+    emitNotice(busy);
+    return "persona_busy";
+  }
+  spawnTeam(canon, dir, sessionId);
   return "ok";
 }
 
@@ -783,9 +915,15 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
   return { status: "failed" };
 }
 
-function focusTerminal(sessionId: string): void {
+/** Probe tmux first; on miss, drop stale team_map entry and return false. */
+function focusTerminal(sessionId: string): boolean {
   const tmux = tmuxForSession(sessionId);
-  if (!tmux) return;
+  if (!tmux) return false;
+  if (!tmuxExists(tmux)) {
+    removeSessionFromTeamMap(sessionId);
+    log("panel-ws", `focus_terminal: stale tmux ${tmux} — removed team_map entry`);
+    return false;
+  }
   const script = `tmux attach -t ${tmux.replace(/"/g, '\\"')}`;
   try {
     const child = spawn(
@@ -799,25 +937,25 @@ function focusTerminal(sessionId: string): void {
       { stdio: "ignore" }
     );
     child.on("error", (e) => log("panel-ws", `focus_terminal spawn error: ${e.message}`));
+    return true;
   } catch (err: any) {
     log("panel-ws", `focus_terminal failed: ${err?.message ?? err}`);
+    return false;
   }
 }
 
 function killTeam(sessionId: string): void {
   const tmux = tmuxForSession(sessionId);
-  if (!tmux) return;
-  try {
-    const child = spawn("tmux", ["kill-session", "-t", tmux], { stdio: "ignore" });
-    child.on("error", (e) => log("panel-ws", `kill_team spawn error: ${e.message}`));
-  } catch (err: any) {
-    log("panel-ws", `kill_team failed: ${err?.message ?? err}`);
+  if (tmux) {
+    try {
+      spawnSync("tmux", ["kill-session", "-t", `=${tmux}`], { stdio: "ignore" });
+    } catch (err: any) {
+      log("panel-ws", `kill_team failed: ${err?.message ?? err}`);
+    }
   }
-  removeSessionFromTeamMap(sessionId);
-  // Retire the room card and any undelivered updates, or the ghost lingers
-  // until the next daemon restart's startup reconciliation.
+  // tmux gone → cleanupSession drops team_map + state + voice.
   purgeSessionQueue(sessionId);
-  removeSessionState(sessionId);
+  cleanupSession(sessionId);
   safe(broadcastSnapshot);
 }
 
@@ -848,7 +986,7 @@ function dispatch(msg: PanelMessage): void {
       runScript("ptt.sh", [msg.phase, msg.sessionId]);
       return;
     case "focus_terminal":
-      focusTerminal(msg.sessionId);
+      // Handled in handleMessage (needs WS error reply on stale tmux).
       return;
     case "kill_team":
       killTeam(msg.sessionId);
@@ -1010,7 +1148,11 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   if (msg.type === "spawn_session") {
     const result = validateAndSpawn(msg.dir, msg.persona);
     if (result !== "ok") {
-      sendError(ws, result);
+      const message =
+        result === "persona_busy"
+          ? `${resolvePersonaName(msg.persona) ?? msg.persona} is already in the room`
+          : undefined;
+      sendError(ws, result, undefined, message);
       return;
     }
     return;
@@ -1019,7 +1161,11 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   if (msg.type === "resume_session") {
     const result = validateAndResume(msg.sessionId, msg.dir, msg.persona);
     if (result !== "ok") {
-      sendError(ws, result, msg.sessionId);
+      const message =
+        result === "persona_busy"
+          ? `${resolvePersonaName(msg.persona) ?? msg.persona} is already in the room`
+          : undefined;
+      sendError(ws, result, msg.sessionId, message);
       return;
     }
     return;
@@ -1082,6 +1228,13 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
       sendError(ws, "not_team", msg.sessionId);
       return;
     }
+  }
+
+  if (msg.type === "focus_terminal") {
+    if (!focusTerminal(msg.sessionId)) {
+      sendError(ws, "stale_tmux", msg.sessionId, "tmux session is gone");
+    }
+    return;
   }
 
   dispatch(msg);

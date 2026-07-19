@@ -9,15 +9,18 @@ import {
 } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
+import { spawnSync } from "child_process";
 import {
   STATE_DIR,
   QUEUE_DIR,
   PLAYED_DIR,
+  SESSION_VOICES_PATH,
   getActiveSessions,
   lookupSessionName,
 } from "./config.js";
 import { isProcessing } from "./audio.js";
 import { log } from "./logger.js";
+import { loadTeamMap, writeTeamMap, tmuxForSession } from "./team-map.js";
 
 // Room state for a single Claude Code session. One JSON file per session at
 // STATE_DIR/<sessionId>.json — separate-process writers (Stop-hook ingest,
@@ -46,6 +49,38 @@ function readState(sessionId: string): StateFile | null {
     return JSON.parse(readFileSync(p, "utf-8")) as StateFile;
   } catch {
     return null;
+  }
+}
+
+function atomicWriteJson(path: string, data: unknown): void {
+  const tmp = `${path}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2) + "\n");
+  renameSync(tmp, path);
+}
+
+function tmuxSessionAlive(tmuxName: string): boolean {
+  try {
+    const r = spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], {
+      stdio: "ignore",
+    });
+    return r.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+function removeSessionVoice(sessionId: string): void {
+  try {
+    if (!existsSync(SESSION_VOICES_PATH)) return;
+    const data = JSON.parse(readFileSync(SESSION_VOICES_PATH, "utf-8")) as Record<
+      string,
+      unknown
+    >;
+    if (!data || typeof data !== "object" || !(sessionId in data)) return;
+    delete data[sessionId];
+    atomicWriteJson(SESSION_VOICES_PATH, data);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -165,6 +200,49 @@ export function removeSessionState(sessionId: string): void {
   } catch {}
 }
 
+/**
+ * Central room cleanup (SessionEnd hook path, pid reaper, kill button).
+ * Removes state card + session_voices entry; drops team_map only when that
+ * entry's tmux session is gone. Never call for clear/resume.
+ */
+export function cleanupSession(sessionId: string): void {
+  if (!sessionId) return;
+  removeSessionState(sessionId);
+  removeSessionVoice(sessionId);
+
+  const team = loadTeamMap();
+  let changed = false;
+  for (const [persona, entry] of Object.entries(team)) {
+    if (entry?.sessionId !== sessionId) continue;
+    const tmux = entry.tmux || tmuxForSession(sessionId);
+    if (tmux && tmuxSessionAlive(tmux)) continue;
+    delete team[persona];
+    changed = true;
+  }
+  if (changed) writeTeamMap(team);
+  log("state", `cleanupSession ${sessionId.slice(0, 12)}`);
+}
+
+/** updatedAt age in ms for a state card, or null if unreadable. */
+export function sessionStateAgeMs(sessionId: string): number | null {
+  const state = readState(sessionId);
+  if (!state?.updatedAt) return null;
+  const t = Date.parse(state.updatedAt);
+  if (Number.isNaN(t)) return null;
+  return Date.now() - t;
+}
+
+export function listStateSessionIds(): string[] {
+  try {
+    if (!existsSync(STATE_DIR)) return [];
+    return readdirSync(STATE_DIR)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.slice(0, -5));
+  } catch {
+    return [];
+  }
+}
+
 // On daemon start, reconcile STATE_DIR against ~/.claude/sessions in both
 // directions: prune state files for dead sessions, and seed a file for every
 // live session that lacks one (queue file → hand_raised, busy → working, else
@@ -206,6 +284,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     recomputeAfterPlayback(sessionId);
     process.exit(0);
   }
-  console.error("Usage: tsx src/state.ts recompute <sessionId>");
+  if (cmd === "cleanup" && sessionId) {
+    cleanupSession(sessionId);
+    process.exit(0);
+  }
+  console.error("Usage: tsx src/state.ts recompute|cleanup <sessionId>");
   process.exit(1);
 }

@@ -3288,6 +3288,11 @@
     es.onmessage = (ev) => {
       try {
         const next = JSON.parse(ev.data);
+        // Typed notice events (spawn failures / dedup) — toast only.
+        if (next && next.type === "notice") {
+          toast(next.message || "Something went wrong");
+          return;
+        }
         const prevKey = lastNowPlayingKey;
         const nextKey = nowPlayingKey(next.nowPlaying);
         snapshot = next;

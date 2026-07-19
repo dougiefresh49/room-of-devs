@@ -30,13 +30,19 @@ import {
   type PlaybackContext,
 } from "./audio.js";
 import { getPhrasesForVoice, playRandomPhrase } from "./phrases.js";
-import { seedStateOnStartup } from "./state.js";
+import {
+  seedStateOnStartup,
+  cleanupSession,
+  listStateSessionIds,
+  sessionStateAgeMs,
+} from "./state.js";
 import { reconcileSessionLineage } from "./session-lineage.js";
 import { maybeFireDeferredAnnounce } from "./announce.js";
 import { startHid, stopHid } from "./hid.js";
 import { startPanelWs, stopPanelWs } from "./panel-ws.js";
 import { startMobileHttp, stopMobileHttp } from "./mobile-http.js";
 import { startDnd, stopDnd } from "./dnd.js";
+import { registryPidBySessionId, isPidAlive } from "./session-catalog.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -376,6 +382,46 @@ if (loadConfig().mobile_port > 0) startMobileHttp();
 // Experimental meeting auto-hold — inert unless dnd_auto.
 if (loadConfig().dnd_auto) startDnd();
 
+// Room-card reaper: Terminal.app quit can skip SessionEnd. Two consecutive
+// dead-pid passes required; cards younger than 2 min are never reaped (team.sh
+// bind can take ~90s). Side-effectful — NOT inside buildSnapshot().
+const REAPER_MS = 60_000;
+const REAPER_MIN_AGE_MS = 2 * 60_1000;
+const reaperMisses = new Map<string, number>();
+const reaperTimer = setInterval(() => {
+  try {
+    const pids = registryPidBySessionId();
+    for (const sid of listStateSessionIds()) {
+      const age = sessionStateAgeMs(sid);
+      if (age != null && age < REAPER_MIN_AGE_MS) {
+        reaperMisses.delete(sid);
+        continue;
+      }
+      const pid = pids.get(sid);
+      const alive = pid != null && isPidAlive(pid);
+      if (alive) {
+        reaperMisses.delete(sid);
+        continue;
+      }
+      const misses = (reaperMisses.get(sid) ?? 0) + 1;
+      reaperMisses.set(sid, misses);
+      if (misses < 2) continue;
+      reaperMisses.delete(sid);
+      log(
+        "server",
+        `Reaping stale card ${sid.slice(0, 12)} (pid ${pid ?? "gone"})`
+      );
+      cleanupSession(sid);
+    }
+    for (const sid of [...reaperMisses.keys()]) {
+      if (!listStateSessionIds().includes(sid)) reaperMisses.delete(sid);
+    }
+  } catch (err: any) {
+    log("server", `reaper error: ${err?.message ?? err}`);
+  }
+}, REAPER_MS);
+reaperTimer.unref?.();
+
 const watcher = watch(QUEUE_DIR, {
   ignoreInitial: true,
   awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
@@ -407,6 +453,7 @@ for (const evt of ["add", "change", "unlink"] as const) {
 
 process.on("SIGTERM", () => {
   log("server", "SIGTERM — shutting down");
+  clearInterval(reaperTimer);
   watcher.close();
   sessionsWatcher.close();
   stopDnd();
@@ -419,6 +466,7 @@ process.on("SIGTERM", () => {
 
 process.on("SIGINT", () => {
   log("server", "SIGINT — shutting down");
+  clearInterval(reaperTimer);
   watcher.close();
   sessionsWatcher.close();
   stopDnd();

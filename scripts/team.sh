@@ -51,6 +51,40 @@ TMUX_NAME="cr-${PERSONA}"
 
 mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$TEAM_MAP")"
 
+# Preflight: cr-<persona> is global (one per machine). If a dead pane we own
+# is left behind, reclaim it; never kill a live unexpected session.
+if tmux has-session -t "=$TMUX_NAME" 2>/dev/null; then
+    PANE_DEAD="$(tmux list-panes -t "=$TMUX_NAME" -F '#{pane_dead}' 2>/dev/null | head -1 || true)"
+    OWNED="$(
+        TEAM_MAP="$TEAM_MAP" PERSONA="$PERSONA" TMUX_NAME="$TMUX_NAME" python3 - <<'PY'
+import json, os
+path = os.environ["TEAM_MAP"]
+persona = os.environ["PERSONA"]
+tmux_name = os.environ["TMUX_NAME"]
+if not os.path.isfile(path):
+    raise SystemExit(1)
+try:
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+except (OSError, json.JSONDecodeError):
+    raise SystemExit(1)
+entry = data.get(persona) if isinstance(data, dict) else None
+if isinstance(entry, dict) and entry.get("tmux") == tmux_name:
+    print("yes")
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+    )" || OWNED=""
+    if [ "$PANE_DEAD" = "1" ] && [ "$OWNED" = "yes" ]; then
+        log "Reclaiming dead tmux session $TMUX_NAME"
+        tmux kill-session -t "=$TMUX_NAME" 2>/dev/null || true
+    else
+        echo "tmux session $TMUX_NAME already exists (live or not owned) — refuse spawn" >&2
+        log "Refuse spawn: $TMUX_NAME already exists (pane_dead=$PANE_DEAD owned=$OWNED)"
+        exit 2
+    fi
+fi
+
 # Snapshot session filenames before launch.
 BEFORE_SNAPSHOT="$(
     SESSIONS_DIR="$SESSIONS_DIR" python3 - <<'PY'
