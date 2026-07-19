@@ -589,9 +589,29 @@
       line-height: 1.55;
       font-size: 0.95rem;
       color: var(--text);
-      white-space: pre-wrap;
       word-break: break-word;
     }
+    #exp-message p { margin: 0 0 0.7em; }
+    #exp-message .md-h { margin: 0.9em 0 0.4em; font-weight: 700; font-size: 1.02rem; }
+    #exp-message ul, #exp-message ol { margin: 0 0 0.7em; padding-left: 1.3em; }
+    #exp-message li { margin-bottom: 0.25em; }
+    #exp-message code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85em;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    #exp-message pre {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      margin: 0 0 0.7em;
+    }
+    #exp-message pre code { background: none; padding: 0; white-space: pre; }
+    #exp-message a { color: var(--accent); }
     .exp-device-row {
       display: flex;
       justify-content: center;
@@ -650,12 +670,21 @@
       background: var(--accent);
       border-radius: 2px;
     }
+    /* 5 equal slots keep the play/pause circle dead-center of the screen
+       (2 buttons left, 2 slots right) — flex centered the GROUP, not the
+       play button, so it sat visibly off-center. */
     .player-controls {
-      display: flex;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto 1fr 1fr;
+      justify-items: center;
       align-items: center;
-      gap: 14px;
       margin-bottom: 16px;
+    }
+    /* Hidden transport buttons keep their grid cell so the layout stays
+       balanced (the class rule below outspecifies the UA [hidden] rule). */
+    .player-controls button[hidden] {
+      display: inline-flex;
+      visibility: hidden;
     }
     /* Ghost/borderless transport icon buttons (§C1) */
     .player-controls button {
@@ -988,9 +1017,9 @@
     <div class="player-controls">
       <button type="button" id="btn-restart" title="Restart" aria-label="Restart"><svg class="icon"><use href="#i-rotate-ccw"/></svg></button>
       <button type="button" id="btn-prev" title="Previous (newer)" aria-label="Previous"><svg class="icon"><use href="#i-skip-back"/></svg></button>
-      <button type="button" id="btn-stop" title="Stop" aria-label="Stop" hidden><svg class="icon"><use href="#i-x"/></svg></button>
       <button type="button" id="btn-pp" title="Play/Pause" aria-label="Play or pause"><svg class="icon filled"><use href="#i-play"/></svg></button>
       <button type="button" id="btn-next" title="Next (older)" aria-label="Next"><svg class="icon"><use href="#i-skip-forward"/></svg></button>
+      <button type="button" id="btn-stop" title="Stop" aria-label="Stop" hidden><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
     <div class="exp-device-row" id="exp-device-row">
       <button type="button" class="seg" data-device="mac"><svg class="icon"><use href="#i-laptop"/></svg><span>Mac · Room</span></button>
@@ -1560,6 +1589,60 @@
     updatePlayerProgress();
   }
 
+  // Minimal markdown → HTML for the Message tab (agent messages are markdown).
+  // Escapes first, then transforms — covers fenced/inline code, headings,
+  // bold/italic, links, and lists; everything else renders as paragraphs.
+  function mdToHtml(src) {
+    const esc = (s) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const inline = (s) =>
+      s
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")
+        .replace(
+          /\[([^\]]+)\]\((https?:[^)\s]+)\)/g,
+          '<a href="$2" target="_blank" rel="noopener">$1</a>'
+        );
+    let out = "";
+    const parts = String(src || "").split(/```/);
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 1) {
+        // Fenced block — drop an optional language tag on the first line.
+        const code = parts[i].replace(/^[^\n]*\n/, "");
+        out += `<pre><code>${esc(code)}</code></pre>`;
+        continue;
+      }
+      const lines = esc(parts[i]).split("\n");
+      let list = null; // "ul" | "ol" while inside a list
+      let para = [];
+      const closeList = () => { if (list) { out += `</${list}>`; list = null; } };
+      const flushPara = () => {
+        if (para.length) { out += `<p>${inline(para.join(" "))}</p>`; para = []; }
+      };
+      for (const raw of lines) {
+        const line = raw.trimEnd();
+        const h = line.match(/^#{1,6}\s+(.*)$/);
+        const ul = line.match(/^\s*[-*]\s+(.*)$/);
+        const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+        if (!line.trim()) { flushPara(); closeList(); continue; }
+        if (h) { flushPara(); closeList(); out += `<div class="md-h">${inline(h[1])}</div>`; continue; }
+        if (ul || ol) {
+          flushPara();
+          const want = ul ? "ul" : "ol";
+          if (list !== want) { closeList(); out += `<${want}>`; list = want; }
+          out += `<li>${inline((ul || ol)[1])}</li>`;
+          continue;
+        }
+        closeList();
+        para.push(line);
+      }
+      flushPara();
+      closeList();
+    }
+    return out || "<p></p>";
+  }
+
   function subjectMessageText(ps) {
     // Message tab = the agent's ORIGINAL text (paths and all), never the
     // character transcript; transcript lives in the other tab.
@@ -1584,7 +1667,7 @@
     if (transcript) {
       updateExpandedKaraoke();
     } else {
-      expMessage.textContent = subjectMessageText(computePlayerState());
+      expMessage.innerHTML = mdToHtml(subjectMessageText(computePlayerState()));
     }
   }
 
@@ -3099,6 +3182,16 @@
   let touchStartY = null;
   expanded.addEventListener("touchstart", (ev) => {
     if (expanded.scrollTop > 0) { touchStartY = null; return; }
+    // A gesture starting inside a scrolled-down inner scroller (transcript/
+    // message pane) is a scroll-back-up, not a pull-to-collapse.
+    let el = ev.target instanceof Element ? ev.target : null;
+    while (el && el !== expanded) {
+      if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
+        touchStartY = null;
+        return;
+      }
+      el = el.parentElement;
+    }
     touchStartY = ev.touches[0].clientY;
   }, { passive: true });
   expanded.addEventListener("touchmove", (ev) => {
