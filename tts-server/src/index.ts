@@ -317,7 +317,7 @@ async function drainQueue(): Promise<void> {
   processing = false;
   // Floor is settling and the drain is empty — fire any deferred announce
   // (validates hands against live state; no-op if the lock is still held).
-  maybeFireDeferredAnnounce();
+  await maybeFireDeferredAnnounce();
 }
 
 const command = process.argv[2];
@@ -343,7 +343,7 @@ if (command === "once") {
   // a multi-item drain (grant_floor.sh), CR_SUPPRESS_DEFERRED is set on every
   // item but the last so the nudge doesn't fire between still-queued grant items.
   if (!process.env.CR_SUPPRESS_DEFERRED) {
-    maybeFireDeferredAnnounce();
+    await maybeFireDeferredAnnounce();
   }
   process.exit(0);
 }

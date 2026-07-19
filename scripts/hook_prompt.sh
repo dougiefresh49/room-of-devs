@@ -27,6 +27,13 @@ if [ -n "$PAYLOAD" ]; then
     USER_PROMPT=$(echo "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('prompt', d.get('message', d.get('input', ''))))" 2>/dev/null || true)
 fi
 
+# Synthetic background/subagent <task-notification> prompts aren't real user
+# prompts — skip before launching Node (signal.ts keeps the same guard).
+TRIMMED="${USER_PROMPT#"${USER_PROMPT%%[![:space:]]*}"}"
+if [[ "$TRIMMED" == \<task-notification* ]]; then
+    exit 0
+fi
+
 # Generate dynamic character response via Node.js
 if [ -f "$SERVER_DIR/src/signal.ts" ] && command -v pnpm &>/dev/null; then
     cd "$SERVER_DIR"

@@ -21,6 +21,12 @@ const voiceId = resolveVoiceId(sessionId);
 const sessionName = (sessionId && lookupSessionName(sessionId)) || undefined;
 
 if (action === "prompt-submitted") {
+  // Synthetic background/subagent <task-notification> prompts aren't real user
+  // prompts — skip before any side effects (no purge, no state flip, no ack).
+  if (/^\s*<task-notification\b/.test(textArg)) {
+    log("signal", "Synthetic task-notification prompt — skipping");
+    process.exit(0);
+  }
   // You just gave the agent new instructions: purge its stale pending update
   // (supersede-consistent — moot now, still replayable in played/) BEFORE
   // flipping to working, so the ack's post-playback recompute doesn't re-raise
