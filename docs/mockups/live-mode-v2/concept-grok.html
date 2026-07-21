@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Live mode v2 — chat + call</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --surface: #1a1d24;
+      --surface2: #242830;
+      --border: #2e3340;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --working: #4a9eff;
+      --accent: #3ecf8e;
+      --danger: #ef4444;
+      --karaoke: #ffe566;
+      --page: #07080a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; min-height: 100%;
+      background: var(--page); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 0.9rem;
+    }
+    button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:active { opacity: 0.85; }
+
+    .desk {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 24px 14px 36px; gap: 14px;
+    }
+    .desk-label { text-align: center; max-width: 400px; }
+    .desk-label h1 {
+      margin: 0 0 4px; font-size: 1.05rem; font-weight: 650; letter-spacing: -0.02em;
+    }
+    .desk-label p { margin: 0; color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+
+    .state-switcher {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 440px;
+    }
+    .state-switcher button {
+      min-height: 34px; padding: 7px 11px; border: 1px solid var(--border);
+      border-radius: 999px; background: #12151c; color: var(--muted);
+      font-size: 0.72rem; font-weight: 650;
+    }
+    .state-switcher button.active {
+      border-color: var(--accent); color: #c8ffe0; background: #163528;
+    }
+
+    /* ---- Phone ---- */
+    .phone {
+      width: 390px; height: 780px; max-width: 100%;
+      background: var(--bg); border: 1px solid #2a2f3a; border-radius: 28px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.55);
+      overflow: hidden; display: flex; flex-direction: column; position: relative;
+      transition: box-shadow 0.35s, border-color 0.35s;
+    }
+    .phone.live {
+      border-color: #2a5a42;
+      box-shadow:
+        0 0 0 1px rgba(62,207,142,0.35),
+        0 0 28px rgba(62,207,142,0.12),
+        0 24px 64px rgba(0,0,0,0.55);
+    }
+    .phone.live::before {
+      content: ""; position: absolute; inset: 0 0 auto; height: 2px; z-index: 30;
+      background: var(--accent); animation: breathe 1.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes breathe { 50% { opacity: 0.28; } }
+
+    .notch {
+      height: 26px; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 18px;
+      font-size: 0.68rem; font-weight: 600; color: var(--muted); z-index: 20;
+    }
+
+    /* Stage holds chat + call panels for the slide */
+    .stage {
+      flex: 1; min-height: 0; position: relative; overflow: hidden;
+      background: #12151c;
+    }
+    .panel {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+      will-change: transform;
+    }
+    .panel-chat { transform: translateX(0); }
+    .panel-call { transform: translateX(100%); }
+    .phone.show-call .panel-chat { transform: translateX(-100%); }
+    .phone.show-call .panel-call { transform: translateX(0); }
+
+    .grab {
+      width: 36px; height: 4px; border-radius: 2px; background: var(--border);
+      margin: 6px auto 0; flex-shrink: 0;
+    }
+
+    /* ===== CHAT VIEW ===== */
+    .chat-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .icon-btn {
+      width: 40px; height: 40px; border: none; background: transparent;
+      color: var(--muted); border-radius: 10px; display: inline-flex;
+      align-items: center; justify-content: center; padding: 0; flex-shrink: 0;
+    }
+    .icon-btn svg { width: 22px; height: 22px; }
+
+    .av {
+      width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+      background: linear-gradient(145deg, #2a3440, #1a222c 55%, #3a2a48);
+      overflow: hidden;
+    }
+    .av svg { width: 100%; height: 100%; display: block; }
+
+    .who { flex: 1; min-width: 0; }
+    .who .name {
+      font-size: 1rem; font-weight: 700; letter-spacing: -0.02em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .who .sub {
+      font-size: 0.7rem; color: var(--muted); font-weight: 550; margin-top: 1px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #6b7280; flex-shrink: 0;
+    }
+    .dot.ready { background: var(--accent); }
+    .dot.working { background: var(--working); }
+    .dot.live { background: var(--accent); animation: breathe 1.2s infinite; }
+
+    .go-live {
+      min-height: 36px; padding: 0 12px 0 10px; border-radius: 999px;
+      border: 1px solid #3a5a42; background: #151c18; color: #a8d4b8;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .go-live .orb {
+      width: 7px; height: 7px; border-radius: 50%; background: #3a5a42;
+    }
+    .go-live.on {
+      background: #163528; border-color: var(--accent); color: #c8ffe0;
+      box-shadow: 0 0 14px rgba(62,207,142,0.22);
+    }
+    .go-live.on .orb {
+      background: var(--accent); box-shadow: 0 0 6px var(--accent);
+      animation: breathe 1.2s infinite;
+    }
+
+    .thread {
+      flex: 1; overflow-y: auto; padding: 12px 14px 8px;
+      display: flex; flex-direction: column; gap: 9px; min-height: 0;
+    }
+    .turn-meta {
+      align-self: center; font-size: 0.65rem; color: #6b7280;
+      font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 2px 0;
+    }
+    .bubble {
+      max-width: 86%; border-radius: 14px; padding: 9px 12px;
+      line-height: 1.45; border: 1px solid var(--border);
+    }
+    .bubble.agent {
+      align-self: flex-start; background: var(--surface); border-bottom-left-radius: 5px;
+    }
+    .bubble.you {
+      align-self: flex-end; background: #1f3d33; border-color: transparent;
+      border-bottom-right-radius: 5px;
+    }
+    .bubble p { margin: 0; }
+    .bubble .play {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 7px;
+      min-height: 28px; padding: 3px 9px 3px 6px; border-radius: 999px;
+      border: 1px solid #3a5a42; background: #2a3a2e; color: #d4ffe4;
+      font-size: 0.68rem; font-weight: 650;
+    }
+    .bubble .play svg { width: 12px; height: 12px; }
+    .bubble.dim { opacity: 0.72; font-size: 0.84rem; }
+
+    /* Slim now-playing — only when a clip is active in chat */
+    .now-playing {
+      display: none; align-items: center; gap: 10px;
+      margin: 0 12px 8px; padding: 8px 10px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .now-playing.show { display: flex; }
+    .now-playing .pp {
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: var(--accent); color: #0d1a12;
+      display: inline-flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .now-playing .pp svg { width: 14px; height: 14px; }
+    .now-playing .meta { flex: 1; min-width: 0; }
+    .now-playing .meta strong {
+      display: block; font-size: 0.75rem; font-weight: 650;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .now-playing .meta span { font-size: 0.65rem; color: var(--muted); }
+    .now-playing .bar {
+      flex: 0 0 64px; height: 3px; border-radius: 2px; background: var(--surface2);
+      overflow: hidden;
+    }
+    .now-playing .bar > i {
+      display: block; height: 100%; width: 58%; background: var(--accent); border-radius: 2px;
+    }
+
+    /* Composer: 1-line grow + inline send */
+    .composer {
+      flex-shrink: 0; border-top: 1px solid var(--border);
+      padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: #12151c;
+    }
+    .composer-row { display: flex; gap: 8px; align-items: flex-end; }
+    .composer textarea {
+      flex: 1; min-height: 40px; max-height: 96px; resize: none;
+      border-radius: 12px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text);
+      padding: 10px 12px; font-size: 0.88rem; font-family: inherit;
+      outline: none; line-height: 1.35;
+    }
+    .composer textarea:focus { border-color: var(--accent); }
+    .composer textarea::placeholder { color: #6b7280; }
+    .composer .send {
+      width: 40px; height: 40px; border-radius: 12px;
+      border: 1px solid #3a5a42; background: #2a3a2e; color: #d4ffe4;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; flex-shrink: 0;
+    }
+    .composer .send svg { width: 18px; height: 18px; }
+    .composer .mic {
+      width: 40px; height: 40px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; flex-shrink: 0;
+    }
+    .composer .mic svg { width: 18px; height: 18px; }
+
+    /* Live pin while chatting from call (state F) */
+    .live-pin {
+      display: none; align-items: center; gap: 8px;
+      padding: 6px 12px; border-bottom: 1px solid #1e3a2a;
+      background: #0e1612; flex-shrink: 0;
+    }
+    .live-pin.show { display: flex; }
+    .live-pin .chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 4px 10px 4px 4px; border-radius: 999px;
+      background: #163528; border: 1px solid #2a4a38;
+      font-size: 0.72rem; font-weight: 650; color: #c8ffe0;
+    }
+    .live-pin .chip .mini-av {
+      width: 22px; height: 22px; border-radius: 6px; overflow: hidden;
+      background: #2a3440;
+    }
+    .live-pin .chip .mini-av svg { width: 100%; height: 100%; display: block; }
+    .live-pin .timer {
+      font-size: 0.7rem; color: #8fbf9e; font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .live-pin .spacer { flex: 1; }
+    .live-pin .hang {
+      min-height: 32px; padding: 0 12px; border-radius: 999px;
+      border: 1px solid #5a3030; background: #2a1818; color: #fca5a5;
+      font-size: 0.72rem; font-weight: 650;
+    }
+    .live-pin .back-call {
+      min-height: 32px; padding: 0 10px; border-radius: 999px;
+      border: 1px solid #2a4a38; background: #151c18; color: #a8d4b8;
+      font-size: 0.72rem; font-weight: 650;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    /* ===== CALL VIEW (Sesame-style) ===== */
+    .call {
+      flex: 1; display: flex; flex-direction: column; min-height: 0;
+      background: radial-gradient(ellipse at 50% 28%, #1a2420 0%, #12151c 55%);
+      position: relative;
+    }
+    .call-top {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 16px 0; flex-shrink: 0; gap: 10px;
+    }
+    .name-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px 6px 6px; border-radius: 999px;
+      background: rgba(26,29,36,0.85); border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+    .name-chip .mini {
+      width: 26px; height: 26px; border-radius: 7px; overflow: hidden;
+      background: #2a3440;
+    }
+    .name-chip .mini svg { width: 100%; height: 100%; display: block; }
+    .name-chip strong { font-size: 0.85rem; font-weight: 700; }
+    .name-chip .credits {
+      font-size: 0.65rem; font-weight: 650; color: #8fbf9e;
+      padding: 2px 7px; border-radius: 999px; background: #163528;
+      border: 1px solid #2a4a38; margin-left: 2px;
+    }
+
+    .presence-avatar {
+      width: 112px; height: 112px; border-radius: 28px; margin-top: 18px;
+      background: linear-gradient(145deg, #2a3440, #1a222c 55%, #3a2a48);
+      box-shadow:
+        0 0 0 3px #12151c,
+        0 0 0 5px rgba(62,207,142,0.45),
+        0 12px 40px rgba(0,0,0,0.35);
+      overflow: hidden; position: relative;
+      animation: presence-pulse 2.4s ease-in-out infinite;
+    }
+    .presence-avatar.working-ring {
+      box-shadow:
+        0 0 0 3px #12151c,
+        0 0 0 5px rgba(74,158,255,0.5),
+        0 12px 40px rgba(0,0,0,0.35);
+      animation: none;
+    }
+    .presence-avatar.final-ring {
+      box-shadow:
+        0 0 0 3px #12151c,
+        0 0 0 5px rgba(62,207,142,0.7),
+        0 12px 40px rgba(62,207,142,0.15);
+      animation: none;
+    }
+    @keyframes presence-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px #12151c, 0 0 0 5px rgba(62,207,142,0.35), 0 12px 40px rgba(0,0,0,0.35); }
+      50% { box-shadow: 0 0 0 3px #12151c, 0 0 0 7px rgba(62,207,142,0.55), 0 12px 40px rgba(0,0,0,0.35); }
+    }
+    .presence-avatar svg { width: 100%; height: 100%; display: block; }
+
+    .call-status {
+      margin-top: 12px; font-size: 0.78rem; color: var(--muted); font-weight: 550;
+    }
+    .call-status.live { color: var(--accent); }
+    .call-status.working { color: #9ec5ff; }
+
+    .call-body {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 12px 22px; min-height: 0; gap: 12px;
+    }
+
+    /* ONE card at a time */
+    .info-card {
+      width: 100%; max-width: 320px; border-radius: 18px;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 16px 16px 14px; animation: card-in 0.35s ease;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+    .info-card .tag {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .info-card .tag.speaking { color: var(--accent); }
+    .info-card .tag.final { color: #8fbf9e; }
+    .info-card .body {
+      font-size: 0.95rem; line-height: 1.5; color: var(--text);
+    }
+    .info-card .speaking-words .w { color: var(--muted); }
+    .info-card .speaking-words .w.past { color: var(--text); }
+    .info-card .speaking-words .w.on {
+      color: var(--karaoke); font-weight: 650;
+    }
+
+    /* Activity feed — display only, fills dead air */
+    .activity {
+      width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .activity .pill {
+      align-self: center; display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px; border-radius: 999px;
+      background: #121820; border: 1px solid #2a3a55;
+      font-size: 0.72rem; color: #9ec5ff; font-weight: 550;
+      animation: card-in 0.3s ease;
+    }
+    .activity .pill .spin {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 2px solid #2a3a55; border-top-color: var(--working);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .activity .feed {
+      background: rgba(18,24,32,0.7); border: 1px dashed #2a3a55;
+      border-radius: 14px; padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.7rem; color: #8aa0b8; line-height: 1.55;
+    }
+    .activity .feed .line { opacity: 0.55; }
+    .activity .feed .line.cur { opacity: 1; color: #cfe4ff; }
+    .activity .feed .line.cur::before { content: "› "; color: var(--working); }
+
+    .call-dock {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px calc(18px + env(safe-area-inset-bottom, 0px));
+      gap: 16px;
+    }
+    .call-dock .end {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: none; background: var(--danger); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    }
+    .call-dock .end svg { width: 24px; height: 24px; }
+    .call-dock .timer-block {
+      text-align: center; flex: 1;
+    }
+    .call-dock .timer-block .t {
+      font-size: 0.95rem; font-weight: 650; font-variant-numeric: tabular-nums;
+      color: var(--text); letter-spacing: 0.02em;
+    }
+    .call-dock .timer-block .hint {
+      font-size: 0.65rem; color: var(--muted); margin-top: 2px;
+    }
+    .call-dock .msg {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .call-dock .msg svg { width: 22px; height: 22px; }
+
+    /* State visibility */
+    [data-show] { display: none !important; }
+    body[data-state="A"] [data-show~="A"],
+    body[data-state="B"] [data-show~="B"],
+    body[data-state="C"] [data-show~="C"],
+    body[data-state="D"] [data-show~="D"],
+    body[data-state="E"] [data-show~="E"],
+    body[data-state="F"] [data-show~="F"] {
+      display: block !important;
+    }
+    body[data-state="A"] .flex-show[data-show~="A"],
+    body[data-state="B"] .flex-show[data-show~="B"],
+    body[data-state="C"] .flex-show[data-show~="C"],
+    body[data-state="D"] .flex-show[data-show~="D"],
+    body[data-state="E"] .flex-show[data-show~="E"],
+    body[data-state="F"] .flex-show[data-show~="F"] {
+      display: flex !important;
+    }
+    body[data-state="A"] .inline-show[data-show~="A"],
+    body[data-state="B"] .inline-show[data-show~="B"],
+    body[data-state="C"] .inline-show[data-show~="C"],
+    body[data-state="D"] .inline-show[data-show~="D"],
+    body[data-state="E"] .inline-show[data-show~="E"],
+    body[data-state="F"] .inline-show[data-show~="F"] {
+      display: inline-flex !important;
+    }
+    body[data-state="A"] .inline-text[data-show~="A"],
+    body[data-state="B"] .inline-text[data-show~="B"],
+    body[data-state="C"] .inline-text[data-show~="C"],
+    body[data-state="D"] .inline-text[data-show~="D"],
+    body[data-state="E"] .inline-text[data-show~="E"],
+    body[data-state="F"] .inline-text[data-show~="F"] {
+      display: inline !important;
+    }
+
+    .hint {
+      max-width: 400px; text-align: center; font-size: 0.74rem;
+      color: #6b7280; line-height: 1.4; min-height: 2.8em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body data-state="A">
+  <div class="desk">
+    <div class="desk-label">
+      <h1>Chat + Call · Sesame pivot</h1>
+      <p>Default is chat. Live opens an isolated call screen. Text reply slides chat over the call.</p>
+    </div>
+
+    <div class="state-switcher" role="tablist" aria-label="Mockup states">
+      <button type="button" class="active" data-go="A" role="tab" aria-selected="true">A · Chat idle</button>
+      <button type="button" data-go="B" role="tab" aria-selected="false">B · Playing</button>
+      <button type="button" data-go="C" role="tab" aria-selected="false">C · Call working</button>
+      <button type="button" data-go="D" role="tab" aria-selected="false">D · Call speaking</button>
+      <button type="button" data-go="E" role="tab" aria-selected="false">E · Call final</button>
+      <button type="button" data-go="F" role="tab" aria-selected="false">F · Call→Chat</button>
+    </div>
+
+    <div class="phone" id="phone" aria-label="Pixel mockup, 390px">
+      <div class="notch"><span>9:41</span><span>Room of Devs</span></div>
+
+      <div class="stage">
+        <!-- ========== CHAT PANEL ========== -->
+        <div class="panel panel-chat" id="panel-chat">
+          <div class="grab" aria-hidden="true"></div>
+
+          <!-- Persistent live pin when messaging mid-call (F) -->
+          <div class="live-pin flex-show" data-show="F">
+            <button type="button" class="back-call" data-go="C" aria-label="Back to call">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              Call
+            </button>
+            <div class="chip">
+              <div class="mini-av" aria-hidden="true">
+                <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><circle cx="24" cy="28" r="2.5" fill="#3ecf8e"/><circle cx="40" cy="28" r="2.5" fill="#3ecf8e"/></svg>
+              </div>
+              Karai · live
+            </div>
+            <span class="timer">1:24</span>
+            <span class="spacer"></span>
+            <button type="button" class="hang" data-go="A">End</button>
+          </div>
+
+          <header class="chat-header">
+            <button type="button" class="icon-btn" aria-label="Collapse">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="av" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><path d="M18 22h28v6H18z" fill="#1a222c" opacity="0.7"/><circle cx="24" cy="28" r="2.5" fill="#3ecf8e"/><circle cx="40" cy="28" r="2.5" fill="#3ecf8e"/></svg>
+            </div>
+            <div class="who">
+              <div class="name">Karai</div>
+              <div class="sub">
+                <span class="dot ready inline-show" data-show="A B"></span>
+                <span class="dot live inline-show" data-show="F"></span>
+                <span class="inline-text" data-show="A B">tmux · reply ready</span>
+                <span class="inline-text" data-show="F">live · call continues</span>
+              </div>
+            </div>
+            <button type="button" class="go-live inline-show" data-show="A B" data-go="C" aria-label="Go live">
+              <span class="orb" aria-hidden="true"></span> Go live
+            </button>
+          </header>
+
+          <main class="thread" id="thread">
+            <div class="turn-meta">Earlier</div>
+            <div class="bubble you">
+              <p>Check why the tmux session lost its cwd.</p>
+            </div>
+            <div class="bubble agent">
+              <p>Found it — started from a stale path. Restarted with the project root.</p>
+              <button type="button" class="play inline-show" data-show="A B" aria-label="Play">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Play
+              </button>
+            </div>
+
+            <div class="turn-meta">Just now</div>
+            <div class="bubble you">
+              <p>Also fix the enqueue path while you're in there.</p>
+            </div>
+            <div class="bubble agent">
+              <p>Done. Enqueue resolves to the synced tts-server root. Want a daemon restart?</p>
+              <button type="button" class="play inline-show" data-show="A B" aria-label="Play final">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Play
+              </button>
+            </div>
+
+            <!-- Mid-call chat: no play buttons on history -->
+            <div data-show="F">
+              <div class="turn-meta" style="margin-top:6px">This turn · live</div>
+              <div class="bubble you">
+                <p>Yes — restart, then smoke-test with a short enqueue.</p>
+              </div>
+              <div class="bubble agent dim">
+                <p>I'll check the enqueue script first…</p>
+              </div>
+            </div>
+          </main>
+
+          <div class="now-playing flex-show" data-show="B">
+            <button type="button" class="pp" aria-label="Pause">
+              <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            </button>
+            <div class="meta">
+              <strong>Karai · final</strong>
+              <span>0:18 / 0:29</span>
+            </div>
+            <div class="bar" aria-hidden="true"><i></i></div>
+          </div>
+
+          <footer class="composer">
+            <div class="composer-row">
+              <textarea rows="1" placeholder="Reply to Karai…" aria-label="Reply"></textarea>
+              <button type="button" class="mic" aria-label="Dictate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
+              <button type="button" class="send" aria-label="Send">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </footer>
+        </div>
+
+        <!-- ========== CALL PANEL ========== -->
+        <div class="panel panel-call" id="panel-call">
+          <div class="call">
+            <div class="call-top">
+              <div class="name-chip">
+                <div class="mini" aria-hidden="true">
+                  <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><circle cx="24" cy="28" r="2.5" fill="#3ecf8e"/><circle cx="40" cy="28" r="2.5" fill="#3ecf8e"/></svg>
+                </div>
+                <strong>Karai</strong>
+                <span class="credits" title="Live synthesis burns credits">live · ~2 clips</span>
+              </div>
+
+              <div class="presence-avatar" data-show="D" aria-hidden="true">
+                <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><path d="M18 22h28v6H18z" fill="#1a222c" opacity="0.7"/><circle cx="24" cy="28" r="2.5" fill="#3ecf8e"/><circle cx="40" cy="28" r="2.5" fill="#3ecf8e"/></svg>
+              </div>
+              <div class="presence-avatar working-ring" data-show="C" aria-hidden="true">
+                <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><path d="M18 22h28v6H18z" fill="#1a222c" opacity="0.7"/><circle cx="24" cy="28" r="2.5" fill="#4a9eff"/><circle cx="40" cy="28" r="2.5" fill="#4a9eff"/></svg>
+              </div>
+              <div class="presence-avatar final-ring" data-show="E" aria-hidden="true">
+                <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#2a3440"/><circle cx="32" cy="26" r="12" fill="#5a6a78"/><ellipse cx="32" cy="52" rx="18" ry="14" fill="#4a5864"/><path d="M18 22h28v6H18z" fill="#1a222c" opacity="0.7"/><circle cx="24" cy="28" r="2.5" fill="#3ecf8e"/><circle cx="40" cy="28" r="2.5" fill="#3ecf8e"/></svg>
+              </div>
+
+              <div class="call-status working" data-show="C">working…</div>
+              <div class="call-status live" data-show="D">speaking</div>
+              <div class="call-status live" data-show="E">final · auto-playing</div>
+            </div>
+
+            <div class="call-body">
+              <!-- C: activity feed only (no synthesis) -->
+              <div class="activity flex-show" data-show="C">
+                <div class="pill"><span class="spin" aria-hidden="true"></span> Looking at the enqueue path</div>
+                <div class="feed" aria-live="polite">
+                  <div class="line">Read scripts/enqueue_manual.sh</div>
+                  <div class="line">Editing tts-server/src/ingest.ts</div>
+                  <div class="line cur">Running tsc --noEmit</div>
+                </div>
+              </div>
+
+              <!-- D: one intermediate card + karaoke -->
+              <div class="info-card" data-show="D">
+                <div class="tag speaking">Intermediate</div>
+                <div class="body speaking-words">
+                  <span class="w past">Path</span>
+                  <span class="w past">was</span>
+                  <span class="w past">hardcoded</span>
+                  <span class="w past">to</span>
+                  <span class="w on">~/.cursor/tts</span>
+                  <span class="w">—</span>
+                  <span class="w">patching</span>
+                  <span class="w">it</span>
+                  <span class="w">to</span>
+                  <span class="w">use</span>
+                  <span class="w">the</span>
+                  <span class="w">synced</span>
+                  <span class="w">root.</span>
+                </div>
+              </div>
+              <div class="activity flex-show" data-show="D" style="margin-top:4px">
+                <div class="pill" style="opacity:0.7"><span class="spin" aria-hidden="true"></span> Still editing ingest.ts</div>
+              </div>
+
+              <!-- E: final card -->
+              <div class="info-card" data-show="E">
+                <div class="tag final">Final</div>
+                <div class="body speaking-words">
+                  <span class="w past">Daemon</span>
+                  <span class="w past">restarted.</span>
+                  <span class="w past">Smoke</span>
+                  <span class="w on">test</span>
+                  <span class="w">passed</span>
+                  <span class="w">—</span>
+                  <span class="w">queue</span>
+                  <span class="w">file</span>
+                  <span class="w">moved</span>
+                  <span class="w">to</span>
+                  <span class="w">played.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="call-dock">
+              <button type="button" class="end" data-go="A" aria-label="End live">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.06-1.06a2 2 0 0 1 2.11-.45l2.07.82a2 2 0 0 1 1.32 1.91V19a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 3h3.09a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+              <div class="timer-block">
+                <div class="t">1:24</div>
+                <div class="hint">End live stops audio</div>
+              </div>
+              <button type="button" class="msg" data-go="F" aria-label="Send a text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint" id="hint">A — Chat idle: compact header, both-side history, play chips on agent bubbles. No transport row.</p>
+  </div>
+
+  <script>
+    (function () {
+      var hints = {
+        A: "A — Chat idle: compact header, both-side history, play chips on agent bubbles. No transport row.",
+        B: "B — Clip playing in chat: slim now-playing strip only. No hero circle / speed / prev-next.",
+        C: "C — Call view: avatar is presence. Activity feed fills dead air (display-only, free). One End live button.",
+        D: "D — Call speaking: one intermediate card with karaoke. Small activity pill below — still one focus.",
+        E: "E — Final landed on the call card; auto-plays. End live exits. No scrubber in call.",
+        F: "F — Message from call: chat slides in over the call. Live pin + hang-up stay; keyboard lives here only."
+      };
+      var callStates = { C: 1, D: 1, E: 1 };
+      var phone = document.getElementById("phone");
+      var buttons = document.querySelectorAll(".state-switcher button");
+      var hint = document.getElementById("hint");
+
+      function show(state) {
+        document.body.setAttribute("data-state", state);
+        var onCall = !!callStates[state];
+        // F shows chat over call (slide), still "live"
+        phone.classList.toggle("show-call", onCall);
+        phone.classList.toggle("live", onCall || state === "F");
+        buttons.forEach(function (b) {
+          var on = b.getAttribute("data-go") === state;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        hint.textContent = hints[state];
+        var thread = document.getElementById("thread");
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          show(btn.getAttribute("data-go"));
+        });
+      });
+
+      document.addEventListener("click", function (e) {
+        var t = e.target.closest("[data-go]");
+        if (!t || t.closest(".state-switcher")) return;
+        show(t.getAttribute("data-go"));
+      });
+
+      // Auto-grow textarea (concept only)
+      var ta = document.querySelector(".composer textarea");
+      if (ta) {
+        ta.addEventListener("input", function () {
+          ta.style.height = "40px";
+          ta.style.height = Math.min(ta.scrollHeight, 96) + "px";
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
