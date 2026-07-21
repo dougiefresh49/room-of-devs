@@ -2441,9 +2441,14 @@
       lastCardSig = null;
       return;
     }
+    // Precedence: audible speech wins; otherwise a NEW turn (working) must
+    // beat a lingering previous final — after a clip ends, audio.paused and
+    // isPhoneIdle stay true while the old now-playing record is still
+    // un-ended, so pending-before-working froze the old message on the card
+    // when a follow-up reply arrived.
     const speaking = speakingOnPhone(agent);
-    const pending = !speaking && finalPendingOnPhone(agent);
-    const working = !speaking && !pending && agent.state === "working";
+    const working = !speaking && agent.state === "working";
+    const pending = !speaking && !working && finalPendingOnPhone(agent);
     const activity = agent.live?.lastActivity;
     const tools = agent.live?.toolCount || 0;
     let mode;
@@ -2471,7 +2476,10 @@
       tagCls = "working";
       const label = activity?.label || "working";
       bodyHtml = `<div class="activity-row"><span>${escapeHtml(label)}</span><span class="cv-dots"><i>.</i><i>.</i><i>.</i></span></div>`;
-      if (tools) bodyHtml += `<div class="tool-count">${tools} tool${tools === 1 ? "" : "s"} so far</div>`;
+      const ackFresh =
+        ackFlash && ackFlash.sessionId === agent.sessionId && Date.now() < ackFlash.until;
+      if (ackFresh) bodyHtml += `<div class="tool-count">🔊 acknowledged</div>`;
+      else if (tools) bodyHtml += `<div class="tool-count">${tools} tool${tools === 1 ? "" : "s"} so far</div>`;
     } else {
       mode = "idle";
       tag = "Done";
@@ -2480,7 +2488,7 @@
       bodyHtml = text ? escapeHtml(text) : `<span style="color:var(--muted)">Listening…</span>`;
     }
 
-    const sig = `${mode}|${tag}|${tools}|${activity?.label || ""}|${(snapshot.nowPlaying?.text || "").slice(0, 40)}`;
+    const sig = `${mode}|${tag}|${tools}|${activity?.label || ""}|${ackFlash && Date.now() < ackFlash.until ? 1 : 0}|${(snapshot.nowPlaying?.text || "").slice(0, 40)}`;
     if (sig !== lastCardSig) {
       lastCardSig = sig;
       cvInfoCard.hidden = false;
@@ -2608,9 +2616,11 @@
     renderPlayer();
   }
 
+  let ackFlash = null; // { sessionId, until } — brief call-card beat on ack
   function handlePhoneAckFrame(ack) {
     if (!ack || !ack.at || ack.at === lastAckAt) return;
     lastAckAt = ack.at;
+    ackFlash = { sessionId: ack.sessionId, until: Date.now() + 4000 };
     const list = ackEvents[ack.sessionId] || (ackEvents[ack.sessionId] = []);
     list.push({ at: ack.at });
     if (ack.ackFile) {
