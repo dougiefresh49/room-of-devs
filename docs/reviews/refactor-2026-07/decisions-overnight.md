@@ -96,3 +96,75 @@ Not really "decisions" — codex found them, I verified and fixed all four:
    `""` as absent. Fixed: schema now requires non-empty (minLength 1).
 4. **Low** — `cp -R` fallback in the sync didn't mirror `rsync --delete`.
    Fixed: fallback now clears the target dir first.
+
+Kick off Phase 2 of the UI refactor.
+
+Context: read docs/spec-ui-refactor.md first — consensus spec, all 8 owner
+decisions answered inline; treat them as final. Session memory ("Refactor
+Mandate") has current status. Phases 0+1 are SHIPPED and DEPLOYED
+(fb2e845, 960c8de): @room/protocol exists (schemas, requestId/
+CommandResult on WS, snapshot rev), the daemon has command/transcript
+services, memoized snapshots, startup recovery, and fail-loud sync.
+Overnight judgment calls are logged in
+docs/reviews/refactor-2026-07/decisions-overnight.md — append to it if you
+make more.
+
+Phase 2 scope (shared client under the OLD UIs — no visual changes):
+
+1. packages/room-client: framework-free external store over PanelSnapshot
+   (@room/protocol types), selectors (selectVisibleAgents,
+   selectNowPlaying, selectGrantPending…), typed queries, and command
+   sending with requestId/CommandResult correlation (server support
+   already live). Grant optimism (the duplicated 25s PENDING_GRANT_MS
+   logic) moves in here, implemented once.
+2. WsTransport on reconnecting-websocket (backoff+jitter replaces the
+   panel's fixed 2s timer) and a revision-aware SSE/HTTP transport
+   (drop frames whose rev <= last applied; rev ships in every snapshot).
+3. Wire it beneath panel/src/main.ts FIRST: main.ts keeps its renderers
+   but consumes the room-client store + transport instead of its raw
+   WebSocket handling. Panel is Vite — direct workspace import.
+4. Mobile second, and only if it doesn't fight the no-build reality of
+   mobile.html: options are serving a small committed room-client bundle
+   via mobile-http (owner decision #5 allows committed dist) or deferring
+   mobile wiring to Phase 5. Triage with codex/grok, pick, and log the
+   decision — don't ask.
+
+Constraints: filesystem IPC and every credit guard untouched (mute-before-
+API, dedup, hold-one live buffer, locks, phone grants, mobile allowlist
+stays server-authoritative). Verification stays cheap-first: keyless runs,
+signal.ts replay, ONE short enqueue_manual.sh poke max after deploy. If
+live-mode behavior specifically needs end-to-end cover, use the bounded
+paid lane in CLAUDE.md (cheap-model team session, few clips, codex
+computer use drives the loop) instead of asking the owner to test.
+Behavior parity except the three intended changes: real reconnect backoff,
+rev-based stale-frame dropping, single grant-optimism source.
+
+Deploy mechanics: daemon changes via ~/.cursor/tts/scripts/tts-server.sh
+restart (fail-loud sync stages packages/protocol; if room-client is
+imported by the daemon for any reason — it shouldn't be — stop and
+reconsider). Panel changes need pnpm tauri build --debug in panel/ (cargo
+from ~/.rustup/toolchains/stable-aarch64-apple-darwin/bin), then
+./scripts/setup.sh (safe now — voice/SFX refresh is opt-in), then
+relaunch the RUNNING Room.app (setup.sh does not restart it).
+
+Verification gate: pnpm typecheck clean (all packages incl. room-client),
+pnpm check-fixtures, panel vite build, live WS checks (requestId round-
+trip, legacy untouched, reconnect: kill/restart daemon and watch backoff
+reconnect + rev-ordered recovery), codex review of the diff before deploy
+(codex-review skill; codex review takes NO custom prompt — use codex
+exec), codex-computer-use sanity pass of both UIs after deploy, compare
+against docs/reviews/refactor-2026-07/baseline/checklist.md.
+
+Delegation per the FULL CLAUDE.md rubric — use the whole roster, not just
+fable+cursor. The owner has ~98% of weekly codex (gpt-5.6) budget free and
+wants it leveraged: use Sol (codex -m, flagship tier) as a design partner
+on the room-client API (independent proposal or adversarial critique of
+yours before you build) and for the deep pre-deploy review; Terra (codex
+exec default) can implement well-specced chunks like the transports
+(reconnecting-WS wrapper, revision-aware SSE) against the protocol
+package. grok/composer via cursor-agent worktrees for mechanical pieces.
+Final call on architecture + anything touching credit guards stays with
+you in-session, and you own the merge — but codex is heavy-lifting
+capacity, not just the reviewer. When Phase 2 is deployed and verified:
+commit, update the Refactor Mandate memory and the decisions log, and
+stop — Phase 3 (tokens + leaf React islands) is the next session.
