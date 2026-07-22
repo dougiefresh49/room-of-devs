@@ -85,7 +85,19 @@ async function main(): Promise<void> {
       reject(new Error("ws test timeout"));
     }, 5000);
     let sawSnapshot = false;
-    let phase: "init" | "set" | "capture" | "swap" | "remove" = "init";
+    let phase:
+      | "init"
+      | "set"
+      | "capture"
+      | "clear-character"
+      | "set-action"
+      | "clear-action"
+      | "set-empty-clear"
+      | "empty-clear"
+      | "bad-name-null"
+      | "bad-both-set"
+      | "bad-empty-patch"
+      | "remove" = "init";
 
     ws.on("message", (data) => {
       const msg = JSON.parse(data.toString());
@@ -127,23 +139,70 @@ async function main(): Promise<void> {
       }
 
       if (phase === "capture" && msg.type === "error" && msg.code === "no_device") {
-        phase = "swap";
+        phase = "clear-character";
         ws.send(
           JSON.stringify({
             type: "set_button",
             idx: 4,
-            patch: { action: "replay" },
+            patch: { character: null },
           })
         );
         return;
       }
 
       if (
-        phase === "swap" &&
+        phase === "clear-character" &&
         msg.type === "buttons" &&
-        msg.buttons?.["4"]?.action === "replay" &&
         !msg.buttons?.["4"]?.character
       ) {
+        phase = "set-action";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: "replay" } }));
+        return;
+      }
+
+      if (phase === "set-action" && msg.type === "buttons" && msg.buttons?.["4"]?.action === "replay") {
+        phase = "clear-action";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: null } }));
+        return;
+      }
+
+      if (phase === "clear-action" && msg.type === "buttons" && !msg.buttons?.["4"]?.action) {
+        phase = "set-empty-clear";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: "replay" } }));
+        return;
+      }
+
+      if (phase === "set-empty-clear" && msg.type === "buttons" && msg.buttons?.["4"]?.action === "replay") {
+        phase = "empty-clear";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: "" } }));
+        return;
+      }
+
+      if (phase === "empty-clear" && msg.type === "buttons" && !msg.buttons?.["4"]?.action) {
+        phase = "bad-name-null";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { name: null } }));
+        return;
+      }
+
+      if (phase === "bad-name-null" && msg.type === "error" && msg.code === "bad_message") {
+        phase = "bad-both-set";
+        ws.send(
+          JSON.stringify({
+            type: "set_button",
+            idx: 4,
+            patch: { character: "Leonardo", action: "replay" },
+          })
+        );
+        return;
+      }
+
+      if (phase === "bad-both-set" && msg.type === "error" && msg.code === "bad_message") {
+        phase = "bad-empty-patch";
+        ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: {} }));
+        return;
+      }
+
+      if (phase === "bad-empty-patch" && msg.type === "error" && msg.code === "bad_message") {
         phase = "remove";
         ws.send(JSON.stringify({ type: "remove_button", idx: 4 }));
         return;
@@ -168,7 +227,8 @@ async function main(): Promise<void> {
   console.log("panel-ws-buttons test OK:");
   console.log("  - get_buttons returns empty map");
   console.log("  - set_button roundtrips + persists color/notes to arcade_buttons.json");
-  console.log("  - character/action exclusivity (action clears character)");
+  console.log("  - null clears character and action; empty string still clears action");
+  console.log("  - name:null, both character+action, and empty patches return bad_message");
   console.log("  - learn_capture → no_device when encoder unavailable");
   console.log("  - remove_button deletes mapping");
   console.log("  - captureNextPress arm/disarm returns null without device");

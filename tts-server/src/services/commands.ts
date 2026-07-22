@@ -243,6 +243,10 @@ function isOptionalString(v: unknown): v is string | undefined {
   return v === undefined || typeof v === "string";
 }
 
+function isOptionalNullableString(v: unknown): v is string | null | undefined {
+  return v === undefined || v === null || typeof v === "string";
+}
+
 export function parseButtonPatch(raw: unknown): ButtonPatch | "bad_message" {
   if (!isPlainObject(raw)) return "bad_message";
   const keys = Object.keys(raw);
@@ -251,11 +255,19 @@ export function parseButtonPatch(raw: unknown): ButtonPatch | "bad_message" {
   const patch = raw as Record<string, unknown>;
   if (
     !isOptionalString(patch.name) ||
-    !isOptionalString(patch.character) ||
-    !isOptionalString(patch.action) ||
-    !isOptionalString(patch.hold_action) ||
-    !isOptionalString(patch.color) ||
-    !isOptionalString(patch.notes)
+    !isOptionalNullableString(patch.character) ||
+    !isOptionalNullableString(patch.action) ||
+    !isOptionalNullableString(patch.hold_action) ||
+    !isOptionalNullableString(patch.color) ||
+    !isOptionalNullableString(patch.notes)
+  ) {
+    return "bad_message";
+  }
+  if (
+    typeof patch.character === "string" &&
+    patch.character.length > 0 &&
+    typeof patch.action === "string" &&
+    patch.action.length > 0
   ) {
     return "bad_message";
   }

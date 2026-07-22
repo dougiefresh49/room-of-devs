@@ -81,6 +81,27 @@ Legend: ☑ captured with screenshot · ◐ observed/asserted, no dedicated shot
   `command_result` frames on the WS path. All additive; both UIs ignore them
   today.
 
+## Phase 4a deltas (2026-07-22 — deliberate; see decisions-overnight.md)
+
+- **LIVE chip is NEW**: cards (and the dock spotlight) show a green
+  pulsing "LIVE" chip when daemon live mode is on for that agent
+  (`agent.live.on`) — owner decision #3, indicator only.
+- **Cluster-gap clicks inside the swap POPOVER no longer reach the
+  grant/PTT gesture** (React-tree bubbling from the portal was a new
+  attack path; two firewalls added). Baseline behavior for everything
+  else unchanged.
+- **Speed slider sends ONE set_setting per adjustment** (legacy could
+  double-send on change+pointerup).
+- **Settings button name/notes fields refresh from server updates**
+  (uncontrolled inputs remount on authoritative value change; legacy
+  rebuilt them every render and lost focus).
+- **Button assign/unassign now PERSISTS server-side** — the null-clear
+  wire fix (CLAUDE.md Known issue resolved).
+- Spotlight enter animation now replays on message change via remount
+  (visually identical 280ms slide).
+- Renderer is a React tree; every DOM class/structure otherwise mirrors
+  the legacy templates on purpose (parity contract).
+
 ## Phase 3 deltas (2026-07-22 — deliberate, owner-decided; see decisions-overnight.md)
 
 - **Accent green is now `#3ecf8e`** (was `#49d99a`, dock-live also had

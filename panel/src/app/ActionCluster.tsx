@@ -17,14 +17,16 @@ import {
 /**
  * Per-agent action strip (room card hover, dock hover, dock spotlight).
  * Mirrors the legacy actionButtonsHtml modes exactly:
- *   live    → pause/resume, stop, restart
+ *   stage   → pause/resume, stop, restart (someone is on the Mac lipsync
+ *             stage — renamed from "live", which collides with daemon
+ *             live mode)
  *   summary → replay, replay-slower, jump-to-terminal (team only)
  *   idle    → terminal, end-session (2-click arm), status, replay-last, swap
  * Kill-arm DECISION logic (arm vs confirm) belongs to the caller; this
  * component only reports clicks and renders the armed state. The swap
  * popover is Radix-positioned (replaces the legacy fixed-position math).
  */
-export type ClusterMode = "live" | "summary" | "idle";
+export type ClusterMode = "stage" | "summary" | "idle";
 export type ClusterAction =
   | "focus"
   | "status"
@@ -64,7 +66,7 @@ function hideBrokenAvatar(e: SyntheticEvent<HTMLImageElement>) {
 export function ActionCluster(props: ActionClusterProps) {
   const { mode, isTeam, paused, killArmed, swapOpen, personas, onAction, onSwapOpenChange, onSwapCharacter } = props;
 
-  if (mode === "live") {
+  if (mode === "stage") {
     return (
       <>
         <ClusterBtn
@@ -158,6 +160,14 @@ export function ActionCluster(props: ActionClusterProps) {
           collisionPadding={8}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => e.preventDefault()}
+          // Portaled content still bubbles synthetic events through the
+          // REACT tree — without these stops, a click on popover padding
+          // would reach the card's grant/PTT handlers (Sol #8). data-no-grant
+          // is the second belt: the gesture rejects targets inside it.
+          data-no-grant=""
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {personas.map((p) => (
             <button
@@ -184,9 +194,9 @@ export function ActionCluster(props: ActionClusterProps) {
 }
 
 /**
- * Legacy `.icon-btn` buttons stop mousedown propagation so the card's
- * grant/PTT hold detector (still legacy-owned) never fires from a button
- * press — same contract as bindHoverActions had.
+ * `.icon-btn` buttons stop mousedown/click propagation so the card's
+ * grant/PTT hold detector (usePttGrant on the card element) never fires
+ * from a button press — same contract as bindHoverActions had.
  */
 function ClusterBtn({
   className,

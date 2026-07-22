@@ -1,0 +1,377 @@
+/**
+ * Dock mode: speaker spotlight row + bottom avatar pill. DOM mirrors the
+ * legacy renderDock()/renderDockSpotlight()/renderDockAgent().
+ *
+ * Layout effect intentionally has NO dependency array: legacy re-ran
+ * enterDockMode() after every store change while docked (re-centering the
+ * pill bottom-center); the effect preserves that cadence. 4a keeps the
+ * in-window dock; 4b mounts this view in its own NSPanel window.
+ */
+import { useEffect, useLayoutEffect } from "react";
+import type { AgentView, NowPlaying, PanelSnapshot } from "@room/protocol";
+import { LiveBadge, SummaryText, stripMarkdown } from "@room/ui";
+import { isPhoneRoutedFrame, nowPlayingKey } from "@room/room-client";
+import { client } from "../client.js";
+import { platform } from "../platform/tauri.js";
+import { dragRegionMouseDown } from "./drag.js";
+import { ActionCluster, type ClusterMode } from "./ActionCluster.js";
+import { AvatarImg } from "./AvatarImg.js";
+import { clusterMode, handleClusterAction } from "./cluster-actions.js";
+import { latestCrossRealmPending } from "./grant-guard.js";
+import { IconCc, IconExpand } from "./icons.js";
+import { PERSONAS, personaAvatarSrc } from "./personas.js";
+import { setSwapOpen, type IslandUiState } from "./ui-state.js";
+import {
+  dismissSummary,
+  dockHoverEnter,
+  dockHoverLeave,
+  setDockMode,
+  toggleCaptions,
+  toggleDockSummaryExpanded,
+  type ViewState,
+} from "./view-state.js";
+import { usePttGrant } from "./usePttGrant.js";
+
+const PERSONA_OPTIONS = PERSONAS.map((p) => ({
+  name: p.name,
+  label: p.label,
+  avatarSrc: personaAvatarSrc(p),
+}));
+
+const DOCK_AVATAR_STEP = 44;
+const DOCK_PADDING = 54;
+const DOCK_EXPAND_WIDTH = 30;
+const DOCK_EXPANDED_WIDTH = 520;
+const DOCK_COMPACT_HEIGHT = 126;
+// Speaker spotlight row (big avatar + always-on actions + bubble) above the pill.
+const DOCK_SPOTLIGHT_HEIGHT = 236;
+const DOCK_SPOTLIGHT_EXPANDED = 300;
+
+const stateLabels: Record<AgentView["state"], string> = {
+  working: "working",
+  hand_raised: "hand raised",
+  speaking: "speaking",
+  idle: "idle",
+};
+
+interface Spotlight {
+  agent?: AgentView;
+  onStage: boolean;
+  bubble: boolean;
+  loading: boolean;
+}
+
+interface DockViewProps {
+  snapshot: PanelSnapshot | null;
+  connected: boolean;
+  staleSessions: ReadonlySet<string>;
+  view: ViewState;
+  ui: IslandUiState;
+}
+
+/** Most recent pending grant — the one the dock spotlight stages. Checks
+ *  this realm's optimism first, then the cross-realm marker belt (a grant
+ *  fired from the other window just before a mode switch — Sol review). */
+function latestPendingGrantSessionId(): string | null {
+  let latest: string | null = null;
+  for (const sessionId of client.getState().pendingGrants.keys()) latest = sessionId;
+  return latest ?? latestCrossRealmPending();
+}
+
+// The speaker spotlight replaces both the centered caption bubble and the
+// in-pill scale-pop: while someone speaks (or their last summary lingers),
+// a dedicated row above the pill holds a big flapping avatar, an always-on
+// action row, and the bubble to its right. Pending grants stage immediately.
+function dockSpotlight(
+  agents: AgentView[],
+  nowPlaying: NowPlaying | null,
+  connected: boolean,
+  view: ViewState,
+): Spotlight | null {
+  const pendingSessionId = latestPendingGrantSessionId();
+  if (pendingSessionId) {
+    const agent = agents.find((a) => a.sessionId === pendingSessionId);
+    if (agent) return { agent, onStage: false, bubble: false, loading: true };
+  }
+
+  const np = nowPlaying;
+  if (!np || np.kind === "ack" || isPhoneRoutedFrame(np)) return null;
+  const agent = agents.find((a) => a.sessionId === np.sessionId);
+  const onStage = !np.endedAt && !!agent && connected;
+  const bubble =
+    view.dockCaptions && !!np.text && view.dockSummaryDismissedKey !== nowPlayingKey(np);
+  if (!onStage && !bubble) return null;
+  return { agent, onStage, bubble, loading: false };
+}
+
+export function DockView({ snapshot, connected, staleSessions, view, ui }: DockViewProps) {
+  const agents = snapshot?.agents ?? [];
+  const nowPlaying = snapshot?.nowPlaying ?? null;
+  const spot = dockSpotlight(agents, nowPlaying, connected, view);
+
+  // Live speaker pops out of the pill — one avatar on stage, not two.
+  const pillAgents =
+    spot?.onStage && spot.agent
+      ? agents.filter((a) => a.sessionId !== spot.agent!.sessionId)
+      : agents;
+
+  const pillCount = Math.max(pillAgents.length, 1);
+  const compactWidth = pillCount * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
+  const width = spot ? Math.max(compactWidth, DOCK_EXPANDED_WIDTH) : compactWidth;
+  const height = !spot
+    ? DOCK_COMPACT_HEIGHT
+    : view.dockSummaryExpanded
+      ? DOCK_SPOTLIGHT_EXPANDED
+      : DOCK_SPOTLIGHT_HEIGHT;
+
+  // No deps: re-assert dock geometry after every committed render (legacy
+  // cadence — see file header). Layout effect: the native resize must start
+  // before paint or the full-size window flashes. Cleanup restores the
+  // saved frame on exit.
+  useLayoutEffect(() => {
+    void platform.enterDockLayout(width, height);
+  });
+  useEffect(() => {
+    return () => {
+      void platform.exitDockLayout();
+    };
+  }, []);
+
+  return (
+    <main
+      className={`dock-shell drag-region${connected ? "" : " disconnected"}`}
+      data-tauri-drag-region
+      onMouseDown={dragRegionMouseDown}
+    >
+      {spot ? (
+        <DockSpotlight spot={spot} nowPlaying={nowPlaying} view={view} ui={ui} paused={snapshot?.paused === true} />
+      ) : null}
+      <div className="dock-pill" data-tauri-drag-region>
+        <button
+          type="button"
+          className={`icon-btn dock-caption-toggle no-drag${view.dockCaptions ? " active" : ""}`}
+          title={view.dockCaptions ? "Hide captions" : "Show captions"}
+          aria-pressed={view.dockCaptions}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleCaptions();
+          }}
+        >
+          <IconCc />
+        </button>
+        <div className="dock-avatars">
+          {pillAgents.length ? (
+            pillAgents.map((agent) => (
+              <DockAgent
+                key={agent.sessionId}
+                agent={agent}
+                connected={connected}
+                stale={staleSessions.has(agent.sessionId)}
+                triageFocus={snapshot?.triageFocus === agent.sessionId}
+                hovered={view.dockHoverSessionId === agent.sessionId}
+                paused={snapshot?.paused === true}
+                ui={ui}
+              />
+            ))
+          ) : (
+            <span className="dock-empty">No agents</span>
+          )}
+        </div>
+        <button
+          type="button"
+          className="icon-btn dock-expand no-drag"
+          title="Expand room"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setDockMode(false);
+          }}
+        >
+          <IconExpand />
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function DockAgent({
+  agent,
+  connected,
+  stale,
+  triageFocus,
+  hovered,
+  paused,
+  ui,
+}: {
+  agent: AgentView;
+  connected: boolean;
+  stale: boolean;
+  triageFocus: boolean;
+  hovered: boolean;
+  paused: boolean;
+  ui: IslandUiState;
+}) {
+  const gesture = usePttGrant(agent.sessionId);
+  const greyed = !connected || stale;
+  const mode = clusterMode(agent.sessionId);
+  const displayName = agent.label ?? agent.name;
+
+  return (
+    <div
+      className={`dock-agent state-${agent.state}${greyed ? " disconnected" : ""}${stale ? " stale" : ""}${triageFocus ? " triage-focus" : ""}${hovered ? " hover-intent" : ""}`}
+      data-session={agent.sessionId}
+      onMouseEnter={() => dockHoverEnter(agent.sessionId)}
+      onMouseLeave={() => dockHoverLeave(agent.sessionId)}
+    >
+      <button
+        type="button"
+        className="dock-avatar-btn"
+        title={`${displayName} - ${stateLabels[agent.state]}`}
+        aria-label={`${displayName}, ${stateLabels[agent.state]}`}
+        {...gesture}
+      >
+        <span className="dock-ring">
+          <AvatarImg agent={agent} imgClassName="avatar dock-avatar" fallbackClassName="avatar-fallback dock-fallback" />
+        </span>
+        {agent.raisedCount > 0 ? (
+          <span className="dock-badge" title={`${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting`}>
+            {agent.raisedCount}
+          </span>
+        ) : null}
+      </button>
+      <div className={`dock-actions actions-${mode === "stage" ? 3 : 5}`} aria-label="Agent actions">
+        <ActionCluster
+          mode={mode}
+          isTeam={agent.isTeam}
+          paused={paused}
+          killArmed={ui.killArmed.has(agent.sessionId)}
+          swapOpen={ui.swapOpen === agent.sessionId}
+          personas={PERSONA_OPTIONS}
+          onAction={(action) => handleClusterAction(agent.sessionId, action)}
+          onSwapOpenChange={(open) => setSwapOpen(open ? agent.sessionId : null)}
+          onSwapCharacter={(character) => {
+            client.send({ type: "set_voice", sessionId: agent.sessionId, character });
+            setSwapOpen(null);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DockSpotlight({
+  spot,
+  nowPlaying,
+  view,
+  ui,
+  paused,
+}: {
+  spot: Spotlight;
+  nowPlaying: NowPlaying | null;
+  view: ViewState;
+  ui: IslandUiState;
+  paused: boolean;
+}) {
+  const { agent, onStage, bubble, loading } = spot;
+
+  let column: React.ReactNode = null;
+  if (agent) {
+    // Keyed by staged message: remount replays the 280ms slide-in CSS
+    // animation exactly when the legacy time-window logic showed it —
+    // without mutating refs or reading clocks during render.
+    const enterKey = loading
+      ? `pending:${agent.sessionId}`
+      : nowPlaying
+        ? `${nowPlaying.sessionId}:${nowPlaying.startedAt}`
+        : agent.sessionId;
+    const mode: ClusterMode | null = loading ? null : onStage ? "stage" : "summary";
+    column = (
+      <div key={enterKey} className="spotlight-col no-drag spotlight-enter" data-session={agent.sessionId}>
+        {mode ? (
+          <div className="spotlight-actions" aria-label="Speaker actions">
+            <ActionCluster
+              mode={mode}
+              isTeam={agent.isTeam}
+              paused={paused}
+              killArmed={ui.killArmed.has(agent.sessionId)}
+              swapOpen={ui.swapOpen === agent.sessionId}
+              personas={PERSONA_OPTIONS}
+              onAction={(action) => handleClusterAction(agent.sessionId, action)}
+              onSwapOpenChange={(open) => setSwapOpen(open ? agent.sessionId : null)}
+              onSwapCharacter={(character) => {
+                client.send({ type: "set_voice", sessionId: agent.sessionId, character });
+                setSwapOpen(null);
+              }}
+            />
+          </div>
+        ) : null}
+        <span
+          className={`spotlight-ring${onStage ? " on-stage" : ""}${loading ? " loading" : ""}`}
+          data-character={(agent.character ?? "default").toLowerCase()}
+        >
+          <AvatarImg
+            agent={agent}
+            imgClassName="avatar spotlight-avatar"
+            fallbackClassName="avatar-fallback spotlight-fallback"
+          />
+        </span>
+        <LiveBadge live={agent.live} />
+      </div>
+    );
+  }
+
+  let bubbleNode: React.ReactNode = null;
+  if (bubble && nowPlaying) {
+    const name = agent?.label ?? agent?.name ?? "Room";
+    const raw = (nowPlaying.rawText?.trim() || nowPlaying.text).trim();
+    bubbleNode = (
+      <button
+        type="button"
+        className={`dock-caption no-drag${view.dockSummaryExpanded ? " expanded" : ""}${nowPlaying.endedAt ? " ended" : ""}`}
+        aria-expanded={view.dockSummaryExpanded}
+        title={view.dockSummaryExpanded ? "Collapse summary" : "Expand summary"}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleDockSummaryExpanded();
+        }}
+      >
+        <span className="dock-caption-name">{name}</span>
+        <span
+          className="dock-caption-close"
+          title="Dismiss"
+          aria-hidden="true"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dismissSummary(nowPlayingKey(nowPlaying));
+          }}
+        >
+          <IconCloseInline />
+        </span>
+        <span className="dock-caption-summary">
+          {view.dockSummaryExpanded ? <SummaryText text={raw} /> : stripMarkdown(raw)}
+        </span>
+      </button>
+    );
+  }
+
+  return <div className="dock-spotlight">{column}{bubbleNode}</div>;
+}
+
+// The caption ✕ is a span INSIDE the caption button (a button can't nest a
+// button); same shape as the legacy template.
+function IconCloseInline() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}

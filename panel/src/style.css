@@ -609,6 +609,31 @@ button,
   color: color-mix(in srgb, var(--room-accent) 55%, var(--room-text));
 }
 
+/* Daemon live-mode indicator (owner decision #3: indicator only). */
+.chip.live-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-color: color-mix(in srgb, var(--room-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--room-accent) 14%, transparent);
+  color: color-mix(in srgb, var(--room-accent) 70%, var(--room-text));
+}
+
+.chip.live-mode .live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--room-accent);
+  animation: live-dot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 .card-actions {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2201,7 +2226,7 @@ button,
   overflow: visible;
 }
 
-.spotlight-ring.live {
+.spotlight-ring.on-stage {
   border-color: var(--green);
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.45),

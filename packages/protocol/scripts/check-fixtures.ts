@@ -50,6 +50,21 @@ commands.forEach((cmd, i) =>
   check(`commands.json[${i}] (${(cmd as any)?.type})`, CommandSchema, cmd)
 );
 
+// Negative cases: these must FAIL validation (the daemon rejects them as
+// bad_message; the schema mirrors that so clients learn at the boundary).
+const invalidCommands = JSON.parse(
+  readFileSync(join(fixturesDir, "invalid-commands.json"), "utf-8")
+) as unknown[];
+invalidCommands.forEach((cmd, i) => {
+  const result = v.safeParse(CommandSchema, cmd);
+  if (!result.success) {
+    console.log(`ok   invalid-commands.json[${i}] rejected (${(cmd as any)?.type})`);
+  } else {
+    failures++;
+    console.error(`FAIL invalid-commands.json[${i}] unexpectedly ACCEPTED`);
+  }
+});
+
 const events = JSON.parse(
   readFileSync(join(fixturesDir, "events.json"), "utf-8")
 ) as unknown[];

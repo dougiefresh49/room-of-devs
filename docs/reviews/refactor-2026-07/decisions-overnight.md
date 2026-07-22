@@ -9,6 +9,120 @@ decision + why → how to reverse if you disagree.**
 
 ---
 
+## Phase 4a (desktop React shell, single window) — 2026-07-22 evening
+
+Design: `phase4-shell-design.md` (my draft) → Sol adversarial critique
+(gpt-5.6-sol, high effort: 4 blockers, 13 majors — resolutions table in
+that doc) → implementation → Sol deep pre-deploy diff review (1 blocker,
+7 majors, 3 minors — ALL fixed before deploy, see below). Terra
+(gpt-5.6-terra) implemented the server button-null fix + PickerView/
+SettingsView against written specs; shell architecture, stores, stage
+engine, gesture, and merges in-session.
+
+### What shipped
+
+- main.ts (2508 lines) + the Phase 3 portal seam (host.tsx/syncIslands/
+  placeholder contract) DELETED; real component tree: App / RoomView /
+  AgentCard / DockView / PickerView / SettingsView over external stores
+  (view-state.ts, server-data.ts — legacy timer/error semantics moved
+  verbatim, incl. per-surface writable flags, learn-capture 15s window,
+  toast 2000/2600ms belts, dock hover 250ms grace).
+- Lipsync/blink → stage/ engine: ONE rAF loop + ref registry, 70ms
+  watchdog when rAF stalls >150ms (WebKit rAF in a non-key NSPanel is
+  unproven — Sol), SIGSTOP pause-anchor arithmetic preserved, blink
+  restore-not-replay on wake, React never owns img src (engine sets the
+  first frame synchronously at ref registration).
+- Grant/PTT gesture → usePttGrant on the card/dock-avatar-btn: refs-only
+  state, exactly-one `ptt stop` on unmount/blur/visibility/pointercancel,
+  event firewall extended with [data-no-grant] (portaled Radix popover
+  content bubbles through the REACT tree — clicks on popover padding
+  would have armed PTT; two belts now: PopoverContent stops
+  pointerdown/mousedown/click + firewall rejects [data-no-grant]).
+- Platform adapter (`platform/tauri.ts`) — the only importer of
+  @tauri-apps/*; dock geometry + corner snap moved behind it; snap
+  no-ops when the window is hidden (4b: both realms get the HID event).
+- Stage-vocab rename per spec: isSessionLive → isStageActive /
+  isSpotlightWorthy, ClusterMode "live" → "stage",
+  `.spotlight-ring.live` → `.on-stage`. NEW LiveBadge (@room/ui) reads
+  `agent.live` — card chips row + dock spotlight (owner decision #3,
+  indicator only).
+- **Button-patch null bug FIXED both sides** (the one sanctioned daemon
+  change, daemon deployed first): protocol ButtonPatchSchema strict +
+  nullable clearable fields (name NOT nullable; character+action both
+  non-empty rejected; {} rejected) with negative fixtures + checker
+  support; server parseButtonPatch accepts null=clear, applyButtonPatch
+  null-safe; test-panel-ws-buttons.ts extended (null clears character/
+  action end-to-end over WS — PASSED).
+- Cross-realm grant belt (grant-guard.ts): localStorage markers so 4b's
+  two realms can't double-dispatch a grant around a mode switch; markers
+  settle the moment this realm's RoomClient optimism clears (Sol deploy
+  review BLOCKER: naive 25s TTL would have pinned spinners and blocked
+  legitimate re-grants). Daemon claim markers stay the billing authority.
+- scripts/panel-dev-install.sh: build → stale-artifact check → install →
+  relaunch (v2-consensus dev install command).
+
+### Judgment calls (review in the morning)
+
+- **Kill-arm/swap state stays in the external ui-state store** rather
+  than React state — remounts no longer force it, but it's proven,
+  snapshot-pruned, and not worth churning.
+- **JSX mirrors legacy class names/structure exactly**; style.css rules
+  untouched except the .on-stage rename + new .chip.live-mode. Dead-CSS
+  sweep deferred until after 4b (Sol: dynamic `state-*`/`actions-*`
+  classes make a grep sweep unsafe; needs the allowlist).
+- **Toast stays the legacy single-toast model** (sonner stays vendored,
+  unused).
+- **Settings name/notes inputs are uncontrolled with value-keyed
+  remounts** — a server update refreshes them unless you're mid-edit of
+  that very field (single-user tool; legacy lost focus entirely here).
+- **Speed slider**: drag is local preview; ONE deduped commit on
+  pointer-up/cancel/blur/key-up (legacy double-sent on change+pointerup).
+- **Spotlight enter animation** now replays via keyed remount per staged
+  message instead of a 280ms wall-clock class window (render-pure).
+- **Tailwind policy formalized** (Phase 3 deferral): no global preflight
+  permanently; tokens unlayered → Tailwind theme/utilities layered →
+  app CSS unlayered wins; primitives carry their own scoped resets.
+
+### Deploy + verification
+
+- Gates: workspace typecheck, check-fixtures (incl. new negative cases),
+  panel vite build, verify-live.ts 9/9, buttons WS test.
+- Daemon deployed via tts-server.sh restart (button fix live).
+- Panel: pnpm tauri build --debug → install → relaunch
+  (scripts/panel-dev-install.sh).
+- codex computer-use, 3 rounds, ONE paid grant total (~jellyfin's queued
+  update; exactly one grant_floor → gemini → elevenlabs in the log):
+  - PASS with evidence: room grid, NEW LIVE badge (staged free via a fake
+    session tailing an EMPTY transcript — the daemon's no-transcript
+    guard kills live for sessions without one, so the empty file is the
+    no-spend trick), queued previews, transport single-fire (2 clicks =
+    2 log lines), replay single-fire, swap popover (7 personas), popover
+    PADDING click fires no ptt/grant (the new firewall), outside-click
+    dismiss, grant single-fire + loading ring, settings general/buttons,
+    **button assign→unassign→restore persisted correctly in
+    arcade_buttons.json (null fix proven live)**, picker + flags, rename
+    single set_nickname, dock enter/hover/captions/expand, character
+    swap via persona chip → avatar art remounts (engine re-registration
+    path), **mouth flaps visibly alternate + smooth under the rAF
+    engine** during a free cached replay.
+  - False alarms triaged, all legacy parity: "gray avatars" =
+    default/idle.png IS a solid gray square and no session had a
+    character (engine verified working via DOM probe: src set, 200,
+    naturalWidth 64); kill-arm "failure" = codex clicked the correctly
+    DISABLED kill button on a non-team card (no team session existed to
+    test arming; logic verbatim from Phase 3's verified pass);
+    rename-to-empty rejected server-side (legacy behavior).
+  - Not visually confirmed: blink (130ms frame, missed by ~5fps
+    screenshot sampling; rides the same tick loop as the verified
+    flaps). Settings buttons rows with lowercase character values show
+    "Unassigned" in the dropdown — pre-existing legacy quirk (case
+    mismatch vs capitalized option values), unchanged.
+  - All test state cleaned: fake live session (state file + live entry +
+    empty transcript) removed, session_voices.json restored (Leonardo
+    swap reverted), TestNick nickname cleared.
+
+---
+
 ## Phase 3 (tokens + leaf React islands, panel only) — 2026-07-22 daytime
 
 ### Verification outcome (deployed same day)

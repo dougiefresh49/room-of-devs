@@ -158,7 +158,7 @@ function applyButtonPatch(existing: ArcadeButton | undefined, patch: ButtonPatch
     return "bad_message";
   }
   if (patch.character !== undefined) {
-    const c = patch.character.trim();
+    const c = (patch.character ?? "").trim();
     if (c && !isKnownCharacter(c)) return "bad_message";
     if (c) {
       merged.character = c;
@@ -168,7 +168,7 @@ function applyButtonPatch(existing: ArcadeButton | undefined, patch: ButtonPatch
     }
   }
   if (patch.action !== undefined) {
-    const a = patch.action.trim();
+    const a = (patch.action ?? "").trim();
     if (a && !isValidAction(a)) return "bad_message";
     if (a) {
       merged.action = a;
@@ -178,19 +178,19 @@ function applyButtonPatch(existing: ArcadeButton | undefined, patch: ButtonPatch
     }
   }
   if (patch.hold_action !== undefined) {
-    const h = patch.hold_action.trim();
+    const h = (patch.hold_action ?? "").trim();
     if (h && !isValidAction(h)) return "bad_message";
     if (h) merged.hold_action = h;
     else delete merged.hold_action;
   }
   if (patch.color !== undefined) {
-    const col = patch.color.trim();
+    const col = (patch.color ?? "").trim();
     if (col && !isValidArcadeColor(col)) return "bad_message";
     if (col) merged.color = col;
     else delete merged.color;
   }
   if (patch.notes !== undefined) {
-    const notes = patch.notes.trim();
+    const notes = (patch.notes ?? "").trim();
     if (notes) merged.notes = notes;
     else delete merged.notes;
   }

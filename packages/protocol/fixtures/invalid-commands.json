@@ -1,0 +1,6 @@
+[
+  { "type": "set_button", "idx": 4, "patch": {} },
+  { "type": "set_button", "idx": 4, "patch": { "name": null } },
+  { "type": "set_button", "idx": 4, "patch": { "character": "Leonardo", "action": "replay" } },
+  { "type": "set_button", "idx": 4, "patch": { "bogus": "key" } }
+]

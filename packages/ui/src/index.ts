@@ -22,6 +22,7 @@ export * from "./primitives/toggle-group.js";
 export * from "./primitives/tooltip.js";
 export * from "./primitives/toast.js";
 
+export * from "./components/LiveBadge.js";
 export * from "./components/StateBadge.js";
 export * from "./components/AgentChips.js";
 export * from "./components/QueuedPreview.js";

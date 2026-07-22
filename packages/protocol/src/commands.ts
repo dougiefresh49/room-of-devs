@@ -41,14 +41,39 @@ const spawnFlags = {
   model: v.optional(SpawnModelSchema),
 };
 
-export const ButtonPatchSchema = v.object({
-  name: v.optional(v.string()),
-  character: v.optional(v.string()),
-  action: v.optional(v.string()),
-  hold_action: v.optional(v.string()),
-  color: v.optional(v.string()),
-  notes: v.optional(v.string()),
-});
+/**
+ * Arcade-button mapping patch. `undefined` leaves a field alone; `null`
+ * (or `""`) clears it — the panel has always sent null to unassign, and
+ * as of Phase 4 the server honors it (pre-4 it rejected null as
+ * bad_message; see decisions-overnight.md). `name` is NOT clearable —
+ * a mapped button always has a display name.
+ *
+ * Deliberately STRICT (unlike the forward-compatible snapshot schemas):
+ * commands flow client → server and the server's parseButtonPatch rejects
+ * unknown keys, empty patches, and character+action both set — the schema
+ * mirrors that so every client learns the contract at the boundary.
+ */
+export const ButtonPatchSchema = v.pipe(
+  v.strictObject({
+    name: v.optional(v.string()),
+    character: v.optional(v.nullable(v.string())),
+    action: v.optional(v.nullable(v.string())),
+    hold_action: v.optional(v.nullable(v.string())),
+    color: v.optional(v.nullable(v.string())),
+    notes: v.optional(v.nullable(v.string())),
+  }),
+  v.check((p) => Object.keys(p).length > 0, "empty button patch"),
+  v.check(
+    (p) =>
+      !(
+        typeof p.character === "string" &&
+        p.character.length > 0 &&
+        typeof p.action === "string" &&
+        p.action.length > 0
+      ),
+    "character and action are mutually exclusive",
+  ),
+);
 export type ButtonPatch = v.InferOutput<typeof ButtonPatchSchema>;
 
 const sessionCommand = <T extends string>(type: T) =>
