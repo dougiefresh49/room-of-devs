@@ -463,11 +463,14 @@ async function handleRequest(
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     });
+    // Subscribe BEFORE the bootstrap write: a state change landing between
+    // the two would otherwise be missed until the next watched change.
+    // (Duplicate frames are harmless — clients rev-gate or last-writer-win.)
     const writeSnap = () => writeSse(res, buildPanelSnapshot());
-    writeSnap();
     sseClients.add(res);
     const unsub = subscribe(() => safe(writeSnap));
     sseUnsubs.add(unsub);
+    writeSnap();
     const heartbeat = setInterval(() => {
       try {
         res.write(": heartbeat\n\n");

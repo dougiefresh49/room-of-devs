@@ -13,6 +13,11 @@ long-lived — maintainability matters now (see Refactor status).
 - **Daemon** (`tts-server/`): Node + TypeScript run via `tsx` (no build
   step), chokidar file watching, `ws` for the panel WebSocket, SSE + plain
   HTTP for the mobile page. Playback via `ffplay`/`afplay`.
+- **Shared client** (`packages/room-client/`): framework-free store over
+  `PanelSnapshot` + WS/SSE transports ((epoch, rev)-gated snapshots,
+  requestId/CommandResult correlation, grant optimism). Bundled into the
+  panel by Vite; the daemon must NEVER import it. Mobile adopts it in the
+  Phase 5 SPA.
 - **AI**: Gemini (`@google/genai`, `gemini-3.1-flash-lite`) rewrites agent
   text into character voice; ElevenLabs streams TTS (billed per character —
   the expensive one).
@@ -282,4 +287,8 @@ changing `~/.cursor/tts/config.json`.
   panel. Audit references before deleting — hooks call into `scripts/`.
 - Cross-persona spawn race and subagent-finish announce filtering
   (docs/ideas-backlog.md).
+- Panel button assign/unassign silently no-ops: the panel sends `null` to
+  clear patch fields, `parseButtonPatch` rejects null (`bad_message`) —
+  pre-dates the refactor (4bf9724). Fix both sides deliberately; see the
+  Phase 2 entry in docs/reviews/refactor-2026-07/decisions-overnight.md.
 - No test suite; verification is manual/scripted per the section above.

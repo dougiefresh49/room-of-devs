@@ -46,6 +46,10 @@ export type { AgentView, PanelSnapshot };
  *  clients can drop stale/replayed frames (bootstrap vs stream ordering). */
 let snapshotRev = 0;
 
+/** Boot epoch: rev restarts with the process, so clients gate staleness on
+ *  (epoch, rev) — reset their rev baseline only when the epoch changes. */
+const snapshotEpoch = Date.now();
+
 // One memoized snapshot per revision: every subscriber (WS broadcast, each
 // SSE client, /snapshot GETs, command validation via sessionInSnapshot) used
 // to rebuild the whole thing independently. The cache is invalidated by any
@@ -294,6 +298,7 @@ export function buildPanelSnapshot(): PanelSnapshot {
   }
   cachedSnapshot = {
     rev: ++snapshotRev,
+    epoch: snapshotEpoch,
     agents: buildSnapshot(),
     nowPlaying: readNowPlaying(),
     roomHeld: isRoomHeld(),

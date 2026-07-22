@@ -17,10 +17,23 @@ import {
 // with Phase 0 of the UI refactor.
 import type {
   AgentView,
+  Command,
   NowPlaying,
+  PanelSnapshot,
   ResumableSession,
+  ServerEvent,
   SessionState,
 } from "@room/protocol";
+// Phase 2: connection, snapshot application ((epoch, rev)-gated), and grant
+// optimism live in the shared room-client store; this file keeps its
+// renderers and mirrors store state into the module vars they read.
+import {
+  RoomClient,
+  WsTransport,
+  isPhoneFrame,
+  isPhoneRoutedFrame,
+  nowPlayingKey,
+} from "@room/room-client";
 
 type AgentState = SessionState;
 
@@ -82,7 +95,6 @@ type ButtonColor = "white" | "blue" | "red" | "teal" | "yellow" | "green" | "bla
 type LearnMode = "rebind" | "add";
 
 const HOLD_MS = 300;
-const RECONNECT_MS = 2000;
 // Confirm window for the end-session button. 2s proved too short in practice:
 // a second click after disarm silently re-arms, which reads as "does nothing".
 const KILL_ARM_MS = 8000;
@@ -100,7 +112,6 @@ const DOCK_SPOTLIGHT_EXPANDED = 300;
 const DOCK_BOTTOM_GAP = 12;
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
 const SUMMARY_PANE_KEY = "roomSummaryPane";
-const PENDING_GRANT_MS = 25000;
 const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
 const LEARN_CAPTURE_MS = 15000;
 const PLAYBACK_MODES = ["auto", "announce", "silent"] as const;
@@ -110,12 +121,10 @@ const DYNAMIC_ACKS = ["always", "cached", "off"] as const;
 type ActionClusterMode = "live" | "summary" | "idle";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
-let ws: WebSocket | null = null;
 let connected = false;
 let agents: AgentView[] = [];
 const staleSessions = new Set<string>();
 const killArmed = new Map<string, ReturnType<typeof setTimeout>>();
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 let roomHeld = false;
@@ -126,29 +135,14 @@ let roomSummaryPane = localStorage.getItem(SUMMARY_PANE_KEY) === "1";
 let dockSummaryExpanded = false;
 // Bubble the user ✕-ed away; keyed per message so the next one re-appears.
 let dockSummaryDismissedKey: string | null = null;
-// Optimistic grant: spotlight/card loading until audio starts (or timeout).
 let playbackPaused = false;
 let pausedAtWall = 0;
-let pendingGrantSessionId: string | null = null;
-let pendingGrantAt = 0;
-/** nowPlaying key at grant click — keep loading while that same message is still live. */
-let pendingGrantBaselineKey: string | null = null;
 let spotlightEnterKey: string | null = null;
 let spotlightEnterUntil = 0;
 
-const summaryKey = (np: NowPlaying) => `${np.sessionId}:${np.startedAt}`;
-const PHONE_FRAME_STALE_MS = 5 * 60_000;
-
-function isPhoneRoutedFrame(np: NowPlaying | null): boolean {
-  return !!np && (np.kind === "live" || np.output === "phone");
-}
-
-function isPhoneFrame(np: NowPlaying | null): boolean {
-  if (!np || np.endedAt || !isPhoneRoutedFrame(np)) return false;
-  const startedAt = typeof np.startedAt === "number" ? np.startedAt : Date.parse(np.startedAt);
-  const age = Date.now() - startedAt;
-  return Number.isFinite(age) && age >= 0 && age <= PHONE_FRAME_STALE_MS;
-}
+// Phone-frame helpers + the message identity key now live in room-client's
+// selectors (shared with the future mobile SPA).
+const summaryKey = nowPlayingKey;
 
 // The chip's staleness belt is wall-clock-based but renders only happen on
 // snapshot pushes — a quiet room would freeze a visible chip forever. Expire
@@ -220,24 +214,29 @@ const icons = {
   folder: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h5l2 2h9a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/></svg>`,
 } as const;
 
-function send(msg: object) {
-  if (ws?.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(msg));
-  }
+// Token/port come from Tauri per connection attempt, so a daemon restart
+// (which rotates the token) reconnects cleanly. WsTransport tolerates this
+// provider rejecting (daemon down → no token file yet).
+async function wsUrl(): Promise<string> {
+  const config = await invoke<WsConfig>("ws_token");
+  return `ws://127.0.0.1:${config.port}/?token=${encodeURIComponent(config.token)}`;
 }
 
-function setConnected(up: boolean) {
-  connected = up;
-  if (!up) stopLipsyncLoop();
-  render();
+const client = new RoomClient(new WsTransport(wsUrl), { source: "desktop" });
+
+function send(msg: Command) {
+  client.send(msg);
 }
 
-function scheduleReconnect() {
-  if (reconnectTimer) return;
-  reconnectTimer = setTimeout(() => {
-    reconnectTimer = null;
-    connect();
-  }, RECONNECT_MS);
+function pendingGrantFor(sessionId: string): boolean {
+  return client.getState().pendingGrants.has(sessionId);
+}
+
+/** Most recent pending grant — the one the dock spotlight stages. */
+function latestPendingGrantSessionId(): string | null {
+  let latest: string | null = null;
+  for (const sessionId of client.getState().pendingGrants.keys()) latest = sessionId;
+  return latest;
 }
 
 type MouthFrame = "idle" | "speaking" | "mouth-mid" | "mouth-closed";
@@ -477,36 +476,6 @@ function isSessionLive(sessionId: string): boolean {
   return isStageWorthy(sessionId);
 }
 
-function clearPendingGrant() {
-  pendingGrantSessionId = null;
-  pendingGrantAt = 0;
-  pendingGrantBaselineKey = null;
-}
-
-/** Drop pending grant when audio starts, another speaker takes over, or timeout. */
-function syncPendingGrant() {
-  if (!pendingGrantSessionId) return;
-  if (Date.now() - pendingGrantAt > PENDING_GRANT_MS) {
-    clearPendingGrant();
-    return;
-  }
-  if (isPhoneRoutedFrame(nowPlaying)) {
-    clearPendingGrant();
-    return;
-  }
-  if (!nowPlaying || nowPlaying.endedAt || nowPlaying.kind === "ack") return;
-  // Same live message as when the user clicked — still waiting for the grant.
-  if (summaryKey(nowPlaying) === pendingGrantBaselineKey) return;
-  clearPendingGrant();
-}
-
-function setPendingGrant(sessionId: string) {
-  pendingGrantSessionId = sessionId;
-  pendingGrantAt = Date.now();
-  pendingGrantBaselineKey =
-    nowPlaying && !nowPlaying.endedAt && !isPhoneRoutedFrame(nowPlaying) ? summaryKey(nowPlaying) : null;
-}
-
 function actionClusterMode(sessionId: string): ActionClusterMode {
   return isSessionLive(sessionId) ? "live" : "idle";
 }
@@ -723,7 +692,7 @@ function renderCard(agent: AgentView): string {
   const displayName = escapeHtml(agent.label ?? agent.name);
   const safeName = escapeHtml(agent.name);
   const isRenaming = renamingSessionId === agent.sessionId;
-  const pending = pendingGrantSessionId === agent.sessionId;
+  const pending = pendingGrantFor(agent.sessionId);
   const grow = isStageWorthy(agent.sessionId) || pending;
   const mode = actionClusterMode(agent.sessionId);
   const nameHtml = isRenaming
@@ -947,10 +916,9 @@ function dockSpotlight(): {
   bubble: boolean;
   loading: boolean;
 } | null {
-  syncPendingGrant();
-
-  if (pendingGrantSessionId) {
-    const agent = agents.find((a) => a.sessionId === pendingGrantSessionId);
+  const pendingSessionId = latestPendingGrantSessionId();
+  if (pendingSessionId) {
+    const agent = agents.find((a) => a.sessionId === pendingSessionId);
     if (agent) return { agent, live: false, bubble: false, loading: true };
   }
 
@@ -1227,7 +1195,6 @@ function render() {
 
   app.classList.remove("dock-mode");
   document.body.classList.remove("dock-window");
-  syncPendingGrant();
   const connClass = connected ? "up" : "down";
   app.innerHTML = shellHtml(`
     <header class="strip drag-region" data-tauri-drag-region>
@@ -2056,10 +2023,12 @@ function spawnFlagChecked(key: string): boolean {
   }
 }
 
-function spawnModel(): string {
+function spawnModel(): "" | NonNullable<Extract<Command, { type: "spawn_session" }>["model"]> {
   try {
     const value = localStorage.getItem(SPAWN_FLAG_MODEL) ?? "";
-    return SPAWN_MODEL_CHOICES.some(([v]) => v === value) ? value : "";
+    return SPAWN_MODEL_CHOICES.some(([v]) => v === value)
+      ? (value as ReturnType<typeof spawnModel>)
+      : "";
   } catch {
     return "";
   }
@@ -2093,10 +2062,11 @@ function bindPickerChips() {
       const dir = row.dataset.dir!;
       const project = row.dataset.project ?? basenameOf(dir);
       const sessionId = row.dataset.session;
+      const model = spawnModel();
       const flags = {
         skipPermissions: spawnFlagChecked(SPAWN_FLAG_SKIP_PERMS),
         remoteControl: spawnFlagChecked(SPAWN_FLAG_REMOTE),
-        ...(spawnModel() ? { model: spawnModel() } : {}),
+        ...(model ? { model } : {}),
       };
       if (sessionId) {
         send({ type: "resume_session", sessionId, dir, persona, ...flags });
@@ -2130,10 +2100,18 @@ function armLearnCapture(mode: LearnMode, oldIdx?: string) {
   render();
 }
 
+// The wire schema types patch fields as string|undefined, but this panel has
+// always sent null to clear assignments (and the server has always rejected
+// those nulls as bad_message — pre-existing bug logged in the Phase 2
+// decisions entry). Phase 2 keeps the bytes identical; fix both sides later.
+function sendButtonPatch(idx: string, patch: Partial<ButtonConfig>) {
+  send({ type: "set_button", idx: Number(idx), patch } as unknown as Command);
+}
+
 function commitButtonPatch(idx: string, patch: Partial<ButtonConfig>) {
   if (!buttonsWritable) return;
   buttonMappings[idx] = { ...(buttonMappings[idx] ?? { name: `Button ${idx}` }), ...patch };
-  send({ type: "set_button", idx: Number(idx), patch });
+  sendButtonPatch(idx, patch);
   render();
 }
 
@@ -2152,7 +2130,7 @@ function handleCapturedButton(idx: string) {
       notes: "",
     };
     buttonMappings[idx] = { name: `Button ${idx}`, action, color: "white", notes: "" };
-    send({ type: "set_button", idx: Number(idx), patch });
+    sendButtonPatch(idx, patch);
     render();
     return;
   }
@@ -2161,7 +2139,7 @@ function handleCapturedButton(idx: string) {
   if (!oldIdx) return;
   const existing = buttonMappings[oldIdx] ?? { name: `Button ${oldIdx}` };
   buttonMappings[idx] = { ...existing };
-  send({ type: "set_button", idx: Number(idx), patch: existing });
+  sendButtonPatch(idx, existing);
   if (idx !== oldIdx) {
     delete buttonMappings[oldIdx];
     send({ type: "remove_button", idx: Number(oldIdx) });
@@ -2375,10 +2353,9 @@ function bindGrantTargets() {
         suppressClick = false;
         return;
       }
-      send({ type: "grant", sessionId });
-      setPendingGrant(sessionId);
-      render();
-      if (dockMode) void enterDockMode();
+      // Optimistic pending state + render come back through the store
+      // subscription; duplicate clicks are deduped in the client.
+      client.grant(sessionId);
     });
   });
 }
@@ -2626,217 +2603,170 @@ function normalizeVoices(value: unknown): VoiceOption[] {
   });
 }
 
-function handleMessage(raw: string) {
-  let msg: {
-    type: string;
-    agents?: AgentView[];
-    code?: string;
-    sessionId?: string;
-    dirs?: string[];
-    sessions?: ResumableSession[];
-    nowPlaying?: NowPlaying | null;
-    roomHeld?: boolean;
-    paused?: boolean;
-    triageFocus?: string | null;
-    corner?: string;
-    device_hint?: string;
-    buttons?: Record<string, ButtonConfig>;
-    actions?: string[];
-    characters?: string[];
-    idx?: number | string;
-    sections?: ShortcutSection[];
-    settings?: unknown;
-    values?: unknown;
-    voices?: unknown;
-    message?: string;
-  };
-  try {
-    msg = JSON.parse(raw);
-  } catch {
-    return;
-  }
-
-  if (msg.type === "snapshot" && Array.isArray(msg.agents)) {
-    agents = msg.agents;
-    roomHeld = typeof msg.roomHeld === "boolean" ? msg.roomHeld : false;
-    const nowPaused = msg.paused === true;
-    if (nowPaused !== playbackPaused) {
-      if (nowPaused) {
-        pausedAtWall = performance.now();
-      } else if (lipsyncAnchor && pausedAtWall) {
-        // SIGSTOP froze the audio but not the wall clock — push the anchor
-        // forward by the paused span so the mouth stays in sync on resume.
-        lipsyncAnchor.t0 += performance.now() - pausedAtWall;
+/**
+ * Non-snapshot server events, already schema-validated by the transport.
+ * Snapshot application lives in applySnapshot (store subscription below);
+ * unknown event kinds never reach here (parseServerEvent drops them).
+ */
+function handleServerEvent(ev: ServerEvent) {
+  switch (ev.type) {
+    case "snap": {
+      const c = ev.corner;
+      if (c === "bl" || c === "br" || c === "bc" || c === "tr") {
+        void snapToCorner(c);
       }
-      playbackPaused = nowPaused;
-      pausedAtWall = nowPaused ? pausedAtWall : 0;
+      return;
     }
-    triageFocus =
-      typeof msg.triageFocus === "string" && msg.triageFocus.trim()
-        ? msg.triageFocus
-        : null;
-    nowPlaying = msg.nowPlaying && typeof msg.nowPlaying.text === "string" ? msg.nowPlaying : null;
-    if (nowPlaying && nowPlaying.kind !== "ack" && !isPhoneRoutedFrame(nowPlaying)) moodSegments(nowPlaying);
-    syncPendingGrant();
-    if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
-      swapOpenSessionId = null;
-    }
-    if (renamingSessionId && !agents.some((a) => a.sessionId === renamingSessionId)) {
-      renamingSessionId = null;
-    }
-    staleSessions.clear();
-    for (const sid of killArmed.keys()) {
-      if (!agents.some((a) => a.sessionId === sid)) {
-        const t = killArmed.get(sid);
-        if (t) clearTimeout(t);
-        killArmed.delete(sid);
-      }
-    }
-    render();
-    if (dockMode) void enterDockMode();
-    return;
-  }
 
-  if (msg.type === "snap" && typeof msg.corner === "string") {
-    const c = msg.corner;
-    if (c === "bl" || c === "br" || c === "bc" || c === "tr") {
-      void snapToCorner(c);
-    }
-    return;
-  }
+    case "known_dirs":
+      knownDirsList = ev.dirs;
+      if (pickerOpen) render();
+      return;
 
-  if (msg.type === "known_dirs" && Array.isArray(msg.dirs)) {
-    knownDirsList = msg.dirs;
-    if (pickerOpen) render();
-    return;
-  }
+    case "resumable":
+      resumableList = ev.sessions;
+      if (pickerOpen) render();
+      return;
 
-  if (msg.type === "resumable" && Array.isArray(msg.sessions)) {
-    resumableList = msg.sessions;
-    if (pickerOpen) render();
-    return;
-  }
-
-  if (msg.type === "buttons") {
-    buttonDeviceHint = typeof msg.device_hint === "string" ? msg.device_hint : "";
-    buttonMappings = msg.buttons && typeof msg.buttons === "object" ? msg.buttons : {};
-    buttonActions = Array.isArray(msg.actions) ? msg.actions.filter((v): v is string => typeof v === "string") : [];
-    buttonCharacters = Array.isArray(msg.characters) ? msg.characters.filter((v): v is string => typeof v === "string") : [];
-    buttonsLoaded = true;
-    buttonsWritable = true;
-    if (settingsOpen && settingsTab === "buttons") render();
-    return;
-  }
-
-  if (msg.type === "settings" || msg.type === "get_settings") {
-    settings = normalizeSettings(msg.values ?? msg.settings ?? msg);
-    settingsLoaded = true;
-    settingsWritable = true;
-    if (settingsOpen && settingsTab === "general") render();
-    return;
-  }
-
-  if (msg.type === "voices" || msg.type === "list_voices") {
-    settingsVoices = normalizeVoices(msg.voices);
-    voicesLoaded = true;
-    if (settingsOpen && settingsTab === "general") render();
-    return;
-  }
-
-  if (msg.type === "captured" && msg.idx != null) {
-    handleCapturedButton(String(msg.idx));
-    return;
-  }
-
-  if (msg.type === "shortcuts" && Array.isArray(msg.sections)) {
-    shortcutsSections = msg.sections
-      .filter((section) => section && typeof section.title === "string" && Array.isArray(section.rows))
-      .map((section) => ({
-        title: section.title,
-        rows: section.rows.filter((row): row is [string, string] =>
-          Array.isArray(row) && typeof row[0] === "string" && typeof row[1] === "string",
-        ),
-      }));
-    shortcutsLoaded = true;
-    shortcutsAvailable = true;
-    if (settingsOpen && settingsTab === "help") render();
-    return;
-  }
-
-  // Typed notices (spawn failures, dedup rejections, stale tmux) — the server
-  // broadcasts these when a fire-and-forget action fails after the optimistic
-  // "launching…" toast.
-  if (msg.type === "notice" && typeof msg.message === "string") {
-    showErrorToast(msg.message);
-    return;
-  }
-
-  if (msg.type === "error" && msg.code === "stale_session" && msg.sessionId) {
-    staleSessions.add(msg.sessionId);
-    render();
-    return;
-  }
-
-  if (msg.type === "error" && msg.code && msg.code in PICKER_ERROR_TEXT) {
-    showErrorToast(PICKER_ERROR_TEXT[msg.code]);
-    return;
-  }
-
-  if (msg.type === "error" && msg.code === "no_device") {
-    cancelLearnCapture();
-    showErrorToast("No button device detected");
-    return;
-  }
-
-  if (msg.type === "error" && msg.code && ["unknown_command", "unsupported", "not_implemented"].includes(msg.code)) {
-    if (settingsOpen && settingsTab === "general") {
-      settingsWritable = false;
-      settingsLoaded = true;
-      voicesLoaded = true;
-      render();
-    } else if (settingsOpen && settingsTab === "buttons") {
-      buttonsWritable = false;
+    case "buttons":
+      buttonDeviceHint = ev.device_hint;
+      // Wire buttons carry color as a plain string; currentButtonColor()
+      // re-validates against BUTTON_COLORS on every read.
+      buttonMappings = ev.buttons as Record<string, ButtonConfig>;
+      buttonActions = ev.actions;
+      buttonCharacters = ev.characters;
       buttonsLoaded = true;
-      cancelLearnCapture();
-      render();
-    } else if (settingsOpen && settingsTab === "help") {
-      shortcutsAvailable = false;
+      buttonsWritable = true;
+      if (settingsOpen && settingsTab === "buttons") render();
+      return;
+
+    case "settings":
+      settings = normalizeSettings(ev.values);
+      settingsLoaded = true;
+      settingsWritable = true;
+      if (settingsOpen && settingsTab === "general") render();
+      return;
+
+    case "list_voices":
+      settingsVoices = normalizeVoices(ev.voices);
+      voicesLoaded = true;
+      if (settingsOpen && settingsTab === "general") render();
+      return;
+
+    case "captured":
+      handleCapturedButton(String(ev.idx));
+      return;
+
+    case "shortcuts":
+      shortcutsSections = ev.sections;
       shortcutsLoaded = true;
-      render();
+      shortcutsAvailable = true;
+      if (settingsOpen && settingsTab === "help") render();
+      return;
+
+    // Typed notices (spawn failures, dedup rejections, stale tmux) — the
+    // server broadcasts these when a fire-and-forget action fails after the
+    // optimistic "launching…" toast.
+    case "notice":
+      showErrorToast(ev.message);
+      return;
+
+    case "error": {
+      const code = ev.code;
+      if (code === "stale_session" && ev.sessionId) {
+        staleSessions.add(ev.sessionId);
+        render();
+      } else if (code in PICKER_ERROR_TEXT) {
+        showErrorToast(PICKER_ERROR_TEXT[code]);
+      } else if (code === "no_device") {
+        cancelLearnCapture();
+        showErrorToast("No button device detected");
+      } else if (["unknown_command", "unsupported", "not_implemented"].includes(code)) {
+        if (settingsOpen && settingsTab === "general") {
+          settingsWritable = false;
+          settingsLoaded = true;
+          voicesLoaded = true;
+          render();
+        } else if (settingsOpen && settingsTab === "buttons") {
+          buttonsWritable = false;
+          buttonsLoaded = true;
+          cancelLearnCapture();
+          render();
+        } else if (settingsOpen && settingsTab === "help") {
+          shortcutsAvailable = false;
+          shortcutsLoaded = true;
+          render();
+        }
+      }
+      return;
+    }
+
+    // Correlated acks are consumed inside room-client (grant optimism,
+    // request promises); the legacy renderer has no use for them.
+    case "command_result":
+      return;
+  }
+}
+
+/** Mirror a freshly applied store snapshot into the module vars the
+ *  renderers read. Rev/epoch staleness gating already happened client-side. */
+function applySnapshot(snap: PanelSnapshot) {
+  agents = snap.agents;
+  roomHeld = snap.roomHeld === true;
+  const nowPaused = snap.paused === true;
+  if (nowPaused !== playbackPaused) {
+    if (nowPaused) {
+      pausedAtWall = performance.now();
+    } else if (lipsyncAnchor && pausedAtWall) {
+      // SIGSTOP froze the audio but not the wall clock — push the anchor
+      // forward by the paused span so the mouth stays in sync on resume.
+      lipsyncAnchor.t0 += performance.now() - pausedAtWall;
+    }
+    playbackPaused = nowPaused;
+    pausedAtWall = nowPaused ? pausedAtWall : 0;
+  }
+  triageFocus =
+    typeof snap.triageFocus === "string" && snap.triageFocus.trim()
+      ? snap.triageFocus
+      : null;
+  nowPlaying = snap.nowPlaying ?? null;
+  if (nowPlaying && nowPlaying.kind !== "ack" && !isPhoneRoutedFrame(nowPlaying)) moodSegments(nowPlaying);
+  if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
+    swapOpenSessionId = null;
+  }
+  if (renamingSessionId && !agents.some((a) => a.sessionId === renamingSessionId)) {
+    renamingSessionId = null;
+  }
+  staleSessions.clear();
+  for (const sid of killArmed.keys()) {
+    if (!agents.some((a) => a.sessionId === sid)) {
+      const t = killArmed.get(sid);
+      if (t) clearTimeout(t);
+      killArmed.delete(sid);
     }
   }
 }
 
-async function connect() {
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-    return;
+let lastAppliedSnapshot: PanelSnapshot | null = null;
+
+// One render path for every store change (connection edge, new snapshot,
+// grant optimism set/cleared) — replaces the old ws.onopen/onclose/
+// onmessage plumbing and its fixed 2s reconnect timer.
+client.subscribe(() => {
+  const st = client.getState();
+  if (st.connected !== connected) {
+    connected = st.connected;
+    if (!connected) stopLipsyncLoop();
   }
-
-  let config: WsConfig;
-  try {
-    config = await invoke<WsConfig>("ws_token");
-  } catch (err) {
-    console.error("ws_token failed:", err);
-    setConnected(false);
-    scheduleReconnect();
-    return;
+  if (st.snapshot && st.snapshot !== lastAppliedSnapshot) {
+    lastAppliedSnapshot = st.snapshot;
+    applySnapshot(st.snapshot);
   }
-
-  const url = `ws://127.0.0.1:${config.port}/?token=${encodeURIComponent(config.token)}`;
-  ws = new WebSocket(url);
-
-  ws.onopen = () => setConnected(true);
-  ws.onclose = () => {
-    setConnected(false);
-    ws = null;
-    scheduleReconnect();
-  };
-  ws.onerror = () => {
-    setConnected(false);
-  };
-  ws.onmessage = (ev) => handleMessage(String(ev.data));
-}
+  render();
+  if (dockMode) void enterDockMode();
+});
+client.onEvent(handleServerEvent);
 
 render();
 preloadAvatarFrames();
-connect();
+client.start();

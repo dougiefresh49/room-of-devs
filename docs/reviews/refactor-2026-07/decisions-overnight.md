@@ -9,6 +9,104 @@ decision + why → how to reverse if you disagree.**
 
 ---
 
+## Phase 2 (shared client under old UIs) — 2026-07-22 daytime
+
+### Verification outcome (deployed same day)
+
+- Sol pre-deploy review of the full diff: no substantive findings.
+- Live WS harness (now committed: `packages/room-client/scripts/
+  verify-live.ts`, runs the real WsTransport+RoomClient under Node):
+  9/9 basic checks; reconnect run proved down/up edges across the daemon's
+  token rotation AND the epoch gate accepting rev 1 < old rev 2 after
+  restart (the case plain rev-gating would have bricked).
+- codex computer-use pass: desktop room/dock/expand PASS, mobile PASS with
+  zero console errors (rev/epoch ignored by old client as designed). Its
+  two "FAILs" were test artifacts, not regressions: (a) the one grant click
+  landed on this Claude session's own hand-raised card (its Stop hook fired
+  mid-test) instead of the "Verify" card — the optimism mechanism itself
+  passed (spinner → audio → cleared); (b) the reconnect red-dot phase was
+  faster than the first screenshot — edges already proven by the harness.
+- One synthesis total spent (216→529 chars, the granted card). The unused
+  "Verify" test queue item was deleted afterward to avoid a later billable
+  grant on test data.
+
+### Mobile wiring DEFERRED to Phase 5 (kickoff explicitly delegated this call)
+
+Context: wire room-client under mobile.html now (committed IIFE bundle via
+owner decision #5) or defer. Consulted: an Explore scout mapped
+mobile.html's internals; grok-4.5-high triaged; Sol's design critique
+covered the same ground. Both models converged on **defer**: of the three
+Phase 2 behavior changes, mobile only meaningfully gains rev-gating (its
+SSE is ordered steady-state; EventSource already reconnects), the wiring
+glue (IIFE global + committed bundle + monolith edits) is throwaway the
+moment Phase 5's Vite SPA lands, and the phone is the daily driver —
+regression asymmetry is bad. `SseTransport` still ships in the package
+(typechecked, protocol-faithful to /events + POST /action) so Phase 5
+mounts it directly. Reverse by: building the room-client IIFE bundle and
+wiring per the scout notes (single `snapshot` var + `postAction` are the
+seams) — nothing in Phase 2 forecloses it.
+
+### Grant optimism unified on PANEL semantics (mobile's differed — not a copy)
+
+The spec's premise ("the duplicated 25s logic") turned out half-true: only
+the 25s belt was duplicated. Panel cleared pending on now-playing baseline
+change; mobile cleared when the agent left `hand_raised` (fires while
+synthesis is still pending — spinner drops too early) and on POST failure.
+Unified in `grant.ts`: per-session pending MAP (mobile's concurrency;
+panel's single slot silently dropped spinner #1 if you granted two agents),
+panel's baseline-key rule scoped per session, mobile's dispatch-failure
+rollback, 25s belt. Net panel-visible change: near zero; mobile adopts
+this in Phase 5.
+
+### Snapshot staleness gate is (epoch, rev), not rev-reset-on-reconnect
+
+Sol's critique caught that resetting the rev baseline on every reconnect
+conflates connection generation with daemon generation (revs are
+daemon-global; only a daemon restart resets them). Added additive
+`epoch` (daemon boot time) to PanelSnapshot, stamped in state-watch;
+client resets its rev baseline only when epoch changes (pre-epoch daemons
+fall back to reset-on-reconnect). Old clients ignore the field.
+
+### reconnecting-websocket wedge guarded
+
+RWS v4.4.0's connect path has no rejection handler for async URL
+providers — a rejected `ws_token` invoke (daemon down at panel launch =
+token file missing) would set `_connectLock` forever and kill reconnection.
+WsTransport's provider never rejects: falls back to last-known URL, else
+`ws://127.0.0.1:9/` (discard port → instant refusal keeps the retry loop
+alive). Found by Sol, verified against the vendored RWS source.
+
+### Server-side fixes ridden along (small, Phase-2-adjacent)
+
+- SSE `/events`: subscribe BEFORE the bootstrap write (a state change in
+  the gap was previously lost until the next watched change). Ordering
+  stays safe for the existing mobile.html last-writer-wins client.
+- `query()` settles only on the expected tagged domain reply (server sends
+  it BEFORE command_result; mutations can emit tagged frames too — naive
+  "any tagged reply" correlation would mis-settle). Replies also cached
+  (`getCachedQuery`) for Phase 3 islands; legacy handlers still get them
+  via onEvent.
+
+### Pre-existing bug found, NOT fixed (out of scope): button patch nulls
+
+The panel has ALWAYS sent `{action: null}` / `{character: null}` to clear
+button assignments, and the server's `parseButtonPatch` (from 4bf9724,
+pre-refactor) has always rejected null as `bad_message` — assign/unassign
+from the panel's Buttons settings tab silently no-ops server-side. Phase 2
+keeps the wire bytes identical (`sendButtonPatch` cast). Fix belongs in a
+deliberate change to both sides (accept null = clear, or send deletes
+differently). Logged here + should join Known issues.
+
+### Design provenance
+
+`docs/reviews/refactor-2026-07/phase2-room-client-design.md` (my draft) →
+Sol adversarial critique (gpt-5.6-sol, high effort) → this implementation.
+Transports implemented by Terra (gpt-5.6-terra) against the spec'd
+Transport interface, then hand-revised (typed TransportError, wedge guard,
+requestId passthrough).
+
+---
+
 ## Phase 1 (server recovery + services) — shipped same night
 
 ### Codex review findings on Phase 1, all seven fixed before deploy

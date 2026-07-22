@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@room/protocol": "workspace:^",
+    "@room/room-client": "workspace:^",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.1"
   },

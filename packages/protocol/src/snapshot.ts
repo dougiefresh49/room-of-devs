@@ -88,6 +88,14 @@ export const PanelSnapshotSchema = v.object({
    * must ignore any snapshot whose rev is lower than one it already applied.
    */
   rev: v.optional(v.number()),
+  /**
+   * Daemon boot epoch (Phase 2, additive). rev restarts from 0 when the
+   * daemon restarts; clients gate staleness on (epoch, rev) — a changed
+   * epoch resets the rev baseline, an unchanged epoch keeps ordering across
+   * client reconnects. Absent (pre-epoch daemon) → treat revs as
+   * connection-scoped and reset the baseline on every reconnect.
+   */
+  epoch: v.optional(v.number()),
   agents: v.array(AgentViewSchema),
   nowPlaying: v.nullable(NowPlayingSchema),
   roomHeld: v.boolean(),
