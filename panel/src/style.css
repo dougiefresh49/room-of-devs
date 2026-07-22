@@ -1,21 +1,26 @@
+/* Semantic tokens are the authority (packages/ui/src/tokens.css, loaded
+   via the tailwind entry). The legacy palette names below are aliases so
+   every existing rule keeps working; Phase 4's React shell consumes the
+   semantic names directly. Owner-decided accent change (green → #3ecf8e)
+   flows from --room-accent. */
 :root {
   color-scheme: dark;
-  --bg: #0d1015;
-  --bg-elevated: #121720;
-  --surface: #171d27;
-  --surface-strong: #1d2530;
-  --surface-hover: #222b38;
-  --border: rgba(156, 174, 198, 0.16);
-  --border-strong: rgba(178, 194, 216, 0.28);
-  --text: #eef3f7;
-  --muted: #909ba9;
-  --faint: #596474;
-  --amber: #f3b247;
-  --blue: #66a9ff;
-  --green: #49d99a;
-  --grey: #7b8492;
-  --red: #f06464;
-  --shadow: rgba(0, 0, 0, 0.35);
+  --bg: var(--room-bg);
+  --bg-elevated: var(--room-bg-elevated);
+  --surface: var(--room-surface);
+  --surface-strong: var(--room-surface-strong);
+  --surface-hover: var(--room-surface-hover);
+  --border: var(--room-border);
+  --border-strong: var(--room-border-strong);
+  --text: var(--room-text);
+  --muted: var(--room-muted);
+  --faint: var(--room-faint);
+  --amber: var(--state-working);
+  --blue: var(--room-interactive);
+  --green: var(--room-accent);
+  --grey: var(--state-idle);
+  --red: var(--room-danger);
+  --shadow: var(--room-shadow);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   font-size: 12px;
 }
@@ -130,7 +135,7 @@ button,
 .conn-dot.up {
   background: var(--green);
   box-shadow:
-    0 0 8px rgba(73, 217, 154, 0.5),
+    0 0 8px color-mix(in srgb, var(--room-accent) 50%, transparent),
     inset 0 0 0 1px rgba(255, 255, 255, 0.25);
 }
 
@@ -428,8 +433,8 @@ button,
   background: conic-gradient(
     from 0deg,
     transparent 0%,
-    rgba(73, 217, 154, 0.15) 8%,
-    rgba(73, 217, 154, 0.9) 22%,
+    color-mix(in srgb, var(--room-accent) 15%, transparent) 8%,
+    color-mix(in srgb, var(--room-accent) 90%, transparent) 22%,
     transparent 38%
   );
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
@@ -530,19 +535,19 @@ button,
 }
 
 .state-working {
-  --state: var(--amber);
+  --state: var(--state-working);
 }
 
 .state-hand_raised {
-  --state: var(--blue);
+  --state: var(--state-hand-raised);
 }
 
 .state-speaking {
-  --state: var(--green);
+  --state: var(--state-speaking);
 }
 
 .state-idle {
-  --state: var(--grey);
+  --state: var(--state-idle);
 }
 
 .state-hand_raised .dot {
@@ -559,6 +564,20 @@ button,
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
+}
+
+/* Waiting-message preview under a raised hand (Phase 3 island; the panel
+   never rendered queuedPreview before — deliberate baseline addition). */
+.queued-preview {
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .chip {
@@ -585,9 +604,9 @@ button,
 }
 
 .chip.phone {
-  border-color: rgba(73, 217, 154, 0.2);
-  background: rgba(73, 217, 154, 0.12);
-  color: #9aebc6;
+  border-color: color-mix(in srgb, var(--room-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--room-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--room-accent) 55%, var(--room-text));
 }
 
 .card-actions {
@@ -715,10 +734,10 @@ button,
 }
 
 .card.state-speaking {
-  border-color: rgba(73, 217, 154, 0.74);
+  border-color: color-mix(in srgb, var(--room-accent) 74%, transparent);
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.42),
-    0 0 14px rgba(73, 217, 154, 0.26),
+    0 0 14px color-mix(in srgb, var(--room-accent) 26%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.075);
   animation: speak-pulse 1.4s ease-in-out infinite;
 }
@@ -1067,10 +1086,10 @@ button,
 }
 
 /* State → ring color. Without these every ring stays the --grey default. */
-.dock-agent.state-working { --state: var(--amber); }
-.dock-agent.state-hand_raised { --state: var(--blue); }
-.dock-agent.state-speaking { --state: var(--green); }
-.dock-agent.state-idle { --state: var(--grey); }
+.dock-agent.state-working { --state: var(--state-working); }
+.dock-agent.state-hand_raised { --state: var(--state-hand-raised); }
+.dock-agent.state-speaking { --state: var(--state-speaking); }
+.dock-agent.state-idle { --state: var(--state-idle); }
 
 .dock-agent.state-hand_raised .dock-ring,
 .dock-agent.state-speaking .dock-ring {
@@ -1161,21 +1180,21 @@ button,
   grid-column: 1 / -1;
   height: 1px;
   margin: 1px 1px;
-  background: rgba(88, 214, 141, 0.32);
+  background: color-mix(in srgb, var(--room-accent) 32%, transparent);
 }
 
 .dock-actions .dock-live-btn {
-  border-color: rgba(88, 214, 141, 0.36);
+  border-color: color-mix(in srgb, var(--room-accent) 36%, transparent);
   background:
-    linear-gradient(180deg, rgba(88, 214, 141, 0.18), rgba(88, 214, 141, 0.055)),
+    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 18%, transparent), color-mix(in srgb, var(--room-accent) 5.5%, transparent)),
     rgba(15, 38, 28, 0.9);
   color: #c9f6d9;
 }
 
 .dock-actions .dock-live-btn:hover {
-  border-color: rgba(88, 214, 141, 0.62);
+  border-color: color-mix(in srgb, var(--room-accent) 62%, transparent);
   background:
-    linear-gradient(180deg, rgba(88, 214, 141, 0.26), rgba(88, 214, 141, 0.08)),
+    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 26%, transparent), color-mix(in srgb, var(--room-accent) 8%, transparent)),
     rgba(18, 48, 34, 0.94);
 }
 
@@ -1245,7 +1264,7 @@ button,
 }
 
 .picker-flag input[type="checkbox"] {
-  accent-color: var(--accent, #4ade80);
+  accent-color: var(--room-accent);
 }
 
 .picker-flag select {
@@ -2076,7 +2095,7 @@ button,
   50% {
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.42),
-      0 0 18px rgba(73, 217, 154, 0.38),
+      0 0 18px color-mix(in srgb, var(--room-accent) 38%, transparent),
       inset 0 1px 0 rgba(255, 255, 255, 0.085);
   }
 }
@@ -2186,7 +2205,7 @@ button,
   border-color: var(--green);
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(73, 217, 154, 0.45);
+    0 0 18px color-mix(in srgb, var(--room-accent) 45%, transparent);
 }
 
 .spotlight-ring.loading::before {
@@ -2197,8 +2216,8 @@ button,
   background: conic-gradient(
     from 0deg,
     transparent 0%,
-    rgba(73, 217, 154, 0.15) 8%,
-    rgba(73, 217, 154, 0.95) 22%,
+    color-mix(in srgb, var(--room-accent) 15%, transparent) 8%,
+    color-mix(in srgb, var(--room-accent) 95%, transparent) 22%,
     transparent 38%
   );
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
@@ -2282,7 +2301,7 @@ button,
 
 /* Paused: footer resume button glows so the frozen room is explained. */
 .icon-btn.paused-indicator {
-  border-color: rgba(73, 217, 154, 0.55);
+  border-color: color-mix(in srgb, var(--room-accent) 55%, transparent);
   color: var(--green);
-  box-shadow: 0 0 10px rgba(73, 217, 154, 0.3);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--room-accent) 30%, transparent);
 }

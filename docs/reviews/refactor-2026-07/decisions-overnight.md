@@ -9,6 +9,90 @@ decision + why → how to reverse if you disagree.**
 
 ---
 
+## Phase 3 (tokens + leaf React islands, panel only) — 2026-07-22 daytime
+
+### Verification outcome (deployed same day)
+
+- Gates: workspace typecheck clean (incl. new @room/ui), check-fixtures ok,
+  panel vite build ok, verify-live.ts 9/9 against the running daemon.
+- Sol pre-deploy review of the full diff: **no substantive findings**.
+- codex computer-use (4 passes; the first used accessibility presses which
+  can't drive the hover-gated clusters — its cluster "FAILs" were test
+  artifacts, daemon logs proved the commands never left the tool, not the
+  panel): islands render (badges, chips, NEW queued preview, summary pane
+  markdown with bold/inline-code), transport buttons single-fire (two
+  clicks = exactly two daemon log lines), Speak Status single-fire, swap
+  popover opens with all 7 personas + outside-click dismiss, kill-arm
+  proven by an atomic devtools probe — `{armedAt200ms: true,
+  disarmedAt9500ms: true}`, no kill dispatched. Grant: ONE card click →
+  spinner → exactly one grant_floor → gemini → elevenlabs sequence in the
+  log; lipsync flapped smoothly with the new green rings during playback.
+- Spend: one granted synthesis (~1170 chars, this Claude session's own
+  raised hand — same pattern as Phase 2's test). The card-less
+  `enqueue_manual` "Verify" item was deleted (manual sessions have no
+  state file → no card; known daemon behavior, predates this phase).
+- Quirk found, accepted: clicking the window-title drag region doesn't
+  dismiss the swap popover (Tauri drag intercepts the pointer); any other
+  outside click does. Legacy had NO outside-dismiss at all.
+
+Design: `phase3-tokens-islands-design.md` (my draft) → Sol adversarial
+critique (gpt-5.6-sol, high effort, 16 findings — resolutions table
+appended to that doc) → implementation. Terra (gpt-5.6-terra) implemented
+the vendored shadcn/Radix primitives + Markdown renderer against a written
+spec; domain components, tokens, and the main.ts island surgery done
+in-session.
+
+### Judgment calls made without asking (review in the morning)
+
+- **Island seam kept as one persistent root + portals despite Sol calling
+  it a blocker.** Sol's failure mode (React cleaning up under
+  innerHTML-replaced DOM) is defused by two facts: replaced containers
+  stay detached WITH their subtrees (React's removeChild is safe), and
+  syncIslands() flushSync-commits in the same task as the legacy render —
+  no async window. His alternative (stable host regions) is Phase 4's
+  React shell by another name; not a leaf-island-phase change.
+- **Grant/PTT stays 100% legacy** (card-wide gesture entangled with the
+  300ms PTT hold on the same element; moving it makes the card an island,
+  not a leaf). Single ownership preserved. Codex still verifies
+  single-fire.
+- **Cluster-gap clicks no longer grant** — legacy fired a billable grant
+  when you clicked the empty gap BETWEEN action buttons on a hovered
+  card; the new event firewall (`isNonGrantTarget`) treats the whole
+  cluster container as non-grant surface. Deliberate improvement, not a
+  parity bug.
+- **Swap popover is now Radix-positioned** (collision-clamped, top/end
+  preferred) instead of the hand-rolled fixed-position math; autofocus
+  suppressed so snapshot-driven remounts don't steal focus. Positioning
+  may differ by a few px from legacy.
+- **`--room-interactive` token added** (Sol #11): `--blue` aliases it, so
+  future state-color changes don't restyle links/sliders/borders.
+- **Old-green alpha literals** (`rgba(73,217,154,…)`, dock-live
+  `rgba(88,214,141,…)`, `#9aebc6`, `#4ade80`) all re-derived from
+  `--room-accent` via color-mix — otherwise the accent change would have
+  produced two greens (Sol #12).
+- **remark-breaks added** to the shared Markdown component so soft line
+  breaks keep rendering as `<br>` like the legacy renderer (Sol #14).
+- **Tailwind v4, preflight OFF**, utilities layered → legacy unlayered
+  CSS wins by design; formal layer policy deferred to Phase 4 (Sol #13,
+  his recommendation matched).
+- **queuedPreview now visible on desktop** (hand-raised cards show the
+  waiting text) — the spec's called-out gap, landed as part of the chips
+  island. New `.queued-preview` rule in style.css.
+- **panel/src/markdown.ts deleted** (both call sites are islands now);
+  `stripMarkdown` lives in @room/ui.
+- **Mid-gesture snapshot click-loss NOT fixed** — pre-existing legacy
+  behavior (innerHTML rebuild), identical cost model with islands;
+  documented instead (Sol #3).
+
+Baseline deltas vs `baseline/checklist.md` (intended, owner-decided):
+accent green is now #3ecf8e everywhere the old #49d99a/#58d68d appeared
+(conn dot, speaking ring, hold-active, dock live controls, phone chip);
+queued-preview text is new on hand-raised cards; swap popover positioning
+is Radix-computed. State color MAPPING is unchanged on the panel (it
+already matched the owner decision).
+
+---
+
 ## Phase 2 (shared client under old UIs) — 2026-07-22 daytime
 
 ### Verification outcome (deployed same day)

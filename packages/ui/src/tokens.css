@@ -1,0 +1,37 @@
+/**
+ * Semantic design tokens — THE authority for Room UI colors.
+ *
+ * Owner decisions (spec-ui-refactor.md, 2026-07-21) land here:
+ *   working = amber, hand_raised = blue on BOTH platforms;
+ *   accent = mobile green #3ecf8e.
+ * Never encode state as raw colors in components — reference these vars
+ * (directly or via the Tailwind theme mapping in tailwind.css).
+ */
+:root {
+  /* Session states */
+  --state-working: #f3b247;
+  --state-hand-raised: #66a9ff;
+  --state-speaking: var(--room-accent);
+  --state-idle: #7b8492;
+
+  /* Brand + intent */
+  --room-accent: #3ecf8e;
+  --room-danger: #f06464;
+  /* Generic interactive tint (links, focus borders, sliders). Same value
+     as --state-hand-raised today, but deliberately a separate token — a
+     future state-color change must not restyle every control. */
+  --room-interactive: #66a9ff;
+
+  /* Surfaces + text (dark room palette; mobile adopts in Phase 5) */
+  --room-bg: #0d1015;
+  --room-bg-elevated: #121720;
+  --room-surface: #171d27;
+  --room-surface-strong: #1d2530;
+  --room-surface-hover: #222b38;
+  --room-border: rgba(156, 174, 198, 0.16);
+  --room-border-strong: rgba(178, 194, 216, 0.28);
+  --room-text: #eef3f7;
+  --room-muted: #909ba9;
+  --room-faint: #596474;
+  --room-shadow: rgba(0, 0, 0, 0.35);
+}

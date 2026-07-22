@@ -7,6 +7,9 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Persistent React island root — never touched by the legacy
+         innerHTML renderer; islands portal into #app placeholders. -->
+    <div id="islands"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

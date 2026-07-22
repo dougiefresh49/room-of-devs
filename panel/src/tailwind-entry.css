@@ -1,0 +1,7 @@
+/* Tailwind + semantic tokens for the panel. The shared theme (and the
+   no-preflight decision) lives in @room/ui; this entry just points the
+   scanner at the sources that use utilities. Legacy style.css rules are
+   unlayered, so they always beat layered utilities — parity by default. */
+@import "@room/ui/tailwind.css";
+@source "../../packages/ui/src";
+@source "./";

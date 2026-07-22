@@ -1,0 +1,28 @@
+/**
+ * Tailwind v4 entry for Room UIs. Deliberately NO preflight while the
+ * legacy string-template renderers coexist (their CSS carries its own
+ * reset; preflight's button/img rules would drift parity). Phase 4
+ * revisits preflight when React owns the shell.
+ */
+@import "./tokens.css";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-state-working: var(--state-working);
+  --color-state-hand-raised: var(--state-hand-raised);
+  --color-state-speaking: var(--state-speaking);
+  --color-state-idle: var(--state-idle);
+  --color-accent: var(--room-accent);
+  --color-danger: var(--room-danger);
+  --color-bg: var(--room-bg);
+  --color-bg-elevated: var(--room-bg-elevated);
+  --color-surface: var(--room-surface);
+  --color-surface-strong: var(--room-surface-strong);
+  --color-surface-hover: var(--room-surface-hover);
+  --color-line: var(--room-border);
+  --color-line-strong: var(--room-border-strong);
+  --color-fg: var(--room-text);
+  --color-fg-muted: var(--room-muted);
+  --color-fg-faint: var(--room-faint);
+}

@@ -1,5 +1,7 @@
+import "./tailwind-entry.css";
 import "./style.css";
-import { renderMarkdown, stripMarkdown } from "./markdown";
+import { initIslands, syncIslands } from "./islands/host";
+import { pruneUiState } from "./islands/ui-state";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -30,7 +32,6 @@ import type {
 import {
   RoomClient,
   WsTransport,
-  isPhoneFrame,
   isPhoneRoutedFrame,
   nowPlayingKey,
 } from "@room/room-client";
@@ -95,9 +96,6 @@ type ButtonColor = "white" | "blue" | "red" | "teal" | "yellow" | "green" | "bla
 type LearnMode = "rebind" | "add";
 
 const HOLD_MS = 300;
-// Confirm window for the end-session button. 2s proved too short in practice:
-// a second click after disarm silently re-arms, which reads as "does nothing".
-const KILL_ARM_MS = 8000;
 const DOCK_HOVER_LEAVE_MS = 250;
 const FULL_MIN_SIZE = new LogicalSize(300, 240);
 const DOCK_MIN_SIZE = new LogicalSize(88, 56);
@@ -124,7 +122,6 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 let connected = false;
 let agents: AgentView[] = [];
 const staleSessions = new Set<string>();
-const killArmed = new Map<string, ReturnType<typeof setTimeout>>();
 let dockMode = false;
 let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 let roomHeld = false;
@@ -141,20 +138,12 @@ let spotlightEnterKey: string | null = null;
 let spotlightEnterUntil = 0;
 
 // Phone-frame helpers + the message identity key now live in room-client's
-// selectors (shared with the future mobile SPA).
+// selectors (shared with the future mobile SPA). The phone chip itself —
+// and its 15s staleness belt — moved into the chips island (host.tsx).
 const summaryKey = nowPlayingKey;
 
-// The chip's staleness belt is wall-clock-based but renders only happen on
-// snapshot pushes — a quiet room would freeze a visible chip forever. Expire
-// it locally: re-render when a shown chip's frame has gone stale.
-setInterval(() => {
-  if (document.querySelector(".chip.phone") && !isPhoneFrame(nowPlaying)) {
-    render();
-  }
-}, 15_000);
 let dockHoverSessionId: string | null = null;
 let dockHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
-let swapOpenSessionId: string | null = null;
 let renamingSessionId: string | null = null;
 
 let pickerOpen = false;
@@ -192,19 +181,10 @@ const stateLabels: Record<AgentState, string> = {
   idle: "idle",
 };
 
+// Transport/cluster glyphs moved to @room/ui components/icons.tsx — only
+// the window-chrome + picker icons the legacy templates still emit remain.
 const icons = {
-  pause: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>`,
-  play: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>`,
-  stop: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg>`,
-  replay: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8a4 4 0 1 1-3.2 6.4"/><path d="M7 7v5H2"/></svg>`,
-  // Replay glyph + 0.8× badge — reads as "again, slower".
-  replaySlower: `<span class="replay-slower-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h8a4 4 0 1 1-3.2 6.4"/><path d="M7 7v5H2"/></svg><span class="replay-slower-label">0.8×</span></span>`,
-  hold: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 14c2.8.7 5.2.5 7-.6"/><path d="M14 5a6 6 0 1 0 5 9.3 5 5 0 0 1-5-9.3z"/><path d="M8 9v3"/><path d="M11 8v3"/><path d="M14 9v2.5"/></svg>`,
-  swap: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5c2 1.5 6 1.5 8 0"/><path d="M5 7.5c1.7 6 12.3 6 14 0"/><path d="M7 8v4a5 5 0 0 0 10 0V8"/><path d="M9 13h.01M15 13h.01"/><path d="m8 19-3-3 3-3"/><path d="M5 16h6"/></svg>`,
   cc: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10 10.5a2 2 0 1 0 0 3"/><path d="M16 10.5a2 2 0 1 0 0 3"/></svg>`,
-  terminal: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 8 3 3-3 3"/><path d="M12 16h5"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>`,
-  power: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M7.05 7.05a7 7 0 1 0 9.9 0"/></svg>`,
-  info: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>`,
   dock: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="6" width="14" height="9" rx="4.5"/><path d="m8 18 4 3 4-3"/></svg>`,
   expand: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
@@ -698,22 +678,11 @@ function renderCard(agent: AgentView): string {
   const nameHtml = isRenaming
     ? `<input class="name-input no-drag" data-rename-input value="${displayName}" aria-label="Nickname" />`
     : `<div class="name${mutedClass}" title="${safeName}" data-rename-name>${displayName}</div>`;
-  const raisedChip =
-    agent.state === "hand_raised"
-      ? `<span class="chip raised" title="Hand raised">✋</span>`
-      : "";
-  const queueChip =
-    agent.raisedCount > 0
-      ? `<span class="chip queue" title="Queued">${agent.raisedCount}</span>`
-      : "";
-  const supersededChip =
-    agent.supersededCount > 0
-      ? `<span class="chip superseded" title="Superseded">${agent.supersededCount}</span>`
-      : "";
-  const phoneChip = isPhoneFrame(nowPlaying) && nowPlaying?.sessionId === agent.sessionId
-    ? `<span class="chip phone" title="Playing on phone">on phone</span>`
-    : "";
+  const sid = escapeHtml(agent.sessionId);
 
+  // Badge/chips/queued-preview/action-cluster are React islands: the
+  // semantic containers below are the portal targets (children render as
+  // direct grid/flex children — no wrapper divs; see islands/host.tsx).
   return `
     <div
       class="card state-${agent.state}${greyed ? " disconnected" : ""}${staleSessions.has(agent.sessionId) ? " stale" : ""}${triageFocus === agent.sessionId ? " triage-focus" : ""}${grow ? " speaking-grow" : ""}"
@@ -723,148 +692,19 @@ function renderCard(agent: AgentView): string {
     >
       <div class="card-main">
         <div class="avatar-wrap${pending ? " grant-loading" : ""}">
-          <img class="avatar" data-avatar-session="${escapeHtml(agent.sessionId)}" src="${avatarSrc(agent)}" alt="" />
+          <img class="avatar" data-avatar-session="${sid}" src="${avatarSrc(agent)}" alt="" />
           <span class="avatar-fallback">${initials(agent.name)}</span>
         </div>
         <div class="card-body">
           ${nameHtml}
-          <div class="badge state-${agent.state}">
-            <span class="dot"></span>
-            <span class="label">${stateLabels[agent.state]}</span>
-          </div>
-          <div class="chips">${raisedChip}${queueChip}${supersededChip}${phoneChip}</div>
+          <div data-island="state-badge" data-session="${sid}"></div>
+          <div class="chips" data-island="chips" data-session="${sid}"></div>
+          <div data-island="queued-preview" data-session="${sid}"></div>
         </div>
       </div>
-      <div class="card-actions actions-${mode === "live" ? 3 : 5}" aria-label="Agent actions">
-        ${actionButtonsHtml(agent, mode)}
-      </div>
+      <div class="card-actions actions-${mode === "live" ? 3 : 5}" data-island="action-cluster" data-variant="card" data-mode="${mode}" data-session="${sid}" aria-label="Agent actions"></div>
     </div>
   `;
-}
-
-// The popover renders at app level (cards clip via overflow + hover transform
-// creates a containing block) and is positioned from its button's rect —
-// above when there's room, below otherwise, clamped to the viewport.
-function positionSwapPopover() {
-  const pop = app.querySelector<HTMLElement>("[data-swap-popover]");
-  if (!pop || !swapOpenSessionId) return;
-  const btn = app.querySelector<HTMLElement>(
-    `[data-session="${CSS.escape(swapOpenSessionId)}"] [data-hover-action="swap"]`
-  );
-  if (!btn) return;
-  const r = btn.getBoundingClientRect();
-  pop.style.position = "fixed";
-  const w = pop.offsetWidth || 180;
-  const h = pop.offsetHeight || 120;
-  let left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
-  let top = r.top - h - 6;
-  if (top < 8) top = Math.min(r.bottom + 6, window.innerHeight - h - 8);
-  pop.style.left = `${Math.round(left)}px`;
-  pop.style.top = `${Math.round(top)}px`;
-}
-
-function renderSwapPopover(sessionId: string): string {
-
-  return `
-    <div class="swap-popover no-drag" data-swap-popover data-session="${escapeHtml(sessionId)}">
-      ${PERSONAS.map((p) => `
-        <button type="button" class="swap-chip" data-swap-character="${p.name}" title="${p.label}">
-          <span class="swap-chip-av">
-            <img class="avatar swap-chip-img" src="${personaAvatarSrc(p)}" alt="" />
-            <span class="avatar-fallback swap-chip-fallback">${p.label[0]}</span>
-          </span>
-          <span>${p.label}</span>
-        </button>
-      `).join("")}
-    </div>`;
-}
-
-function actionButtonsHtml(agent: AgentView, mode: ActionClusterMode): string {
-  if (mode === "live") {
-    return `
-        <button
-          type="button"
-          class="icon-btn hover-btn dock-live-btn"
-          data-hover-action="pause"
-          title="${playbackPaused ? "Resume audio" : "Pause audio"}"
-        >${playbackPaused ? icons.play : icons.pause}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn dock-live-btn"
-          data-hover-action="stop"
-          title="Stop audio"
-        >${icons.stop}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn dock-live-btn"
-          data-hover-action="restart"
-          title="Restart audio"
-        >${icons.replay}</button>`;
-  }
-
-  if (mode === "summary") {
-    const jump = agent.isTeam
-      ? `<button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="focus"
-          title="Jump to terminal"
-        >${icons.terminal}</button>`
-      : "";
-    return `
-        <button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="replay"
-          title="Replay"
-        >${icons.replay}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="replay_slower"
-          title="Replay slower"
-        >${icons.replaySlower}</button>
-        ${jump}`;
-  }
-
-  const teamOnly = !agent.isTeam;
-  const killIsArmed = killArmed.has(agent.sessionId);
-  return `<button
-          type="button"
-          class="icon-btn hover-btn${teamOnly ? " disabled" : ""}"
-          data-hover-action="focus"
-          title="${teamOnly ? "team sessions only" : "Jump to terminal"}"
-          ${teamOnly ? "disabled" : ""}
-        >${icons.terminal}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn kill-btn${teamOnly ? " disabled" : ""}${killIsArmed ? " armed" : ""}"
-          data-hover-action="kill"
-          title="${teamOnly ? "team sessions only" : killIsArmed ? "click again to end session" : "End session"}"
-          ${teamOnly ? "disabled" : ""}
-        >${icons.power}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="status"
-          title="Speak status"
-        >${icons.info}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="replay_session"
-          title="Replay their last message"
-        >${icons.replay}</button>
-        <button
-          type="button"
-          class="icon-btn hover-btn"
-          data-hover-action="swap"
-          title="Swap character"
-        >${icons.swap}</button>`;
-}
-
-function dockActionButtons(agent: AgentView, mode?: ActionClusterMode): string {
-  return actionButtonsHtml(agent, mode ?? actionClusterMode(agent.sessionId));
 }
 
 function renderDockAgent(agent: AgentView): string {
@@ -890,9 +730,7 @@ function renderDockAgent(agent: AgentView): string {
         </span>
         ${agent.raisedCount > 0 ? `<span class="dock-badge" title="${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting">${agent.raisedCount}</span>` : ""}
       </button>
-      <div class="dock-actions actions-${mode === "live" ? 3 : 5}" aria-label="Agent actions">
-        ${dockActionButtons(agent, mode)}
-      </div>
+      <div class="dock-actions actions-${mode === "live" ? 3 : 5}" data-island="action-cluster" data-variant="dock" data-mode="${mode}" data-session="${escapeHtml(agent.sessionId)}" aria-label="Agent actions"></div>
     </div>
   `;
 }
@@ -1099,14 +937,10 @@ function renderDock() {
           ${icons.expand}
         </button>
       </div>
-      ${swapOpenSessionId ? renderSwapPopover(swapOpenSessionId) : ""}
     </main>
   `;
 
   bindDockHoverIntent();
-  bindHoverActions();
-  bindSwapPopover();
-  positionSwapPopover();
   bindWindowActions();
   bindDockSummaryActions();
   bindGrantTargets();
@@ -1132,9 +966,7 @@ function renderDockSpotlight(): string {
       : avatarSrc(agent);
     const mode: ActionClusterMode | null = loading ? null : live ? "live" : "summary";
     const actionsHtml = mode
-      ? `<div class="spotlight-actions" aria-label="Speaker actions">
-          ${dockActionButtons(agent, mode)}
-        </div>`
+      ? `<div class="spotlight-actions" data-island="action-cluster" data-variant="spotlight" data-mode="${mode}" data-session="${escapeHtml(agent.sessionId)}" aria-label="Speaker actions"></div>`
       : "";
     column = `
       <div class="spotlight-col no-drag${spotlightEnterClass(enterKey)}" data-session="${agent.sessionId}">
@@ -1149,10 +981,6 @@ function renderDockSpotlight(): string {
   let bubbleHtml = "";
   if (bubble && nowPlaying) {
     const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
-    const rawSummary = (nowPlaying.rawText?.trim() || nowPlaying.text).trim();
-    const summary = dockSummaryExpanded
-      ? renderMarkdown(rawSummary)
-      : escapeHtml(stripMarkdown(rawSummary));
     const expandedClass = dockSummaryExpanded ? " expanded" : "";
     const endedClass = nowPlaying.endedAt ? " ended" : "";
     bubbleHtml = `
@@ -1165,16 +993,22 @@ function renderDockSpotlight(): string {
       >
         <span class="dock-caption-name">${name}</span>
         <span class="dock-caption-close" data-summary-action="dismiss" title="Dismiss" aria-hidden="true">${icons.close}</span>
-        <span class="dock-caption-summary">
-          ${summary}
-        </span>
+        <span class="dock-caption-summary" data-island="dock-caption-text" data-expanded="${dockSummaryExpanded ? "1" : "0"}"></span>
       </button>`;
   }
 
   return `<div class="dock-spotlight">${column}${bubbleHtml}</div>`;
 }
 
+/** Legacy render + island re-sync. Every store change funnels through here;
+ *  syncIslands flushSync-commits portals into the fresh placeholders in the
+ *  same task, so the DOM never paints half-rendered. */
 function render() {
+  renderView();
+  syncIslands(app);
+}
+
+function renderView() {
   if (dockMode) {
     renderDock();
     syncLipsyncLoop();
@@ -1220,21 +1054,12 @@ function render() {
       </main>
       ${roomSummaryPane ? renderRoomSummaryPane() : ""}
     </div>
-    <footer class="controls no-drag">
-      <button type="button" class="icon-btn${playbackPaused ? " paused-indicator" : ""}" data-action="pause" title="${playbackPaused ? "Resume playback" : "Pause playback"}">${playbackPaused ? icons.play : icons.pause}</button>
-      <button type="button" class="icon-btn" data-action="stop" title="Stop playback">${icons.stop}</button>
-      <button type="button" class="icon-btn" data-action="replay" title="Replay last message (free)">${icons.replay}</button>
-      <button type="button" class="icon-btn hold-control${roomHeld ? " active" : ""}" data-action="hold" title="${roomHeld ? "Release the room" : "Hold the room"}" aria-pressed="${roomHeld}">${icons.hold}</button>
-    </footer>
-    ${swapOpenSessionId ? renderSwapPopover(swapOpenSessionId) : ""}
+    <footer class="controls no-drag" data-island="transport"></footer>
     ${toastHtml()}
   `);
 
-  bindCards();
-  positionSwapPopover();
-  bindHoverActions();
+  bindGrantTargets();
   bindRename();
-  bindControls();
   bindWindowActions();
   bindDockSummaryActions();
   bindAvatars();
@@ -1254,7 +1079,6 @@ function renderRoomSummaryPane(): string {
   }
   const agent = agents.find((a) => a.sessionId === np.sessionId);
   const name = escapeHtml(agent?.label ?? agent?.name ?? "Room");
-  const rawSummary = (np.rawText?.trim() || np.text).trim();
   const endedClass = np.endedAt ? " ended" : "";
   return `
     <aside class="room-summary-pane${endedClass}" aria-label="Spoken summary">
@@ -1267,9 +1091,7 @@ function renderRoomSummaryPane(): string {
           title="Dismiss"
         >${icons.close}</button>
       </div>
-      <div class="room-summary-body">
-        ${renderMarkdown(rawSummary)}
-      </div>
+      <div class="room-summary-body" data-island="summary-body"></div>
     </aside>`;
 }
 
@@ -2309,6 +2131,18 @@ function bindDockSummaryActions() {
   });
 }
 
+// Event firewall: the card/dock grant gesture must never fire from island-
+// owned controls. React's ClusterBtn stops propagation at the portal
+// container, but this native-side guard is the belt — a press on any
+// button (other than the grant target itself) or inside an action-cluster
+// container is not a grant/PTT gesture.
+function isNonGrantTarget(el: EventTarget | null, boundTarget: HTMLElement): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  const btn = el.closest("button");
+  if (btn && btn !== boundTarget) return true;
+  return !!el.closest(".card-actions, .dock-actions, .spotlight-actions");
+}
+
 function bindGrantTargets() {
   app.querySelectorAll<HTMLElement>(".card, .dock-avatar-btn").forEach((target) => {
     const sessionEl = target.closest<HTMLElement>("[data-session]");
@@ -2327,6 +2161,7 @@ function bindGrantTargets() {
 
     target.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
+      if (isNonGrantTarget(e.target, target)) return;
       suppressClick = false;
       clearHold();
       holdTimer = setTimeout(() => {
@@ -2348,7 +2183,8 @@ function bindGrantTargets() {
     target.addEventListener("mouseup", endHold);
     target.addEventListener("mouseleave", endHold);
 
-    target.addEventListener("click", () => {
+    target.addEventListener("click", (e) => {
+      if (isNonGrantTarget(e.target, target)) return;
       if (suppressClick) {
         suppressClick = false;
         return;
@@ -2367,75 +2203,6 @@ function bindAvatars() {
       const fallback = img.nextElementSibling as HTMLElement | null;
       if (fallback) fallback.style.display = "flex";
     };
-  });
-}
-
-function bindControls() {
-  app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const action = btn.dataset.action;
-      if (action === "pause") send({ type: "pause" });
-      else if (action === "stop") send({ type: "stop" });
-      else if (action === "replay") send({ type: "replay" });
-      else if (action === "hold") send({ type: "hold_room" });
-    });
-  });
-}
-
-function armKill(sessionId: string) {
-  const existing = killArmed.get(sessionId);
-  if (existing) clearTimeout(existing);
-  const timer = setTimeout(() => {
-    killArmed.delete(sessionId);
-    render();
-  }, KILL_ARM_MS);
-  killArmed.set(sessionId, timer);
-}
-
-function bindHoverActions() {
-  app.querySelectorAll<HTMLButtonElement>("[data-hover-action]").forEach((btn) => {
-    const sessionEl = btn.closest<HTMLElement>("[data-session]");
-    if (!sessionEl) return;
-    const sessionId = sessionEl.dataset.session!;
-
-    btn.addEventListener("mousedown", (e) => e.stopPropagation());
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (btn.disabled) return;
-
-      const action = btn.dataset.hoverAction;
-      if (action === "focus") {
-        send({ type: "focus_terminal", sessionId });
-      } else if (action === "status") {
-        send({ type: "status_say", sessionId });
-      } else if (action === "pause") {
-        send({ type: "pause" });
-      } else if (action === "stop") {
-        send({ type: "stop" });
-      } else if (action === "restart") {
-        send({ type: "restart" });
-      } else if (action === "replay") {
-        send({ type: "replay" });
-      } else if (action === "replay_slower") {
-        send({ type: "replay_slower" });
-      } else if (action === "replay_session") {
-        send({ type: "replay_session", sessionId });
-      } else if (action === "kill") {
-        if (killArmed.has(sessionId)) {
-          const timer = killArmed.get(sessionId)!;
-          clearTimeout(timer);
-          killArmed.delete(sessionId);
-          send({ type: "kill_team", sessionId });
-        } else {
-          armKill(sessionId);
-          render();
-        }
-      } else if (action === "swap") {
-        swapOpenSessionId = swapOpenSessionId === sessionId ? null : sessionId;
-        render();
-      }
-    });
   });
 }
 
@@ -2471,32 +2238,6 @@ function bindDockHoverIntent() {
   });
 }
 
-function bindSwapPopover() {
-  app.querySelectorAll<HTMLElement>("[data-swap-popover]").forEach((popover) => {
-    popover.addEventListener("mousedown", (e) => e.stopPropagation());
-    popover.addEventListener("click", (e) => e.stopPropagation());
-  });
-  app.querySelectorAll<HTMLButtonElement>("[data-swap-character]").forEach((btn) => {
-    const sessionEl = btn.closest<HTMLElement>("[data-session]");
-    if (!sessionEl) return;
-    const sessionId = sessionEl.dataset.session!;
-    btn.addEventListener("mousedown", (e) => e.stopPropagation());
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const character = btn.dataset.swapCharacter;
-      if (!character) return;
-      send({ type: "set_voice", sessionId, character });
-      swapOpenSessionId = null;
-      render();
-    });
-  });
-}
-
-function bindCards() {
-  bindGrantTargets();
-  bindSwapPopover();
-}
-
 function bindRename() {
   app.querySelectorAll<HTMLElement>("[data-rename-name]").forEach((nameEl) => {
     const sessionEl = nameEl.closest<HTMLElement>("[data-session]");
@@ -2507,7 +2248,6 @@ function bindRename() {
       e.preventDefault();
       e.stopPropagation();
       renamingSessionId = sessionEl.dataset.session!;
-      swapOpenSessionId = null;
       render();
       const input = app.querySelector<HTMLInputElement>("[data-rename-input]");
       input?.focus();
@@ -2731,20 +2471,12 @@ function applySnapshot(snap: PanelSnapshot) {
       : null;
   nowPlaying = snap.nowPlaying ?? null;
   if (nowPlaying && nowPlaying.kind !== "ack" && !isPhoneRoutedFrame(nowPlaying)) moodSegments(nowPlaying);
-  if (swapOpenSessionId && !agents.some((a) => a.sessionId === swapOpenSessionId)) {
-    swapOpenSessionId = null;
-  }
   if (renamingSessionId && !agents.some((a) => a.sessionId === renamingSessionId)) {
     renamingSessionId = null;
   }
   staleSessions.clear();
-  for (const sid of killArmed.keys()) {
-    if (!agents.some((a) => a.sessionId === sid)) {
-      const t = killArmed.get(sid);
-      if (t) clearTimeout(t);
-      killArmed.delete(sid);
-    }
-  }
+  // Kill-arm timers + the swap popover moved to the island ui-state store.
+  pruneUiState(new Set(agents.map((a) => a.sessionId)));
 }
 
 let lastAppliedSnapshot: PanelSnapshot | null = null;
@@ -2767,6 +2499,10 @@ client.subscribe(() => {
 });
 client.onEvent(handleServerEvent);
 
+initIslands(
+  client,
+  PERSONAS.map((p) => ({ name: p.name, label: p.label, avatarSrc: personaAvatarSrc(p) })),
+);
 render();
 preloadAvatarFrames();
 client.start();

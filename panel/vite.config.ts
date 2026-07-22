@@ -1,9 +1,11 @@
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   clearScreen: false,
+  plugins: [tailwindcss()],
   server: {
     port: 5173,
     strictPort: true,

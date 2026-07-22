@@ -21,8 +21,20 @@ long-lived — maintainability matters now (see Refactor status).
 - **AI**: Gemini (`@google/genai`, `gemini-3.1-flash-lite`) rewrites agent
   text into character voice; ElevenLabs streams TTS (billed per character —
   the expensive one).
-- **Desktop panel** (`panel/`): Tauri 2 + Vite + TypeScript. UI currently
-  template-string DOM (refactor target → React components).
+- **Shared UI** (`packages/ui/`): semantic design tokens (`tokens.css` is
+  the color authority — state colors, `--room-accent`), Tailwind v4 theme
+  mapping (no preflight while legacy CSS coexists), vendored shadcn/Radix
+  primitives, domain leaf components (StateBadge, AgentChips, TransportBar,
+  SummaryText), and the sanitized `Markdown` renderer (react-markdown +
+  rehype-sanitize, platform link policy). Components take domain values +
+  callbacks only — no fetch/WS/Tauri/audio inside.
+- **Desktop panel** (`panel/`): Tauri 2 + Vite + TypeScript + React 19.
+  Leaf UI (badges, chips, queued preview, transport footer, action
+  clusters incl. kill-arm + swap popover, summary text) runs as React
+  islands portaled from one persistent root (`src/islands/`) into
+  placeholders emitted by the legacy string-template shell (`main.ts`,
+  Phase 4 target). HARD RULE: each action is owned by the legacy handler
+  OR an island, never both; lipsync/blink stay direct-DOM outside React.
 - **Mobile room** (`tts-server/mobile.html`): single-file HTML/CSS/JS served
   raw over LAN, token-gated (refactor target → componentized build).
 - **Glue** (`scripts/`): bash utilities + Claude Code hooks; SwiftBar plugin

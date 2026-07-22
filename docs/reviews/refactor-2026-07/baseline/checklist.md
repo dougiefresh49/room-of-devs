@@ -80,3 +80,23 @@ Legend: ☑ captured with screenshot · ◐ observed/asserted, no dedicated shot
   `rev` field, optional `requestId`/`source` accepted on commands,
   `command_result` frames on the WS path. All additive; both UIs ignore them
   today.
+
+## Phase 3 deltas (2026-07-22 — deliberate, owner-decided; see decisions-overnight.md)
+
+- **Accent green is now `#3ecf8e`** (was `#49d99a`, dock-live also had
+  `#58d68d`): connection dot, speaking rings, hold-active, dock live
+  controls, phone chip — all re-derived from `--room-accent` via
+  color-mix. State color MAPPING unchanged (panel already matched the
+  owner decision: working=amber, hand_raised=blue).
+- **Queued-preview text is NEW on desktop**: hand-raised cards show the
+  waiting message (italic, 2-line clamp) — closes the "desktop can't
+  render waiting text" gap from the spec.
+- **Swap popover is Radix-positioned** (collision-clamped) and gains
+  outside-click dismissal (legacy had none). Quirk: clicks on the
+  window-title drag region don't dismiss it (Tauri drag intercepts).
+- **Clicks in the GAP between action-cluster buttons no longer fire a
+  billable grant** (legacy did — treated as a bug, fixed by the event
+  firewall).
+- Leaf UI (badge/chips/preview/transport/clusters/summary text) is now
+  React islands; verified single-fire per action (codex physical-mouse
+  pass, 2026-07-22).
