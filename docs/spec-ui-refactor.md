@@ -241,9 +241,18 @@ normal activating window; dock = separate NSPanel window carrying today's
 `lib.rs` policy; role-aware activation policy; hide-vs-destroy on mode
 switch decided here. Rename the desktop "stage live" vocabulary.
 
-**5 — Mobile Vite shell + cutover.** Vite entry + authenticated static
-serving first; migrate room/picker **directly onto shared components** (no
-parity clone), then player/replay, then call/thread/composer last;
+**5 — Mobile Vite shell + cutover.** Build the **live-mode test harness**
+at the start of this phase (or pull it into an earlier phase the moment
+live behavior needs regression cover): (a) a no-spend mock — scripted
+`live_sessions.json` entries + a fake transcript fed through `live-tail.ts
+once` + cached replay clips — so the call view, activity feed, hold-one
+buffer, and Mac↔phone handoff can be exercised with zero synthesis; (b) a
+documented bounded paid smoke lane (owner-approved 2026-07-22): a
+`sonnet`/`haiku` team session with one-sentence prompts, a few clips max,
+driven end-to-end by codex computer use for the final parity pass. Then:
+Vite entry + authenticated static serving first; migrate room/picker
+**directly onto shared components** (no parity clone), then player/replay,
+then call/thread/composer last;
 phone-audio controller stays behind an adapter until parity is proven with
 cached audio; keep that adapter content/delivery-neutral and abortable
 (future interpreter replies route through it). Phone mic capture /

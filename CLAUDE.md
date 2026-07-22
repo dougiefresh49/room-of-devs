@@ -71,6 +71,16 @@ for any work in this repo:
   `echo "short test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Test"`, or
   process one file with `pnpm exec tsx src/index.ts once <queue-file>`. One
   run is enough — never loop live synthesis.
+- **Live-mode testing may spend a little** (owner call 2026-07-22): to test
+  live/call features end-to-end, spawn or reuse a dedicated team session on
+  a cheap model (`sonnet`/`haiku` — e.g. in the agent-usage-bar project),
+  keep its prompts short ("reply in one sentence"), cap a run at a handful
+  of clips, and prefer delegating the whole interact→listen→verify→fix loop
+  to codex computer use so the owner isn't the test rig. This is a bounded
+  lane, not a loosening of the rules above: no unbounded/repeated synthesis
+  loops, and anything testable without spend still goes the free route
+  first. A no-spend mock live harness is planned in the refactor
+  (docs/spec-ui-refactor.md, Phase 5).
 - If the thing being verified isn't synthesis itself, test WITHOUT burning
   credits: `processWithGemini` and `streamTTS` skip gracefully when API
   keys are absent; `signal.ts replay` re-plays saved audio free;
@@ -241,6 +251,8 @@ observe side effects:
 4. UI checks (panel window, mobile page rendering) need real computer use —
    delegate to codex via `codex-computer-use`.
 5. `signal.ts replay "" 1` is a free end-to-end audio check.
+6. Live/call-mode flows: use the bounded paid lane above (cheap-model team
+   session + codex driving both UIs) until the mock harness exists.
 
 Launching the app, screenshots, and short test audio are fine without
 asking; ask first before clearing queues, deleting replay history, or
