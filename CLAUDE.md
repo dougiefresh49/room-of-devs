@@ -170,7 +170,7 @@ Taste covers UI/UX, code quality, API design, and copy.
 | model          | cost | intelligence | taste | reachable via                    |
 | -------------- | ---- | ------------ | ----- | -------------------------------- |
 | composer-2.5   | 8    | 5            | 5     | cursor-agent CLI (`agent`)       |
-| grok-4.5       | 8    | 6            | 6     | cursor-agent CLI (`--model grok-4.5-fast-xhigh`; everyday tier `-fast-high`) |
+| grok-4.5       | 8    | 6            | 6     | cursor-agent CLI (`--model cursor-grok-4.5-high`; `-medium`/`-low` for lighter work) |
 | gpt-5.6 Sol    | 7    | 8\*          | 5     | codex CLI (`codex -m` Sol tier)  |
 | gpt-5.6 Terra  | 8    | 7\*          | 5     | codex CLI (default tier)         |
 | gpt-5.6 Luna   | 8    | 4\*          | 4     | codex CLI (`codex -m` Luna tier) |
@@ -214,6 +214,11 @@ Mechanics:
   `command -v codex`; fall back to a Claude subagent if missing.
 - composer/grok: `agent --worktree -p --force "prompt"` (see the
   `cursor-agent` skill). Always `--force` for tasks that write code.
+  Model IDs verified 2026-07-22 (`cursor-agent models`): `composer-2.5`,
+  `cursor-grok-4.5-high|-medium|-low`. Every ID also has a `-fast` variant
+  that burns MORE quota for the same model served faster — default to
+  non-fast; Cursor plan headroom is generous (2x usage promo), so
+  `cursor-grok-4.5-high` is the standard grok pick.
 - gpt-5.6: codex CLI — `codex exec` / `codex review`. Note: `codex review`
   accepts NO custom prompt; use `codex exec` with a self-contained prompt
   when you need one. Long runs exceed Bash's 10-min default timeout —
