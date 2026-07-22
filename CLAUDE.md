@@ -29,12 +29,20 @@ long-lived — maintainability matters now (see Refactor status).
   rehype-sanitize, platform link policy). Components take domain values +
   callbacks only — no fetch/WS/Tauri/audio inside.
 - **Desktop panel** (`panel/`): Tauri 2 + Vite + TypeScript + React 19.
-  Leaf UI (badges, chips, queued preview, transport footer, action
-  clusters incl. kill-arm + swap popover, summary text) runs as React
-  islands portaled from one persistent root (`src/islands/`) into
-  placeholders emitted by the legacy string-template shell (`main.ts`,
-  Phase 4 target). HARD RULE: each action is owned by the legacy handler
-  OR an island, never both; lipsync/blink stay direct-DOM outside React.
+  Fully React since Phase 4: component tree in `src/app/` over external
+  stores (`view-state`, `server-data`, `ui-state` + the shared
+  room-client store); all Tauri calls behind `src/platform/` (components
+  never import @tauri-apps/*). TWO windows, one bundle, two JS realms:
+  `main` = normal activating NSWindow with the standard titlebar; `dock`
+  = NSPanel (float level, non-activating, all-Spaces) converted once at
+  startup. Rust (`lib.rs`) is the mode authority — `set_room_mode` swaps
+  visibility + activation policy (Regular/Accessory); realms coordinate
+  via daemon snapshots only. Lipsync/blink run in `src/stage/` (one rAF
+  loop + 70ms watchdog, img refs — avatar frames NEVER go through React
+  renders). Grant/PTT lives solely in `usePttGrant` (event firewall incl.
+  portaled popover content). The cross-realm grant belt
+  (`grant-guard.ts`, localStorage) prevents double-dispatch around mode
+  switches; the daemon's claim markers stay the billing authority.
 - **Mobile room** (`tts-server/mobile.html`): single-file HTML/CSS/JS served
   raw over LAN, token-gated (refactor target → componentized build).
 - **Glue** (`scripts/`): bash utilities + Claude Code hooks; SwiftBar plugin
@@ -121,7 +129,8 @@ pnpm check-fixtures                           # validate protocol fixtures vs sc
 echo "test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Verify"   # cheap pipeline poke
 pnpm exec tsx src/signal.ts replay "" 1       # free replay of last message
 tail -40 ~/.cursor/tts/logs/hook.log          # full pipeline trace
-cd panel && pnpm tauri build --debug          # rebuild Room.app (then setup.sh + relaunch)
+./scripts/panel-dev-install.sh                # panel: build → verify fresh → install → relaunch
+cd panel && pnpm tauri dev                    # panel: ordinary component work (HMR)
 ```
 
 ## Code style
@@ -299,8 +308,4 @@ changing `~/.cursor/tts/config.json`.
   panel. Audit references before deleting — hooks call into `scripts/`.
 - Cross-persona spawn race and subagent-finish announce filtering
   (docs/ideas-backlog.md).
-- Panel button assign/unassign silently no-ops: the panel sends `null` to
-  clear patch fields, `parseButtonPatch` rejects null (`bad_message`) —
-  pre-dates the refactor (4bf9724). Fix both sides deliberately; see the
-  Phase 2 entry in docs/reviews/refactor-2026-07/decisions-overnight.md.
 - No test suite; verification is manual/scripted per the section above.

@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { client } from "../client.js";
-import { dragRegionMouseDown } from "./drag.js";
-import { IconBack, IconClose, IconFolder } from "./icons.js";
+import { IconBack, IconFolder } from "./icons.js";
 import { PERSONAS, personaAvatarSrc } from "./personas.js";
 import {
   closePicker,
@@ -48,19 +47,19 @@ function selectedModel(): "" | "fable" | "opus" | "sonnet" | "haiku" {
   } catch { return ""; }
 }
 
-function HeaderButton({ back }: { back?: boolean }) {
+function BackButton() {
   const stop = (event: React.SyntheticEvent) => event.stopPropagation();
   return (
     <button
       type="button"
-      className={`icon-btn window-btn${back ? " no-drag" : ""}`}
-      data-window-action={back ? "picker-back" : "close"}
-      title={back ? "Back to room" : "Close room"}
-      onPointerDown={back ? (event) => { event.stopPropagation(); event.preventDefault(); closePicker(); } : stop}
+      className="icon-btn window-btn no-drag"
+      data-window-action="picker-back"
+      title="Back to room"
+      onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); closePicker(); }}
       onMouseDown={stop}
-      onClick={back ? stop : (event) => { event.stopPropagation(); platform.closeWindow(); }}
+      onClick={stop}
     >
-      {back ? <IconBack /> : <IconClose />}
+      <IconBack />
     </button>
   );
 }
@@ -99,5 +98,5 @@ export function PickerView() {
   </div>;
   const rows = view.pickerTab === "new" ? <>{browse}{data.knownDirs.length ? data.knownDirs.map((dir) => { const name = basenameOf(dir); const path = prettyPath(dir); return <div key={dir} className="picker-row" data-dir={dir} data-project={name}><div className="picker-row-info"><div className="picker-row-name" title={path}>{name}</div><div className="picker-row-sub" title={path}>{path}</div></div><PersonaChips dir={dir} project={name} /></div>; }) : <p className="picker-empty">No known projects</p>}</> : data.resumable.length ? <>{data.resumable.map((session) => { const project = session.project || basenameOf(session.dir); return <div key={session.sessionId} className="picker-row" data-dir={session.dir} data-session={session.sessionId} data-project={project}><div className="picker-row-info"><div className="picker-row-name" title={prettyPath(session.dir)}>{project}</div><div className="picker-row-sub"><span className="picker-age">{humanizeAge(session.mtimeMs)}</span><span className="picker-sid">{session.sessionId.slice(0, 8)}</span></div></div><PersonaChips dir={session.dir} project={project} sessionId={session.sessionId} /></div>; })}</> : <p className="picker-empty">No resumable sessions</p>;
   const connected = clientState.connected;
-  return <><header className="strip drag-region" data-tauri-drag-region onMouseDown={dragRegionMouseDown}><div className="strip-left"><HeaderButton back /><span className="title" data-tauri-drag-region>New Session</span></div><div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span><HeaderButton /></div></header><main className="picker"><div className="picker-tabs no-drag" role="tablist"><button type="button" className={`picker-tab${view.pickerTab === "new" ? " active" : ""}`} data-picker-tab="new" role="tab" onClick={() => setPickerTab("new")}>New</button><button type="button" className={`picker-tab${view.pickerTab === "resume" ? " active" : ""}`} data-picker-tab="resume" role="tab" onClick={() => setPickerTab("resume")}>Resume</button></div><div className="picker-flags no-drag"><label className="picker-flag"><input type="checkbox" data-spawn-flag={SKIP_PERMS} defaultChecked={flagChecked(SKIP_PERMS)} onChange={(event) => { try { localStorage.setItem(SKIP_PERMS, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Skip permission prompts</label><label className="picker-flag"><input type="checkbox" data-spawn-flag={REMOTE} defaultChecked={flagChecked(REMOTE)} onChange={(event) => { try { localStorage.setItem(REMOTE, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Remote control (Claude app)</label><label className="picker-flag">Model <select data-spawn-model defaultValue={selectedModel()} onChange={(event) => { try { localStorage.setItem(MODEL, event.currentTarget.value); } catch {} }}>{MODELS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="picker-list">{rows}</div></main></>;
+  return <><header className="strip"><div className="strip-left"><BackButton /><span className="title">New Session</span></div><div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span></div></header><main className="picker"><div className="picker-tabs no-drag" role="tablist"><button type="button" className={`picker-tab${view.pickerTab === "new" ? " active" : ""}`} data-picker-tab="new" role="tab" onClick={() => setPickerTab("new")}>New</button><button type="button" className={`picker-tab${view.pickerTab === "resume" ? " active" : ""}`} data-picker-tab="resume" role="tab" onClick={() => setPickerTab("resume")}>Resume</button></div><div className="picker-flags no-drag"><label className="picker-flag"><input type="checkbox" data-spawn-flag={SKIP_PERMS} defaultChecked={flagChecked(SKIP_PERMS)} onChange={(event) => { try { localStorage.setItem(SKIP_PERMS, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Skip permission prompts</label><label className="picker-flag"><input type="checkbox" data-spawn-flag={REMOTE} defaultChecked={flagChecked(REMOTE)} onChange={(event) => { try { localStorage.setItem(REMOTE, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Remote control (Claude app)</label><label className="picker-flag">Model <select data-spawn-model defaultValue={selectedModel()} onChange={(event) => { try { localStorage.setItem(MODEL, event.currentTarget.value); } catch {} }}>{MODELS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div><div className="picker-list">{rows}</div></main></>;
 }

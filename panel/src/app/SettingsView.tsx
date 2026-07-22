@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { client } from "../client.js";
-import { platform } from "../platform/tauri.js";
-import { dragRegionMouseDown } from "./drag.js";
-import { IconBack, IconClose } from "./icons.js";
+import { IconBack } from "./icons.js";
 import {
   armLearnCapture, BUTTON_COLORS, commitButtonPatch, commitSetting, getServerData, removeButton, sendHoldRoom, subscribeServerData,
   type ButtonConfig, type RoomSettings,
@@ -21,9 +19,9 @@ function colorOf(config: ButtonConfig) { return BUTTON_COLORS.includes(config.co
 function nextColor(config: ButtonConfig) { const color = colorOf(config); return BUTTON_COLORS[(BUTTON_COLORS.indexOf(color) + 1) % BUTTON_COLORS.length]; }
 function assignment(config: ButtonConfig) { return config.character ? `character:${config.character}` : config.action ? `action:${config.action}` : ""; }
 
-function WindowButton({ back }: { back?: boolean }) {
+function BackButton() {
   const stop = (event: React.SyntheticEvent) => event.stopPropagation();
-  return <button type="button" className={`icon-btn window-btn${back ? " no-drag" : ""}`} data-window-action={back ? "settings-back" : "close"} title={back ? "Back to room" : "Close room"} onPointerDown={back ? (event) => { event.stopPropagation(); event.preventDefault(); closeSettings(); } : stop} onMouseDown={stop} onClick={back ? stop : (event) => { event.stopPropagation(); platform.closeWindow(); }}>{back ? <IconBack /> : <IconClose />}</button>;
+  return <button type="button" className="icon-btn window-btn no-drag" data-window-action="settings-back" title="Back to room" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); closeSettings(); }} onMouseDown={stop} onClick={stop}><IconBack /></button>;
 }
 
 function Segmented({ group, options, current, labels, writable }: { group: keyof RoomSettings; options: readonly string[]; current: string; labels: Record<string, string>; writable: boolean }) {
@@ -69,5 +67,5 @@ export function SettingsView() {
   else if (!data.shortcutsLoaded) body = <div className="shortcut-panel"><p className="picker-empty">Waiting for shortcuts</p></div>;
   else if (!data.shortcutsSections.length) body = <div className="shortcut-panel"><p className="picker-empty">No shortcuts</p></div>;
   else body = <div className="shortcut-panel">{data.shortcutsSections.map((section) => <section key={section.title} className="shortcut-section"><h2>{section.title}</h2><div className="shortcut-table">{section.rows.map(([key, description]) => <div key={key} className="shortcut-row"><kbd>{key}</kbd><span>{description}</span></div>)}</div></section>)}</div>;
-  return <><header className="strip drag-region" data-tauri-drag-region onMouseDown={dragRegionMouseDown}><div className="strip-left"><WindowButton back /><span className="title" data-tauri-drag-region>{title}</span></div><div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span><WindowButton /></div></header><main className="picker"><div className="picker-tabs no-drag" role="tablist">{([ ["general", "General"], ["buttons", "Buttons"], ["help", "Help"] ] as const).map(([tab, label]) => <button key={tab} type="button" className={`picker-tab${view.settingsTab === tab ? " active" : ""}`} data-settings-tab={tab} role="tab" onClick={() => setSettingsTab(tab)}>{label}</button>)}</div>{body}</main></>;
+  return <><header className="strip"><div className="strip-left"><BackButton /><span className="title">{title}</span></div><div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span></div></header><main className="picker"><div className="picker-tabs no-drag" role="tablist">{([ ["general", "General"], ["buttons", "Buttons"], ["help", "Help"] ] as const).map(([tab, label]) => <button key={tab} type="button" className={`picker-tab${view.settingsTab === tab ? " active" : ""}`} data-settings-tab={tab} role="tab" onClick={() => setSettingsTab(tab)}>{label}</button>)}</div>{body}</main></>;
 }

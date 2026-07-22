@@ -177,6 +177,12 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Allows invoking the set_room_mode command (floating/dock window swap)",
+          "type": "string",
+          "const": "allow-set-room-mode",
+          "markdownDescription": "Allows invoking the set_room_mode command (floating/dock window swap)"
+        },
+        {
           "description": "Enables the ws_token command.",
           "type": "string",
           "const": "allow-ws-token",

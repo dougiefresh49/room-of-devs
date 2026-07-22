@@ -12,11 +12,27 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Room",
         "width": 380,
         "height": 300,
         "minWidth": 300,
         "minHeight": 240,
+        "resizable": true,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "fullscreen": false,
+        "transparent": false,
+        "shadow": true
+      },
+      {
+        "label": "dock",
+        "title": "Room Dock",
+        "width": 400,
+        "height": 126,
+        "minWidth": 88,
+        "minHeight": 56,
+        "visible": false,
         "resizable": true,
         "decorations": false,
         "alwaysOnTop": true,

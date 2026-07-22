@@ -4,8 +4,10 @@
  * had) and switches between the dock / room / picker / settings trees.
  * In 4b this also becomes the window-role switch (main vs dock realm).
  */
-import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import type { WindowRole } from "../platform/types.js";
 import { client } from "../client.js";
+import { getGrantMarkVersion, subscribeGrantMarks } from "./grant-guard.js";
 import { DockView } from "./DockView.js";
 import { PickerView } from "./PickerView.js";
 import { RoomView } from "./RoomView.js";
@@ -14,11 +16,14 @@ import { getServerData, subscribeServerData } from "./server-data.js";
 import { getUiState, subscribeUiState } from "./ui-state.js";
 import { getViewState, subscribeViewState, type ToastState } from "./view-state.js";
 
-export function App() {
+export function App({ role }: { role: WindowRole }) {
   const room = useSyncExternalStore(client.subscribe, client.getState);
   const view = useSyncExternalStore(subscribeViewState, getViewState);
   const serverData = useSyncExternalStore(subscribeServerData, getServerData);
   const ui = useSyncExternalStore(subscribeUiState, getUiState);
+  // Cross-realm grant markers (storage events from the other window) —
+  // value unused; subscribing re-renders spinner/spotlight readers.
+  useSyncExternalStore(subscribeGrantMarks, getGrantMarkVersion);
 
   // One shared clock for the phone-chip staleness belt — one timer total,
   // not one per card (Phase 3 precedent).
@@ -28,17 +33,12 @@ export function App() {
     return () => clearInterval(t);
   }, []);
 
-  // Legacy toggled these classes BEFORE painting the dock DOM; layout
-  // effect (pre-paint) avoids a one-frame unstyled dock flash. #app is the
-  // React root container (outside the tree).
-  useLayoutEffect(() => {
-    document.body.classList.toggle("dock-window", view.dockMode);
-    document.getElementById("app")?.classList.toggle("dock-mode", view.dockMode);
-  }, [view.dockMode]);
-
   const snapshot = room.snapshot ?? null;
 
-  if (view.dockMode) {
+  // The dock REALM always renders the dock tree — mode switching is a
+  // window-visibility swap owned by Rust, not view state. (The body/app
+  // dock classes are set once at bootstrap.)
+  if (role === "dock") {
     return (
       <DockView
         snapshot={snapshot}

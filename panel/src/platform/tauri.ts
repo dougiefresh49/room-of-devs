@@ -9,24 +9,20 @@ import {
   LogicalPosition,
   LogicalSize,
   PhysicalPosition,
-  PhysicalSize,
   availableMonitors,
   currentMonitor,
   getCurrentWindow,
 } from "@tauri-apps/api/window";
-import type { PlatformAdapter, SnapCorner } from "./types.js";
+import type { PlatformAdapter, RoomMode, SnapCorner, WindowRole } from "./types.js";
 
 interface WsConfig {
   token: string;
   port: number;
 }
 
-const FULL_MIN_SIZE = new LogicalSize(300, 240);
 const DOCK_MIN_SIZE = new LogicalSize(88, 56);
 const DOCK_BOTTOM_GAP = 12;
 const SNAP_MARGIN = 12;
-
-let savedWindowFrame: { size: PhysicalSize; position: PhysicalPosition } | null = null;
 
 async function snapToCorner(corner: SnapCorner): Promise<void> {
   // Snap must never move a hidden window (4b: both realms receive the
@@ -90,14 +86,29 @@ async function snapToCorner(corner: SnapCorner): Promise<void> {
   }
 }
 
-async function enterDockLayout(width: number, height: number): Promise<void> {
+// Serialized + coalesced: geometry ops are async and must never
+// interleave; a call arriving mid-flight just becomes the next target.
+let dockLayoutChain: Promise<void> = Promise.resolve();
+let dockLayoutTarget: { width: number; height: number } | null = null;
+
+function enterDockLayout(width: number, height: number): Promise<void> {
+  const first = dockLayoutTarget === null;
+  dockLayoutTarget = { width, height };
+  if (first) {
+    dockLayoutChain = dockLayoutChain.then(async () => {
+      while (dockLayoutTarget) {
+        const t = dockLayoutTarget;
+        await applyDockLayout(t.width, t.height);
+        if (dockLayoutTarget === t) dockLayoutTarget = null;
+      }
+    });
+  }
+  return dockLayoutChain;
+}
+
+async function applyDockLayout(width: number, height: number): Promise<void> {
   const win = getCurrentWindow();
   try {
-    if (!savedWindowFrame) {
-      const [size, position] = await Promise.all([win.outerSize(), win.outerPosition()]);
-      savedWindowFrame = { size, position };
-    }
-
     await win.setMinSize(DOCK_MIN_SIZE);
     await win.setSize(new LogicalSize(width, height));
 
@@ -120,21 +131,19 @@ async function enterDockLayout(width: number, height: number): Promise<void> {
   }
 }
 
-async function exitDockLayout(): Promise<void> {
-  const win = getCurrentWindow();
-  try {
-    await win.setMinSize(FULL_MIN_SIZE);
-    if (savedWindowFrame) {
-      await win.setSize(savedWindowFrame.size);
-      await win.setPosition(savedWindowFrame.position);
-      savedWindowFrame = null;
-    }
-  } catch (err) {
-    console.error("failed to exit dock mode:", err);
-  }
-}
-
 export const platform: PlatformAdapter = {
+  windowRole(): WindowRole {
+    return getCurrentWindow().label === "dock" ? "dock" : "main";
+  },
+
+  async setRoomMode(mode: RoomMode): Promise<void> {
+    try {
+      await invoke("set_room_mode", { mode });
+    } catch (err) {
+      console.error("set_room_mode failed:", err);
+    }
+  },
+
   // Token/port come from Tauri per connection attempt, so a daemon restart
   // (which rotates the token) reconnects cleanly. WsTransport tolerates
   // this provider rejecting (daemon down → no token file yet).
@@ -163,7 +172,6 @@ export const platform: PlatformAdapter = {
 
   snapToCorner,
   enterDockLayout,
-  exitDockLayout,
 
   isVisible(): boolean {
     return document.visibilityState === "visible";

@@ -25,6 +25,25 @@ const KEY_PREFIX = "room_grant_pending:";
 /** Sessions THIS realm wrote markers for (settled via syncSettledGrants). */
 const ourMarks = new Set<string>();
 
+// The OTHER realm's marker writes arrive as storage events — bump a
+// version so React re-reads marker-derived state (spinner/spotlight)
+// without waiting for an unrelated snapshot (Sol 4b review).
+let markVersion = 0;
+const markListeners = new Set<() => void>();
+
+window.addEventListener("storage", (e) => {
+  if (e.key && !e.key.startsWith(KEY_PREFIX)) return;
+  markVersion += 1;
+  for (const cb of markListeners) cb();
+});
+
+export function subscribeGrantMarks(cb: () => void): () => void {
+  markListeners.add(cb);
+  return () => markListeners.delete(cb);
+}
+
+export const getGrantMarkVersion = (): number => markVersion;
+
 function markKey(sessionId: string): string {
   return `${KEY_PREFIX}${sessionId}`;
 }

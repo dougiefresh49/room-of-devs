@@ -48,8 +48,20 @@ preloadAvatarFrames(PERSONAS.map((p) => p.avatar));
 
 const appEl = document.getElementById("app");
 if (!appEl) throw new Error("#app root missing from index.html");
+
+// Realm identity is fixed for the window's lifetime: the dock realm gets
+// the dock chrome classes once; the main realm marks native chrome so the
+// legacy .shell corner styling steps aside for the real titlebar.
+const role = platform.windowRole();
+if (role === "dock") {
+  document.body.classList.add("dock-window");
+  appEl.classList.add("dock-mode");
+} else {
+  document.body.classList.add("native-chrome");
+}
+
 const root = createRoot(appEl);
-root.render(<App />);
+root.render(<App role={role} />);
 
 client.start();
 

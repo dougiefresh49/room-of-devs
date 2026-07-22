@@ -22,7 +22,6 @@ export interface ToastState {
 
 export interface ViewState {
   view: ViewName;
-  dockMode: boolean;
   pickerTab: PickerTab;
   settingsTab: SettingsTab;
   browseDir: string | null;
@@ -44,7 +43,6 @@ const ERROR_TOAST_MS = 2600;
 
 let state: ViewState = {
   view: "room",
-  dockMode: false,
   pickerTab: "new",
   settingsTab: "general",
   browseDir: null,
@@ -176,10 +174,6 @@ export function setSettingsTab(tab: SettingsTab): void {
 }
 
 // ── Dock / summary ────────────────────────────────────────────────────
-
-export function setDockMode(on: boolean): void {
-  if (state.dockMode !== on) setState({ dockMode: on });
-}
 
 export function toggleCaptions(): void {
   const next = !state.dockCaptions;

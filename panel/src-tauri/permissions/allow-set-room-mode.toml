@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-set-room-mode"
+description = "Allows invoking the set_room_mode command (floating/dock window swap)"
+commands.allow = ["set_room_mode"]

@@ -2,12 +2,10 @@
  * Dock mode: speaker spotlight row + bottom avatar pill. DOM mirrors the
  * legacy renderDock()/renderDockSpotlight()/renderDockAgent().
  *
- * Layout effect intentionally has NO dependency array: legacy re-ran
- * enterDockMode() after every store change while docked (re-centering the
- * pill bottom-center); the effect preserves that cadence. 4a keeps the
- * in-window dock; 4b mounts this view in its own NSPanel window.
+ * Mounted in the dock NSPanel window (its own realm); Rust owns window
+ * visibility and initial placement, this view owns pill geometry.
  */
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import type { AgentView, NowPlaying, PanelSnapshot } from "@room/protocol";
 import { LiveBadge, SummaryText, stripMarkdown } from "@room/ui";
 import { isPhoneRoutedFrame, nowPlayingKey } from "@room/room-client";
@@ -25,7 +23,6 @@ import {
   dismissSummary,
   dockHoverEnter,
   dockHoverLeave,
-  setDockMode,
   toggleCaptions,
   toggleDockSummaryExpanded,
   type ViewState,
@@ -124,18 +121,15 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
       ? DOCK_SPOTLIGHT_EXPANDED
       : DOCK_SPOTLIGHT_HEIGHT;
 
-  // No deps: re-assert dock geometry after every committed render (legacy
-  // cadence — see file header). Layout effect: the native resize must start
-  // before paint or the full-size window flashes. Cleanup restores the
-  // saved frame on exit.
+  // Geometry re-asserts only when the SIZE changes (Sol 4b: unbounded
+  // per-commit async geometry calls can interleave); Rust already places
+  // the window bottom-center on every dock entry, so a dragged dock now
+  // stays put until its size changes — deliberate delta from the legacy
+  // recenter-on-every-snapshot behavior. Layout effect: resize must start
+  // before paint.
   useLayoutEffect(() => {
     void platform.enterDockLayout(width, height);
-  });
-  useEffect(() => {
-    return () => {
-      void platform.exitDockLayout();
-    };
-  }, []);
+  }, [width, height]);
 
   return (
     <main
@@ -187,7 +181,7 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
-            setDockMode(false);
+            void platform.setRoomMode("floating");
           }}
         >
           <IconExpand />

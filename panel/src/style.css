@@ -86,6 +86,20 @@ body.dock-window {
   overflow: visible;
 }
 
+/* Two-window model: the floating room is a normal decorated NSWindow —
+   the system draws the frame, so the shell's floating-card chrome (rounded
+   corners, hairline border, faux drag region) steps aside. */
+body.native-chrome {
+  background: var(--bg);
+  -webkit-app-region: no-drag;
+}
+
+body.native-chrome .shell {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .drag-region {
   -webkit-app-region: drag;
 }

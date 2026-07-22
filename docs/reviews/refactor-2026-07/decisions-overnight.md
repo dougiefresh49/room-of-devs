@@ -9,6 +9,70 @@ decision + why → how to reverse if you disagree.**
 
 ---
 
+## Phase 4b (two windows: floating NSWindow + dock NSPanel) — 2026-07-22 night
+
+Same-session follow-on to 4a. Sol focused review of the ~260-line delta
+(1 blocker, 2 majors, 2 minors — all fixed pre-deploy).
+
+### What shipped
+
+- `main` window: normal ACTIVATING NSWindow, standard macOS titlebar
+  (owner decision #1), alwaysOnTop removed, appears in Dock/⌘-Tab while
+  floating. `dock` window: hidden second webview converted ONCE at setup
+  via to_panel(), carrying the old whole-app policy (float level 4,
+  non-activating+resizable mask, CanJoinAllSpaces+FullScreenAuxiliary).
+- lib.rs `set_room_mode` = the mode authority: Mutex-serialized,
+  idempotent, ROLLBACK on any failed step (policy failures restore the
+  previous visible window — no partial commits, Sol major #2). Dock
+  entry computes the FINAL bottom-center position in Rust from MAIN's
+  monitor + the dock's current size BEFORE order_front_regardless (the
+  plugin's show() is never used — it makes the panel KEY; Sol blocker:
+  without Rust-side placement the dock appeared parked until the next
+  React commit). Activation policy is role-aware: Regular floating,
+  Accessory docked (runtime AppHandle::set_activation_policy).
+- **Hide, not destroy** on mode switch (logged in the design doc):
+  to_panel is one-shot, webview recreation re-runs the whole bootstrap;
+  hidden windows cost memory only and rAF parks itself.
+- Two realms, same bundle: App switches on window label via
+  platform.windowRole(); each realm runs its own RoomClient/stores/
+  engine; coordination via daemon snapshots only (spec invariant).
+  view-state.dockMode died — window visibility IS the mode.
+- Capabilities split per window (Sol 4b #1 from the design critique):
+  dock gets geometry/drag/ws_token/set_room_mode only — no dialog, no
+  close. New permissions/allow-set-room-mode.toml (hand-written app
+  permission, mirrors allow-ws-token).
+- Close = quit: main's CloseRequested → app.exit(0) (the hidden dock
+  would otherwise keep the process alive). The old in-app ✕/title/drag
+  died in ALL headers (RoomView + Picker + Settings — Sol major #3
+  caught the second titlebar in Terra's views); native chrome owns
+  those. body.native-chrome CSS drops the floating-card corner styling.
+- Dock geometry effect: deps [width,height] + serialized/coalesced
+  adapter calls (Sol minor #4). Deliberate delta: a DRAGGED dock now
+  stays where you put it until its size changes or dock mode re-enters
+  (legacy re-centered on every snapshot).
+- Cross-realm grant markers became reactive: `storage` events from the
+  other realm bump an external-store version App subscribes to (Sol
+  minor #5) — the newly shown realm renders pending spinners without
+  waiting for a snapshot. Sol verified the localStorage-sharing
+  assumption holds for this stack (same-origin webviews, one default
+  WKWebsiteDataStore); daemon claim markers remain the billing backstop.
+
+### Verification
+
+Gates: workspace typecheck, cargo check, vite build, panel-dev-install
+deploy. codex computer-use window-behavior pass: **11/11 PASS, zero
+grants** — standard titlebar + activation (LaunchServices Foreground
+floating / UIElement docked, i.e. the role-aware policy verified both
+ways), immediate bottom-center dock placement, dock never steals focus
+(Finder stayed active through pill interaction), dock visible over a
+native full-screen Space, 4 rapid mode switches with no stuck/double
+state, cross-realm localStorage proven (same timestamp read from both
+webviews' consoles), dock spotlight staged during free replay, transport
+single-fire, red-light close quits the app + clean relaunch. No visual
+artifacts (corners/titlebar/seams) reported.
+
+---
+
 ## Phase 4a (desktop React shell, single window) — 2026-07-22 evening
 
 Design: `phase4-shell-design.md` (my draft) → Sol adversarial critique

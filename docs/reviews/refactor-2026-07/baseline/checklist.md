@@ -81,6 +81,22 @@ Legend: ☑ captured with screenshot · ◐ observed/asserted, no dedicated shot
   `command_result` frames on the WS path. All additive; both UIs ignore them
   today.
 
+## Phase 4b deltas (2026-07-22 — deliberate, per closed consensus + owner decision #1)
+
+- **Floating room is a normal macOS window now**: standard titlebar +
+  traffic lights, ACTIVATES on click, appears in Dock/⌘-Tab while
+  floating (was: non-activating NSPanel with custom chrome). In-app
+  close button, "Room" title text, and header drag region are gone from
+  all views — native chrome owns them. Red light QUITS the app.
+- **Dock mode is a separate NSPanel window** (visibility swap via Rust):
+  same float-over-everything behavior as before; app becomes Accessory
+  (no Dock icon/⌘-Tab) only while docked.
+- **A dragged dock pill stays where you put it** until its size changes
+  or dock mode re-enters (legacy re-centered on every snapshot).
+- **Summary dismissal + caption expansion are per-window** now (floating
+  vs dock realms don't share view state; daemon snapshots are the only
+  cross-window channel).
+
 ## Phase 4a deltas (2026-07-22 — deliberate; see decisions-overnight.md)
 
 - **LIVE chip is NEW**: cards (and the dock spotlight) show a green

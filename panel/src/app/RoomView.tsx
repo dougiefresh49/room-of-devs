@@ -7,7 +7,6 @@ import { SummaryText, TransportBar } from "@room/ui";
 import { nowPlayingKey } from "@room/room-client";
 import { client } from "../client.js";
 import { platform } from "../platform/tauri.js";
-import { dragRegionMouseDown } from "./drag.js";
 import { AgentCard } from "./AgentCard.js";
 import { IconCc, IconClose, IconDock, IconGear, IconPlus } from "./icons.js";
 import type { IslandUiState } from "./ui-state.js";
@@ -15,7 +14,6 @@ import {
   dismissSummary,
   openPicker,
   openSettings,
-  setDockMode,
   toggleSummaryPane,
   type ViewState,
 } from "./view-state.js";
@@ -52,12 +50,13 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
       ? snapshot.triageFocus
       : null;
 
+  // The main window has native macOS decorations in the two-window model
+  // (owner decision #1): the titlebar owns title/drag/close, so the in-app
+  // header drops those and keeps only the action buttons (Sol #5).
   return (
     <div className="shell">
-      <header className="strip drag-region" data-tauri-drag-region onMouseDown={dragRegionMouseDown}>
-        <span className="title" data-tauri-drag-region>
-          Room
-        </span>
+      <header className="strip">
+        <span className="title" />
         <div className="header-actions no-drag">
           <span
             className={`conn-dot ${connected ? "up" : "down"}`}
@@ -78,11 +77,13 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
           >
             <IconCc />
           </button>
-          <button type="button" className="icon-btn window-btn" title="Dock room" {...windowBtnProps(() => setDockMode(true))}>
+          <button
+            type="button"
+            className="icon-btn window-btn"
+            title="Dock room"
+            {...windowBtnProps(() => void platform.setRoomMode("dock"))}
+          >
             <IconDock />
-          </button>
-          <button type="button" className="icon-btn window-btn" title="Close room" {...windowBtnProps(platform.closeWindow)}>
-            <IconClose />
           </button>
         </div>
       </header>
