@@ -60,10 +60,25 @@ decision + why → how to reverse if you disagree.**
   invisibly, so nothing got worse). A follow-up could age queue items for
   sessions absent from state/ into failed/ after N days. Left alone: queue
   admission policy is credit-sensitive and deserves an awake owner.
-  **You may want to just delete those 5 old files by hand** (they're from
-  67ed12f4/37b927a9/2844ae19/a13b9dab/d2dd62e5, July 15-21).
+  **You may want to just delete those 5 old files by hand** — they live in
+  `~/.cursor/tts/queue/`. Reviewed contents (all are end-of-session recaps
+  from closed sessions; nothing in them that isn't already in memory/docs):
+  - `1784133751-893-cc-67ed12f4-bb2.json` (Jul 15) — "memories written"
+    recap (Session Token Hygiene save).
+  - `1784137293-367-cc-37b927a9-341.json` (Jul 15) — answer on keeping the
+    codex skills.
+  - `1784137523-068-cc-2844ae19-4b2.json` (Jul 15) — chrome-devtools MCP
+    double-registration finding.
+  - `1784176161-438-cc-a13b9dab-05b.json` (Jul 15) — "safe to /clear"
+    recap of Pending Next Session (Tailscale round).
+  - `1784496950-866-cc-d2dd62e5-b81.json` (Jul 19) — throwaway "did you
+    mean /login?" reply.
 
-### Phase 0: codex review findings, all fixed before deploy (fb2e845)
+  Delete with:
+  `rm ~/.cursor/tts/queue/{1784133751,1784137293,1784137523,1784176161,1784496950}*.json`
+
+  The other two queue files are the LIVE raised hands (jellyfin 97921813,
+  agent-usage-bar 75a33b56) — keep those.
 
 ### Phase 0: codex review findings, all fixed before deploy (fb2e845)
 
