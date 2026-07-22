@@ -29,7 +29,9 @@ import { clearLiveSession } from "./live-mode.js";
 // whole file, so the only conflict window is two writers on the SAME session,
 // which the lifecycle makes near-impossible. No locks; last-writer-wins
 // converges because racy pairs both derive from the queue directory.
-export type SessionState = "working" | "hand_raised" | "speaking" | "idle";
+// Shape owned by the shared protocol package; re-exported for daemon callers.
+import type { SessionState } from "./protocol/index.js";
+export type { SessionState };
 
 interface StateFile {
   sessionId: string;

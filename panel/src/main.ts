@@ -12,47 +12,21 @@ import {
   getCurrentWindow,
 } from "@tauri-apps/api/window";
 
-type AgentState = "working" | "hand_raised" | "speaking" | "idle";
+// Wire shapes come from the shared protocol package — the panel's old
+// partial AgentView copy (which omitted queuedPreview/injectable/live) died
+// with Phase 0 of the UI refactor.
+import type {
+  AgentView,
+  NowPlaying,
+  ResumableSession,
+  SessionState,
+} from "@room/protocol";
 
-interface AgentView {
-  sessionId: string;
-  character: string;
-  name: string;
-  label?: string;
-  state: AgentState;
-  raisedCount: number;
-  supersededCount: number;
-  muted: boolean;
-  isTeam: boolean;
-}
-
-interface NowPlaying {
-  sessionId: string;
-  text: string;
-  rawText?: string;
-  endedAt?: string | number;
-  startedAt: string | number;
-  // Word-level karaoke timings from ElevenLabs: [word, startMs][].
-  alignment?: [string, number][];
-  // Post-EL atempo factor (1.0 when none). Content timeline = wall * rate.
-  playbackRate?: number;
-  // "ack" = short prompt acknowledgment: mouth flaps in place, but no
-  // spotlight / card growth / live controls — acks don't take the stage.
-  kind?: "ack" | "update" | "live";
-  output?: "phone" | "mac";
-}
+type AgentState = SessionState;
 
 interface WsConfig {
   token: string;
   port: number;
-}
-
-interface ResumableSession {
-  sessionId: string;
-  dir: string;
-  project: string;
-  mtimeMs: number;
-  sizeBytes: number;
 }
 
 interface Persona {

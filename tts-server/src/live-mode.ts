@@ -120,13 +120,9 @@ export function consumePendingPhoneAck(sessionId: string): boolean {
   }
 }
 
-export interface PhoneAck {
-  sessionId: string;
-  /** "<voiceId>/<basename>.mp3" under sounds/phrases, or null (chip only). */
-  ackFile: string | null;
-  character: string | null;
-  at: string;
-}
+// Shape owned by the shared protocol package; re-exported for daemon callers.
+import type { PhoneAck } from "./protocol/index.js";
+export type { PhoneAck };
 
 export function writePhoneAck(ack: PhoneAck): void {
   try {

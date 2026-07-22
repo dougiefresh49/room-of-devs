@@ -1,0 +1,63 @@
+[
+  { "type": "notice", "message": "Donatello is already in the room" },
+  { "type": "error", "code": "stale_session", "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0" },
+  { "type": "error", "code": "bad_message" },
+  { "type": "command_result", "requestId": "req-42", "ok": true },
+  {
+    "type": "command_result",
+    "requestId": "req-43",
+    "ok": false,
+    "code": "stale_session",
+    "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0",
+    "message": "session no longer in room"
+  },
+  {
+    "type": "resumable",
+    "requestId": "req-45",
+    "sessions": [
+      {
+        "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+        "dir": "/Users/owner/projects/example",
+        "project": "example",
+        "mtimeMs": 1753142400000,
+        "sizeBytes": 12345
+      }
+    ]
+  },
+  { "type": "known_dirs", "dirs": ["/Users/owner/projects/example"] },
+  {
+    "type": "buttons",
+    "device_hint": "joystick|usb gamepad|generic",
+    "buttons": {
+      "0": { "name": "Grant", "action": "grant_focused", "color": "green" },
+      "1": { "name": "Donnie", "character": "Donatello", "hold_action": "replay_slower" }
+    },
+    "actions": ["grant_focused", "replay", "pause"],
+    "characters": ["Donatello", "Karai", "Leonardo"]
+  },
+  {
+    "type": "settings",
+    "values": {
+      "default_speed": 1.5,
+      "playback_mode": "announce",
+      "mood": "normal",
+      "notifications_enabled": true,
+      "listening": true
+    }
+  },
+  {
+    "type": "list_voices",
+    "voices": [
+      { "voiceId": "abc123", "voice_id": "abc123", "name": "Deep Voice", "character": "Shredder" },
+      { "voiceId": "def456", "name": "Bright Voice", "character": null }
+    ]
+  },
+  { "type": "captured", "idx": 7 },
+  {
+    "type": "shortcuts",
+    "sections": [
+      { "title": "Voice commands", "rows": [["grant", "speak the focused agent"]] }
+    ]
+  },
+  { "type": "snap", "corner": "bottom-right" }
+]

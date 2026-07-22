@@ -36,40 +36,15 @@ import {
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
 
-export interface AgentView {
-  sessionId: string;
-  name: string;
-  label: string;
-  state: SessionState;
-  raisedAt: string | null;
-  character: string | null;
-  raisedCount: number;
-  supersededCount: number;
-  muted: boolean;
-  isTeam: boolean;
-  /** First ~120 chars of the grant target (newest-by-basename queue item). */
-  queuedPreview: string | null;
-  /** team_map.json presence only — no tmux probes on snapshot builds. */
-  injectable: boolean;
-  /** Live mode (intermediate narration) — null when off. */
-  live: {
-    on: boolean;
-    toolCount: number;
-    turnStartedAt: string | null;
-    lastActivity: { label: string; at: string } | null;
-  } | null;
-}
+// Wire shapes live in the shared protocol package (packages/protocol in the
+// repo; staged into src/protocol/ by tts-server.sh). Re-exported so existing
+// daemon imports keep working.
+import type { AgentView, PanelSnapshot } from "./protocol/index.js";
+export type { AgentView, PanelSnapshot };
 
-export interface PanelSnapshot {
-  agents: AgentView[];
-  nowPlaying: NowPlaying | null;
-  roomHeld: boolean;
-  triageFocus: string | null;
-  // pause.sh's SIGSTOP flag — panel freezes the mouth and shows resume.
-  paused: boolean;
-  // Fresh (<30s) reply-ack event for the phone; client keys on `at`.
-  phoneAck: PhoneAck | null;
-}
+/** Daemon-local monotonic snapshot revision — stamped on every build so
+ *  clients can drop stale/replayed frames (bootstrap vs stream ordering). */
+let snapshotRev = 0;
 
 interface StateFile {
   sessionId: string;
@@ -250,6 +225,7 @@ export function isRoomHeld(): boolean {
 
 export function buildPanelSnapshot(): PanelSnapshot {
   return {
+    rev: ++snapshotRev,
     agents: buildSnapshot(),
     nowPlaying: readNowPlaying(),
     roomHeld: isRoomHeld(),

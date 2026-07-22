@@ -26,7 +26,9 @@ import type { WordTiming } from "./elevenlabs.js";
 import { basename, join } from "path";
 
 // Compact [word, startMs] tuples — what the panel highlights against.
-export type AlignmentTuples = [string, number][];
+// Shape owned by the shared protocol package; re-exported for daemon callers.
+import type { AlignmentTuples, NowPlaying } from "./protocol/index.js";
+export type { AlignmentTuples, NowPlaying };
 
 function toTuples(words: WordTiming[]): AlignmentTuples {
   return words.map((w) => [w.word, w.startMs]);
@@ -53,35 +55,8 @@ function endSessionPlayback(ctx: PlaybackContext, excludeFile?: string): void {
 const REPLAY_DIR = join(TTS_DIR, "replay");
 export const NOW_PLAYING_PATH = join(TTS_DIR, ".now-playing.json");
 
-export interface NowPlaying {
-  sessionId: string;
-  text: string;
-  startedAt: string;
-  approxCharsPerSec: number;
-  // Word-level karaoke timings (ElevenLabs timestamps). When present the panel
-  // highlights the current word instead of running the time-paced marquee.
-  alignment?: AlignmentTuples;
-  // Post-EL atempo factor only (1.0 when none). Speed ≤1.2 is baked into the
-  // streamed audio + timestamp alignment together at synthesis time.
-  playbackRate?: number;
-  // The pre-Gemini original message (what the agent actually wrote) — the
-  // panel's summary bubble shows this, not the character rewrite.
-  rawText?: string;
-  // Present once playback finished: the file lingers as "last spoken" so the
-  // bubble can keep showing the previous message until the next one starts.
-  endedAt?: string;
-  // "ack" = short prompt acknowledgment — the panel keeps it off the stage
-  // (no spotlight/card growth); "live" = intermediate live-mode clip;
-  // absent/"update" = full treatment.
-  kind?: "ack" | "update" | "live";
-  // Grant-to-phone: phone plays this exact replay file; Mac speakers stay quiet.
-  output?: "mac" | "phone";
-  replayFile?: string;
-  grantId?: string;
-  // false while the replay file is still growing (phone streams it live via
-  // /live-audio/); flips true on the finalize re-stamp. Absent = complete.
-  synthesisComplete?: boolean;
-}
+// NowPlaying now lives in the shared protocol package (see import above) —
+// full shape + field docs in packages/protocol/src/snapshot.ts.
 
 /** Where playStreamBuffer sends synthesized audio. "none" = buffer → replay only. */
 export type StreamSink = "ffplay" | "none";

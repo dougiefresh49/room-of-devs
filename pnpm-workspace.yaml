@@ -1,0 +1,4 @@
+packages:
+  - tts-server
+  - panel
+  - packages/*

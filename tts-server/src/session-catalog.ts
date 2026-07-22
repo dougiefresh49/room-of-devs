@@ -10,13 +10,9 @@ const MIN_JSONL_BYTES = 1024;
 const MAX_RESUMABLE = 30;
 const CWD_SCAN_LINES = 100;
 
-export interface ResumableSession {
-  sessionId: string;
-  dir: string;
-  project: string;
-  mtimeMs: number;
-  sizeBytes: number;
-}
+// Shape owned by the shared protocol package; re-exported for daemon callers.
+import type { ResumableSession } from "./protocol/index.js";
+export type { ResumableSession };
 
 function decodeProjectDir(encoded: string): string {
   if (!encoded.startsWith("-")) return encoded;

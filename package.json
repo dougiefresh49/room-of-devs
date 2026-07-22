@@ -1,0 +1,14 @@
+{
+  "name": "room-of-devs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "check-fixtures": "pnpm --filter @room/protocol run check-fixtures"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "node-hid"
+    ]
+  }
+}

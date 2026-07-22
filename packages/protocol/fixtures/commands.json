@@ -1,0 +1,58 @@
+[
+  { "type": "grant", "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0" },
+  { "type": "grant", "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0", "output": "phone" },
+  {
+    "type": "grant",
+    "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0",
+    "output": "mac",
+    "requestId": "req-42",
+    "source": "desktop"
+  },
+  { "type": "ptt", "phase": "start", "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0" },
+  { "type": "replay" },
+  { "type": "replay_slower", "requestId": "req-43", "source": "mobile" },
+  { "type": "replay_session", "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0" },
+  { "type": "play_replay", "file": "2026-07-22T04-51-52-244Z_example.mp3", "offsetSec": 12.5 },
+  { "type": "pause" },
+  { "type": "stop" },
+  { "type": "restart" },
+  { "type": "hold_room" },
+  { "type": "list_resumable" },
+  { "type": "known_dirs" },
+  {
+    "type": "spawn_session",
+    "dir": "/Users/owner/projects/example",
+    "persona": "Donatello",
+    "remoteControl": true,
+    "skipPermissions": false,
+    "model": "sonnet",
+    "source": "mobile"
+  },
+  {
+    "type": "resume_session",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "dir": "/Users/owner/projects/example",
+    "persona": "Karai"
+  },
+  { "type": "set_live", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "on": true },
+  { "type": "set_voice", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "character": "Splinter" },
+  { "type": "set_nickname", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "label": "Sanitized Nick" },
+  { "type": "set_setting", "key": "speed", "value": 1.5 },
+  { "type": "set_button", "idx": 3, "patch": { "name": "Grant", "action": "grant_focused", "color": "green" } },
+  { "type": "remove_button", "idx": 3 },
+  { "type": "get_buttons" },
+  { "type": "get_shortcuts" },
+  { "type": "get_settings" },
+  { "type": "list_voices" },
+  { "type": "learn_capture" },
+  { "type": "focus_terminal", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808" },
+  { "type": "kill_team", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808" },
+  { "type": "status_say", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808" },
+  {
+    "type": "reply",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "text": "Sanitized reply text.",
+    "requestId": "req-44",
+    "source": "voice"
+  }
+]

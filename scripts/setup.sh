@@ -84,6 +84,16 @@ if command -v pnpm &>/dev/null; then
     TTS_SERVER_DEST="$TTS_DIR/tts-server"
     rm -rf "$TTS_SERVER_DEST"
     cp -r "$PROJECT_DIR/tts-server" "$TTS_SERVER_DEST"
+    # src/protocol is a repo symlink into packages/protocol — replace it with
+    # real staged files; the installed daemon must never resolve into the repo.
+    rm -rf "$TTS_SERVER_DEST/src/protocol"
+    if [ -d "$PROJECT_DIR/packages/protocol/src" ]; then
+        mkdir -p "$TTS_SERVER_DEST/src/protocol"
+        cp -R "$PROJECT_DIR/packages/protocol/src/." "$TTS_SERVER_DEST/src/protocol/"
+    fi
+    # In-repo node_modules is a pnpm-workspace symlink farm — never usable in
+    # place; make sure the copy didn't drag a broken one along.
+    rm -rf "$TTS_SERVER_DEST/node_modules"
     cd "$TTS_SERVER_DEST"
     pnpm install --frozen-lockfile 2>/dev/null || pnpm install
     log "TTS server installed at $TTS_SERVER_DEST"

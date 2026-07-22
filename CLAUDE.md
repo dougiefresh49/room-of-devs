@@ -45,7 +45,11 @@ before launching. So:
 
 - Edit files **in the repo**, never in `~/.cursor/tts/`.
 - TypeScript/mobile.html changes take effect after
-  `~/.cursor/tts/scripts/tts-server.sh restart`.
+  `~/.cursor/tts/scripts/tts-server.sh restart`. That sync also stages the
+  shared wire contract `packages/protocol/src/` → installed `src/protocol/`
+  (in the repo, `tts-server/src/protocol` is a symlink to it). The installed
+  daemon must never resolve modules back into the repo workspace — protocol
+  deps (valibot) are direct deps of tts-server/package.json for that reason.
 - `scripts/*.sh`, hooks, or SwiftBar changes take effect after re-running
   `scripts/setup.sh`.
 - Panel changes need a rebuild (`pnpm tauri build --debug` in `panel/`,
@@ -84,7 +88,8 @@ for any work in this repo:
 ```bash
 ~/.cursor/tts/scripts/tts-server.sh restart   # deploy daemon + mobile changes
 ./scripts/setup.sh                            # install scripts/hooks/panel bundle
-cd tts-server && pnpm exec tsc --noEmit       # type check (also: cd panel && …)
+pnpm typecheck                                # type check all packages (root workspace)
+pnpm check-fixtures                           # validate protocol fixtures vs schemas
 echo "test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Verify"   # cheap pipeline poke
 pnpm exec tsx src/signal.ts replay "" 1       # free replay of last message
 tail -40 ~/.cursor/tts/logs/hook.log          # full pipeline trace

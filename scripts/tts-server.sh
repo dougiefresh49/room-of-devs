@@ -24,6 +24,25 @@ sync_source() {
     if [ -d "$REPO_SERVER_DIR/src" ]; then
         cp "$REPO_SERVER_DIR"/src/*.ts "$SERVER_DIR/src/" 2>/dev/null || true
         cp "$REPO_SERVER_DIR"/src/*.json "$SERVER_DIR/src/" 2>/dev/null || true
+        # Shared protocol package, staged as plain files. In the repo,
+        # tts-server/src/protocol is a symlink into packages/protocol/src;
+        # here it becomes a real directory so the installed daemon never
+        # resolves modules back into the repo workspace (valibot comes from
+        # SERVER_DIR's own node_modules).
+        REPO_PROTOCOL_SRC="$(dirname "$REPO_SERVER_DIR")/packages/protocol/src"
+        if [ -d "$REPO_PROTOCOL_SRC" ]; then
+            # A symlinked target (e.g. copied in by an older setup.sh) would
+            # dangle or write back into the repo — replace it with a real dir.
+            if [ -L "$SERVER_DIR/src/protocol" ]; then
+                rm -f "$SERVER_DIR/src/protocol"
+            fi
+            mkdir -p "$SERVER_DIR/src/protocol"
+            rsync -a --delete --copy-links "$REPO_PROTOCOL_SRC"/ "$SERVER_DIR/src/protocol/" 2>/dev/null || {
+                rm -rf "$SERVER_DIR/src/protocol"
+                mkdir -p "$SERVER_DIR/src/protocol"
+                cp -R "$REPO_PROTOCOL_SRC"/. "$SERVER_DIR/src/protocol/" 2>/dev/null || true
+            }
+        fi
         # Mobile room page (served by mobile-http.ts)
         if [ -f "$REPO_SERVER_DIR/mobile.html" ]; then
             cp "$REPO_SERVER_DIR/mobile.html" "$SERVER_DIR/mobile.html"

@@ -64,44 +64,58 @@ const MOOD_PRESETS: Record<
 
 const VALID_SPEEDS = new Set([0.75, 1.0, 1.1, 1.15, 1.2, 1.25, 1.5, 2.0]);
 
-export type PanelMessage =
-  | { type: "grant"; sessionId: string; output?: "mac" | "phone" }
-  | { type: "ptt"; phase: "start" | "stop"; sessionId: string }
-  | { type: "focus_terminal"; sessionId: string }
-  | { type: "kill_team"; sessionId: string }
-  | { type: "status_say"; sessionId: string }
-  | { type: "replay" }
-  | { type: "replay_slower" }
-  | { type: "replay_session"; sessionId: string }
-  | { type: "play_replay"; file: string; offsetSec?: number }
-  | { type: "restart" }
-  | { type: "stop" }
-  | { type: "pause" }
-  | { type: "list_resumable" }
-  | { type: "known_dirs" }
-  | { type: "spawn_session"; dir: string; persona: string; remoteControl?: boolean; skipPermissions?: boolean; model?: string }
-  | { type: "resume_session"; sessionId: string; dir: string; persona: string; remoteControl?: boolean; skipPermissions?: boolean; model?: string }
-  | { type: "set_live"; sessionId: string; on: boolean }
-  | { type: "set_voice"; sessionId: string; character: string }
-  | { type: "set_nickname"; sessionId: string; label: string }
-  | { type: "hold_room" }
-  | { type: "get_buttons" }
-  | { type: "set_button"; idx: number; patch: ButtonPatch }
-  | { type: "remove_button"; idx: number }
-  | { type: "learn_capture" }
-  | { type: "get_shortcuts" }
-  | { type: "get_settings" }
-  | { type: "set_setting"; key: string; value: unknown }
-  | { type: "list_voices" };
+// Command vocabulary now lives in the shared protocol package. PanelMessage
+// stays exported as the daemon-side alias; validatePanelMessage remains the
+// strict (key-counting) validator — protocol's parseCommand is looser and is
+// NOT swapped in here to keep Phase 0 behavior identical.
+import type { Command, CommandSource, ButtonPatch, SpawnModel } from "./protocol/index.js";
+export type PanelMessage = Command;
+export type { ButtonPatch };
 
-export type ButtonPatch = {
-  name?: string;
-  character?: string;
-  action?: string;
-  hold_action?: string;
-  color?: string;
-  notes?: string;
-};
+export interface CommandEnvelope {
+  requestId: string | null;
+  source: CommandSource | null;
+  body: unknown;
+}
+
+/**
+ * Additive Phase 0 envelope: accept and strip `requestId`/`source` before the
+ * strict key-counting validator sees the message, so new-style clients don't
+ * get bad_message. `source` is reservation-only (desktop|mobile|voice|
+ * interpreter) — nothing keys off it yet. Old shapes pass through untouched.
+ */
+export function splitCommandEnvelope(raw: unknown): CommandEnvelope {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { requestId: null, source: null, body: raw };
+  }
+  const record = raw as Record<string, unknown>;
+  if (record.requestId === undefined && record.source === undefined) {
+    return { requestId: null, source: null, body: raw };
+  }
+  // Strip only SCHEMA-VALID envelope fields (non-empty string requestId,
+  // known source). An invalid value is left on the body so the strict
+  // key-counting validator rejects it exactly as it always did — stripping
+  // it would silently accept messages the old server refused.
+  const validRequestId =
+    typeof record.requestId === "string" && record.requestId.length > 0;
+  const validSource =
+    record.source === "desktop" ||
+    record.source === "mobile" ||
+    record.source === "voice" ||
+    record.source === "interpreter";
+  if (
+    (record.requestId !== undefined && !validRequestId) ||
+    (record.source !== undefined && !validSource)
+  ) {
+    return { requestId: null, source: null, body: raw };
+  }
+  const { requestId, source, ...body } = record;
+  return {
+    requestId: validRequestId ? (requestId as string) : null,
+    source: validSource ? (source as CommandSource) : null,
+    body,
+  };
+}
 
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;
@@ -371,7 +385,7 @@ function writeButtons(cfg: ArcadeButtons): void {
 }
 
 function sendButtons(ws: WebSocket): void {
-  ws.send(JSON.stringify(buildButtonsMessage()));
+  replyFrame(ws, buildButtonsMessage());
 }
 
 function loadCharactersMap(): Record<string, { name?: string }> {
@@ -457,7 +471,7 @@ export function buildSettingsMessage(): { type: "settings"; values: Record<strin
 }
 
 function sendSettings(ws: WebSocket): void {
-  ws.send(JSON.stringify(buildSettingsMessage()));
+  replyFrame(ws, buildSettingsMessage());
 }
 
 export function buildListVoicesMessage(): {
@@ -754,6 +768,46 @@ export function broadcastPanel(msg: object): void {
   }
 }
 
+/**
+ * The in-flight correlated WS request. handleMessage is fully synchronous
+ * (async completions — learn_capture presses, spawn exits — report via their
+ * own frames/notices), so a single module slot is safe: it is set right
+ * before handleMessage and cleared right after.
+ */
+let activeRequest: { ws: WebSocket; id: string; responded: boolean } | null = null;
+
+/** Correlated CommandResult (additive Phase 0). ok=true means ACCEPTED, not
+ *  completed — side effects still arrive via snapshots/notices. No-op when
+ *  the message carried no requestId or a result was already sent. */
+function sendCommandResult(
+  ws: WebSocket,
+  ok: boolean,
+  code?: string,
+  message?: string,
+  sessionId?: string
+): void {
+  if (!activeRequest || activeRequest.ws !== ws || activeRequest.responded) return;
+  activeRequest.responded = true;
+  const frame: Record<string, unknown> = {
+    type: "command_result",
+    requestId: activeRequest.id,
+    ok,
+  };
+  if (code) frame.code = code;
+  if (message) frame.message = message;
+  if (sessionId) frame.sessionId = sessionId;
+  ws.send(JSON.stringify(frame));
+}
+
+/** Send a reply frame, tagged with the active requestId when there is one. */
+function replyFrame(ws: WebSocket, payload: object): void {
+  const tagged =
+    activeRequest && activeRequest.ws === ws
+      ? { ...payload, requestId: activeRequest.id }
+      : payload;
+  ws.send(JSON.stringify(tagged));
+}
+
 function sendError(
   ws: WebSocket,
   code:
@@ -772,7 +826,11 @@ function sendError(
   const err: Record<string, string> = { type: "error", code };
   if (sessionId) err.sessionId = sessionId;
   if (message) err.message = message;
+  if (activeRequest && activeRequest.ws === ws) err.requestId = activeRequest.id;
   ws.send(JSON.stringify(err));
+  // New-style clients get the correlated failure too; legacy frame above is
+  // unchanged for old clients.
+  sendCommandResult(ws, false, code, message, sessionId);
 }
 
 function isKnownPersona(persona: string): boolean {
@@ -855,7 +913,7 @@ function personaBusyReason(persona: string): string | null {
 export interface SpawnOpts {
   remoteControl?: boolean;
   skipPermissions?: boolean;
-  model?: string;
+  model?: SpawnModel;
 }
 
 /** Aliases accepted by `claude --model`; absent/empty = CLI default. */
@@ -873,7 +931,8 @@ function spawnFlags(msg: Record<string, unknown>): SpawnOpts {
   return {
     ...(typeof msg.remoteControl === "boolean" ? { remoteControl: msg.remoteControl } : {}),
     ...(typeof msg.skipPermissions === "boolean" ? { skipPermissions: msg.skipPermissions } : {}),
-    ...(typeof msg.model === "string" ? { model: msg.model } : {}),
+    // validSpawnFlags already vetted membership in SPAWN_MODELS.
+    ...(typeof msg.model === "string" ? { model: msg.model as SpawnModel } : {}),
   };
 }
 
@@ -958,6 +1017,7 @@ export type ReplyStatus = "ok" | "not_in_team" | "failed";
  * Returns null on validation failure (caller should 400).
  */
 export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null {
+  raw = splitCommandEnvelope(raw).body;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const msg = raw as Record<string, unknown>;
   if (msg.type !== "reply") return null;
@@ -1104,7 +1164,8 @@ function dispatch(msg: PanelMessage): void {
 
 /** Mobile HTTP whitelist + validate + dispatch. Returns false on reject. */
 export function dispatchPanelAction(raw: unknown): boolean {
-  const msg = validatePanelMessage(raw);
+  // Envelope fields are accepted-and-stripped here too (additive).
+  const msg = validatePanelMessage(splitCommandEnvelope(raw).body);
   if (msg === "bad_message") return false;
   if (!MOBILE_ACTION_TYPES.has(msg.type)) return false;
 
@@ -1148,12 +1209,12 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "list_resumable") {
-    ws.send(JSON.stringify({ type: "resumable", sessions: listResumable() }));
+    replyFrame(ws, { type: "resumable", sessions: listResumable() });
     return;
   }
 
   if (msg.type === "known_dirs") {
-    ws.send(JSON.stringify({ type: "known_dirs", dirs: knownDirs() }));
+    replyFrame(ws, { type: "known_dirs", dirs: knownDirs() });
     return;
   }
 
@@ -1163,7 +1224,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "get_shortcuts") {
-    ws.send(JSON.stringify(buildShortcutsPayload()));
+    replyFrame(ws, buildShortcutsPayload());
     return;
   }
 
@@ -1173,7 +1234,7 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "list_voices") {
-    ws.send(JSON.stringify(buildListVoicesMessage()));
+    replyFrame(ws, buildListVoicesMessage());
     return;
   }
 
@@ -1376,7 +1437,20 @@ export function startPanelWs(): void {
           sendError(ws, "bad_message");
           return;
         }
-        handleMessage(ws, parsed);
+        const { requestId, body } = splitCommandEnvelope(parsed);
+        if (!requestId) {
+          // Legacy path — behavior unchanged.
+          handleMessage(ws, body);
+          return;
+        }
+        activeRequest = { ws, id: requestId, responded: false };
+        try {
+          handleMessage(ws, body);
+          // Nothing errored → the command was accepted/dispatched.
+          sendCommandResult(ws, true);
+        } finally {
+          activeRequest = null;
+        }
       });
     });
   });
