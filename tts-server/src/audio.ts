@@ -1,15 +1,11 @@
-import { spawn, spawnSync, ChildProcess } from "child_process";
+import { spawn } from "child_process";
 import {
   existsSync,
   readFileSync,
   writeFileSync,
-  unlinkSync,
   readdirSync,
 } from "fs";
 import {
-  STREAM_PID_FILE,
-  PLAYBACK_PID_FILE,
-  TTS_DIR,
   loadConfig,
 } from "./config.js";
 import { log } from "./logger.js";
@@ -53,6 +49,16 @@ export {
   supersedePhoneGrant,
   markPhonePlaybackDone,
 } from "./now-playing.js";
+import {
+  playerRef,
+  writePidFiles,
+  removePidFiles,
+  cleanup,
+  startSuspendHealer,
+  PLAYBACK_FILE_REF,
+  AUDIO_REF,
+} from "./player-process.js";
+export { stopCurrent } from "./player-process.js";
 
 // Compact [word, startMs] tuples — what the panel highlights against.
 // Shape owned by the shared protocol package; re-exported for daemon callers.
@@ -66,32 +72,6 @@ function toTuples(words: WordTiming[]): AlignmentTuples {
 /** Where playStreamBuffer sends synthesized audio. "none" = buffer → replay only. */
 export type StreamSink = "ffplay" | "none";
 
-const PAUSED_FLAG = join(TTS_DIR, ".playback-paused");
-const PLAYBACK_FILE_REF = join(TTS_DIR, ".playback-file");
-const AUDIO_REF = join(TTS_DIR, ".playback-audio");
-
-let currentProcess: ChildProcess | null = null;
-
-// Invariant: a SIGSTOPped player is legitimate ONLY while the pause flag
-// exists. If the flag disappears without a SIGCONT (crashed pauser, manual
-// cleanup), the player wedges forever — the daemon waits on a close event
-// that can't come. Self-heal by resuming any orphaned-suspended child.
-function healOrphanedSuspend(child: ChildProcess): void {
-  try {
-    if (!child.pid || child.killed || existsSync(PAUSED_FLAG)) return;
-    const out = spawnSync("ps", ["-o", "stat=", "-p", String(child.pid)]);
-    if (out.status === 0 && out.stdout.toString().trim().startsWith("T")) {
-      child.kill("SIGCONT");
-      log("audio", `Player ${child.pid} suspended with no pause flag — resumed (self-heal)`);
-    }
-  } catch {}
-}
-
-function startSuspendHealer(child: ChildProcess): () => void {
-  const timer = setInterval(() => healOrphanedSuspend(child), 3000);
-  return () => clearInterval(timer);
-}
-
 // Early-stop drains outlive playStreamBuffer's resolution. The `once` process
 // exits right after playback settles — it must await this first, or the drain
 // (and the complete replay file) dies with the process.
@@ -104,50 +84,6 @@ export function awaitPendingDrain(capMs = 95_000): Promise<void> {
     pendingDrain,
     new Promise<void>((r) => setTimeout(r, capMs).unref?.()),
   ]);
-}
-
-export function stopCurrent(): void {
-  if (currentProcess && !currentProcess.killed) {
-    // A paused (SIGSTOPped) player never receives SIGTERM — resume first,
-    // or the close event never fires and the session wedges on "speaking".
-    currentProcess.kill("SIGCONT");
-    currentProcess.kill("SIGTERM");
-    currentProcess = null;
-  }
-  // Kill by PID file — works even from a fresh process where
-  // currentProcess is null (e.g. `tsx src/index.ts stop`).
-  for (const pidFile of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
-    try {
-      const pid = Number(readFileSync(pidFile, "utf-8").trim());
-      if (pid > 0) {
-        process.kill(pid, "SIGCONT");
-        process.kill(pid, "SIGTERM");
-      }
-    } catch {}
-  }
-  cleanup();
-}
-
-// Both PID files hold the same player PID: STREAM_PID_FILE is the server's
-// own reference; PLAYBACK_PID_FILE is what pause.sh reads.
-function writePidFiles(pid: number | undefined): void {
-  if (!pid) return;
-  writeFileSync(STREAM_PID_FILE, String(pid));
-  writeFileSync(PLAYBACK_PID_FILE, String(pid));
-}
-
-function removePidFiles(): void {
-  for (const f of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
-    try { unlinkSync(f); } catch {}
-  }
-}
-
-function cleanup(): void {
-  removePidFiles();
-  clearNowPlaying();
-  for (const f of [PAUSED_FLAG, AUDIO_REF, PLAYBACK_FILE_REF]) {
-    try { unlinkSync(f); } catch {}
-  }
 }
 
 export function playFile(
@@ -169,7 +105,7 @@ export function playFile(
 
     beginSessionPlayback(ctx, replayMeta, undefined, speed);
     const child = spawn("afplay", args, { stdio: "ignore" });
-    currentProcess = child;
+    playerRef.current = child;
     writePidFiles(child.pid);
     const stopHealer = startSuspendHealer(child);
 
@@ -178,7 +114,7 @@ export function playFile(
       if (settled) return;
       settled = true;
       stopHealer();
-      if (currentProcess === child) currentProcess = null;
+      if (playerRef.current === child) playerRef.current = null;
       removePidFiles();
       clearNowPlaying();
       endSessionPlayback(ctx);
@@ -365,7 +301,7 @@ export function playStreamBuffer(
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
-    currentProcess = child;
+    playerRef.current = child;
 
     writePidFiles(child.pid);
     writeFileSync(PLAYBACK_FILE_REF, queueFile);
@@ -404,7 +340,7 @@ export function playStreamBuffer(
       if (settled) return;
       settled = true;
       stopHealer();
-      if (currentProcess === child) currentProcess = null;
+      if (playerRef.current === child) playerRef.current = null;
       cleanup();
       // The queue file being played is still in queue/ here — the daemon moves
       // it to played/ only after this promise resolves — so exclude it from the
@@ -571,7 +507,7 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
   }
 
   const child = spawn("ffplay", ffplayArgs, { stdio: "ignore" });
-  currentProcess = child;
+  playerRef.current = child;
   writePidFiles(child.pid);
   const stopHealer = startSuspendHealer(child);
 
@@ -580,7 +516,7 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
     if (settled) return;
     settled = true;
     stopHealer();
-    if (currentProcess === child) currentProcess = null;
+    if (playerRef.current === child) playerRef.current = null;
     removePidFiles();
     clearNowPlaying();
     endSessionPlayback(ctx);
@@ -618,7 +554,7 @@ export function playMp3Buffer(
     const child = spawn("ffplay", ffplayArgs, {
       stdio: ["pipe", "ignore", "ignore"],
     });
-    currentProcess = child;
+    playerRef.current = child;
     writePidFiles(child.pid);
 
     let settled = false;
@@ -627,7 +563,7 @@ export function playMp3Buffer(
       if (settled) return;
       settled = true;
       stopHealer();
-      if (currentProcess === child) currentProcess = null;
+      if (playerRef.current === child) playerRef.current = null;
       removePidFiles();
       clearNowPlaying();
       endSessionPlayback(ctx);
