@@ -153,6 +153,53 @@ export async function fetchReplayList(signal?: AbortSignal): Promise<ReplayEntry
   return out;
 }
 
+// --- conversation thread (chat view) ---------------------------------------
+
+/**
+ * One message in `GET /thread/<sessionId>` (mobile-http → transcriptThread).
+ * `final` marks the last agent item before each user item / EOF (spec §A1) —
+ * play chips attach only to finals.
+ */
+export interface ThreadItem {
+  role: "user" | "agent";
+  text: string;
+  at: string | null;
+  final?: boolean;
+}
+
+function coerceThreadItem(value: unknown): ThreadItem | null {
+  if (!value || typeof value !== "object") return null;
+  const e = value as Record<string, unknown>;
+  const role = e.role === "user" || e.role === "agent" ? e.role : null;
+  if (!role) return null;
+  return {
+    role,
+    text: typeof e.text === "string" ? e.text : "",
+    at: typeof e.at === "string" ? e.at : null,
+    final: e.final === true,
+  };
+}
+
+/**
+ * GET /thread/<sessionId>?limit=40 → real transcript history (both roles).
+ * The SINGLE source of chat history (spec §A1): opened on chat-open and
+ * refetched after each SSE final — never spliced client-side, so there is no
+ * dedup problem. Rejects on a non-2xx (404 when the session has no transcript).
+ */
+export async function fetchThread(sessionId: string, signal?: AbortSignal): Promise<ThreadItem[]> {
+  const res = await fetch(`/thread/${encodeURIComponent(sessionId)}?limit=40`, { signal });
+  if (!res.ok) throw new Error(`GET /thread failed: ${res.status}`);
+  const raw: unknown = await res.json();
+  const items = raw && typeof raw === "object" ? (raw as { items?: unknown }).items : null;
+  if (!Array.isArray(items)) return [];
+  const out: ThreadItem[] = [];
+  for (const item of items) {
+    const parsed = coerceThreadItem(item);
+    if (parsed) out.push(parsed);
+  }
+  return out;
+}
+
 /**
  * Fire-and-forget `POST /action` (mobile.html postAction). Used by the audio
  * controller for the Mac↔phone handoff commands (stop / play_replay). Returns

@@ -1,0 +1,203 @@
+/**
+ * Call view (spec §B2) — the Sesame-style isolated call screen shown while a
+ * session is live. Layout: name chip pinned top-center (mini avatar + name +
+ * "live · N clips" credits chip) · presence avatar centered upper-third
+ * (~120px, ring animates by mode) · ONE content card (precedence
+ * speaking > final-landed > working > idle) · bottom dock (End-live left ·
+ * live timer center · Send-a-text right). NOTHING else — no transport, no
+ * output/broadcast buttons.
+ *
+ * The single <audio> keeps playing across the slide to chat; this view only
+ * renders controls + reads the controller snapshot.
+ */
+import type { AgentView, NowPlaying } from "@room/protocol";
+import type { PlayerSnapshot } from "../audio/controller.js";
+import { usePlayer } from "../audio/react.js";
+import type { ThreadItem } from "../api.js";
+import { lastFinalText } from "../thread.js";
+import { IconMessage, IconPhoneOff } from "../icons.js";
+import { Avatar } from "./Avatar.js";
+import { KaraokeLine } from "./KaraokeLine.js";
+
+type CardMode = "speaking" | "final" | "working" | "idle";
+
+interface CardState {
+  mode: CardMode;
+  tag: string;
+  tagClass: string;
+  ringClass: string;
+}
+
+/** A phone-routed FINAL clip that's active but not yet audibly playing here. */
+function isFreshPhoneFinal(
+  np: NowPlaying | null,
+  sessionId: string,
+  speakingHere: boolean,
+  player: PlayerSnapshot,
+): boolean {
+  if (!np || np.sessionId !== sessionId) return false;
+  if (np.kind === "live" || np.output !== "phone" || np.endedAt || !np.text) return false;
+  if (speakingHere) return false;
+  // Loading / pending-tap / idle / paused = the final has landed but this phone
+  // isn't audibly playing it yet.
+  return (
+    player.status === "loading" ||
+    player.status === "pending-tap" ||
+    player.status === "idle" ||
+    player.status === "paused"
+  );
+}
+
+interface CallViewProps {
+  agent: AgentView;
+  nowPlaying: NowPlaying | null;
+  items: ThreadItem[];
+  liveClips: number;
+  ackFlash: boolean;
+  elapsed: string;
+  onEndLive: () => void;
+  onSendText: () => void;
+}
+
+export function CallView({
+  agent,
+  nowPlaying,
+  items,
+  liveClips,
+  ackFlash,
+  elapsed,
+  onEndLive,
+  onSendText,
+}: CallViewProps) {
+  // The 80ms karaoke tick is subscribed HERE (a leaf), so it never re-renders
+  // the whole sheet — the chat thread/markdown stay off the playback tick.
+  const player: PlayerSnapshot = usePlayer();
+  const name = agent.label || agent.name;
+  const speakingHere =
+    player.status === "playing" && player.entry?.sessionId === agent.sessionId;
+  const isLiveClip = nowPlaying?.kind === "live";
+  const working = !speakingHere && agent.state === "working";
+  const pending =
+    !speakingHere && !working && isFreshPhoneFinal(nowPlaying, agent.sessionId, speakingHere, player);
+  const activity = agent.live?.lastActivity;
+  const tools = agent.live?.toolCount ?? 0;
+  const done = lastFinalText(items);
+
+  const card: CardState = speakingHere
+    ? {
+        mode: "speaking",
+        tag: isLiveClip ? "Speaking" : "Final",
+        tagClass: "text-accent",
+        ringClass: isLiveClip ? "" : "is-final",
+      }
+    : pending
+      ? { mode: "final", tag: "Final", tagClass: "text-accent", ringClass: "is-final" }
+      : working
+        ? { mode: "working", tag: "Working", tagClass: "text-state-working", ringClass: "is-working" }
+        : { mode: "idle", tag: "Done", tagClass: "text-fg-muted", ringClass: done ? "is-final" : "" };
+
+  return (
+    <div
+      className="flex h-full flex-col bg-bg"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 26%, color-mix(in srgb, var(--room-accent) 9%, var(--room-bg)) 0%, var(--room-bg) 58%)",
+      }}
+    >
+      {/* name chip + credits */}
+      <div className="flex shrink-0 flex-col items-center gap-4 px-4 pt-4">
+        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-bg-elevated/80 py-1.5 pl-1.5 pr-3 backdrop-blur">
+          <Avatar
+            agent={agent}
+            frame="idle"
+            className="grid size-6 place-items-center overflow-hidden rounded-md bg-surface-strong text-[10px] font-semibold text-fg-muted"
+          />
+          <strong className="text-[13px] font-bold text-fg">{name}</strong>
+          <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+            live · {liveClips} clip{liveClips === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        {/* presence avatar */}
+        <div className={`cv-presence mt-3 size-[120px] overflow-hidden rounded-[28px] ${card.ringClass}`}>
+          <Avatar
+            agent={agent}
+            frame={speakingHere ? "speaking" : "idle"}
+            className="grid size-full place-items-center bg-surface-strong text-2xl font-semibold text-fg-muted"
+          />
+        </div>
+      </div>
+
+      {/* content card */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 py-4">
+        <div key={card.mode} className="cv-card-in w-full max-w-sm rounded-2xl border border-line bg-surface p-4">
+          <div className={`mb-2 text-[11px] font-bold uppercase tracking-wider ${card.tagClass}`}>
+            {card.tag}
+          </div>
+          {card.mode === "speaking" ? (
+            <KaraokeLine
+              text={player.text}
+              alignment={player.alignment}
+              elapsedMs={player.elapsedMs}
+              variant="card"
+              dim={isLiveClip}
+            />
+          ) : card.mode === "final" ? (
+            <div className="text-[15px] leading-relaxed text-fg">
+              {nowPlaying?.text || done || "…"}
+              <div className="mt-2 text-[12px] text-fg-muted">auto-playing…</div>
+            </div>
+          ) : card.mode === "working" ? (
+            <div className="text-[15px] leading-relaxed text-fg">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 truncate">{activity?.label || "working"}</span>
+                <span className="cv-dots shrink-0 text-accent" aria-hidden="true">
+                  <i>.</i>
+                  <i>.</i>
+                  <i>.</i>
+                </span>
+              </div>
+              <div className="mt-2 text-[12px] text-fg-muted">
+                {ackFlash
+                  ? "🔊 acknowledged"
+                  : tools
+                    ? `${tools} tool${tools === 1 ? "" : "s"} so far`
+                    : "listening in…"}
+              </div>
+            </div>
+          ) : (
+            <div className="text-[15px] leading-relaxed text-fg">
+              {done || <span className="text-fg-muted">Listening…</span>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* dock: End · timer · Send a text */}
+      <div className="flex shrink-0 items-center justify-between gap-4 px-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
+        <button
+          type="button"
+          onClick={onEndLive}
+          aria-label="End live"
+          className="grid size-14 place-items-center rounded-full bg-danger text-white shadow-lg shadow-danger/30 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger [&_svg]:size-6"
+        >
+          <IconPhoneOff />
+        </button>
+
+        <div className="flex-1 text-center">
+          <div className="text-[15px] font-semibold tabular-nums text-fg">{elapsed}</div>
+          <div className="text-[11px] text-fg-muted">live</div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSendText}
+          aria-label="Send a text"
+          className="grid size-14 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
+        >
+          <IconMessage />
+        </button>
+      </div>
+    </div>
+  );
+}

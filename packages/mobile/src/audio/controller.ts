@@ -113,6 +113,12 @@ function isNowPlayingActive(np: NowPlaying | null | undefined): np is NowPlaying
 
 export class AudioController {
   private readonly audio: HTMLAudioElement;
+  /**
+   * A SECOND, dedicated element for reply-ack phrase clips ("on it, boss").
+   * Kept separate from the main plane so an ack never clobbers a loaded clip
+   * (legacy mobile.html used a standalone `ackAudio` for the same reason).
+   */
+  private readonly ackAudio: HTMLAudioElement;
 
   // playback state
   private status: PlayerStatus = "idle";
@@ -162,12 +168,34 @@ export class AudioController {
   private watchdog: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
-  constructor(audio?: HTMLAudioElement) {
+  constructor(audio?: HTMLAudioElement, ackAudio?: HTMLAudioElement) {
     this.audio = audio ?? new Audio();
     this.audio.preload = "auto";
+    this.ackAudio = ackAudio ?? new Audio();
+    this.ackAudio.preload = "auto";
     this.wireAudio();
     // Live stall watchdog (iOS can wedge without firing ended/error).
     this.watchdog = setInterval(() => this.checkLiveStall(), 2000);
+  }
+
+  // --- diagnostics (read-only) ---------------------------------------------
+  //
+  // The <audio> is unattached, so verification tooling can't inspect it via the
+  // DOM. These primitive getters back the `window.__roomAudio` handle installed
+  // at the bottom of this module — they expose values, never the instance, so
+  // nothing can drive the controller through them.
+
+  get diagPlaybackRate(): number {
+    return this.audio.playbackRate;
+  }
+  get diagStatus(): PlayerStatus {
+    return this.status;
+  }
+  get diagSrc(): string | null {
+    return this.audio.getAttribute("src");
+  }
+  get diagLive(): boolean {
+    return this.liveMode;
   }
 
   // --- player store (mini player) ------------------------------------------
@@ -259,6 +287,34 @@ export class AudioController {
       }
     } catch {
       /* ignore */
+    }
+  }
+
+  /**
+   * Unlock the SEPARATE ack element inside a user gesture (go-live / reply
+   * send), so the server-routed "on it, boss" phrase can autoplay later
+   * without a fresh tap. Mirrors legacy's `ackAudio.src = SILENT_WAV; play()`.
+   */
+  primeAck(): void {
+    if (this.disposed) return;
+    try {
+      this.ackAudio.src = SILENT_WAV;
+      const p = this.ackAudio.play();
+      if (p && typeof p.then === "function") p.catch(() => {});
+    } catch {
+      /* chip-only fallback */
+    }
+  }
+
+  /** Play a reply-ack phrase clip on the dedicated element (never the main). */
+  playAck(ackFile: string): void {
+    if (this.disposed || !ackFile) return;
+    try {
+      this.ackAudio.src = `/phrase-audio/${ackFile.split("/").map(encodeURIComponent).join("/")}`;
+      const p = this.ackAudio.play();
+      if (p && typeof p.then === "function") p.catch(() => {});
+    } catch {
+      /* chip-only fallback */
     }
   }
 
@@ -867,6 +923,10 @@ export class AudioController {
     this.liveStalled = false;
     this.setSource(null); // pause event now sees entry === null → ignored
     this.stopTick();
+    // Chunk-D follow-up (a): a rejected-autoplay "Ready — tap to play" notice
+    // must not linger past a Stop/clear — dismiss any residual toast so the
+    // strip's status node can't survive teardown.
+    this.clearNotice();
     this.emit();
     this.markListDirty();
   }
@@ -908,6 +968,13 @@ export class AudioController {
     for (const cb of this.noticeListeners) cb();
   }
 
+  /** Dismiss any showing toast (Toast returns null on a null notice). */
+  private clearNotice(): void {
+    if (!this.notice) return;
+    this.notice = null;
+    for (const cb of this.noticeListeners) cb();
+  }
+
   private markListDirty(): void {
     for (const cb of this.listDirtyListeners) cb();
   }
@@ -915,3 +982,33 @@ export class AudioController {
 
 /** Module singleton — one <audio>, one state machine for the whole SPA. */
 export const audioController = new AudioController();
+
+/**
+ * Chunk-D follow-up (b): a tiny READ-ONLY diagnostic handle. The <audio> is
+ * unattached, so verification tooling (codex mock-harness round) needs a way to
+ * observe playback rate / status / src. Only primitive getters are exposed —
+ * the controller instance never leaks, so this can't be used to drive audio.
+ */
+if (typeof window !== "undefined") {
+  try {
+    Object.defineProperty(window, "__roomAudio", {
+      configurable: true,
+      value: Object.freeze({
+        get playbackRate() {
+          return audioController.diagPlaybackRate;
+        },
+        get status() {
+          return audioController.diagStatus;
+        },
+        get src() {
+          return audioController.diagSrc;
+        },
+        get live() {
+          return audioController.diagLive;
+        },
+      }),
+    });
+  } catch {
+    /* non-configurable / locked-down window — diagnostics are optional */
+  }
+}

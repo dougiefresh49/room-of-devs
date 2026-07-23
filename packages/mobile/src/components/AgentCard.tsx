@@ -11,7 +11,9 @@
  * Idle agents get "Replay last" (chunk D) → plays that agent's newest cached
  * clip through the AudioController (App resolves the entry + primes audio).
  *
- * DEFERRED (chunk E, omitted not disabled): Chat, Reply.
+ * Injectable (team/tmux) sessions also get "Chat" (chunk E) → opens the
+ * conversation sheet (chat + live call). Non-injectable sessions keep the
+ * classic grant/replay behavior with no chat/call surface (spec §B3).
  */
 import type { AgentView, NowPlaying } from "@room/protocol";
 import { AgentChips, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
@@ -28,6 +30,7 @@ interface AgentCardProps {
   grantPending: boolean;
   onGrant: () => void;
   onReplayLast: () => void;
+  onChat: () => void;
   onHide: () => void;
 }
 
@@ -39,13 +42,25 @@ export function AgentCard({
   grantPending,
   onGrant,
   onReplayLast,
+  onChat,
   onHide,
 }: AgentCardProps) {
   const displayName = agent.label || agent.name;
   const raised = agent.state === "hand_raised";
   const speaking = agent.state === "speaking";
+  const injectable = agent.injectable;
   const onPhone = isPhoneFrame(nowPlaying, clock) && nowPlaying?.sessionId === agent.sessionId;
   const grantSub = output === "phone" ? "on this phone" : "on Mac";
+
+  const chatBtn = (
+    <button
+      type="button"
+      onClick={onChat}
+      className="rounded-xl border border-line-strong px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
+      Chat
+    </button>
+  );
 
   return (
     <article
@@ -104,7 +119,7 @@ export function AgentCard({
       </div>
 
       {raised ? (
-        <div className="mt-3">
+        <div className="mt-3 flex flex-col gap-2">
           {/*
             Reviewed polish (live verification round): the old fully-saturated
             #3ecf8e fill dominated the room. Now a darker green SURFACE (accent
@@ -135,18 +150,29 @@ export function AgentCard({
               </>
             )}
           </button>
+          {injectable ? <div className="grid grid-cols-1">{chatBtn}</div> : null}
         </div>
-      ) : !speaking ? (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={onReplayLast}
-            className="w-full rounded-xl border border-line-strong px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Replay last
-          </button>
-        </div>
-      ) : null}
+      ) : (
+        // Idle/working/speaking: Replay last (unless speaking) + Chat (injectable).
+        (() => {
+          const showReplay = !speaking;
+          if (!showReplay && !injectable) return null;
+          return (
+            <div className={`mt-3 grid gap-2 ${showReplay && injectable ? "grid-cols-2" : "grid-cols-1"}`}>
+              {showReplay ? (
+                <button
+                  type="button"
+                  onClick={onReplayLast}
+                  className="rounded-xl border border-line-strong px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  Replay last
+                </button>
+              ) : null}
+              {injectable ? chatBtn : null}
+            </div>
+          );
+        })()
+      )}
     </article>
   );
 }

@@ -644,3 +644,74 @@ every awaited `play()` continuation and delayed callback validates.
    called in `main.tsx`'s `beforeunload` alongside `client.dispose()`;
    `dispose()` kills the tick + watchdog intervals, tears down the audio,
    drops listeners, and is idempotent.
+
+## Phase 5 chunk E (2026-07-22 night, fresh session)
+
+Call view + chat/thread + reply composer + phone-audio-adapter handoff
+activation (`packages/mobile/src/**` additive; `packages/ui` untouched;
+no daemon/scripts/mobile.html/panel touched; zero synthesis). New:
+`convo-state.ts` (sheet + live/ack/thread bookkeeping store), `thread.ts`
+(`useThread` + replay-match), `drafts.ts` (in-memory per-session drafts),
+`dock.ts` (phone/mac dock model + `macOffsetSec`), and components
+`ConvoSheet`/`ChatView`/`CallView`/`Composer`/`ThreadBubble`/
+`PlaybackStrip`/`PlayerSheet`/`KaraokeLine` (extracted from MiniPlayer).
+`api.ts` gains `fetchThread`; the controller gains additive-only helpers.
+Judgment calls:
+
+1. **Call↔chat slide follows the WINNING CONCEPT, not §B2's prose.** The
+   spec text says both transitions bring the incoming panel "from the
+   right"; a single linear track can't do that, and the winning concept
+   (`concept-grok.html`) implements the standard push — call is the
+   "forward" screen: it enters from the right on go-live and exits right
+   on send-a-text; chat slides under it to the left; the back arrow
+   reverses. Two absolutely-stacked panels, `translateX` 300ms. Audio is
+   unaffected regardless (it lives in the controller singleton, not the
+   panels), so the slide never interrupts playback.
+2. **Card precedence = legacy ordering (speaking > working > final >
+   idle), a deliberate deviation from §B2's literal "speaking > final >
+   working".** Legacy put working before final on purpose (comment at
+   mobile.html:2444): after a clip ends, the old now-playing frame lingers
+   un-ended, so a "final-pending" test also matches a STALE final and
+   would freeze the card on the previous message when a new reply starts
+   the agent working. A genuinely fresh final auto-plays within ~1s and
+   surfaces as the *speaking* card anyway, so nothing is lost; the ordering
+   only prevents the stale-final freeze. Flag if the owner wants the strict
+   §B2 order.
+3. **Live timer origin is snapshot-driven, not optimistic.** `beginLive`
+   only zeroes the clip count + shows the call surface; the timer origin
+   (`liveStartedAt`) is set when the daemon confirms `live.on` and cleared
+   on the on→off transition (which also forces the sheet back to chat,
+   matching legacy `if (!liveOn) callViewOpen=false`). This stops the
+   sub-second go-live optimism window from being mistaken for a live-off
+   transition. Cost: the timer reads 0:00 for that < 1s gap.
+4. **Replay-match returns the FIRST match, not the last.** The §B1
+   contract is "newest replay with the same sessionId whose rawText starts
+   with the first 200 chars". Legacy walked a chrono-ASCENDING list and
+   kept the last match; `GET /replay-list` here is NEWEST-FIRST (per
+   api.ts + App.newestForAgent), so the first match is the newest.
+5. **Handoff surface (item 3): an expanded PlayerSheet off the docked
+   player, and the docked player now also surfaces an active MAC clip.**
+   Chunk D only surfaced PHONE playback, leaving `beginMacToPhone`
+   unreachable. To activate BOTH dormant initiators without rebuilding a
+   full Mac transport (scrub/timestamps that §B1 removed), the MiniPlayer
+   gained a compact "Playing on Mac · tap to move here" variant; tapping
+   either variant opens `PlayerSheet` (primes audio on entry, §B3), whose
+   Mac|Phone device row calls `beginPhoneToMac()` / `beginMacToPhone(np,
+   meta, macOffsetSec(np))`. `macOffsetSec` mirrors legacy `macElapsedMs`
+   (wall × atempo rate, clamped to an alignment/CPS duration estimate).
+   The device row keeps NO transport beyond play/pause + speed, honoring
+   §B3's classic-player minimalism. Flag if Mac-clip surfacing in the
+   mobile dock is unwanted (it's a small additive bar).
+6. **Reply-ack phrase clip plays on a SECOND controller element.** The
+   composer/go-live gestures `primeAck()` and convo-state plays the routed
+   `phoneAck.ackFile` via a dedicated `ackAudio` element inside the
+   controller, so the "on it, boss" clip never clobbers a loaded main clip
+   (legacy used a standalone `ackAudio` for the same reason). The ack also
+   shows as a thread chip + a call-card beat.
+7. **Chunk-D follow-ups.** (a) `clear()`/`stop()` now dismiss any residual
+   "Ready — tap to play" notice so it can't linger past a Stop.
+   (b) `window.__roomAudio` is a frozen read-only handle
+   (`playbackRate`/`status`/`src`/`live` getters) backed by controller
+   getters that expose primitives only — the instance never leaks, so
+   verification tooling can observe the unattached `<audio>` without being
+   able to drive it.

@@ -38,11 +38,13 @@ import {
   setOutputDevice,
   subscribePrefs,
 } from "./prefs.js";
+import { convo } from "./convo-state.js";
 import { Header } from "./components/Header.js";
 import { RoomGrid } from "./components/RoomGrid.js";
 import { HiddenDevs } from "./components/HiddenDevs.js";
 import { ReplayHistory } from "./components/ReplayHistory.js";
 import { MiniPlayer } from "./components/MiniPlayer.js";
+import { ConvoSheet } from "./components/ConvoSheet.js";
 import { Toast } from "./components/Toast.js";
 import { PickerSheet } from "./components/PickerSheet.js";
 
@@ -128,11 +130,13 @@ export function App() {
   const roomAgents = allAgents.filter((agent) => !isHiddenName(agent.name));
 
   // Feed every snapshot frame to the audio controller — grant-to-phone pickup,
-  // Mac↔phone handoff, and live finalize all settle from these frames. The
-  // effect fires only when the snapshot reference changes (grant-only updates
-  // reuse it), which is exactly once per applied frame.
+  // Mac↔phone handoff, and live finalize all settle from these frames — AND to
+  // the conversation store (live-clip counting, ack beat, thread refetch on a
+  // new final). The effect fires only when the snapshot reference changes
+  // (grant-only updates reuse it), which is exactly once per applied frame.
   useEffect(() => {
     audioController.onSnapshot(snapshot);
+    convo.onSnapshot(snapshot);
   }, [snapshot]);
 
   // Visible replay history: drop cleared + hidden-dev entries (newest-first).
@@ -166,6 +170,15 @@ export function App() {
       return;
     }
     void audioController.play(entry);
+  };
+
+  // Open the conversation sheet (§B1/§B2). Prime audio in this tap gesture so a
+  // later SSE-driven clip / ack can autoplay (§B3: prime on entry); onto a live
+  // session, open straight to the call surface.
+  const handleChat = (agent: AgentView) => {
+    audioController.prime();
+    audioController.primeAck();
+    convo.open(agent.sessionId, { asCall: !!agent.live?.on });
   };
 
   const handlePlayEntry = (entry: ReplayEntry) => {
@@ -225,6 +238,7 @@ export function App() {
           isGrantPending={(sessionId) => selectGrantPending(state, sessionId)}
           onGrant={handleGrant}
           onReplayLast={handleReplayLast}
+          onChat={handleChat}
           onHide={handleHide}
         />
 
@@ -245,7 +259,8 @@ export function App() {
         />
       </main>
 
-      <MiniPlayer agents={allAgents} />
+      <MiniPlayer agents={allAgents} nowPlaying={nowPlaying} />
+      <ConvoSheet agents={allAgents} nowPlaying={nowPlaying} replayAll={replayAll} />
       <Toast />
 
       <PickerSheet

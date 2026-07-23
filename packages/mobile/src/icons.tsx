@@ -44,3 +44,22 @@ export const IconChevron = () => glyph(<path d="m6 9 6 6 6-6" />);
 
 export const IconFolder = () =>
   glyph(<path d="M4 5h5l2 2h9v11H4z" />);
+
+export const IconArrowLeft = () => glyph(<path d="M19 12H5m0 0 6 6m-6-6 6-6" />);
+
+/** Upward paper-plane send glyph (composer + call "send a text"). */
+export const IconSend = () =>
+  glyph(<path d="M12 20V5m0 0-6 6m6-6 6 6" />);
+
+/** Speech bubble (call dock "send a text"). */
+export const IconMessage = () =>
+  glyph(<path d="M4 5h16v11H8l-4 4z" />);
+
+/** Hang-up / end-live glyph (tilted handset with a strike). */
+export const IconPhoneOff = () =>
+  glyph(
+    <>
+      <path d="M4.5 9.5a13 13 0 0 1 15 0c.8.6.9 1.7.3 2.4l-1.6 1.6a1.6 1.6 0 0 1-1.9.3l-2-1a1.6 1.6 0 0 1-.8-1.6l.2-1.5a11 11 0 0 0-3 0l.2 1.5a1.6 1.6 0 0 1-.8 1.6l-2 1a1.6 1.6 0 0 1-1.9-.3L4.2 11.9a1.7 1.7 0 0 1 .3-2.4Z" />
+      <path d="M3 3l18 18" />
+    </>,
+  );

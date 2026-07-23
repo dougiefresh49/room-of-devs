@@ -31,3 +31,122 @@ body,
   background: var(--room-bg);
   color: var(--room-text);
 }
+
+/* ============================================================
+   Chunk E — conversation sheet motion (call ⇄ chat) + call-view
+   presence/card animation. Keyframes live here because Tailwind's
+   arbitrary-value syntax can't express @keyframes; the utility
+   classes below are consumed by ChatView/CallView/ConvoSheet.
+   ============================================================ */
+
+/* The call view is the "forward" screen: it enters from the right and
+   exits to the right, matching the winning concept's push model
+   (docs/mockups/live-mode-v2/concept-grok.html). Both panels are
+   absolutely stacked; audio lives in the controller singleton, so this
+   transform never touches playback. */
+.cv-slide {
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv-slide {
+    transition: none;
+  }
+}
+
+/* Info card swap-in + presence breathing (call view). */
+@keyframes cv-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cv-card-in {
+  animation: cv-card-in 0.32s ease;
+}
+
+@keyframes cv-presence-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px var(--room-bg),
+      0 0 0 5px color-mix(in srgb, var(--room-accent) 35%, transparent),
+      0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--room-bg),
+      0 0 0 7px color-mix(in srgb, var(--room-accent) 55%, transparent),
+      0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+}
+.cv-presence {
+  box-shadow:
+    0 0 0 3px var(--room-bg),
+    0 0 0 5px color-mix(in srgb, var(--room-accent) 45%, transparent),
+    0 12px 40px rgba(0, 0, 0, 0.35);
+  animation: cv-presence-pulse 2.4s ease-in-out infinite;
+}
+.cv-presence.is-working {
+  box-shadow:
+    0 0 0 3px var(--room-bg),
+    0 0 0 5px color-mix(in srgb, var(--state-working) 55%, transparent),
+    0 12px 40px rgba(0, 0, 0, 0.35);
+  animation: none;
+}
+.cv-presence.is-final {
+  box-shadow:
+    0 0 0 3px var(--room-bg),
+    0 0 0 5px color-mix(in srgb, var(--room-accent) 75%, transparent),
+    0 12px 40px color-mix(in srgb, var(--room-accent) 15%, transparent);
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv-presence {
+    animation: none;
+  }
+}
+
+/* Live status dot + working dots — subtle breathing. */
+@keyframes cv-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.cv-breathe {
+  animation: cv-breathe 1.2s ease-in-out infinite;
+}
+@keyframes cv-dot-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.cv-dots > i {
+  display: inline-block;
+  animation: cv-dot-bounce 1.4s ease-in-out infinite;
+}
+.cv-dots > i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.cv-dots > i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv-breathe,
+  .cv-dots > i {
+    animation: none;
+  }
+}
