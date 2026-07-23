@@ -12,7 +12,7 @@
  * `onSend` returns whether the send succeeded — on success the field + draft
  * are cleared; on failure the text stays so the user can retry.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconSend } from "../icons.js";
 import { getDraft, setDraft } from "../drafts.js";
 
@@ -26,7 +26,11 @@ interface ComposerProps {
 
 export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  // The sync ref is the race gate (blocks a second dispatch before React
+  // re-renders); the reactive flag drives the disabled/visual state. Both are
+  // reset in `finally` so a rejecting onSend can't wedge the composer.
   const sending = useRef(false);
+  const [isSending, setIsSending] = useState(false);
 
   const autoGrow = () => {
     const ta = ref.current;
@@ -50,12 +54,17 @@ export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
     const text = ta.value.trim();
     if (!text) return;
     sending.current = true;
-    const ok = await onSend(text);
-    sending.current = false;
-    if (ok) {
-      ta.value = "";
-      setDraft(sessionId, "");
-      autoGrow();
+    setIsSending(true);
+    try {
+      const ok = await onSend(text);
+      if (ok) {
+        ta.value = "";
+        setDraft(sessionId, "");
+        autoGrow();
+      }
+    } finally {
+      sending.current = false;
+      setIsSending(false);
     }
   };
 
@@ -66,6 +75,7 @@ export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
           ref={ref}
           rows={1}
           placeholder={placeholder}
+          disabled={isSending}
           onInput={(e) => {
             setDraft(sessionId, e.currentTarget.value);
             autoGrow();
@@ -76,15 +86,21 @@ export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
               void submit();
             }
           }}
-          className="min-h-[28px] flex-1 resize-none bg-transparent px-1.5 py-1 text-[15px] leading-snug text-fg outline-none placeholder:text-fg-faint"
+          className="min-h-[28px] flex-1 resize-none bg-transparent px-1.5 py-1 text-[15px] leading-snug text-fg outline-none placeholder:text-fg-faint disabled:opacity-60"
         />
         <button
           type="button"
           onClick={() => void submit()}
+          disabled={isSending}
+          aria-disabled={isSending}
           aria-label="Send reply"
-          className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-bg transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[18px]"
+          className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-bg transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-70 [&_svg]:size-[18px]"
         >
-          <IconSend />
+          {isSending ? (
+            <span className="size-4 animate-spin rounded-full border-2 border-bg/40 border-t-bg" />
+          ) : (
+            <IconSend />
+          )}
         </button>
       </div>
     </div>

@@ -14,7 +14,7 @@
  *
  * Talks to the AudioController only — never to <audio> directly.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AgentView, NowPlaying } from "@room/protocol";
 import { IconPause, IconPlay } from "@room/ui";
 import { audioController } from "../audio/controller.js";
@@ -33,12 +33,16 @@ export function MiniPlayer({ agents, nowPlaying }: MiniPlayerProps) {
   const player = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const dock = deriveDock(player, nowPlaying, agents);
+  const hasDock = !!dock;
 
-  if (!dock) {
-    // Nothing playing — make sure a stale sheet can't linger.
-    if (expanded) setExpanded(false);
-    return null;
-  }
+  // Collapse the expanded sheet once nothing is playing (effect — no
+  // render-phase setState). `hasDock` is a boolean, so this only fires on the
+  // has→hasn't edge, not every render.
+  useEffect(() => {
+    if (!hasDock) setExpanded(false);
+  }, [hasDock]);
+
+  if (!dock) return null;
 
   const openSheet = () => {
     audioController.prime(); // §B3: prime on entry, inside this tap gesture

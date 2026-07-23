@@ -33,14 +33,17 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
   const isPhone = dock.kind === "phone";
   const playing = player.status === "playing";
   const source: "mac" | "phone" = isPhone ? "phone" : "mac";
+  // Belt on top of the controller's single-in-flight latch: while any handoff
+  // is pending BOTH device buttons are disabled, so rapid taps can't queue.
+  const busy = player.handoffPending;
 
   const moveToMac = () => {
-    if (!isPhone) return;
+    if (!isPhone || busy) return;
     audioController.beginPhoneToMac();
     onClose();
   };
   const moveToPhone = () => {
-    if (isPhone || !dock.np) return;
+    if (isPhone || !dock.np || busy) return;
     audioController.beginMacToPhone(dock.np, { character: dock.character, name: dock.name }, macOffsetSec(dock.np));
     onClose();
   };
@@ -100,7 +103,9 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           <button
             type="button"
             onClick={moveToMac}
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors [&_svg]:size-4 ${
+            disabled={busy}
+            aria-disabled={busy}
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors disabled:opacity-60 [&_svg]:size-4 ${
               source === "mac"
                 ? "bg-accent/15 text-accent"
                 : "text-fg-muted hover:bg-surface-hover hover:text-fg"
@@ -111,7 +116,9 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           <button
             type="button"
             onClick={moveToPhone}
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors [&_svg]:size-4 ${
+            disabled={busy}
+            aria-disabled={busy}
+            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors disabled:opacity-60 [&_svg]:size-4 ${
               source === "phone"
                 ? "bg-accent/15 text-accent"
                 : "text-fg-muted hover:bg-surface-hover hover:text-fg"
@@ -120,8 +127,8 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
             <IconSmartphone /> This phone
           </button>
         </div>
-        {player.handoffPending ? (
-          <div className="mt-2 text-center text-[12px] text-fg-muted">Moving to this phone…</div>
+        {busy ? (
+          <div className="mt-2 text-center text-[12px] text-fg-muted">Moving playback…</div>
         ) : null}
 
         {/* speed — phone static playback only */}

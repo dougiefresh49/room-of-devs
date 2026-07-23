@@ -27,6 +27,8 @@ import { nowPlayingKey } from "@room/room-client";
 
 const ACK_FLASH_MS = 4000;
 
+export type LiveTransition = "idle" | "starting" | "ending";
+
 export interface ConvoSnapshot {
   /** Open conversation session id, or null when the sheet is closed. */
   sessionId: string | null;
@@ -42,6 +44,13 @@ export interface ConvoSnapshot {
   ackFlashUntil: number | null;
   /** Bumps to force a `/thread` refetch for the open session. */
   threadRev: number;
+  /**
+   * In-flight set_live transition for the OPEN session. While not "idle" every
+   * Go-live / End-live control is disabled and further dispatches are ignored,
+   * so a double-tap (or an opposite tap before the first resolves) can't post
+   * duplicate/conflicting set_live commands.
+   */
+  liveTransition: LiveTransition;
 }
 
 class ConvoStore {
@@ -52,6 +61,9 @@ class ConvoStore {
   private readonly ackEvents = new Map<string, string[]>();
   private ackFlash: { sessionId: string; until: number } | null = null;
   private threadRev = 0;
+  /** In-flight set_live transition per session + its monotonic token. */
+  private readonly liveTransitions = new Map<string, LiveTransition>();
+  private readonly liveTxnToken = new Map<string, number>();
 
   // per-frame dedup
   private lastNowPlayingKey: string | null = null;
@@ -121,6 +133,41 @@ class ConvoStore {
   /** Force a `/thread` refetch (used right after a reply is accepted). */
   bumpThread(): void {
     this.threadRev++;
+    this.emit();
+  }
+
+  // --- set_live transition guard ------------------------------------------
+
+  /** Current in-flight live transition for a session. */
+  liveTransitionOf(sessionId: string): LiveTransition {
+    return this.liveTransitions.get(sessionId) ?? "idle";
+  }
+
+  /**
+   * Begin a set_live transition; returns null when one is already in flight
+   * (caller must abort — the control is also disabled in the UI). Otherwise
+   * returns a monotonic token the caller passes back to `endLiveTransition` so
+   * a stale completion can't clear a newer transition.
+   */
+  beginLiveTransition(sessionId: string, kind: "starting" | "ending"): number | null {
+    if ((this.liveTransitions.get(sessionId) ?? "idle") !== "idle") return null;
+    const token = (this.liveTxnToken.get(sessionId) ?? 0) + 1;
+    this.liveTxnToken.set(sessionId, token);
+    this.liveTransitions.set(sessionId, kind);
+    this.emit();
+    return token;
+  }
+
+  /** True while `token` is still the current transition for the session. */
+  isLiveTransitionCurrent(sessionId: string, token: number): boolean {
+    return this.liveTxnToken.get(sessionId) === token;
+  }
+
+  /** Settle a transition — no-op if a newer one has superseded this token. */
+  endLiveTransition(sessionId: string, token: number): void {
+    if (this.liveTxnToken.get(sessionId) !== token) return;
+    if ((this.liveTransitions.get(sessionId) ?? "idle") === "idle") return;
+    this.liveTransitions.set(sessionId, "idle");
     this.emit();
   }
 
@@ -196,6 +243,7 @@ class ConvoStore {
       ackAts: sid ? (this.ackEvents.get(sid) ?? []) : [],
       ackFlashUntil: flash,
       threadRev: this.threadRev,
+      liveTransition: sid ? (this.liveTransitions.get(sid) ?? "idle") : "idle",
     };
   }
 

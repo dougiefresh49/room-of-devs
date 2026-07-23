@@ -11,6 +11,7 @@
  */
 import { useEffect, useMemo, useRef } from "react";
 import type { AgentView } from "@room/protocol";
+import type { LiveTransition } from "../convo-state.js";
 import type { ReplayEntry, ThreadItem } from "../api.js";
 import { findReplayForFinal } from "../thread.js";
 import { IconArrowLeft, IconChevron } from "../icons.js";
@@ -27,6 +28,9 @@ interface ChatViewProps {
   callView: boolean;
   elapsed: string;
   ackAts: readonly string[];
+  /** A set_live transition is in flight — disable Go-live / End controls. */
+  liveBusy: boolean;
+  liveTransition: LiveTransition;
   onGoLive: () => void;
   onEndLive: () => void;
   onBackToCall: () => void;
@@ -47,6 +51,8 @@ export function ChatView({
   callView,
   elapsed,
   ackAts,
+  liveBusy,
+  liveTransition,
   onGoLive,
   onEndLive,
   onBackToCall,
@@ -56,6 +62,8 @@ export function ChatView({
 }: ChatViewProps) {
   const name = agent.label || agent.name;
   const working = agent.state === "working";
+  const activity = agent.live?.lastActivity?.label ?? "";
+  const tools = agent.live?.toolCount ?? 0;
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // Merge thread messages + page-local ack chips into one time-sorted list.
@@ -114,14 +122,22 @@ export function ChatView({
           <button
             type="button"
             onClick={liveOn ? onEndLive : onGoLive}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            disabled={liveBusy}
+            aria-disabled={liveBusy}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 ${
               liveOn
                 ? "border-accent bg-accent/15 text-accent shadow-[0_0_14px_color-mix(in_srgb,var(--room-accent)_22%,transparent)]"
                 : "border-accent/40 bg-accent/5 text-accent/90 hover:bg-accent/10"
             }`}
           >
             <span className={`size-[7px] rounded-full ${liveOn ? "bg-accent cv-breathe" : "bg-accent/50"}`} />
-            {liveOn ? "Live" : "Go live"}
+            {liveTransition === "starting"
+              ? "Going live…"
+              : liveTransition === "ending"
+                ? "Ending…"
+                : liveOn
+                  ? "Live"
+                  : "Go live"}
           </button>
         ) : null}
 
@@ -151,7 +167,9 @@ export function ChatView({
           <button
             type="button"
             onClick={onEndLive}
-            className="rounded-full border border-danger/40 bg-danger/10 px-2.5 py-1 text-[12px] font-semibold text-danger"
+            disabled={liveBusy}
+            aria-disabled={liveBusy}
+            className="rounded-full border border-danger/40 bg-danger/10 px-2.5 py-1 text-[12px] font-semibold text-danger disabled:opacity-60"
           >
             End
           </button>
@@ -197,7 +215,13 @@ export function ChatView({
                 <i>.</i>
               </span>
             </div>
-            {agent.injectable ? (
+            {/* §B1: surface the current activity + tool count when present. */}
+            {activity || tools ? (
+              <div className="mt-0.5 max-w-[85%] truncate text-[11px] text-fg-muted">
+                {activity || "working"}
+                {tools ? ` · ${tools} tool${tools === 1 ? "" : "s"}` : ""}
+              </div>
+            ) : agent.injectable ? (
               <div className="mt-0.5 text-[11px] text-fg-faint">
                 tap Go live to listen in while they work
               </div>

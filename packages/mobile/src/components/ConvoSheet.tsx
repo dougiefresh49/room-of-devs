@@ -74,35 +74,53 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   const callView = state.callView;
   const elapsed = fmtElapsed(state.liveStartedAt, now);
   const ackFlash = state.ackFlashUntil != null && now < state.ackFlashUntil;
+  const liveBusy = state.liveTransition !== "idle";
 
   const handleGoLive = async () => {
+    // One live transition at a time: the guard returns null if a Go/End is
+    // already in flight (the control is also disabled). Optimistic UI only
+    // commits after we hold the transition.
+    const token = convo.beginLiveTransition(sessionId, "starting");
+    if (token === null) return;
     audioController.prime();
     audioController.primeAck();
     convo.beginLive(sessionId);
     convo.setCallView(true);
     try {
       const r = await client.request({ type: "set_live", sessionId, on: true } as Command);
+      if (!convo.isLiveTransitionCurrent(sessionId, token)) return; // superseded
       if (!r.ok) {
         convo.endLive(sessionId);
         audioController.announce("Couldn't go live");
       }
     } catch {
-      convo.endLive(sessionId);
-      audioController.announce("Couldn't go live");
+      if (convo.isLiveTransitionCurrent(sessionId, token)) {
+        convo.endLive(sessionId);
+        audioController.announce("Couldn't go live");
+      }
+    } finally {
+      convo.endLiveTransition(sessionId, token);
     }
   };
 
-  const handleEndLive = () => {
+  const handleEndLive = async () => {
+    const token = convo.beginLiveTransition(sessionId, "ending");
+    if (token === null) return;
     // Stop phone audio first, clear live state (slides to chat), then tell the
     // daemon — order per §B2.
     audioController.stop();
     convo.endLive(sessionId);
-    void client
-      .request({ type: "set_live", sessionId, on: false } as Command)
-      .then((r) => {
-        if (!r.ok) audioController.announce("Couldn't end live");
-      })
-      .catch(() => audioController.announce("Couldn't end live"));
+    try {
+      const r = await client.request({ type: "set_live", sessionId, on: false } as Command);
+      if (!convo.isLiveTransitionCurrent(sessionId, token)) return;
+      if (!r.ok) audioController.announce("Couldn't end live");
+    } catch {
+      if (convo.isLiveTransitionCurrent(sessionId, token)) {
+        audioController.announce("Couldn't end live");
+      }
+    } finally {
+      convo.endLiveTransition(sessionId, token);
+    }
   };
 
   const handlePlay = (entry: ReplayEntry) => {
@@ -151,6 +169,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
               liveClips={state.liveClips}
               ackFlash={ackFlash}
               elapsed={elapsed}
+              liveBusy={liveBusy}
               onEndLive={handleEndLive}
               onSendText={() => convo.setCallView(false)}
             />
@@ -170,6 +189,8 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
             callView={callView}
             elapsed={elapsed}
             ackAts={state.ackAts}
+            liveBusy={liveBusy}
+            liveTransition={state.liveTransition}
             onGoLive={handleGoLive}
             onEndLive={handleEndLive}
             onBackToCall={() => convo.setCallView(true)}

@@ -105,6 +105,8 @@ interface HandoffAwait {
   startedAt: string;
   character: string;
   name: string;
+  /** Monotonic identity — stale-token responses can't cancel a newer attempt. */
+  token: number;
 }
 
 function isNowPlayingActive(np: NowPlaying | null | undefined): np is NowPlaying {
@@ -154,9 +156,20 @@ export class AudioController {
   /** Invalidates an in-flight grant pickup (new pickup / manual play / stop). */
   private pickupSeq = 0;
 
-  // Mac↔phone handoff
+  // Mac↔phone handoff. `handoffToken` is the monotonic identity for the single
+  // in-flight handoff; `phoneToMacPending` is the phone→Mac in-flight latch
+  // (Mac→phone uses `handoffAwait`). Both directions share the token + the
+  // "any handoff pending" gate so rapid taps can't double-dispatch.
   private handoffAwait: HandoffAwait | null = null;
   private handoffTimer: ReturnType<typeof setTimeout> | null = null;
+  private handoffToken = 0;
+  private phoneToMacPending = false;
+
+  // Reply-ack phrase audio: play each routed ack exactly once, deduped by a
+  // stable identity so reconnect/frame replays can't re-play it. The first
+  // frame's ack is seeded (marked handled, never played) — no boot replay.
+  private readonly handledAckKeys = new Set<string>();
+  private ackSeeded = false;
 
   // stores
   private snapshot: PlayerSnapshot = this.buildSnapshot();
@@ -504,6 +517,33 @@ export class AudioController {
         void this.maybePlayGrantToPhone(np, key);
       }
     }
+
+    // Reply-ack phrase audio: this controller is the SINGLE owner of PLAYING a
+    // routed ack (the UI store owns the chip/flash). Fire once per stable
+    // identity; the first REAL frame's ack is only seeded, never replayed on
+    // boot. Seed only on a non-null frame so a pre-connect null can't flip it.
+    this.maybePlayAck(snapshot?.phoneAck ?? null);
+    if (snapshot) this.ackSeeded = true;
+  }
+
+  /** Play a routed ack phrase exactly once per (sessionId, at, ackFile). */
+  private maybePlayAck(ack: PanelSnapshot["phoneAck"]): void {
+    if (!ack || !ack.at || !ack.ackFile) return;
+    const key = `${ack.sessionId}|${ack.at}|${ack.ackFile}`;
+    if (this.handledAckKeys.has(key)) return;
+    this.handledAckKeys.add(key);
+    this.pruneHandledAckKeys();
+    if (this.ackSeeded) this.playAck(ack.ackFile); // skip the pre-load ack
+  }
+
+  private pruneHandledAckKeys(): void {
+    if (this.handledAckKeys.size <= HANDLED_KEYS_CAP) return;
+    const drop = this.handledAckKeys.size - HANDLED_KEYS_CAP;
+    let i = 0;
+    for (const k of this.handledAckKeys) {
+      if (i++ >= drop) break;
+      this.handledAckKeys.delete(k);
+    }
   }
 
   private pruneHandledKeys(): void {
@@ -679,40 +719,63 @@ export class AudioController {
 
   // --- Mac↔phone handoff (chunk E triggers begin*; detection runs here) -----
 
+  /** True while EITHER handoff direction is in flight (single-in-flight gate). */
+  private handoffBusy(): boolean {
+    return !!this.handoffAwait || this.phoneToMacPending;
+  }
+
   /** Mac speaking → this phone: capture position, stop the Mac, await replay. */
   beginMacToPhone(np: NowPlaying, meta: { character: string; name: string }, offsetSec: number): void {
+    if (this.handoffBusy()) return; // rapid taps / opposite direction in flight
     this.prime(); // unlock <audio> inside this tap so a later play() works
+    const token = ++this.handoffToken;
     this.handoffAwait = {
       offsetSec: Math.max(0, offsetSec),
       sessionId: np.sessionId,
       startedAt: np.startedAt,
       character: meta.character,
       name: meta.name,
+      token,
     };
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
-    this.handoffTimer = setTimeout(() => this.cancelHandoff("Couldn't move playback"), HANDOFF_TIMEOUT_MS);
+    this.handoffTimer = setTimeout(() => this.cancelHandoff("Couldn't move playback", token), HANDOFF_TIMEOUT_MS);
     this.emit();
     void postAction({ type: "stop" }).then((r) => {
-      if (!r) this.cancelHandoff("Couldn't move playback");
+      // Only a STILL-CURRENT attempt may be cancelled — a stale older stop
+      // response must not tear down a newer handoff.
+      if (!r) this.cancelHandoff("Couldn't move playback", token);
     });
   }
 
   /** This phone → Mac: pause locally, ask the Mac to resume at our offset. */
   beginPhoneToMac(): void {
     if (!this.entry?.file) return;
+    if (this.handoffBusy()) return; // single in-flight latch
+    const token = ++this.handoffToken;
+    this.phoneToMacPending = true;
     this.audio.pause();
     const file = this.entry.file;
     const offsetSec = this.audio.currentTime || 0;
     this.emit();
     void postAction({ type: "play_replay", file, offsetSec }).then((r) => {
+      if (token !== this.handoffToken) return; // superseded — ignore stale reply
+      this.phoneToMacPending = false;
       if (!r) this.notify("Mac is busy");
+      this.emit();
     });
   }
 
-  cancelHandoff(msg?: string): void {
+  /**
+   * Cancel the in-flight handoff. A `token`, when passed, must match the
+   * current attempt — a stale timeout / failed older response is ignored so it
+   * can't cancel a newer attempt.
+   */
+  cancelHandoff(msg?: string, token?: number): void {
+    if (token !== undefined && token !== this.handoffToken) return;
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
     this.handoffTimer = null;
     this.handoffAwait = null;
+    this.phoneToMacPending = false;
     this.emit();
     if (msg) this.notify(msg);
   }
@@ -730,6 +793,9 @@ export class AudioController {
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
     this.handoffTimer = null;
     this.handoffAwait = null;
+    // Advance the token so the pending timeout / a late stop response can't
+    // cancel this now-completed handoff.
+    this.handoffToken++;
     void this.playHandoffFile(file, np, offsetSec);
   }
 
@@ -951,7 +1017,7 @@ export class AudioController {
       live: this.liveMode,
       speed: prefs.getSpeed(),
       catchUp: this.catchUpMode,
-      handoffPending: !!this.handoffAwait,
+      handoffPending: this.handoffBusy(),
       text: this.entry ? this.entry.spokenText || this.entry.textPreview || "" : "",
       alignment: this.entry?.alignment ?? null,
       elapsedMs: ((this.liveMode ? this.liveBaseSec : 0) + cur) * 1000,

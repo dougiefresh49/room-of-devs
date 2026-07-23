@@ -703,11 +703,11 @@ Judgment calls:
    §B3's classic-player minimalism. Flag if Mac-clip surfacing in the
    mobile dock is unwanted (it's a small additive bar).
 6. **Reply-ack phrase clip plays on a SECOND controller element.** The
-   composer/go-live gestures `primeAck()` and convo-state plays the routed
-   `phoneAck.ackFile` via a dedicated `ackAudio` element inside the
-   controller, so the "on it, boss" clip never clobbers a loaded main clip
-   (legacy used a standalone `ackAudio` for the same reason). The ack also
-   shows as a thread chip + a call-card beat.
+   composer/go-live gestures `primeAck()`; the controller (single audio
+   owner) plays the routed `phoneAck.ackFile` via a dedicated `ackAudio`
+   element, so the "on it, boss" clip never clobbers a loaded main clip
+   (legacy used a standalone `ackAudio` for the same reason). The UI store
+   separately shows a thread chip + a call-card beat.
 7. **Chunk-D follow-ups.** (a) `clear()`/`stop()` now dismiss any residual
    "Ready — tap to play" notice so it can't linger past a Stop.
    (b) `window.__roomAudio` is a frozen read-only handle
@@ -715,3 +715,47 @@ Judgment calls:
    getters that expose primitives only — the instance never leaks, so
    verification tooling can observe the unattached `<audio>` without being
    able to drive it.
+
+### Chunk E — Sol pre-merge review round (fixed in-branch)
+
+Sol found 2 blockers, 2 majors, 2 minors on commit `06e5004`; all fixed.
+Sol explicitly cleared (unchanged): /thread stale-response ordering,
+draft/focus stability, play-chip suppression/matching, timer cleanup, card
+precedence, and the Mac-offset math.
+
+1. **BLOCKER — set_live had no transition guard.** convo-state now owns a
+   per-session `liveTransition` (idle|starting|ending) + a monotonic token.
+   `beginLiveTransition` returns null if one is already in flight (dispatch
+   aborted; every Go-live / End-live control is also `disabled` in
+   ChatView + CallView with "Going live…"/"Ending…" labels). Completions
+   are gated on `isLiveTransitionCurrent` and settled in `finally` via
+   `endLiveTransition`, so a double-tap or an opposite tap before the first
+   resolves can't post duplicate/conflicting commands. End keeps its
+   stop-audio → post-false ordering.
+2. **BLOCKER — handoff initiators unguarded.** The AudioController now
+   holds a monotonic `handoffToken` + a single-in-flight latch
+   (`handoffBusy()` = Mac→phone `handoffAwait` OR phone→Mac
+   `phoneToMacPending`). Both `beginMacToPhone`/`beginPhoneToMac` early-out
+   when busy; `cancelHandoff(msg, token)` ignores a stale token (a failed
+   OLDER stop response can't cancel a NEWER attempt); the phone→Mac
+   `play_replay` reply settles its own pending latch only when still
+   current; completing a Mac→phone handoff advances the token so the
+   pending timeout can't fire. `handoffPending` in the player snapshot now
+   covers both directions and disables both PlayerSheet device buttons.
+   Offset math untouched (Sol-cleared).
+3. **MAJOR — acks were never audibly played.** `playAck()` had no caller.
+   The controller (single audio owner) now detects the `phoneAck` edge in
+   `onSnapshot`, deduped by a stable `(sessionId, at, ackFile)` key in a
+   bounded set, and calls `playAck` exactly once. The first REAL frame's
+   ack is seeded (marked handled, never played) so a boot/reconnect can't
+   replay a pre-load ack; the seed flag flips only on a non-null frame.
+4. **MAJOR — composer had no in-flight UI.** Added a reactive `isSending`
+   (disables textarea + send button, shows a spinner, `aria-disabled`)
+   alongside the sync ref race-gate; BOTH reset in `finally`, so an
+   `onSend` that rejects outside the wrapper can't wedge the field.
+5. **MINOR — non-live working row omitted activity.** It now renders
+   `live.lastActivity.label` + toolCount when present (falling back to the
+   Go-live hint), still fully suppressed while live is on.
+6. **MINOR — render-phase setState in MiniPlayer.** Replaced the in-render
+   `setExpanded(false)` with an effect keyed on the boolean `hasDock`, so
+   it fires only on the has→hasn't edge.

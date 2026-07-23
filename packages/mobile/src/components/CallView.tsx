@@ -55,6 +55,8 @@ interface CallViewProps {
   liveClips: number;
   ackFlash: boolean;
   elapsed: string;
+  /** A set_live transition is in flight — disable End-live. */
+  liveBusy: boolean;
   onEndLive: () => void;
   onSendText: () => void;
 }
@@ -66,6 +68,7 @@ export function CallView({
   liveClips,
   ackFlash,
   elapsed,
+  liveBusy,
   onEndLive,
   onSendText,
 }: CallViewProps) {
@@ -178,8 +181,10 @@ export function CallView({
         <button
           type="button"
           onClick={onEndLive}
+          disabled={liveBusy}
+          aria-disabled={liveBusy}
           aria-label="End live"
-          className="grid size-14 place-items-center rounded-full bg-danger text-white shadow-lg shadow-danger/30 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger [&_svg]:size-6"
+          className="grid size-14 place-items-center rounded-full bg-danger text-white shadow-lg shadow-danger/30 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger disabled:opacity-60 [&_svg]:size-6"
         >
           <IconPhoneOff />
         </button>
