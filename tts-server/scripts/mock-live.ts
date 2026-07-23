@@ -46,6 +46,7 @@ const STATE_DIR = join(TTS_DIR, "state");
 const REPLAY_DIR = join(TTS_DIR, "replay");
 const NOW_PLAYING_PATH = join(TTS_DIR, ".now-playing.json");
 const STREAM_LOCK = join(TTS_DIR, ".stream-lock");
+const TEAM_MAP_PATH = join(TTS_DIR, "team_map.json");
 const FIXTURES_DIR = join(SERVER_DIR, "fixtures", "live");
 const REAL_FRAME_FRESH_MS = 10 * 60_000;
 
@@ -135,6 +136,12 @@ function commandUp(name?: string): void {
   const map = liveMap();
   map[id] = { on: true, since: now, toolCount: 0, turnStartedAt: now, lastActivity: null };
   atomicWrite(LIVE_PATH, map);
+  // Register in team_map so the snapshot marks the mock injectable (Chat/reply
+  // UI renders). The tmux session is fake, so replies fail server-side — the
+  // intended zero-cost error path. Keyed by id: collision-proof, easy to sweep.
+  const team = readJson<Record<string, unknown>>(TEAM_MAP_PATH, {});
+  team[id] = { tmux: `cr-${id}`, sessionId: id, createdAt: now };
+  atomicWrite(TEAM_MAP_PATH, team);
   console.log(id);
 }
 
@@ -297,6 +304,14 @@ function commandDown(target: string | undefined): void {
     ids.add(requireMockId(target));
   }
   for (const id of ids) cleanupOne(id);
+  const team = readJson<Record<string, { sessionId?: string } | undefined>>(TEAM_MAP_PATH, {});
+  const teamKeys = Object.keys(team).filter(
+    (k) => k.startsWith("mock-") || ids.has(team[k]?.sessionId ?? ""),
+  );
+  if (teamKeys.length) {
+    for (const k of teamKeys) delete team[k];
+    atomicWrite(TEAM_MAP_PATH, team);
+  }
   if (target === "--all") for (const file of mockReplayFiles()) { try { unlinkSync(join(REPLAY_DIR, file)); } catch {} }
   const frame = readJson<NowPlaying | null>(NOW_PLAYING_PATH, null);
   if (frame && isMockFrame(frame) && (target === "--all" || ids.has(frame.sessionId ?? ""))) {
