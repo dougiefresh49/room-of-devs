@@ -6,7 +6,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
-  LogicalPosition,
   LogicalSize,
   PhysicalPosition,
   availableMonitors,
@@ -109,22 +108,49 @@ function enterDockLayout(width: number, height: number): Promise<void> {
 async function applyDockLayout(width: number, height: number): Promise<void> {
   const win = getCurrentWindow();
   try {
+    // Size stays logical — the webview drives it and Tauri handles the DPR.
     await win.setMinSize(DOCK_MIN_SIZE);
     await win.setSize(new LogicalSize(width, height));
 
+    // Positioning is ALL physical: monitor.position/size are already physical,
+    // and dividing them by a single scaleFactor breaks on multi-monitor rigs
+    // with mixed scales or non-zero origins — that math parked the pill off
+    // every screen. Convert the logical width/height/gap into the TARGET
+    // monitor's physical pixels and compute bottom-center from its rect
+    // (mirrors snapToCorner above).
+    const bottomCenter = (m: NonNullable<Awaited<ReturnType<typeof currentMonitor>>>) => {
+      const s = m.scaleFactor || 1;
+      const pw = Math.round(width * s);
+      const ph = Math.round(height * s);
+      const gap = Math.round(DOCK_BOTTOM_GAP * s);
+      return {
+        x: m.position.x + Math.round((m.size.width - pw) / 2),
+        y: m.position.y + m.size.height - ph - gap,
+      };
+    };
+
     const monitor = await currentMonitor();
-    if (monitor) {
-      const scale = await win.scaleFactor();
-      const monitorX = monitor.position.x / scale;
-      const monitorY = monitor.position.y / scale;
-      const monitorWidth = monitor.size.width / scale;
-      const monitorHeight = monitor.size.height / scale;
-      await win.setPosition(
-        new LogicalPosition(
-          Math.round(monitorX + (monitorWidth - width) / 2),
-          Math.round(monitorY + monitorHeight - height - DOCK_BOTTOM_GAP),
-        ),
+    let target = monitor ? bottomCenter(monitor) : null;
+
+    // Safety clamp: the target's top-left must sit inside SOME monitor, or
+    // the pill becomes unfindable under Accessory policy. If currentMonitor()
+    // was null, or the target lands on no display, fall back to bottom-center
+    // of the first available monitor — and if there are none, don't move it.
+    const all = await availableMonitors();
+    const onScreen = (t: { x: number; y: number }) =>
+      all.some(
+        (m) =>
+          t.x >= m.position.x - 8 &&
+          t.x < m.position.x + m.size.width &&
+          t.y >= m.position.y - 8 &&
+          t.y < m.position.y + m.size.height,
       );
+    if (!target || !onScreen(target)) {
+      target = all.length ? bottomCenter(all[0]) : null;
+    }
+
+    if (target) {
+      await win.setPosition(new PhysicalPosition(target.x, target.y));
     }
   } catch (err) {
     console.error("failed to enter dock mode:", err);

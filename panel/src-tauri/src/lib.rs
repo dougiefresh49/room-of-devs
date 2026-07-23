@@ -65,6 +65,42 @@ fn apply_dock_panel_policy(panel: &tauri_nspanel::objc_id::ShareId<tauri_nspanel
     );
 }
 
+/// Switch to MAIN (floating) mode: show the room window, hide the dock panel,
+/// restore Regular activation policy. Extracted so BOTH the set_room_mode
+/// command and the macOS Reopen recovery handler share one transition (and
+/// keep the mutex-guarded ModeState consistent). Acquires the mode lock
+/// itself — callers must NOT already hold it.
+fn switch_to_main(app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<ModeState>();
+    // Mutex held for the whole transition: serialized, no interleaving.
+    let mut current = state.0.lock().map_err(|_| "mode lock poisoned")?;
+    if *current == RoomMode::Floating {
+        return Ok(()); // idempotent repeat
+    }
+
+    let main = app
+        .get_webview_window("main")
+        .ok_or("main window missing")?;
+    let panel = app
+        .get_webview_panel("dock")
+        .map_err(|e| format!("dock panel missing: {e:?}"))?;
+
+    if let Err(e) = app.set_activation_policy(ActivationPolicy::Regular) {
+        return Err(format!("failed to set Regular policy: {e}"));
+    }
+    if let Err(e) = main.show() {
+        // Roll back the policy; the dock stays up.
+        let _ = app.set_activation_policy(ActivationPolicy::Accessory);
+        return Err(format!("failed to show main window: {e}"));
+    }
+    // User-initiated transition → focus the room (best-effort:
+    // a focus failure is cosmetic, not a state inconsistency).
+    let _ = main.set_focus();
+    panel.order_out(None);
+    *current = RoomMode::Floating;
+    Ok(())
+}
+
 #[tauri::command]
 fn set_room_mode(app: AppHandle, mode: String) -> Result<(), String> {
     let target = match mode.as_str() {
@@ -72,6 +108,11 @@ fn set_room_mode(app: AppHandle, mode: String) -> Result<(), String> {
         "floating" => RoomMode::Floating,
         other => return Err(format!("unknown mode: {other}")),
     };
+
+    // Floating shares its transition with the reopen recovery path.
+    if target == RoomMode::Floating {
+        return switch_to_main(&app);
+    }
 
     let state = app.state::<ModeState>();
     // Mutex held for the whole transition: serialized, no interleaving.
@@ -87,67 +128,48 @@ fn set_room_mode(app: AppHandle, mode: String) -> Result<(), String> {
         .get_webview_panel("dock")
         .map_err(|e| format!("dock panel missing: {e:?}"))?;
 
-    match target {
-        RoomMode::Dock => {
-            // Position the dock at its FINAL bottom-center spot on MAIN's
-            // monitor before it becomes visible — the hidden dock's own
-            // monitor may be a different display (Sol #6), and waiting for
-            // the dock webview's layout effect would leave it parked
-            // wherever it last was until the next store commit (Sol 4b
-            // blocker). The dock realm still refines geometry on later
-            // renders (agent-count width changes).
-            if let (Ok(Some(monitor)), Some(dock_win)) =
-                (main.current_monitor(), app.get_webview_window("dock"))
-            {
-                let mon_pos = monitor.position();
-                let mon_size = monitor.size();
-                let dock_size = dock_win
-                    .outer_size()
-                    .unwrap_or(tauri::PhysicalSize::new(400, 126));
-                let gap = (12.0 * monitor.scale_factor()) as i32;
-                let x = mon_pos.x + ((mon_size.width as i32 - dock_size.width as i32) / 2).max(0);
-                let y = mon_pos.y + mon_size.height as i32 - dock_size.height as i32 - gap;
-                let _ = dock_win.set_position(tauri::PhysicalPosition::new(x, y));
-            }
-            apply_dock_panel_policy(&panel);
-            // NEVER the plugin's show() — it makes the panel KEY, which is
-            // the exact opposite of a non-activating dock (Sol #3).
-            panel.order_front_regardless();
-            if !panel.is_visible() {
-                return Err("dock panel did not become visible".into());
-            }
-            if let Err(e) = main.hide() {
-                // Roll back: dock away again, main stays the visible one.
-                panel.order_out(None);
-                return Err(format!("failed to hide main window: {e}"));
-            }
-            if let Err(e) = app.set_activation_policy(ActivationPolicy::Accessory) {
-                // Policy failed → restore the floating world entirely so
-                // ModeState never disagrees with what's on screen (Sol 4b
-                // major: no partial commits).
-                let _ = main.show();
-                let _ = main.set_focus();
-                panel.order_out(None);
-                return Err(format!("failed to set Accessory policy: {e}"));
-            }
-            *current = RoomMode::Dock;
-        }
-        RoomMode::Floating => {
-            if let Err(e) = app.set_activation_policy(ActivationPolicy::Regular) {
-                return Err(format!("failed to set Regular policy: {e}"));
-            }
-            if let Err(e) = main.show() {
-                // Roll back the policy; the dock stays up.
-                let _ = app.set_activation_policy(ActivationPolicy::Accessory);
-                return Err(format!("failed to show main window: {e}"));
-            }
-            // User-initiated transition → focus the room (best-effort:
-            // a focus failure is cosmetic, not a state inconsistency).
-            let _ = main.set_focus();
-            panel.order_out(None);
-            *current = RoomMode::Floating;
-        }
+    // Position the dock at its FINAL bottom-center spot on MAIN's
+    // monitor before it becomes visible — the hidden dock's own
+    // monitor may be a different display (Sol #6), and waiting for
+    // the dock webview's layout effect would leave it parked
+    // wherever it last was until the next store commit (Sol 4b
+    // blocker). The dock realm still refines geometry on later
+    // renders (agent-count width changes).
+    if let (Ok(Some(monitor)), Some(dock_win)) =
+        (main.current_monitor(), app.get_webview_window("dock"))
+    {
+        let mon_pos = monitor.position();
+        let mon_size = monitor.size();
+        let dock_size = dock_win
+            .outer_size()
+            .unwrap_or(tauri::PhysicalSize::new(400, 126));
+        let gap = (12.0 * monitor.scale_factor()) as i32;
+        let x = mon_pos.x + ((mon_size.width as i32 - dock_size.width as i32) / 2).max(0);
+        let y = mon_pos.y + mon_size.height as i32 - dock_size.height as i32 - gap;
+        let _ = dock_win.set_position(tauri::PhysicalPosition::new(x, y));
     }
+    apply_dock_panel_policy(&panel);
+    // NEVER the plugin's show() — it makes the panel KEY, which is
+    // the exact opposite of a non-activating dock (Sol #3).
+    panel.order_front_regardless();
+    if !panel.is_visible() {
+        return Err("dock panel did not become visible".into());
+    }
+    if let Err(e) = main.hide() {
+        // Roll back: dock away again, main stays the visible one.
+        panel.order_out(None);
+        return Err(format!("failed to hide main window: {e}"));
+    }
+    if let Err(e) = app.set_activation_policy(ActivationPolicy::Accessory) {
+        // Policy failed → restore the floating world entirely so
+        // ModeState never disagrees with what's on screen (Sol 4b
+        // major: no partial commits).
+        let _ = main.show();
+        let _ = main.set_focus();
+        panel.order_out(None);
+        return Err(format!("failed to set Accessory policy: {e}"));
+    }
+    *current = RoomMode::Dock;
     Ok(())
 }
 
@@ -183,6 +205,28 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            // Recovery escape hatch: `open ~/.cursor/tts/Room.app` while the
+            // app is already running fires Reopen — even under Accessory
+            // policy (no Dock icon), the one signal that still reaches us when
+            // the dock pill is lost off-screen. Force back to MAIN mode so
+            // the user always has a way home short of killing the process.
+            if let tauri::RunEvent::Reopen { .. } = event {
+                // Read the mode with the guard dropped BEFORE calling
+                // switch_to_main (which locks the same mutex) — no deadlock.
+                let in_dock = app_handle
+                    .state::<ModeState>()
+                    .0
+                    .lock()
+                    .map(|m| *m == RoomMode::Dock)
+                    .unwrap_or(false);
+                if in_dock {
+                    if let Err(e) = switch_to_main(app_handle) {
+                        eprintln!("reopen: failed to switch to main mode: {e}");
+                    }
+                }
+            }
+        });
 }
