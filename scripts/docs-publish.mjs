@@ -9,9 +9,8 @@
 // upload so the URL stays stable.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
 
@@ -76,7 +75,11 @@ ${body}
 </body>
 </html>`;
 
-const outFile = join(mkdtempSync(join(tmpdir(), "docs-publish-")), "room-status.html");
+// Render inside the repo (gitignored): postplan reads git metadata from the
+// uploaded file's directory, which groups the draft under this repo.
+const buildDir = join(docsDir, ".build");
+mkdirSync(buildDir, { recursive: true });
+const outFile = join(buildDir, "room-status.html");
 writeFileSync(outFile, html);
 console.log(`rendered: ${outFile}`);
 if (dryRun) process.exit(0);

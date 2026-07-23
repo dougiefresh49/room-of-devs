@@ -15,3 +15,4 @@ other-claude.md
 panel/node_modules
 panel/src-tauri/target
 panel/dist
+docs/.build/
