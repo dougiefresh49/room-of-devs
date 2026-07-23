@@ -3,7 +3,9 @@ import { join } from "path";
 import { pathToFileURL } from "url";
 import { PHRASES_DIR, loadConfig } from "./config.js";
 import { generateTTS } from "./elevenlabs.js";
-import { playMp3Buffer, acquireLock, releaseLock, type PlaybackContext } from "./audio.js";
+import { playMp3Buffer } from "./audio.js";
+import { acquireLock, releaseLock } from "./playback-locks.js";
+import type { PlaybackContext } from "./now-playing.js";
 import { log } from "./logger.js";
 import { readFileSync } from "fs";
 

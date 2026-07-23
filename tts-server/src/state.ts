@@ -18,7 +18,7 @@ import {
   getActiveSessions,
   lookupSessionName,
 } from "./config.js";
-import { isProcessing } from "./audio.js";
+import { isProcessing } from "./playback-locks.js";
 import { log } from "./logger.js";
 import { loadTeamMap, writeTeamMap, tmuxForSession } from "./team-map.js";
 import { clearLiveSession } from "./live-mode.js";

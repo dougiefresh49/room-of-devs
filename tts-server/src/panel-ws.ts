@@ -14,9 +14,10 @@ import { buildPanelSnapshot, invalidateSnapshot, subscribe } from "./state-watch
 import { log } from "./logger.js";
 import { isTeamSession } from "./team-map.js";
 import { knownDirs, listResumable } from "./session-catalog.js";
-import { HID_ACTIONS, captureNextPress, isCaptureReady } from "./hid.js";
+import { HID_ACTIONS } from "./hid-actions.js";
+import { captureNextPress, isCaptureReady } from "./hid-controller.js";
 import { buildShortcutsPayload } from "./shortcuts.js";
-import { isUnexpiredPhoneGrant, supersedePhoneGrant } from "./audio.js";
+import { isUnexpiredPhoneGrant, supersedePhoneGrant } from "./now-playing.js";
 import {
   HOLD_ROOM_FILE,
   splitCommandEnvelope,

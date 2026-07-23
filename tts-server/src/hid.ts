@@ -1,23 +1,9 @@
 import { pathToFileURL } from "url";
-import {
-  type Differ,
-  type StickArmState,
-  evaluateStickAxis,
-} from "./hid-report.js";
-import { HID_ACTIONS, type HidAction } from "./hid-actions.js";
-import { startHid, stopHid } from "./hid-device.js";
-import { captureNextPress, isCaptureReady } from "./hid-controller.js";
 import { learn } from "./hid-learn.js";
 
-export type { Differ, StickArmState, HidAction };
-export {
-  evaluateStickAxis,
-  HID_ACTIONS,
-  startHid,
-  stopHid,
-  captureNextPress,
-  isCaptureReady,
-};
+// Phase 7 split: the runtime lives in hid-report / hid-actions / hid-device /
+// hid-controller / hid-learn (import those directly). This file is only the
+// documented CLI entry point: `pnpm exec tsx src/hid.ts learn [name]`.
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] === "learn") {

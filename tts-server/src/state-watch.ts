@@ -20,8 +20,8 @@ import {
 import { getCharacter } from "./dynamic-response.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import type { SessionState } from "./state.js";
-import type { NowPlaying } from "./audio.js";
-import { NOW_PLAYING_PATH } from "./audio.js";
+import type { NowPlaying } from "./protocol/index.js";
+import { NOW_PLAYING_PATH } from "./now-playing.js";
 import { log } from "./logger.js";
 import { TEAM_MAP_PATH, teamSessionIds } from "./team-map.js";
 import { TRIAGE_PATH, readTriageFocus } from "./triage.js";

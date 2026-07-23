@@ -29,12 +29,12 @@ import {
 import { purgeSessionQueue, cleanupSession } from "../state.js";
 import { runStatusSay } from "../status-say.js";
 import { isResumableSession } from "../session-catalog.js";
+import { startPlayReplay } from "../audio.js";
 import {
   isUnexpiredPhoneGrant,
   supersedePhoneGrant,
-  startPlayReplay,
   markPhonePlaybackDone,
-} from "../audio.js";
+} from "../now-playing.js";
 import {
   setLiveSession,
   markPendingPhoneAck,

@@ -332,9 +332,10 @@ changing `~/.cursor/tts/config.json`.
 
 - Phase 7 splits shipped: `audio.ts` → playback-locks / now-playing /
   replay-store / player-process / stream-playback, `hid.ts` → hid-report /
-  hid-actions / hid-device / hid-controller / hid-learn — each original
-  file remains the facade (importers unchanged; direct-import migration is
-  an optional follow-up).
+  hid-actions / hid-device / hid-controller / hid-learn. Callers import the
+  owning modules directly; audio.ts keeps only the simple players
+  (playFile/playMp3Buffer/replayLast/startPlayReplay) and hid.ts only the
+  `learn` CLI entry.
   `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
   future panel credits chip.
 - Cross-persona spawn race and subagent-finish announce filtering

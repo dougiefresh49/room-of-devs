@@ -17,7 +17,7 @@ import {
   lookupSessionName,
   loadMutedSessions,
 } from "./config.js";
-import { isProcessing } from "./audio.js";
+import { isProcessing } from "./playback-locks.js";
 import { setSessionState } from "./state.js";
 import { log } from "./logger.js";
 

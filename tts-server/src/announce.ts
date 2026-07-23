@@ -2,7 +2,7 @@ import { existsSync, readFileSync, appendFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import { TTS_DIR, STATE_DIR } from "./config.js";
-import { acquireLock, releaseLock } from "./audio.js";
+import { acquireLock, releaseLock } from "./playback-locks.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import { playRandomPhrase } from "./phrases.js";
 import { log } from "./logger.js";

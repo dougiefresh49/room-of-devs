@@ -4,14 +4,10 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import { loadConfig, effectivePlaybackMode, QUEUE_DIR } from "./config.js";
 import { streamTTS } from "./elevenlabs.js";
-import {
-  playStreamBuffer,
-  acquireLock,
-  waitForLock,
-  releaseLock,
-  type ReplayMeta,
-  type PlaybackContext,
-} from "./audio.js";
+import { playStreamBuffer } from "./stream-playback.js";
+import { acquireLock, waitForLock, releaseLock } from "./playback-locks.js";
+import type { ReplayMeta } from "./replay-store.js";
+import type { PlaybackContext } from "./now-playing.js";
 import { playRandomPhrase } from "./phrases.js";
 import { setSessionState } from "./state.js";
 import { deferAnnounce } from "./announce.js";

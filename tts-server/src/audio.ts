@@ -8,20 +8,11 @@ import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
 import { acquireLock, releaseLock } from "./playback-locks.js";
-export {
-  isProcessing,
-  claimProcessing,
-  clearProcessing,
-  acquireLock,
-  waitForLock,
-  releaseLock,
-} from "./playback-locks.js";
 import {
   REPLAY_DIR,
   loadReplayAttribution,
   type ReplayMeta,
 } from "./replay-store.js";
-export type { ReplayMeta } from "./replay-store.js";
 import {
   type PlaybackContext,
   endSessionPlayback,
@@ -29,28 +20,16 @@ import {
   beginSessionPlayback,
   stampReplayFileCas,
 } from "./now-playing.js";
-export type { PlaybackContext } from "./now-playing.js";
-export {
-  NOW_PLAYING_PATH,
-  phoneGrantDurationMs,
-  activePhoneGrantId,
-  isUnexpiredPhoneGrant,
-  supersedePhoneGrant,
-  markPhonePlaybackDone,
-} from "./now-playing.js";
 import {
   playerRef,
   writePidFiles,
   removePidFiles,
   startSuspendHealer,
 } from "./player-process.js";
-export { stopCurrent } from "./player-process.js";
-export type { StreamSink } from "./stream-playback.js";
-export { awaitPendingDrain, playStreamBuffer } from "./stream-playback.js";
 
-// Compact [word, startMs] tuples — what the panel highlights against.
-// Shape owned by the shared protocol package; re-exported for daemon callers.
-export type { AlignmentTuples, NowPlaying } from "./protocol/index.js";
+// Phase 7 split: locks, now-playing store, replay store, player process,
+// and streaming playback live in their own modules (import them directly).
+// This file keeps the simple whole-file/buffer players that share playerRef.
 
 export function playFile(
   filePath: string,

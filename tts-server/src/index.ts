@@ -22,14 +22,15 @@ import {
   waitForLock,
   releaseLock,
   acquireLock,
-  stopCurrent,
-  playStreamBuffer,
-  awaitPendingDrain,
+} from "./playback-locks.js";
+import { stopCurrent } from "./player-process.js";
+import { playStreamBuffer, awaitPendingDrain } from "./stream-playback.js";
+import {
   activePhoneGrantId,
   isUnexpiredPhoneGrant,
-  type ReplayMeta,
   type PlaybackContext,
-} from "./audio.js";
+} from "./now-playing.js";
+import type { ReplayMeta } from "./replay-store.js";
 import { getPhrasesForVoice, playRandomPhrase } from "./phrases.js";
 import {
   seedStateOnStartup,
@@ -41,7 +42,7 @@ import { reconcileSessionLineage } from "./session-lineage.js";
 import { isLiveSession } from "./live-mode.js";
 import { startLiveTail, stopLiveTail } from "./live-tail.js";
 import { maybeFireDeferredAnnounce } from "./announce.js";
-import { startHid, stopHid } from "./hid.js";
+import { startHid, stopHid } from "./hid-device.js";
 import { startPanelWs, stopPanelWs } from "./panel-ws.js";
 import { startMobileHttp, stopMobileHttp } from "./mobile-http.js";
 import { startDnd, stopDnd } from "./dnd.js";
