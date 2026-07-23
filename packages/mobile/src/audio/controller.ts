@@ -524,7 +524,20 @@ export class AudioController {
 
     // Grant-to-phone pickup, deduped by frame key so a transient null → same
     // frame does NOT re-arm and restart the clip (finding 1).
-    if (key && isNowPlayingActive(np) && np.output === "phone" && np.replayFile) {
+    //
+    // Gated on THIS client's device toggle: every open /app page is a
+    // potential "phone", so without the gate a stray desktop tab (or a phone
+    // toggled to Mac) auto-plays too and audio comes out everywhere
+    // (owner-reported 2026-07-23). Only a client whose output pref is
+    // "phone" acts as the speaker; explicit taps (play, "This phone"
+    // handoff) are unaffected.
+    if (
+      key &&
+      isNowPlayingActive(np) &&
+      np.output === "phone" &&
+      np.replayFile &&
+      prefs.getPrefs().output === "phone"
+    ) {
       if (!this.handledPhoneKeys.has(key)) {
         this.handledPhoneKeys.add(key);
         this.pruneHandledKeys();
@@ -547,7 +560,11 @@ export class AudioController {
     if (this.handledAckKeys.has(key)) return;
     this.handledAckKeys.add(key);
     this.pruneHandledAckKeys();
-    if (this.ackSeeded) this.playAck(ack.ackFile); // skip the pre-load ack
+    // Same speaker gate as grant pickup: only the client acting as the phone
+    // voices the ack — other open tabs just show the chip/flash.
+    if (this.ackSeeded && prefs.getPrefs().output === "phone") {
+      this.playAck(ack.ackFile); // skip the pre-load ack
+    }
   }
 
   private pruneHandledAckKeys(): void {
