@@ -1083,7 +1083,9 @@ export class AudioController {
     const agent = e?.sessionId ? this.agentIndex.get(e.sessionId) : undefined;
     const artist = e?.sessionName || agent?.name || "Room of Devs";
     const character = e?.character || agent?.character || null;
-    const text = (e?.textPreview || e?.spokenText || "").replace(/\s+/g, " ").trim();
+    let text = (e?.textPreview || e?.spokenText || "").replace(/\s+/g, " ").trim();
+    // Previews open with "In <session>... " — redundant under the artist line.
+    text = text.replace(/^In [^.]{1,60}\.\.\.\s*/, "");
     const summary = text.length > 90 ? `${text.slice(0, 89).trimEnd()}…` : text;
     const title = summary || artist;
     return { title: this.liveMode ? `Live · ${title}` : title, artist, character };
