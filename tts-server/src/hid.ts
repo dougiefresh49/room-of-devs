@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "fs";
 import { pathToFileURL } from "url";
 import { createInterface } from "readline";
-import { devices, HID } from "node-hid";
+import { HID } from "node-hid";
 import {
   STATE_DIR,
   ARCADE_BUTTONS_PATH,
@@ -49,14 +49,18 @@ import {
   characterPress,
   characterHold,
 } from "./hid-actions.js";
+import {
+  startHid,
+  stopHid,
+  deviceRef,
+  findDevicePath,
+} from "./hid-device.js";
 
 export type { Differ, StickArmState, HidAction };
-export { evaluateStickAxis, HID_ACTIONS };
+export { evaluateStickAxis, HID_ACTIONS, startHid, stopHid };
 
 // A press held this long or longer is a hold (PTT), not a tap (grant).
 const HOLD_MS = 500;
-// Reconnect poll: one cheap enumerate every 3s while the device is closed.
-const RECONNECT_MS = 3000;
 
 // ── Dispatch ──────────────────────────────────────────────────────
 function buttonFor(idx: number): ArcadeButton | null {
@@ -76,9 +80,9 @@ let whiteStickUsed = false;
 
 const STICK_COOLDOWN_MS = 200;
 const stickCooldownUntil = new Map<StickDirection, number>();
-const stickArmState = new Map<StickDirection, StickArmState>();
+export const stickArmState = new Map<StickDirection, StickArmState>();
 
-function refreshMappedAxisBytes(): void {
+export function refreshMappedAxisBytes(): void {
   mappedAxisBytes.clear();
   const sticks = loadArcadeButtons().sticks;
   if (!sticks) return;
@@ -87,7 +91,7 @@ function refreshMappedAxisBytes(): void {
   }
 }
 
-function onReportAxes(buf: Buffer): void {
+export function onReportAxes(buf: Buffer): void {
   refreshMappedAxisBytes();
   const sticks = loadArcadeButtons().sticks;
   if (!sticks) return;
@@ -266,7 +270,7 @@ let captureArmed: {
 const suppressPress = new Set<number>();
 
 export function isCaptureReady(): boolean {
-  return loadConfig().arcade_enabled && device !== null;
+  return loadConfig().arcade_enabled && deviceRef.current !== null;
 }
 
 export function captureNextPress(timeoutMs = 15_000): Promise<number | null> {
@@ -292,7 +296,7 @@ export function captureNextPress(timeoutMs = 15_000): Promise<number | null> {
   });
 }
 
-function onEdge(edge: Edge, idx: number): void {
+export function onEdge(edge: Edge, idx: number): void {
   if (edge === "down" && captureArmed) {
     const armed = captureArmed;
     captureArmed = null;
@@ -338,7 +342,7 @@ function onEdge(edge: Edge, idx: number): void {
   }
 }
 
-function clearPending(): void {
+export function clearPending(): void {
   for (const p of pending.values()) clearTimeout(p.timer);
   pending.clear();
   suppressPress.clear();
@@ -353,89 +357,6 @@ function clearPending(): void {
     clearTimeout(captureArmed.timer);
     captureArmed = null;
   }
-}
-
-// ── Device discovery / open / reconnect ───────────────────────────
-function findDevicePath(hint: string): string | null {
-  const hints = (hint || DEFAULT_DEVICE_HINT)
-    .toLowerCase()
-    .split("|")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  let list;
-  try {
-    list = devices();
-  } catch (err: any) {
-    log("hid", `devices() failed: ${err?.message ?? err}`);
-    return null;
-  }
-  for (const d of list) {
-    const hay = `${d.product ?? ""} ${d.manufacturer ?? ""}`.toLowerCase();
-    if (hints.some((h) => hay.includes(h))) return d.path ?? null;
-  }
-  return null;
-}
-
-let device: HID | null = null;
-let scheduler: ReturnType<typeof setInterval> | null = null;
-let differ = makeDiffer();
-
-function openDevice(): void {
-  if (device) return;
-  const path = findDevicePath(loadArcadeButtons().device_hint);
-  if (!path) return; // unplugged → silent no-op; the scheduler retries
-  try {
-    const d = new HID(path);
-    refreshMappedAxisBytes();
-    // Reset baseline + recalibrate noise mask so the first report doesn't fire.
-    differ = makeDiffer((n) => log("hid", `calibrated — masked ${n} noisy bit(s)`));
-    stickArmState.clear();
-    d.on("data", (buf: Buffer) =>
-      safe(() => {
-        differ(buf, onEdge);
-        if (differ.isCalibrated()) onReportAxes(buf);
-      })
-    );
-    d.on("error", (err: any) => {
-      log("hid", `device error: ${err?.message ?? err}`);
-      closeDevice(); // reconnect is the scheduler's job — never a timer here
-    });
-    device = d;
-    log("hid", `opened encoder at ${path}`);
-  } catch (err: any) {
-    log("hid", `open failed: ${err?.message ?? err}`);
-  }
-}
-
-function closeDevice(): void {
-  const d = device;
-  device = null;
-  clearPending();
-  if (!d) return;
-  try {
-    d.close();
-  } catch {
-    /* already gone */
-  }
-}
-
-export function startHid(): void {
-  if (scheduler) return; // idempotent
-  openDevice();
-  // ONE persistent scheduler, installed once; no-ops while the device is open.
-  // Error/close handlers never install timers, so intervals can't stack.
-  scheduler = setInterval(() => {
-    if (!device) safe(openDevice);
-  }, RECONNECT_MS);
-  log("hid", `started (reconnect poll ${RECONNECT_MS}ms)`);
-}
-
-export function stopHid(): void {
-  if (scheduler) {
-    clearInterval(scheduler);
-    scheduler = null;
-  }
-  closeDevice();
 }
 
 // ── Learn mode ────────────────────────────────────────────────────
