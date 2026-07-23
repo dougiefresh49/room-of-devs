@@ -2,7 +2,7 @@
  * Scratch WS test for button config CRUD — uses TTS_DIR_OVERRIDE, no device/daemon.
  * Run: pnpm exec tsx test-panel-ws-buttons.ts
  */
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
 import { createServer } from "net";
@@ -38,9 +38,21 @@ async function main(): Promise<void> {
     JSON.stringify({ device_hint: "test-joystick", buttons: {} }, null, 2)
   );
 
+  // characters.json is the REAL (gitignored, hand-authored) character
+  // catalog — stomping it with the test fixture and not restoring it broke
+  // every persona in production on 2026-07-22. Save it, restore on exit.
   const srcDir = join(dirname(fileURLToPath(import.meta.url)), "src");
+  const charactersPath = join(srcDir, "characters.json");
+  const realCharacters = existsSync(charactersPath)
+    ? readFileSync(charactersPath, "utf-8")
+    : null;
+  const restoreCharacters = () => {
+    if (realCharacters !== null) writeFileSync(charactersPath, realCharacters);
+    else rmSync(charactersPath, { force: true });
+  };
+  process.on("exit", restoreCharacters);
   writeFileSync(
-    join(srcDir, "characters.json"),
+    charactersPath,
     JSON.stringify(
       {
         v1: { name: "Leonardo" },

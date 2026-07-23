@@ -171,18 +171,37 @@ mobile.html sync — keep this doc in lockstep when that lands.
   gpt-5.6 with Codex (see the `codex-computer-use` skill). One-shot
   claude-in-chrome checks are fine; multi-step interactive MCP ping-pong
   from the main session is not.
+- **Never let automation attach to the owner's Chrome** (owner call
+  2026-07-22, after codex opened a Playwright-driven tab): every
+  codex-computer-use prompt must say to drive native UI / screenshots
+  only and NOT to attach Playwright/CDP to the running browser; if a test
+  needs a fullscreen or throwaway window, use a non-browser app or a
+  separate app instance.
 
 ## Session token hygiene
 
 Long sessions are the Fable cost driver, not delegated agents. Per-task
 cost ≈ context size × wakeup count (every background-task notification
-re-reads the whole conversation).
+re-reads the whole conversation — cached, but a 300-450k context across
+13 wakeups burned ~25% of a weekly Fable budget on 2026-07-22).
 
+- **The main session authors almost no code** (owner directive
+  2026-07-22): anything beyond small surgical edits (~50 lines) is
+  written by a delegate against a written spec — Terra/grok/composer for
+  well-specced chunks; an Agent-tool `fable`/`opus` SUBAGENT when the
+  chunk genuinely needs frontier judgment (fresh context, none of the
+  session history billed with it). The main session does: specs, credit-
+  guard-adjacent edits, targeted diff review, merges.
+- **Codebase recon goes to composer-2.5** (cursor-agent) or an Explore
+  subagent: finding references, mapping call sites, summarizing big
+  files. Don't pull 2000-line files into the main context when a
+  delegate can return the 20 lines that matter.
+- Batch verification into ONE delegated round with the complete
+  checklist; let codex own the whole interact→diagnose→verify loop and
+  report once. Every extra round-trip is a full-context wakeup.
 - End of a shipped feature/round → tell the owner it's a good `/clear`
-  point. Mid-task bloat → `/compact`. Never let sessions run for days.
-- Browser/computer verification goes to codex; batch independent tool
-  calls; prefer one delegated agent that reports once over many small
-  interactive checks.
+  point. Mid-task bloat → `/compact` (especially once recon reads are
+  stale after a design is locked). Never let sessions run for days.
 - Sequential pipelines (spec→build→review→fix) at one wakeup per stage are
   fine; don't add wakeups for things a delegate can verify itself.
 
