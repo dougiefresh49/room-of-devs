@@ -9,6 +9,42 @@ decision + why → how to reverse if you disagree.**
 
 ---
 
+## Phase 6 (legacy audit + deletion) — 2026-07-23
+
+Manifest: `legacy-manifest.md` (composer-2.5 recon, spot-verified). Judgment
+calls made without waking the owner, per "ask only on a real gap":
+
+1. **`build_read_aloud_notifier_app.sh` deleted, installed app kept.**
+   Context: the built `~/Applications/CursorReadAloudNotifier.app` is still
+   resolved at runtime by `notify_queued.sh` (stock terminal-notifier is the
+   fallback). Decision: delete the one-shot builder script (owner listed it),
+   keep the runtime resolution untouched — notifications unaffected. Reverse:
+   `git revert`; build steps preserved in pre-Phase-6 README history.
+2. **`scripts/raycast/push-to-talk.sh` survives the raycast/ deletion.** It's
+   the only invoker of `voice_ptt.sh` (README's Raycast-hotkey PTT path) —
+   that's PTT plumbing, exempt per the spec. The other 9 raycast scripts are
+   deleted: never installed by setup.sh, and Raycast's prefs/config on this
+   machine contain no reference to the repo dir.
+3. **SwiftBar fully dropped, not demoted** (owner decision #4 leaned "not
+   necessary"). Panel coverage confirmed for replay/stop/restart/pause/
+   session-mute/voice/nickname/session-queue-clear. Two functions die with
+   no replacement, judged non-gaps: global `clear_queue.sh` (rare, manual
+   `mv` works) and ElevenLabs credits display — the daemon's
+   `elevenlabs.ts fetchCredits()` was ALSO caller-less; left in place as
+   the hook for a future panel credits chip (ideas-backlog candidate).
+   SwiftBar.app itself was left running/installed — quitting the owner's
+   apps is not Phase 6's call; the plugin file was removed from
+   `~/projects/Swiftbar/Plugins/` so the menu item disappears.
+4. **Kept despite no runtime caller:** `mobile_url.sh`,
+   `panel-dev-install.sh` (operator/dev utilities documented in CLAUDE.md);
+   `setup.sh`'s stale-piper-config-key strip (that IS the cleanup, not a
+   leftover).
+5. **`mobile.html` + `/legacy` deleted** after the SPA soak (owner-approved
+   cutover 2026-07-23); `tts-server.sh` now `rm -f`'s the stale copy out of
+   old installs. Reverse: revert the commit and restart.
+
+---
+
 ## Phase 4b (two windows: floating NSWindow + dock NSPanel) — 2026-07-22 night
 
 Same-session follow-on to 4a. Sol focused review of the ~260-line delta
