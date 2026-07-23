@@ -27,8 +27,13 @@ import { transcriptThread } from "./services/transcript.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CHARACTERS_PATH = join(__dirname, "characters.json");
 const HTML_PATH = join(__dirname, "..", "mobile.html");
+/** Built mobile Vite SPA (sibling of mobile.html in the install). */
+const MOBILE_DIST_DIR = join(__dirname, "..", "mobile-dist");
 const COOKIE_NAME = "mobile_token";
 const HEARTBEAT_MS = 25_000;
+
+/** True when mobile-dist/index.html is present; set once at startup. */
+let mobileDistReady = false;
 
 function tokenPath(): string {
   return join(TTS_DIR, "mobile_token");
@@ -366,6 +371,14 @@ async function serveLiveAudio(
 }
 
 function contentTypeFor(path: string): string {
+  if (path.endsWith(".html")) return "text/html; charset=utf-8";
+  if (path.endsWith(".js") || path.endsWith(".mjs")) {
+    return "text/javascript; charset=utf-8";
+  }
+  if (path.endsWith(".css")) return "text/css; charset=utf-8";
+  if (path.endsWith(".svg")) return "image/svg+xml";
+  if (path.endsWith(".woff2")) return "font/woff2";
+  if (path.endsWith(".map")) return "application/json";
   if (path.endsWith(".png")) return "image/png";
   if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
   if (path.endsWith(".webp")) return "image/webp";
@@ -374,7 +387,11 @@ function contentTypeFor(path: string): string {
   return "application/octet-stream";
 }
 
-function serveFile(res: ServerResponse, filePath: string): void {
+function serveFile(
+  res: ServerResponse,
+  filePath: string,
+  cacheControl = "public, max-age=3600"
+): void {
   if (!existsSync(filePath) || !statSync(filePath).isFile()) {
     res.writeHead(404);
     res.end();
@@ -382,9 +399,20 @@ function serveFile(res: ServerResponse, filePath: string): void {
   }
   res.writeHead(200, {
     "Content-Type": contentTypeFor(filePath),
-    "Cache-Control": "public, max-age=3600",
+    "Cache-Control": cacheControl,
   });
   createReadStream(filePath).pipe(res);
+}
+
+function serveMobileAppMissing(res: ServerResponse): void {
+  res.writeHead(503, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-cache",
+  });
+  res.end(
+    "mobile SPA not installed: packages/mobile/dist missing. " +
+      "Build with `pnpm --filter @room/mobile build`, then restart via tts-server.sh."
+  );
 }
 
 async function handleRequest(
@@ -420,6 +448,42 @@ async function handleRequest(
       "Cache-Control": "no-cache",
     });
     res.end(html);
+    return;
+  }
+
+  // Phase 5 Chunk B: Vite SPA under /app (token auth already enforced above).
+  if (method === "GET" && (path === "/app" || path === "/app/")) {
+    if (!mobileDistReady) {
+      serveMobileAppMissing(res);
+      return;
+    }
+    const indexPath = join(MOBILE_DIST_DIR, "index.html");
+    if (!existsSync(indexPath) || !statSync(indexPath).isFile()) {
+      serveMobileAppMissing(res);
+      return;
+    }
+    const html = readFileSync(indexPath, "utf-8");
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-cache",
+    });
+    res.end(html);
+    return;
+  }
+
+  if (method === "GET" && path.startsWith("/app/assets/")) {
+    if (!mobileDistReady) {
+      serveMobileAppMissing(res);
+      return;
+    }
+    const rel = path.slice("/app/assets/".length);
+    const filePath = safePathUnder(join(MOBILE_DIST_DIR, "assets"), rel);
+    if (!filePath) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    serveFile(res, filePath, "public, max-age=31536000, immutable");
     return;
   }
 
@@ -624,6 +688,16 @@ export function startMobileHttp(portOverride?: number): void {
   if (httpServer) return;
 
   token = loadOrCreateToken();
+
+  mobileDistReady =
+    existsSync(MOBILE_DIST_DIR) &&
+    existsSync(join(MOBILE_DIST_DIR, "index.html"));
+  if (!mobileDistReady) {
+    log(
+      "mobile-http",
+      `WARNING: mobile SPA dist missing at ${MOBILE_DIST_DIR} — GET /app will 503 until packages/mobile/dist is built and synced`
+    );
+  }
 
   if (!noticeUnsub) {
     noticeUnsub = onNotice((msg) => broadcastSseNotice(msg.message));
