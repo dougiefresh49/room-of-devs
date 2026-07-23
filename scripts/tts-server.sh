@@ -65,6 +65,18 @@ sync_source() {
     cp "$REPO_SERVER_DIR/mobile.html" "$SERVER_DIR/mobile.html" \
         || { echo "Error: mobile.html sync failed"; exit 1; }
 
+    # Mobile Vite SPA artifact (Phase 5 Chunk B) — sibling of mobile.html.
+    # Fatal if missing (mirrors the mobile.html gate). Rollback path (/)
+    # still uses mobile.html until cutover.
+    REPO_MOBILE_DIST="$(dirname "$REPO_SERVER_DIR")/packages/mobile/dist"
+    if [ ! -d "$REPO_MOBILE_DIST" ] || [ ! -f "$REPO_MOBILE_DIST/index.html" ]; then
+        echo "Error: packages/mobile/dist missing in repo — build with: pnpm --filter @room/mobile build"
+        exit 1
+    fi
+    mkdir -p "$SERVER_DIR/mobile-dist"
+    rsync -a --delete "$REPO_MOBILE_DIST"/ "$SERVER_DIR/mobile-dist/" \
+        || { echo "Error: mobile-dist sync failed"; exit 1; }
+
     # Avatar frames for LAN mobile clients
     REPO_AVATARS="$(dirname "$REPO_SERVER_DIR")/panel/public/avatars"
     if [ -d "$REPO_AVATARS" ]; then

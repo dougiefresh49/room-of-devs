@@ -1,0 +1,70 @@
+/*
+ * Mobile SPA Tailwind entry.
+ *
+ * Preflight ENABLED: React owns the whole shell and no legacy CSS coexists
+ * here (unlike the panel, which still shares the page with string-template
+ * rules). Shared @room/ui/tailwind.css deliberately omits preflight; we add
+ * it for this app only.
+ */
+@import "tailwindcss/preflight.css" layer(base);
+@import "@room/ui/tailwind.css";
+@source "../../ui/src";
+@source "./";
+
+/* Legacy StateBadge class hooks — colors from semantic tokens. */
+:root {
+  --muted: var(--room-muted);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+  background: var(--room-bg);
+  color: var(--room-text);
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--state);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--state) 60%, transparent);
+}
+
+.badge .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state-working {
+  --state: var(--state-working);
+}
+
+.state-hand_raised {
+  --state: var(--state-hand-raised);
+}
+
+.state-speaking {
+  --state: var(--state-speaking);
+}
+
+.state-idle {
+  --state: var(--state-idle);
+}
