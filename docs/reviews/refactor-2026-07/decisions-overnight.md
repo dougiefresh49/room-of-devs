@@ -928,3 +928,47 @@ Two bugs on the expanded PlayerSheet (non-tmux replay playback).
    loaded clip changes. Markdown output matches the existing thread-bubble
    rendering (no extra md-* CSS in the mobile bundle — a pre-existing,
    consistent choice, not new debt).
+
+## Phase 7 — server splits (2026-07-23)
+
+### Seam design (main session, pre-delegation)
+
+audio.ts (1113) → five modules behind an unchanged `audio.ts` facade:
+`playback-locks` (processing markers + stream lock — the credit-guard
+core), `replay-store` (dir pruning, save/progressive writer, sidecar
+attribution), `now-playing` (.now-playing.json store + session
+begin/end helpers), `player-process` (shared child-process registry,
+PID files, suspend healer, stopCurrent), `stream-playback`
+(playStreamBuffer/playStreamToPhone + early-stop drain).
+
+1. **Phone-grant did NOT get its own module** (spec suggested it).
+   activePhoneGrantId / supersedePhoneGrant / markPhonePlaybackDone /
+   phoneGrantDurationMs are entirely reads-and-CAS-writes of
+   .now-playing.json — a separate module would be ~90 lines importing
+   now-playing internals both ways. Merged into `now-playing.ts`;
+   minimal cross-imports beat hitting the suggested module count.
+2. **A fifth seam (player-process) was added instead**: the shared
+   mutable `currentProcess` ties playFile / playMp3Buffer /
+   startPlayReplay / playStreamBuffer / stopCurrent together. Without
+   extracting that registry (as `playerRef.current`, the one sanctioned
+   mechanical rename) audio.ts would have stayed ~600 lines.
+3. **state.ts↔audio.ts import cycle preserved deliberately** — it
+   exists today and works; the facade keeps it identical. A follow-up
+   caller migration (state.ts → playback-locks directly) can break it,
+   deferred until after verification.
+
+hid.ts (1063) → `hid-report` (XOR differ + calibration + stick
+hysteresis; owns the shared `mappedAxisBytes` set since makeDiffer
+reads it), `hid-actions` (script spawning, doAction, character→session
+resolution), `hid-device` (open/reconnect lifecycle, `deviceRef`
+holder — second sanctioned rename), `hid-controller` (edge dispatch,
+press/hold, triage stick, learn-capture bridge), `hid-learn` (the
+~300-line CLI learn flow; the `import.meta.url` entry guard stays in
+hid.ts so `tsx src/hid.ts learn` keeps working). The
+device↔controller function-level circular import is accepted: it is
+the same coupling that exists inside the single file today, and
+nothing runs at module top level.
+
+Delegation: both splits ran as grok-4.5-high cursor-agent worktrees,
+one commit per module, pure relocation, tsc after every commit; main
+session owns diff review + merge + free-lane verification.

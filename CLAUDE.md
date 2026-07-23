@@ -165,12 +165,13 @@ cd panel && pnpm tauri dev                    # panel: ordinary component work (
 
 ## Refactor status (2026-07-23)
 
-Phases 0-6 SHIPPED: shared protocol/client/ui packages, server services +
-recovery, React panel (two windows), mobile Vite SPA cut over to `/`,
-legacy audit + deletion (caller manifest in
+REFACTOR COMPLETE — Phases 0-7 SHIPPED: shared protocol/client/ui
+packages, server services + recovery, React panel (two windows), mobile
+Vite SPA cut over to `/`, legacy audit + deletion (caller manifest in
 docs/reviews/refactor-2026-07/legacy-manifest.md; mobile.html, SwiftBar,
-raycast, orphan scripts removed — PTT plumbing exempt and kept).
-Remaining: optional Phase 7 server splits. Context in session memory ("Refactor Mandate");
+raycast, orphan scripts removed — PTT plumbing exempt and kept), and the
+Phase 7 server splits (audio.ts and hid.ts each behind a facade — see
+Known issues note). Context in session memory ("Refactor Mandate");
 judgment calls in docs/reviews/refactor-2026-07/decisions-overnight.md.
 Free live-mode regression tooling: tts-server/scripts/mock-live.ts +
 docs/testing-live-mode.md.
@@ -329,7 +330,11 @@ changing `~/.cursor/tts/config.json`.
 
 ## Known issues / technical debt
 
-- `audio.ts` split in Phase 7 (playback-locks / now-playing / replay-store / player-process / stream-playback; audio.ts is the facade).
+- Phase 7 splits shipped: `audio.ts` → playback-locks / now-playing /
+  replay-store / player-process / stream-playback, `hid.ts` → hid-report /
+  hid-actions / hid-device / hid-controller / hid-learn — each original
+  file remains the facade (importers unchanged; direct-import migration is
+  an optional follow-up).
   `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
   future panel credits chip.
 - Cross-persona spawn race and subagent-finish announce filtering
