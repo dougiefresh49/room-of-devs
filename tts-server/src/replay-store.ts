@@ -14,7 +14,7 @@ import { TTS_DIR, STATE_DIR } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
 import type { AlignmentTuples } from "./protocol/index.js";
-import type { PlaybackContext } from "./audio.js";
+import type { PlaybackContext } from "./now-playing.js";
 
 export const REPLAY_DIR = join(TTS_DIR, "replay");
 
