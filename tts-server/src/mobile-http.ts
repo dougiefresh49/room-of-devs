@@ -501,7 +501,9 @@ async function handleRequest(
 
   if (method === "GET" && path.startsWith("/thread/")) {
     const sessionId = path.slice("/thread/".length);
-    if (!/^[0-9a-f-]{8,64}$/i.test(sessionId)) {
+    // Real ids are UUIDs; the wider [a-z0-9-] admits mock-live harness ids
+    // (mock-<ts>-<pid>) while still excluding every path-traversal character.
+    if (!/^[a-z0-9-]{8,64}$/i.test(sessionId)) {
       sendJson(res, 400, { error: "invalid sessionId" });
       return;
     }
