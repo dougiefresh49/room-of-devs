@@ -12,7 +12,14 @@
  * (phone static only), device row. No scrub/timestamps. The one <audio> keeps
  * playing while the sheet is open.
  */
-import { useRef, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
+import { Markdown } from "@room/ui";
 import { IconLaptop, IconPause, IconPlay, IconSmartphone } from "../icons.js";
 import { audioController } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
@@ -40,11 +47,25 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
     dragStartY.current = null;
   };
 
+  // Transcript (character-interpreted, with karaoke) vs Original (the agent's
+  // raw message, Markdown, no karaoke). Default transcript; reset when the
+  // loaded clip changes.
+  const [showOriginal, setShowOriginal] = useState(false);
+  const file = player.file;
+  useEffect(() => {
+    setShowOriginal(false);
+  }, [file]);
+
   if (!open || !dock) return null;
 
   const isPhone = dock.kind === "phone";
   const playing = player.status === "playing";
   const source: "mac" | "phone" = isPhone ? "phone" : "mac";
+  const rawText = (player.entry?.rawText ?? "").trim();
+  const spokenText = player.text.trim();
+  // Offer the toggle only when there's a distinct original worth seeing.
+  const hasRaw = rawText.length > 0 && rawText !== spokenText;
+  const viewingOriginal = showOriginal && hasRaw;
   // Belt on top of the controller's single-in-flight latch: while any handoff
   // is pending BOTH device buttons are disabled, so rapid taps can't queue.
   const busy = player.handoffPending;
@@ -68,7 +89,7 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
         onClick={onClose}
         className="absolute inset-0 bg-black/50"
       />
-      <div className="relative mx-auto w-full max-w-xl rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl">
+      <div className="relative mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl">
         {/* Grab handle — tap OR swipe down to dismiss. Generous tap target. */}
         <button
           type="button"
@@ -76,12 +97,12 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           onClick={onClose}
           onPointerDown={onGrabDown}
           onPointerUp={onGrabUp}
-          className="mx-auto flex w-full touch-none items-center justify-center py-2 focus-visible:outline-none"
+          className="mx-auto flex w-full shrink-0 touch-none items-center justify-center py-2 focus-visible:outline-none"
         >
           <span className="h-1 w-10 rounded-full bg-line-strong" />
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <Avatar
             agent={dock.agent ?? { character: dock.character === "default" ? null : dock.character, name: dock.name }}
             frame={playing || !isPhone ? "speaking" : "idle"}
@@ -118,21 +139,42 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           ) : null}
         </div>
 
-        {/* karaoke */}
+        {/* transcript / original — clamped within the sheet with internal
+            scroll so the device + speed rows and the handle stay visible. */}
         {isPhone ? (
-          <div className="mt-3 rounded-xl border border-line bg-surface px-3 py-2.5">
-            <KaraokeLine
-              text={player.text}
-              alignment={player.alignment}
-              elapsedMs={player.elapsedMs}
-              variant="card"
-              pendingTap={player.status === "pending-tap"}
-            />
+          <div className="mt-3 flex min-h-0 flex-col rounded-xl border border-line bg-surface">
+            {hasRaw ? (
+              <div className="flex shrink-0 items-center justify-end gap-1 border-b border-line px-2 py-1.5">
+                <ToggleChip active={!viewingOriginal} onClick={() => setShowOriginal(false)}>
+                  Transcript
+                </ToggleChip>
+                <ToggleChip active={viewingOriginal} onClick={() => setShowOriginal(true)}>
+                  Original
+                </ToggleChip>
+              </div>
+            ) : null}
+            <div className="min-h-0 max-h-[40dvh] overflow-y-auto px-3 py-2.5">
+              {viewingOriginal ? (
+                <Markdown
+                  text={rawText}
+                  linkPolicy="inert"
+                  className="cv-md text-[14px] leading-relaxed text-fg"
+                />
+              ) : (
+                <KaraokeLine
+                  text={player.text}
+                  alignment={player.alignment}
+                  elapsedMs={player.elapsedMs}
+                  variant="card"
+                  pendingTap={player.status === "pending-tap"}
+                />
+              )}
+            </div>
           </div>
         ) : null}
 
         {/* device row — the handoff (§A2/A3 semantics) */}
-        <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
+        <div className="mt-3 grid shrink-0 grid-cols-2 gap-2 rounded-xl bg-surface p-1">
           <button
             type="button"
             onClick={moveToMac}
@@ -161,12 +203,12 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           </button>
         </div>
         {busy ? (
-          <div className="mt-2 text-center text-[12px] text-fg-muted">Moving playback…</div>
+          <div className="mt-2 shrink-0 text-center text-[12px] text-fg-muted">Moving playback…</div>
         ) : null}
 
         {/* speed — phone static playback only */}
         {isPhone && !player.live ? (
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-3 flex shrink-0 items-center justify-between">
             <span className="text-[12px] text-fg-muted">Playback speed</span>
             <button
               type="button"
@@ -179,5 +221,29 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** Quiet segmented chip for the Transcript / Original toggle (secondary). */
+function ToggleChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        active ? "bg-accent/15 text-accent" : "text-fg-faint hover:text-fg-muted"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

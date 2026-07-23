@@ -869,3 +869,26 @@ controller.ts — grant pickup + ack playback require
    keyboard show/hide so the newest messages stay above the composer. Reset
    to bottom on session change (defensive; ChatView normally remounts per
    session).
+
+### Chunk E — PlayerSheet clamp + raw-message toggle (on-device, fixed in-branch)
+
+Two bugs on the expanded PlayerSheet (non-tmux replay playback).
+
+1. **Transcript card had no max height** (same class as the call-card fix).
+   The sheet is now `flex max-h-[88dvh] flex-col`; the handle, header,
+   device row, "Moving playback" line, and speed row are all `shrink-0`, and
+   the text region is `min-h-0 max-h-[40dvh] overflow-y-auto` — a long
+   transcript scrolls INSIDE the region while the device/speed rows and the
+   drag handle stay visible and tappable without scrolling the whole sheet.
+   KaraokeLine's `scrollIntoView({block:"nearest"})` keeps the active word in
+   view because the clamped region is now its nearest scrollable ancestor.
+2. **No way to see the agent's original message.** Added a quiet
+   Transcript/Original segmented chip (top-right of the text region, shown
+   only when `entry.rawText` exists and differs from the spoken text — api.ts
+   already maps `rawText`). Transcript = the interpreted spoken text with
+   karaoke (default); Original = the raw agent message via the shared
+   `@room/ui` Markdown (no karaoke). Both render inside the same clamped,
+   internally-scrollable region. The toggle resets to Transcript when the
+   loaded clip changes. Markdown output matches the existing thread-bubble
+   rendering (no extra md-* CSS in the mobile bundle — a pre-existing,
+   consistent choice, not new debt).
