@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TTS_DIR="$HOME/.cursor/tts"
 HOOKS_DIR="$HOME/.cursor"
-SWIFTBAR_PLUGINS_DIR="${SWIFTBAR_PLUGINS_DIR:-$HOME/projects/Swiftbar/Plugins}"
 
 AUTOSTART=false
 # ElevenLabs voice-list + SFX refresh hits the network/API and is opt-in
@@ -26,26 +25,6 @@ err() { echo "[setup] ERROR: $*" >&2; }
 log "Creating directory structure under $TTS_DIR"
 mkdir -p "$TTS_DIR"/{queue,played,cache,scripts,logs,icons,sounds/default,ptt,models}
 
-# ── 1b. Menu bar + notification icons ─────────────────────────────
-ICON_SRC_DIR="$PROJECT_DIR/icons"
-ICON_DST_DIR="$TTS_DIR/icons"
-if [ -d "$ICON_SRC_DIR" ] && [ -f "$ICON_SRC_DIR/tmnt-icon.png" ] && [ -f "$ICON_SRC_DIR/tmnt-notification-queued.png" ]; then
-    log "Installing icons to $ICON_DST_DIR"
-    cp -f "$ICON_SRC_DIR/tmnt-icon.png" "$ICON_DST_DIR/tmnt-icon.png"
-    cp -f "$ICON_SRC_DIR/tmnt-notification-queued.png" "$ICON_DST_DIR/tmnt-notification-queued.png"
-    if command -v sips >/dev/null 2>&1; then
-        sips -Z 36 "$ICON_DST_DIR/tmnt-icon.png" --out "$ICON_DST_DIR/tmnt-menubar-idle.png" >/dev/null 2>&1 \
-            || cp -f "$ICON_DST_DIR/tmnt-icon.png" "$ICON_DST_DIR/tmnt-menubar-idle.png"
-        sips -Z 36 "$ICON_DST_DIR/tmnt-notification-queued.png" --out "$ICON_DST_DIR/tmnt-menubar-queued.png" >/dev/null 2>&1 \
-            || cp -f "$ICON_DST_DIR/tmnt-notification-queued.png" "$ICON_DST_DIR/tmnt-menubar-queued.png"
-    else
-        cp -f "$ICON_DST_DIR/tmnt-icon.png" "$ICON_DST_DIR/tmnt-menubar-idle.png"
-        cp -f "$ICON_DST_DIR/tmnt-notification-queued.png" "$ICON_DST_DIR/tmnt-menubar-queued.png"
-    fi
-else
-    log "Optional repo icons missing under $ICON_SRC_DIR (SwiftBar uses emoji fallback)"
-fi
-
 # ── 2. Copy .env file ────────────────────────────────────────────
 ENV_FILE="$PROJECT_DIR/.env"
 ENV_DEST="$TTS_DIR/.env"
@@ -63,18 +42,17 @@ fi
 # ── 4. Copy scripts ──────────────────────────────────────────────
 log "Installing scripts to $TTS_DIR/scripts/"
 for script in \
-    ingest.sh play_node.sh stop.sh pause.sh play_latest.sh media_control.sh \
-    restart.sh quit.sh set_speed.sh clear_queue.sh clear_thread_queue.sh clear_session_queue.sh \
+    ingest.sh play_node.sh stop.sh pause.sh \
+    restart.sh set_speed.sh clear_session_queue.sh \
     grant_floor.sh \
     set_listening.sh enqueue_manual.sh set_voice.sh \
     notify_queued.sh set_notifications.sh set_notification_sound.sh \
     clean_text.py fetch_voices.py load_env.sh \
-    paste_voice_id.sh generate_sfx.sh random_sfx.sh cleanup_played.sh \
-    build_read_aloud_notifier_app.sh \
+    generate_sfx.sh random_sfx.sh cleanup_played.sh \
     hook_stop.sh hook_prompt.sh hook_ask_user.sh hook_session_end.sh tts-server.sh mobile_url.sh \
-    set_streaming.sh set_playback_mode.sh set_mood.sh announce.sh replay.sh panel.sh \
+    set_playback_mode.sh set_mood.sh announce.sh panel.sh \
     set_session_mute.sh set_session_voice.sh nickname.sh \
-    ingest_claude_code.sh fetch_credits.sh \
+    ingest_claude_code.sh \
     ptt.sh voice_ptt.sh \
     team.sh inject_prompt.sh hold_room.sh cancel_inject.sh; do
     if [ -f "$PROJECT_DIR/scripts/$script" ]; then
@@ -316,16 +294,8 @@ else
     log "SessionEnd merge skipped/failed (result=${MERGE_RESULT:-empty})"
 fi
 
-# ── 8. Install SwiftBar plugin ─────────────────────────────────────
-if [ -d "$SWIFTBAR_PLUGINS_DIR" ]; then
-    log "Installing SwiftBar plugin to $SWIFTBAR_PLUGINS_DIR"
-    cp "$PROJECT_DIR/plugins/cursor-read-aloud.5s.sh" "$SWIFTBAR_PLUGINS_DIR/"
-    chmod +x "$SWIFTBAR_PLUGINS_DIR/cursor-read-aloud.5s.sh"
-else
-    log "SwiftBar plugin directory not found at $SWIFTBAR_PLUGINS_DIR"
-    log "Install SwiftBar (brew install --cask swiftbar) then re-run setup,"
-    log "or manually copy plugins/cursor-read-aloud.5s.sh to your SwiftBar plugins folder."
-fi
+# ── 8. Remove retired SwiftBar plugin (Phase 6) ────────────────────
+rm -f "${SWIFTBAR_PLUGINS_DIR:-$HOME/projects/Swiftbar/Plugins}/cursor-read-aloud.5s.sh"
 
 # ── 8b. Install built Room.app (if present) ───────────────────────
 ROOM_SRC="$PROJECT_DIR/panel/src-tauri/target/debug/bundle/macos/Room.app"
@@ -376,12 +346,9 @@ log "  Hooks:       $HOOKS_FILE"
 log "  TTS Engine:  ElevenLabs (eleven_v3) via Node.js server"
 log ""
 log "Next steps:"
-log "  1. Set your ElevenLabs voice in the SwiftBar menu (Voice submenu)"
-log "  2. Start the TTS server: $TTS_DIR/scripts/tts-server.sh start"
-log "  3. Generate phrases: cd $TTS_DIR/tts-server && pnpm run generate-phrases"
-log "  4. Enable streaming in SwiftBar menu for auto-play"
-log ""
-log "Hotkeys: SwiftBar menu — Play Latest (ctrl+shift+p), Pause/Resume (ctrl+shift+space)."
+log "  1. Start the TTS server: $TTS_DIR/scripts/tts-server.sh start"
+log "  2. Generate phrases: cd $TTS_DIR/tts-server && pnpm run generate-phrases"
+log "  3. Set voices / playback mode in the Room panel (Room.app)"
 log ""
 
 if [ "$AUTOSTART" = true ]; then

@@ -53,8 +53,8 @@ long-lived — maintainability matters now (see Refactor status).
   toggle is "phone" auto-plays routed audio). The legacy single-file
   `mobile.html` was deleted in Phase 6 (2026-07-23) — it lives in git
   history if a behavior reference is ever needed.
-- **Glue** (`scripts/`): bash utilities + Claude Code hooks; SwiftBar plugin
-  (`plugins/`) is the legacy menu-bar UI, still installed.
+- **Glue** (`scripts/`): bash utilities + Claude Code hooks. (The SwiftBar
+  menu-bar plugin was retired in Phase 6 — the panel is the only Mac UI.)
 - **State/IPC**: JSON + lock/pid files under `~/.cursor/tts/` — this is the
   IPC layer between hook processes and the daemon, not incidental style.
 
@@ -72,7 +72,7 @@ tmux team sessions (`team.sh`) accept injected replies
 ## The two-location gotcha
 
 The repo is NOT what runs. `scripts/setup.sh` installs to `~/.cursor/tts/`
-(scripts, config, SwiftBar plugin, Room.app bundle), and `tts-server.sh
+(scripts, config, Room.app bundle), and `tts-server.sh
 start|restart` syncs `tts-server/src/*.ts` from the repo before
 launching. So:
 
@@ -88,7 +88,7 @@ launching. So:
   `mobile-dist/` and is FATAL if the repo dist is missing), then the same
   `tts-server.sh restart`. Editing `packages/mobile/src` without rebuilding
   deploys nothing.
-- `scripts/*.sh`, hooks, or SwiftBar changes take effect after re-running
+- `scripts/*.sh` or hook changes take effect after re-running
   `scripts/setup.sh`.
 - Panel changes need a rebuild (`pnpm tauri build --debug` in `panel/`,
   cargo comes from `~/.rustup/toolchains/stable-aarch64-apple-darwin/bin`),

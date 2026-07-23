@@ -412,8 +412,7 @@ export function stopCurrent(): void {
 }
 
 // Both PID files hold the same player PID: STREAM_PID_FILE is the server's
-// own reference; PLAYBACK_PID_FILE is what pause.sh / media_control.sh /
-// the SwiftBar plugin / hammerspoon read.
+// own reference; PLAYBACK_PID_FILE is what pause.sh reads.
 function writePidFiles(pid: number | undefined): void {
   if (!pid) return;
   writeFileSync(STREAM_PID_FILE, String(pid));

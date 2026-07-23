@@ -24,7 +24,7 @@ A macOS "room full of AI devs": every coding agent session (**Claude Code** or *
    - **silent** — queue only (legacy "Streaming off")
 3. In **announce** mode, granting the floor triggers synthesis: menu click, **ctrl+shift+g**, voice ("go ahead Donnie"), arcade button press, or Room panel click. A raised hand holds only the latest update — repeat arrivals supersede without stacking API cost.
 4. Text is processed through **Gemini** (converts markdown to natural speech with emotion tags, rewritten in the session's character voice) then synthesized via **ElevenLabs TTS** (eleven_v3 model) and streamed to `ffplay`.
-5. A **SwiftBar** menu bar plugin lists raised hands, queued responses grouped by session/thread, playback controls, voice assignment, and recent-playback replay.
+5. The **Room panel** (Room.app) shows raised hands, playback controls, voice assignment, and replay. (The old SwiftBar menu-bar plugin was retired in the Phase 6 legacy audit.)
 6. Every playback is saved to `~/.cursor/tts/replay/` (last 20) so any message can be re-heard for free.
 
 Optional extras via Claude Code hooks: **dynamic prompt acknowledgments** (`UserPromptSubmit` → a short in-character "on it!" while the agent works) and **question readouts** (`AskUserQuestion` → the question is paraphrased aloud in character).
@@ -33,7 +33,6 @@ Optional extras via Claude Code hooks: **dynamic prompt acknowledgments** (`User
 
 - macOS
 - Python 3.9+
-- [SwiftBar](https://github.com/swiftbar/SwiftBar) (`brew install --cask swiftbar`)
 - [ElevenLabs](https://elevenlabs.io) API key
 - [Gemini](https://ai.google.dev) API key (optional, for text preprocessing)
 - **Optional — voice control & team sessions:** `brew install whisper-cpp tmux` (local STT + tmux-addressable Claude sessions)
@@ -54,7 +53,6 @@ This will:
 
 - Copy `.env` and scripts to `~/.cursor/tts/`
 - Create the directory structure (`queue/`, `played/`, `sounds/`, `cache/`, `logs/`)
-- Install the SwiftBar plugin and TMNT menu bar icons
 - Fetch your ElevenLabs voices and cache them
 - Pre-generate notification sound effects via ElevenLabs Sound Effects API
 - Install the Cursor hook (`~/.cursor/hooks.json`)
@@ -325,16 +323,13 @@ echo "Remember to update the API keys" | ~/.cursor/tts/scripts/enqueue_manual.sh
 
 ### Raycast Script Commands
 
-Optional Raycast scripts in `scripts/raycast/`:
+One Raycast script remains in `scripts/raycast/`:
 
 | Script | What it does |
 |--------|-------------|
-| `start-cursor-read-aloud.sh` | Start SwiftBar and enable listening |
 | `push-to-talk.sh` | Toggle push-to-talk (record → transcribe → route) |
-| `go-ahead-next.sh` | Grant floor to next raised hand |
-| `enqueue-read-aloud-clipboard.sh` | Queue clipboard contents |
-| `enqueue-read-aloud-file.sh` | Queue a file's contents |
-| `enqueue-read-aloud-text.sh` | Queue inline text |
+
+The rest were deleted in the Phase 6 legacy audit (git history has them).
 
 ## Troubleshooting
 
@@ -343,18 +338,16 @@ Optional Raycast scripts in `scripts/raycast/`:
 - **Hook not firing (Cursor)**: Verify `~/.cursor/hooks.json` exists and Cursor is restarted
 - **Hook not firing (Claude Code)**: Check `~/.claude/settings.json` has the Stop hook. Start a new session after changing hook config.
 - **Notification one message behind**: The ingest retries briefly for transcript flush timing. If still stale, check `hook.log` for what was extracted.
-- **SwiftBar not showing**: Ensure SwiftBar is running and the plugin is in the correct plugins directory
 - **Speed not working**: Speeds above 1.2x apply an `ffplay` atempo filter on top of ElevenLabs' native speed parameter
 - **Auto-play when Streaming shows Off**: fixed — the watcher now checks the flag live. If it recurs, check for a second watcher process (`pgrep -fl "src/index.ts"`).
 - **Double playback**: Processing markers in `.processing/` prevent the same message from being synthesized twice when clicking both notification and menu item
 
 ### Custom Notifier App
 
-For a custom notification icon on the left side of banners:
-
-1. Install terminal-notifier (`brew install --cask terminal-notifier`)
-2. Run `bash scripts/build_read_aloud_notifier_app.sh`
-3. Set `"terminal_notifier_app"` in config to the built `.app` path
-4. First launch: right-click → Open if macOS blocks it
+Notifications use `~/Applications/CursorReadAloudNotifier.app` if present
+(custom icon), else stock terminal-notifier
+(`brew install --cask terminal-notifier`). The one-shot builder script
+(`build_read_aloud_notifier_app.sh`) was deleted in the Phase 6 legacy
+audit — recover it from git history to rebuild the app.
 
 For macOS 15+ (Sequoia), you may need to build terminal-notifier from source with a bumped deployment target — see [this issue](https://github.com/julienXX/terminal-notifier/issues/312).

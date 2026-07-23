@@ -18,8 +18,8 @@ export const MUTED_SESSIONS_PATH = join(TTS_DIR, "muted_sessions.json");
 export const NICKNAMES_PATH = join(TTS_DIR, "nicknames.json");
 export const PHRASES_DIR = join(TTS_DIR, "sounds", "phrases");
 export const STREAM_PID_FILE = join(TTS_DIR, ".stream-playback-pid");
-// Legacy PID file read by pause.sh, media_control.sh, the SwiftBar plugin,
-// and hammerspoon — written alongside STREAM_PID_FILE so those controls work.
+// Legacy PID file read by pause.sh — written alongside STREAM_PID_FILE so
+// that control works.
 export const PLAYBACK_PID_FILE = join(TTS_DIR, ".playback-pid");
 export const STREAM_LOCK = join(TTS_DIR, ".stream-lock");
 export const PROCESSING_DIR = join(TTS_DIR, ".processing");
