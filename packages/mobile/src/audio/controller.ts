@@ -50,6 +50,8 @@ const LIVE_MAX_TOTAL_RECONNECTS = 40;
 /** …and a wall-clock ceiling (> the 5-min live silence auto-off). */
 const LIVE_MAX_TOTAL_MS = 6 * 60_000;
 const HANDOFF_TIMEOUT_MS = 30000;
+/** Give up waiting for the Mac's take-over frame after a phone→Mac hop. */
+const PHONE_TO_MAC_TAKEOVER_MS = 12000;
 const TICK_MS = 80;
 /** Keep the handled-phone-key set from growing without bound. */
 const HANDLED_KEYS_CAP = 64;
@@ -164,6 +166,14 @@ export class AudioController {
   private handoffTimer: ReturnType<typeof setTimeout> | null = null;
   private handoffToken = 0;
   private phoneToMacPending = false;
+  /**
+   * After a phone→Mac hop, the local <audio> stays PAUSED as a recovery source
+   * until the Mac's own now-playing frame arrives via SSE — then the stale
+   * local entry is released so the dock reflects Mac ownership (legacy
+   * `clearLocalForHandoff`). Armed on the hop, disarmed on refusal/timeout.
+   */
+  private phoneToMacHandoff: { sessionId: string; file: string } | null = null;
+  private phoneToMacTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Reply-ack phrase audio: play each routed ack exactly once, deduped by a
   // stable identity so reconnect/frame replays can't re-play it. The first
@@ -240,6 +250,7 @@ export class AudioController {
     if (this.tickTimer) clearInterval(this.tickTimer);
     if (this.watchdog) clearInterval(this.watchdog);
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
+    this.disarmPhoneToMac();
     this.tickTimer = null;
     this.watchdog = null;
     this.handoffTimer = null;
@@ -344,8 +355,10 @@ export class AudioController {
       this.notify("Mac is speaking — stop it first");
       return { ok: false, reason: "mac-live" };
     }
-    // A manual/explicit play supersedes any in-flight grant pickup.
+    // A manual/explicit play supersedes any in-flight grant pickup — and any
+    // pending phone→Mac hop (we're taking the floor on the phone again).
     this.pickupSeq++;
+    this.disarmPhoneToMac();
     if (!opts.fromCatchUp) this.cancelCatchUp();
     this.entry = entry;
     this.status = "loading";
@@ -496,6 +509,7 @@ export class AudioController {
     const np = snapshot?.nowPlaying ?? null;
     // Handoff + finalize don't change nowPlayingKey — check every frame.
     if (this.handoffAwait) this.checkMacToPhoneHandoff();
+    if (this.phoneToMacHandoff) this.checkPhoneToMacHandoff();
     this.checkLiveFinalize(np);
     this.enforceArbitration();
 
@@ -755,14 +769,58 @@ export class AudioController {
     this.phoneToMacPending = true;
     this.audio.pause();
     const file = this.entry.file;
+    const sessionId = this.entry.sessionId ?? "";
     const offsetSec = this.audio.currentTime || 0;
+    // Arm the take-over watch BEFORE the request: the Mac's now-playing frame
+    // can land before the HTTP response. It stays armed on success (local kept
+    // as recovery until the frame settles it); a refusal/timeout disarms it and
+    // keeps the paused local clip so the user can resume on the phone.
+    this.armPhoneToMacHandoff(sessionId, file);
     this.emit();
     void postAction({ type: "play_replay", file, offsetSec }).then((r) => {
       if (token !== this.handoffToken) return; // superseded — ignore stale reply
       this.phoneToMacPending = false;
-      if (!r) this.notify("Mac is busy");
+      if (!r) {
+        this.disarmPhoneToMac(); // Mac refused — keep the paused local clip
+        this.notify("Mac is busy");
+      }
       this.emit();
     });
+  }
+
+  private armPhoneToMacHandoff(sessionId: string, file: string): void {
+    if (this.phoneToMacTimer) clearTimeout(this.phoneToMacTimer);
+    this.phoneToMacHandoff = { sessionId, file };
+    this.phoneToMacTimer = setTimeout(() => this.disarmPhoneToMac(), PHONE_TO_MAC_TAKEOVER_MS);
+  }
+
+  private disarmPhoneToMac(): void {
+    if (this.phoneToMacTimer) clearTimeout(this.phoneToMacTimer);
+    this.phoneToMacTimer = null;
+    this.phoneToMacHandoff = null;
+  }
+
+  /**
+   * The Mac's own playback frame has arrived after a phone→Mac hop — release
+   * the stale local paused entry so `deriveDock` falls through to the Mac frame
+   * and the dock/PlayerSheet show Mac ownership. Matches on session id or the
+   * exact replay file (the daemon stamps replayFile === our file). Text is NOT
+   * required here (identity is the signal); the dock's own predicate carries
+   * the display fields.
+   */
+  private checkPhoneToMacHandoff(): void {
+    const h = this.phoneToMacHandoff;
+    if (!h) return;
+    const np = this.lastFrame?.nowPlaying;
+    if (!np || np.endedAt || np.output === "phone" || np.kind === "live" || np.kind === "ack") {
+      return;
+    }
+    const matches =
+      (!!h.sessionId && np.sessionId === h.sessionId) ||
+      (!!np.replayFile && np.replayFile === h.file);
+    if (!matches) return;
+    this.disarmPhoneToMac();
+    this.clear(); // release the local paused clip → Mac frame owns the dock
   }
 
   /**
@@ -980,6 +1038,7 @@ export class AudioController {
 
   private clear(): void {
     this.pickupSeq++; // invalidate any in-flight grant pickup
+    this.disarmPhoneToMac(); // any teardown supersedes a pending phone→Mac hop
     this.entry = null;
     this.status = "idle";
     this.liveMode = false;
