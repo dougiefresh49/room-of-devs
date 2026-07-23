@@ -7,9 +7,9 @@
  *
  * Talks only to the AudioController.
  */
-import { IconPause, IconPlay } from "@room/ui";
 import { audioController } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
+import { IconPause, IconPlay } from "../icons.js";
 import { KaraokeLine } from "./KaraokeLine.js";
 
 export function PlaybackStrip({ sessionId }: { sessionId: string }) {

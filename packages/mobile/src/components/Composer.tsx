@@ -86,6 +86,18 @@ export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
               void submit();
             }
           }}
+          onFocus={(e) => {
+            // Bug 5 belt: once the keyboard has animated in, pull the field
+            // fully into the (shrunk) visual viewport so it isn't covered.
+            const el = e.currentTarget;
+            setTimeout(() => {
+              try {
+                el.scrollIntoView({ block: "center", behavior: "smooth" });
+              } catch {
+                /* older webview */
+              }
+            }, 250);
+          }}
           className="min-h-[28px] flex-1 resize-none bg-transparent px-1.5 py-1 text-[15px] leading-snug text-fg outline-none placeholder:text-fg-faint disabled:opacity-60"
         />
         <button

@@ -12,8 +12,8 @@
  * (phone static only), device row. No scrub/timestamps. The one <audio> keeps
  * playing while the sheet is open.
  */
-import { IconLaptop, IconSmartphone } from "../icons.js";
-import { IconPause, IconPlay } from "@room/ui";
+import { useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { IconLaptop, IconPause, IconPlay, IconSmartphone } from "../icons.js";
 import { audioController } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
 import { macOffsetSec, type DockState } from "../dock.js";
@@ -28,6 +28,18 @@ interface PlayerSheetProps {
 
 export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
   const player = usePlayer();
+  // Bug 2: the grab handle must actually dismiss. Tap-to-close is the floor;
+  // a downward swipe on the handle is the bonus gesture (no live translate —
+  // just detect the drag distance on release).
+  const dragStartY = useRef<number | null>(null);
+  const onGrabDown = (e: ReactPointerEvent) => {
+    dragStartY.current = e.clientY;
+  };
+  const onGrabUp = (e: ReactPointerEvent) => {
+    if (dragStartY.current != null && e.clientY - dragStartY.current > 56) onClose();
+    dragStartY.current = null;
+  };
+
   if (!open || !dock) return null;
 
   const isPhone = dock.kind === "phone";
@@ -56,8 +68,18 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
         onClick={onClose}
         className="absolute inset-0 bg-black/50"
       />
-      <div className="relative mx-auto w-full max-w-xl rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl">
-        <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-line-strong" />
+      <div className="relative mx-auto w-full max-w-xl rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl">
+        {/* Grab handle — tap OR swipe down to dismiss. Generous tap target. */}
+        <button
+          type="button"
+          aria-label="Close player"
+          onClick={onClose}
+          onPointerDown={onGrabDown}
+          onPointerUp={onGrabUp}
+          className="mx-auto flex w-full touch-none items-center justify-center py-2 focus-visible:outline-none"
+        >
+          <span className="h-1 w-10 rounded-full bg-line-strong" />
+        </button>
 
         <div className="flex items-center gap-3">
           <Avatar
@@ -71,6 +93,17 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
               {isPhone ? (player.live ? "streaming on this phone" : "on this phone") : "playing on Mac"}
             </div>
           </div>
+          {/* Always-present, reachable close affordance (never trap the user). */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid size-9 shrink-0 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
           {isPhone ? (
             playing || player.status === "paused" ? (
               <button

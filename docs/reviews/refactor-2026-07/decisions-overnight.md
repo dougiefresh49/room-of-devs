@@ -789,3 +789,58 @@ disarmed on refusal ("Mac is busy" — local kept so the phone can resume),
 on a 12s timeout, and on any local teardown/new play. No daemon change was
 needed — the frame shape was already correct; only client ownership
 handoff was missing.
+
+### Chunk E — on-device phone-review bug batch (fixed in-branch)
+
+Owner tested the deployed SPA on a real Android phone. The root hang (live
+reply + End-live wedged) was a DAEMON bug (`inject_prompt.sh` → tmux
+send-keys hung inside spawnSync) — fixed on the daemon side by the
+coordinator; NOT my change. My client-side batch:
+
+1. **Pause icon invisible.** The shared `@room/ui` `IconPause`/`IconPlay`
+   rely on external `.icon-btn svg` CSS the mobile app never supplies, so
+   pause (two zero-width stroke-less lines) rendered blank. Added
+   self-contained filled `IconPlay`/`IconPause` (fill=currentColor; pause =
+   two filled bars, matching the filled play) to `src/icons.tsx` and pointed
+   MiniPlayer, PlayerSheet, and PlaybackStrip at them.
+2. **Expanded PlayerSheet couldn't be dismissed.** The grab handle was inert.
+   It's now a real button (tap-to-close + a downward-swipe gesture), plus an
+   always-present × close button in the header, plus the existing backdrop
+   tap — nothing can trap the user.
+3. **Fresh live call showed a stale (hours-old) final.** The call card's
+   resting/idle content pulled `lastFinalText` from the whole thread. New
+   `lastFinalTextSince(items, liveStartedAt)` only returns a final that
+   landed at/after the call's start (client `liveStartedAt`), so a fresh
+   call shows working/idle until something new lands. A few seconds of
+   client↔server clock skew can only exclude a borderline in-call final (it
+   still surfaces via the speaking card during playback) — it can never
+   re-admit an hours-old one.
+4. **Call content card overflowed the avatar/dock off-screen.** The card is
+   now `flex max-h-full flex-col` with its body in a `min-h-0 overflow-y-auto`
+   region, so a long final scrolls INSIDE the card; header/avatar and the
+   End/timer/Send-a-text dock stay fixed and tappable.
+5. **Keyboard covered the composer.** Added a `visualViewport`
+   resize/scroll hook: the sheet is `fixed left-0 right-0` with
+   `top`/`height` tracking the visible viewport, so it (and the composer at
+   its bottom) shrink above the keyboard. Belt: `scrollIntoView({block:
+   "center"})` on textarea focus (250ms, matching legacy) +
+   `interactive-widget=resizes-content` in the viewport meta (Chrome). Works
+   in Android Chrome; the offsetTop/height approach also covers iOS Safari's
+   keyboard-overlap quirk.
+6. **Pending states on a dead/slow daemon.** Read room-client: the SSE
+   transport already times out at **10s** (`requestTimeoutMs ?? 10_000`,
+   `setTimeout`+`AbortController` — fires even on a hung fetch), within the
+   10–12s target, and the existing `finally`/`catch` blocks reset the
+   composer + live transition. Added an 11s `Promise.race` wrapper
+   (`requestWithTimeout`) around reply/set_live as a guaranteed upper bound
+   in case the transport ever fails to reject; the transport's own 10s
+   TransportError normally wins. Reply failure/timeout now shows "Couldn't
+   send"/"Couldn't send — check connection" with the draft preserved;
+   End-live timeout resets the transition + "Couldn't end live". room-client
+   itself was NOT edited.
+
+On-device re-verify (vs desktop): #5 keyboard-overlap and the #2 swipe
+gesture genuinely need a phone (Android Chrome + ideally iOS Safari). #1
+pause glyph, #2 tap/×/backdrop close, #3 stale-final suppression, #4 long-
+final scroll containment, and #6 timeout settling are all verifiable in a
+desktop browser at a ~390px width (throttle/kill the daemon for #6).

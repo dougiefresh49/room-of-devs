@@ -16,10 +16,10 @@
  */
 import { useEffect, useState } from "react";
 import type { AgentView, NowPlaying } from "@room/protocol";
-import { IconPause, IconPlay } from "@room/ui";
 import { audioController } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
 import { deriveDock } from "../dock.js";
+import { IconPause, IconPlay } from "../icons.js";
 import { Avatar } from "./Avatar.js";
 import { KaraokeLine } from "./KaraokeLine.js";
 import { PlayerSheet } from "./PlayerSheet.js";
