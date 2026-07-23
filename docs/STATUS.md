@@ -5,6 +5,14 @@ round; publish to the phone with `pnpm docs:publish`.
 
 _Last updated: 2026-07-23_
 
+## Inbox
+
+Owner drop zone — bugs, findings, ideas, "next I want…". One bullet each,
+no format rules. Sessions triage these: bugs → fixes/known issues, ideas →
+the backlog, work → `active/` specs or Next up. Empty is the goal state.
+
+- _(empty)_
+
 ## Now
 
 - **Nothing actively in flight.** The July UI/server refactor (Phases

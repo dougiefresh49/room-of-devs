@@ -321,8 +321,11 @@ changing `~/.cursor/tts/config.json`.
 ## Docs organization (lifecycle folders, 2026-07-23)
 
 `docs/STATUS.md` is the single tracking surface — what shipped, what's
-awaiting the owner, what's next. Update it at the end of every shipped
-round, then `pnpm docs:publish` (renders STATUS + `docs/active/` to HTML
+awaiting the owner, what's next. Its **Inbox section is the owner's drop
+zone**: check it at session start and triage anything there (bugs →
+fixes/known issues, ideas → the backlog, work items → `active/` specs or
+Next up). Update STATUS at the end of every shipped round, then
+`pnpm docs:publish` (renders STATUS + `docs/active/` to HTML
 and updates the owner's phone-viewable Postplan draft — stable URL, draft
 id in `docs/.postplan-draft`; no API/TTS cost).
 
