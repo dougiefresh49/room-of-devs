@@ -35,6 +35,7 @@ import type { NowPlaying, PanelSnapshot } from "@room/protocol";
 import { nowPlayingKey } from "@room/room-client";
 import { fetchReplayList, postAction, type ReplayEntry } from "../api.js";
 import * as prefs from "../prefs.js";
+import { clearMediaSession, setMediaPlaybackState, setMediaSession, type MediaMeta } from "./media-session.js";
 
 /** 44-byte silent WAV — same primer mobile.html uses to unlock autoplay. */
 const SILENT_WAV =
@@ -127,6 +128,8 @@ export class AudioController {
   // playback state
   private status: PlayerStatus = "idle";
   private entry: ReplayEntry | null = null;
+  /** sessionId → display name/character, fed by snapshots (live clips lack them). */
+  private readonly agentIndex = new Map<string, { name: string; character: string | null }>();
   /** Bumped on EVERY src change/teardown; async continuations validate it. */
   private srcGen = 0;
   private pendingSeekSec = 0;
@@ -506,6 +509,11 @@ export class AudioController {
 
   onSnapshot(snapshot: PanelSnapshot | null): void {
     this.lastFrame = snapshot;
+    if (snapshot) {
+      for (const a of snapshot.agents) {
+        this.agentIndex.set(a.sessionId, { name: a.label || a.name, character: a.character });
+      }
+    }
     const np = snapshot?.nowPlaying ?? null;
     // Handoff + finalize don't change nowPlayingKey — check every frame.
     if (this.handoffAwait) this.checkMacToPhoneHandoff();
@@ -928,6 +936,7 @@ export class AudioController {
     this.audio.addEventListener("playing", () => {
       if (!this.entry) return; // silent-primer event — no real track loaded
       this.status = "playing";
+      setMediaSession(this.mediaMeta());
       this.startTick();
       this.emit();
     });
@@ -936,6 +945,7 @@ export class AudioController {
       if (!this.entry || this.status === "idle") return;
       if (this.audio.ended) return;
       this.status = "paused";
+      setMediaPlaybackState("paused");
       this.stopTick();
       this.emit();
     });
@@ -1067,11 +1077,24 @@ export class AudioController {
 
   // --- teardown / stores ---------------------------------------------------
 
+  /** OS media-card fields for the current track (title/artist/artwork). */
+  private mediaMeta(): MediaMeta {
+    const e = this.entry;
+    const agent = e?.sessionId ? this.agentIndex.get(e.sessionId) : undefined;
+    const artist = e?.sessionName || agent?.name || "Room of Devs";
+    const character = e?.character || agent?.character || null;
+    const text = (e?.textPreview || e?.spokenText || "").replace(/\s+/g, " ").trim();
+    const summary = text.length > 90 ? `${text.slice(0, 89).trimEnd()}…` : text;
+    const title = summary || artist;
+    return { title: this.liveMode ? `Live · ${title}` : title, artist, character };
+  }
+
   private clear(): void {
     this.pickupSeq++; // invalidate any in-flight grant pickup
     this.disarmPhoneToMac(); // any teardown supersedes a pending phone→Mac hop
     this.entry = null;
     this.status = "idle";
+    clearMediaSession();
     this.liveMode = false;
     this.liveComplete = false;
     this.liveBaseSec = 0;
