@@ -171,12 +171,6 @@ mobile.html sync — keep this doc in lockstep when that lands.
   gpt-5.6 with Codex (see the `codex-computer-use` skill). One-shot
   claude-in-chrome checks are fine; multi-step interactive MCP ping-pong
   from the main session is not.
-- **Never let automation attach to the owner's Chrome** (owner call
-  2026-07-22, after codex opened a Playwright-driven tab): every
-  codex-computer-use prompt must say to drive native UI / screenshots
-  only and NOT to attach Playwright/CDP to the running browser; if a test
-  needs a fullscreen or throwaway window, use a non-browser app or a
-  separate app instance.
 
 ## Session token hygiene
 
@@ -185,13 +179,15 @@ cost ≈ context size × wakeup count (every background-task notification
 re-reads the whole conversation — cached, but a 300-450k context across
 13 wakeups burned ~25% of a weekly Fable budget on 2026-07-22).
 
-- **The main session authors almost no code** (owner directive
-  2026-07-22): anything beyond small surgical edits (~50 lines) is
-  written by a delegate against a written spec — Terra/grok/composer for
-  well-specced chunks; an Agent-tool `fable`/`opus` SUBAGENT when the
-  chunk genuinely needs frontier judgment (fresh context, none of the
-  session history billed with it). The main session does: specs, credit-
-  guard-adjacent edits, targeted diff review, merges.
+- **During big multi-stage efforts (a refactor phase, a feature round
+  with several delegate/verify wakeups), the main session stops
+  authoring code** (owner call 2026-07-22): chunks beyond small surgical
+  edits are written by a delegate against a written spec —
+  Terra/grok/composer for well-specced work; an Agent-tool
+  `fable`/`opus` SUBAGENT when a chunk genuinely needs frontier judgment
+  (fresh context, none of the session history billed with it). The main
+  session does: specs, credit-guard-adjacent edits, targeted diff
+  review, merges. Ordinary small tasks: writing code directly is fine.
 - **Codebase recon goes to composer-2.5** (cursor-agent) or an Explore
   subagent: finding references, mapping call sites, summarizing big
   files. Don't pull 2000-line files into the main context when a
