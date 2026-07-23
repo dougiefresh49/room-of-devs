@@ -1,0 +1,4 @@
+SPEAK (44 chars): I found the likely cause and will verify it.
+
+held (would NOT speak — final): Verification passed; the issue is understood.
+toolCount: 0

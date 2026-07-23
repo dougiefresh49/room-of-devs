@@ -1,0 +1,4 @@
+{"type":"user","message":{"content":[{"type":"text","text":"Investigate the issue."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"I found the likely cause and will verify it."}]}}
+{"type":"user","toolUseResult":{"stdout":"ok"},"message":{"content":[{"type":"tool_result","content":"ok"}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Verification passed; the issue is understood."}]}}

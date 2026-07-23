@@ -1,0 +1,4 @@
+{"type":"user","message":{"content":[{"type":"text","text":"Summarize the result."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The first turn is complete and needs no more work."}]}}
+{"type":"user","message":{"content":[{"type":"text","text":"Now start a separate task."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The second turn is also complete."}]}}

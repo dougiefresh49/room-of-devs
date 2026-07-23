@@ -1,0 +1,4 @@
+SPEAK (40 chars): I will inspect the relevant files first.
+
+held (would NOT speak — final): The checks are complete and the project is healthy.
+toolCount: 2

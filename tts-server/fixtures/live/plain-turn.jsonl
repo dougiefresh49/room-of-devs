@@ -1,0 +1,2 @@
+{"type":"user","message":{"content":[{"type":"text","text":"Give a brief status."}]}}
+{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"Reviewing the current state."},{"type":"text","text":"Everything is ready for review."}]}}

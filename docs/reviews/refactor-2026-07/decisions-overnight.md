@@ -456,3 +456,33 @@ Not really "decisions" — codex found them, I verified and fixed all four:
    `""` as absent. Fixed: schema now requires non-empty (minLength 1).
 4. **Low** — `cp -R` fallback in the sync didn't mirror `rsync --delete`.
    Fixed: fallback now clears the target dir first.
+
+## Phase 5 chunks A+B (2026-07-22 night, fresh session)
+
+Build spec: `phase5-mobile-design.md`. Chunk A (mock harness) authored by
+codex/Terra, chunk B (SPA scaffold + /app serving) by grok-4.5 in a
+worktree; fable reviewed both diffs. Judgment calls:
+
+1. **Mock transcripts live at `~/.claude/projects/mock-live-harness/<id>.jsonl`**
+   — mirrors how the tailer resolves transcripts by session id, so the
+   REAL installed tailer tails the fake session (proven live: `live.on`
+   stayed true in the snapshot). Cleanup removes them.
+2. **`mock-live.ts final` refuses a second call per session.** A second
+   assistant-final would flush the held first one through the real tailer
+   → real synthesis. One held final is free and exercises the hold-one
+   buffer; the refusal keeps the harness zero-spend by construction.
+3. **Harness `stream` takes the real `.stream-lock`** (wx, PID-checked
+   release in `finally`) and refuses fresh non-mock now-playing frames —
+   verification-hygiene rule enforced in code, not convention.
+4. **SPA dev route is `/app`** (base `/app/`, hashed assets under
+   `/app/assets/` immutable, index no-cache). Cutover later flips `/` to
+   the dist and keeps `/legacy` → mobile.html for one release.
+5. **Tailwind preflight ON for @room/mobile only** — React owns the whole
+   mobile shell, no legacy CSS coexists there. Shared `@room/ui/tailwind.css`
+   still omits preflight (panel constraint).
+6. **Known smell carried to chunk C:** `StateBadge` depends on host
+   `.badge`/`.state-*` CSS; grok duplicated those rules into the mobile
+   stylesheet. Move them into `@room/ui` when chunk C builds the real
+   room view.
+7. `dist/` is globally gitignored; committed-dist policy implemented via
+   `!packages/mobile/dist/` + `!packages/mobile/dist/**`.
