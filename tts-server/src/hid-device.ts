@@ -12,7 +12,7 @@ import {
   refreshMappedAxisBytes,
   clearPending,
   stickArmState,
-} from "./hid.js";
+} from "./hid-controller.js";
 
 // Reconnect poll: one cheap enumerate every 3s while the device is closed.
 const RECONNECT_MS = 3000;
