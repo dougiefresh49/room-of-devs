@@ -86,3 +86,21 @@ export function lastFinalText(items: readonly ThreadItem[]): string {
   }
   return "";
 }
+
+/**
+ * The last FINAL agent text that landed at/after `since` (ms) — the call view
+ * uses this so a FRESH call never renders an OLD, pre-call final as its content
+ * (phone-review bug 3). Returns "" when `since` is null (go-live optimism) or
+ * no in-call final exists yet, so the card falls back to working/idle.
+ */
+export function lastFinalTextSince(items: readonly ThreadItem[], since: number | null): string {
+  if (since == null) return "";
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.role !== "agent" || !it.final) continue;
+    const at = it.at ? Date.parse(it.at) : NaN;
+    if (Number.isFinite(at) && at >= since) return it.text || "";
+    // Older finals (and finals with no timestamp) don't count for this call.
+  }
+  return "";
+}

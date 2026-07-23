@@ -14,7 +14,7 @@ import type { AgentView, NowPlaying } from "@room/protocol";
 import type { PlayerSnapshot } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
 import type { ThreadItem } from "../api.js";
-import { lastFinalText } from "../thread.js";
+import { lastFinalTextSince } from "../thread.js";
 import { IconMessage, IconPhoneOff } from "../icons.js";
 import { Avatar } from "./Avatar.js";
 import { KaraokeLine } from "./KaraokeLine.js";
@@ -55,6 +55,8 @@ interface CallViewProps {
   liveClips: number;
   ackFlash: boolean;
   elapsed: string;
+  /** Call-timer origin (ms) — the "final landed" content is scoped to it. */
+  liveStartedAt: number | null;
   /** A set_live transition is in flight — disable End-live. */
   liveBusy: boolean;
   onEndLive: () => void;
@@ -68,6 +70,7 @@ export function CallView({
   liveClips,
   ackFlash,
   elapsed,
+  liveStartedAt,
   liveBusy,
   onEndLive,
   onSendText,
@@ -84,7 +87,9 @@ export function CallView({
     !speakingHere && !working && isFreshPhoneFinal(nowPlaying, agent.sessionId, speakingHere, player);
   const activity = agent.live?.lastActivity;
   const tools = agent.live?.toolCount ?? 0;
-  const done = lastFinalText(items);
+  // Bug 3: only a final that landed DURING this call may fill the resting card
+  // — never an hours-old pre-call final from the thread history.
+  const done = lastFinalTextSince(items, liveStartedAt);
 
   const card: CardState = speakingHere
     ? {
@@ -131,27 +136,33 @@ export function CallView({
         </div>
       </div>
 
-      {/* content card */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 py-4">
-        <div key={card.mode} className="cv-card-in w-full max-w-sm rounded-2xl border border-line bg-surface p-4">
-          <div className={`mb-2 text-[11px] font-bold uppercase tracking-wider ${card.tagClass}`}>
+      {/* content card — height-capped within the call layout so a long final
+          scrolls INSIDE the card and never covers the avatar or the dock. */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-4">
+        <div
+          key={card.mode}
+          className="cv-card-in flex max-h-full w-full max-w-sm flex-col rounded-2xl border border-line bg-surface p-4"
+        >
+          <div className={`mb-2 shrink-0 text-[11px] font-bold uppercase tracking-wider ${card.tagClass}`}>
             {card.tag}
           </div>
           {card.mode === "speaking" ? (
-            <KaraokeLine
-              text={player.text}
-              alignment={player.alignment}
-              elapsedMs={player.elapsedMs}
-              variant="card"
-              dim={isLiveClip}
-            />
+            <div className="min-h-0 overflow-y-auto">
+              <KaraokeLine
+                text={player.text}
+                alignment={player.alignment}
+                elapsedMs={player.elapsedMs}
+                variant="card"
+                dim={isLiveClip}
+              />
+            </div>
           ) : card.mode === "final" ? (
-            <div className="text-[15px] leading-relaxed text-fg">
-              {nowPlaying?.text || done || "…"}
-              <div className="mt-2 text-[12px] text-fg-muted">auto-playing…</div>
+            <div className="flex min-h-0 flex-col text-[15px] leading-relaxed text-fg">
+              <div className="min-h-0 overflow-y-auto">{nowPlaying?.text || done || "…"}</div>
+              <div className="mt-2 shrink-0 text-[12px] text-fg-muted">auto-playing…</div>
             </div>
           ) : card.mode === "working" ? (
-            <div className="text-[15px] leading-relaxed text-fg">
+            <div className="min-h-0 overflow-y-auto text-[15px] leading-relaxed text-fg">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 truncate">{activity?.label || "working"}</span>
                 <span className="cv-dots shrink-0 text-accent" aria-hidden="true">
@@ -169,7 +180,7 @@ export function CallView({
               </div>
             </div>
           ) : (
-            <div className="text-[15px] leading-relaxed text-fg">
+            <div className="min-h-0 overflow-y-auto text-[15px] leading-relaxed text-fg">
               {done || <span className="text-fg-muted">Listening…</span>}
             </div>
           )}

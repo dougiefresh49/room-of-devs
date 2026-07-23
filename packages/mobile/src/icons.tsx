@@ -47,6 +47,27 @@ export const IconFolder = () =>
 
 export const IconArrowLeft = () => glyph(<path d="M19 12H5m0 0 6 6m-6-6 6-6" />);
 
+/**
+ * Transport play/pause — SELF-CONTAINED fills (not the `glyph` stroke helper).
+ * The shared @room/ui IconPause/IconPlay rely on external `.icon-btn svg` CSS
+ * the mobile app never supplies, so its pause (two zero-width stroke-less
+ * lines) rendered invisible on-device. These carry `fill="currentColor"` so
+ * the glyph is always visible; both are filled to match (owner liked the
+ * filled play triangle).
+ */
+export const IconPlay = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M8 5l11 7-11 7z" />
+  </svg>
+);
+
+export const IconPause = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="6.5" y="5" width="3.6" height="14" rx="1.1" />
+    <rect x="13.9" y="5" width="3.6" height="14" rx="1.1" />
+  </svg>
+);
+
 /** Upward paper-plane send glyph (composer + call "send a text"). */
 export const IconSend = () =>
   glyph(<path d="M12 20V5m0 0-6 6m6-6 6 6" />);
