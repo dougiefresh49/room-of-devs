@@ -5,11 +5,15 @@
   "scripts": {
     "typecheck": "pnpm -r --if-present run typecheck",
     "check-fixtures": "pnpm --filter @room/protocol run check-fixtures",
-    "check-live-fixtures": "pnpm --dir tts-server exec tsx scripts/mock-live.ts check-tailer"
+    "check-live-fixtures": "pnpm --dir tts-server exec tsx scripts/mock-live.ts check-tailer",
+    "docs:publish": "node scripts/docs-publish.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "node-hid"
     ]
+  },
+  "devDependencies": {
+    "marked": "^18.0.7"
   }
 }

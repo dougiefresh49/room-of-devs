@@ -118,7 +118,7 @@ for any work in this repo:
   lane, not a loosening of the rules above: no unbounded/repeated synthesis
   loops, and anything testable without spend still goes the free route
   first. A no-spend mock live harness is planned in the refactor
-  (docs/spec-ui-refactor.md, Phase 5).
+  (docs/shipped/spec-ui-refactor.md, Phase 5).
 - If the thing being verified isn't synthesis itself, test WITHOUT burning
   credits: `processWithGemini` and `streamTTS` skip gracefully when API
   keys are absent; `signal.ts replay` re-plays saved audio free;
@@ -168,13 +168,13 @@ cd panel && pnpm tauri dev                    # panel: ordinary component work (
 REFACTOR COMPLETE — Phases 0-7 SHIPPED: shared protocol/client/ui
 packages, server services + recovery, React panel (two windows), mobile
 Vite SPA cut over to `/`, legacy audit + deletion (caller manifest in
-docs/reviews/refactor-2026-07/legacy-manifest.md; mobile.html, SwiftBar,
+docs/archive/reviews/refactor-2026-07/legacy-manifest.md; mobile.html, SwiftBar,
 raycast, orphan scripts removed — PTT plumbing exempt and kept), and the
 Phase 7 server splits (audio.ts and hid.ts each behind a facade — see
 Known issues note). Context in session memory ("Refactor Mandate");
-judgment calls in docs/reviews/refactor-2026-07/decisions-overnight.md.
+judgment calls in docs/archive/reviews/refactor-2026-07/decisions-overnight.md.
 Free live-mode regression tooling: tts-server/scripts/mock-live.ts +
-docs/testing-live-mode.md.
+docs/reference/testing-live-mode.md.
 
 ## General preferences
 
@@ -318,15 +318,24 @@ Launching the app, screenshots, and short test audio are fine without
 asking; ask first before clearing queues, deleting replay history, or
 changing `~/.cursor/tts/config.json`.
 
-## Docs index
+## Docs organization (lifecycle folders, 2026-07-23)
 
-| Doc                                             | What it covers                                                                        |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `docs/spec-live-mode-v2.md`                     | Current live-mode architecture (call/chat views, /thread, activity feed, panel rules) |
-| `docs/spec-live-mode.md`                        | v1 spec (superseded UI, still-valid server cost guards)                               |
-| `docs/mockups/live-mode-v2/`                    | Concept round + cross-reviews behind the current UI                                   |
-| `docs/ideas-backlog.md`                         | Owner's someday list — check before proposing "new" ideas                             |
-| `docs/plan-room-of-devs.md` + phase/design docs | Earlier room architecture history                                                     |
+`docs/STATUS.md` is the single tracking surface — what shipped, what's
+awaiting the owner, what's next. Update it at the end of every shipped
+round, then `pnpm docs:publish` (renders STATUS + `docs/active/` to HTML
+and updates the owner's phone-viewable Postplan draft — stable URL, draft
+id in `docs/.postplan-draft`; no API/TTS cost).
+
+| Folder            | Meaning                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| `docs/active/`    | Designs/specs for unbuilt work — the queue                              |
+| `docs/shipped/`   | Specs whose feature landed (e.g. `spec-live-mode-v2.md` = current live-mode architecture) |
+| `docs/archive/`   | Superseded specs, old plans, review rounds (incl. `archive/reviews/`)   |
+| `docs/reference/` | Evergreen: `ideas-backlog.md` (check before proposing "new" ideas), `testing-live-mode.md`, vision docs |
+
+Lifecycle rules: new specs start in `active/`; move to `shipped/` when the
+feature deploys (and log it in STATUS.md); superseded docs get a pointer
+banner and move to `archive/`.
 
 ## Known issues / technical debt
 
@@ -339,5 +348,5 @@ changing `~/.cursor/tts/config.json`.
   `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
   future panel credits chip.
 - Cross-persona spawn race and subagent-finish announce filtering
-  (docs/ideas-backlog.md).
+  (docs/reference/ideas-backlog.md).
 - No test suite; verification is manual/scripted per the section above.
