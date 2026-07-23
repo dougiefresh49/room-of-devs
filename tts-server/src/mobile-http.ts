@@ -26,8 +26,7 @@ import { transcriptThread } from "./services/transcript.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CHARACTERS_PATH = join(__dirname, "characters.json");
-const HTML_PATH = join(__dirname, "..", "mobile.html");
-/** Built mobile Vite SPA (sibling of mobile.html in the install). */
+/** Built mobile Vite SPA. */
 const MOBILE_DIST_DIR = join(__dirname, "..", "mobile-dist");
 const COOKIE_NAME = "mobile_token";
 const HEARTBEAT_MS = 25_000;
@@ -437,8 +436,6 @@ async function handleRequest(
   const path = url.pathname;
 
   // Phase 5 cutover (2026-07-23, owner-approved): `/` is the React SPA.
-  // The legacy single-file page stays at /legacy as the rollback for one
-  // release — delete mobile.html + this route once the SPA has proven out.
   if (method === "GET" && path === "/") {
     if (!mobileDistReady) {
       serveMobileAppMissing(res);
@@ -454,21 +451,6 @@ async function handleRequest(
       "Cache-Control": "no-cache",
     });
     res.end(readFileSync(indexPath, "utf-8"));
-    return;
-  }
-
-  if (method === "GET" && (path === "/legacy" || path === "/legacy/")) {
-    if (!existsSync(HTML_PATH)) {
-      res.writeHead(500);
-      res.end("mobile.html missing");
-      return;
-    }
-    const html = readFileSync(HTML_PATH, "utf-8");
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-cache",
-    });
-    res.end(html);
     return;
   }
 

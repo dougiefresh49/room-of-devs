@@ -51,9 +51,8 @@ long-lived — maintainability matters now (see Refactor status).
   never fetch; audio lives in one adapter (`src/audio/controller.ts` —
   prime/live-stream/handoff/speaker-gate; only a client whose device
   toggle is "phone" auto-plays routed audio). The legacy single-file
-  `tts-server/mobile.html` is served at `/legacy` as rollback ONLY —
-  delete it (+ the route + its tts-server.sh cp) once the SPA has proven
-  out; it's also still a behavior reference for the Phase 6 audit.
+  `mobile.html` was deleted in Phase 6 (2026-07-23) — it lives in git
+  history if a behavior reference is ever needed.
 - **Glue** (`scripts/`): bash utilities + Claude Code hooks; SwiftBar plugin
   (`plugins/`) is the legacy menu-bar UI, still installed.
 - **State/IPC**: JSON + lock/pid files under `~/.cursor/tts/` — this is the
@@ -74,8 +73,8 @@ tmux team sessions (`team.sh`) accept injected replies
 
 The repo is NOT what runs. `scripts/setup.sh` installs to `~/.cursor/tts/`
 (scripts, config, SwiftBar plugin, Room.app bundle), and `tts-server.sh
-start|restart` syncs `tts-server/src/*.ts` + `mobile.html` from the repo
-before launching. So:
+start|restart` syncs `tts-server/src/*.ts` from the repo before
+launching. So:
 
 - Edit files **in the repo**, never in `~/.cursor/tts/`.
 - TypeScript changes take effect after
@@ -151,10 +150,9 @@ cd panel && pnpm tauri dev                    # panel: ordinary component work (
 
 - Concise, simple solutions; propose the simpler path when one exists.
 - **UI code is componentized** — React (or similar) with shared components
-  and design tokens across the panel and mobile page. No new features into
-  the mobile.html / panel main.ts monoliths; no UI built from innerHTML
-  template strings. (Owner call 2026-07-21; the old "no frameworks" rule is
-  dead — it produced 3k-line files.)
+  and design tokens across the panel and mobile page. No UI built from
+  innerHTML template strings. (Owner call 2026-07-21; the old "no
+  frameworks" rule is dead — it produced 3k-line monoliths, since deleted.)
 - Keep files focused; a file approaching ~500 lines is a smell worth
   raising, not a norm.
 - Server-side filesystem state (JSON/lock/pid files) remains the IPC
@@ -167,12 +165,12 @@ cd panel && pnpm tauri dev                    # panel: ordinary component work (
 
 ## Refactor status (2026-07-23)
 
-Phases 0-5 SHIPPED: shared protocol/client/ui packages, server services +
-recovery, React panel (two windows), mobile Vite SPA cut over to `/`
-(legacy mobile.html at `/legacy`, rollback-only — see deletion note in
-Tech Stack). Remaining: Phase 6 legacy audit/deletion (script caller
-manifest first; PTT plumbing is NOT a deletion candidate), optional
-Phase 7 server splits. Context in session memory ("Refactor Mandate");
+Phases 0-6 SHIPPED: shared protocol/client/ui packages, server services +
+recovery, React panel (two windows), mobile Vite SPA cut over to `/`,
+legacy audit + deletion (caller manifest in
+docs/reviews/refactor-2026-07/legacy-manifest.md; mobile.html, SwiftBar,
+raycast, orphan scripts removed — PTT plumbing exempt and kept).
+Remaining: optional Phase 7 server splits. Context in session memory ("Refactor Mandate");
 judgment calls in docs/reviews/refactor-2026-07/decisions-overnight.md.
 Free live-mode regression tooling: tts-server/scripts/mock-live.ts +
 docs/testing-live-mode.md.
@@ -294,8 +292,7 @@ Repo-specific rules for delegated agents:
   prompt.
 - Verification gate for code tasks: `pnpm exec tsc --noEmit` clean in
   `tts-server/` AND `panel/` (when touched), `bash -n` on changed shell
-  scripts, and a parse check on mobile.html's inline script while it
-  remains a single file.
+  scripts.
 
 ## Verifying this app
 
@@ -332,13 +329,9 @@ changing `~/.cursor/tts/config.json`.
 
 ## Known issues / technical debt
 
-- Legacy `mobile.html` still shipped/served at `/legacy` — delete after
-  the SPA proves out (Phase 6). Server hotspot `audio.ts` remains large
-  (optional Phase 7 split).
-- Legacy candidates to audit: `scripts/ingest_claude_code.sh` (bash
-  fallback), piper-era leftovers, `build_read_aloud_notifier_app.sh`,
-  `raycast/`, `clean_text.py`, the SwiftBar plugin's overlap with the
-  panel. Audit references before deleting — hooks call into `scripts/`.
+- Server hotspot `audio.ts` remains large (optional Phase 7 split).
+  `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
+  future panel credits chip.
 - Cross-persona spawn race and subagent-finish announce filtering
   (docs/ideas-backlog.md).
 - No test suite; verification is manual/scripted per the section above.

@@ -57,17 +57,10 @@ sync_source() {
     rsync -a --delete --copy-links "$REPO_PROTOCOL_SRC"/ "$SERVER_DIR/src/protocol/" \
         || { echo "Error: protocol staging failed"; exit 1; }
 
-    # Mobile room page (served raw by mobile-http.ts until the Vite build lands)
-    if [ ! -f "$REPO_SERVER_DIR/mobile.html" ]; then
-        echo "Error: mobile.html missing in repo — not syncing"
-        exit 1
-    fi
-    cp "$REPO_SERVER_DIR/mobile.html" "$SERVER_DIR/mobile.html" \
-        || { echo "Error: mobile.html sync failed"; exit 1; }
+    # Legacy mobile.html deleted in Phase 6 — clean it out of old installs.
+    rm -f "$SERVER_DIR/mobile.html"
 
-    # Mobile Vite SPA artifact (Phase 5 Chunk B) — sibling of mobile.html.
-    # Fatal if missing (mirrors the mobile.html gate). Rollback path (/)
-    # still uses mobile.html until cutover.
+    # Mobile Vite SPA artifact — fatal if missing; / serves it.
     REPO_MOBILE_DIST="$(dirname "$REPO_SERVER_DIR")/packages/mobile/dist"
     if [ ! -d "$REPO_MOBILE_DIST" ] || [ ! -f "$REPO_MOBILE_DIST/index.html" ]; then
         echo "Error: packages/mobile/dist missing in repo — build with: pnpm --filter @room/mobile build"
