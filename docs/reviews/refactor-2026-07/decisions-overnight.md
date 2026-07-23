@@ -844,3 +844,28 @@ gesture genuinely need a phone (Android Chrome + ideally iOS Safari). #1
 pause glyph, #2 tap/×/backdrop close, #3 stale-final suppression, #4 long-
 final scroll containment, and #6 timeout settling are all verifiable in a
 desktop browser at a ~390px width (throttle/kill the daemon for #6).
+
+### Chunk E — composer Enter + thread scroll anchor (on-device, fixed in-branch)
+
+Branch synced forward onto main first (main's speaker-gate fix in
+controller.ts — grant pickup + ack playback require
+`prefs.getPrefs().output === "phone"` — preserved untouched).
+
+1. **Soft-keyboard Enter sent instead of newlining.** A soft keyboard has
+   no Shift, so Enter-sends made multi-line replies impossible. Composer
+   now detects coarse pointers once
+   (`matchMedia("(pointer: coarse)").matches`): on touch, Enter is NOT
+   intercepted → the textarea inserts a newline and `onInput` auto-grows
+   it; only the send button sends. Desktop keeps Enter-sends /
+   Shift+Enter-newline.
+2. **Thread opened scrolled to the top.** Replaced the single
+   near-bottom `useEffect` (which, on open, saw scrollTop 0 vs a tall
+   thread → "not near bottom" → never scrolled down). Now an `atBottomRef`
+   seeded **true** + an `onScroll` handler track whether the user is parked
+   at the bottom; a `useLayoutEffect` (no top-flash) re-anchors to the
+   bottom after any content change ONLY when parked there — so a fresh open
+   lands on the newest message and a refetch never yanks a user who
+   scrolled up. A `visualViewport` resize/scroll listener re-anchors on
+   keyboard show/hide so the newest messages stay above the composer. Reset
+   to bottom on session change (defensive; ChatView normally remounts per
+   session).

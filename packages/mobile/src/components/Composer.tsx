@@ -18,6 +18,17 @@ import { getDraft, setDraft } from "../drafts.js";
 
 const MAX_HEIGHT = 112; // ~4 lines at the field's line-height + padding
 
+/**
+ * On coarse-pointer (touch) devices the soft keyboard's Enter has no Shift
+ * companion, so Enter must insert a NEWLINE (multi-line entry) and only the
+ * send button sends. On fine-pointer (desktop) devices Enter sends and
+ * Shift+Enter inserts a newline. Evaluated once — pointer type is stable.
+ */
+const enterInsertsNewline =
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(pointer: coarse)").matches;
+
 interface ComposerProps {
   sessionId: string;
   placeholder: string;
@@ -81,7 +92,9 @@ export function Composer({ sessionId, placeholder, onSend }: ComposerProps) {
             autoGrow();
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            // Touch: never send on Enter — let it insert a newline (onInput
+            // then auto-grows). Desktop: Enter sends, Shift+Enter newlines.
+            if (e.key === "Enter" && !e.shiftKey && !enterInsertsNewline) {
               e.preventDefault();
               void submit();
             }

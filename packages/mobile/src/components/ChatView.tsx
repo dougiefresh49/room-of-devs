@@ -9,7 +9,7 @@
  * Ownership rule (§B1): when live is ON, the working UI lives ONLY in the call
  * card — this thread shows no working row.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { AgentView } from "@room/protocol";
 import type { LiveTransition } from "../convo-state.js";
 import type { ReplayEntry, ThreadItem } from "../api.js";
@@ -65,6 +65,16 @@ export function ChatView({
   const activity = agent.live?.lastActivity?.label ?? "";
   const tools = agent.live?.toolCount ?? 0;
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Whether the user is parked at the bottom. Seeded true so a freshly opened
+  // thread lands on the NEWEST message; an onScroll handler keeps it current so
+  // a refetch never yanks a user who scrolled up to read history. Reset to true
+  // on a session change (defensive — ChatView normally remounts per session).
+  const atBottomRef = useRef(true);
+  const prevSessionRef = useRef(agent.sessionId);
+  if (prevSessionRef.current !== agent.sessionId) {
+    prevSessionRef.current = agent.sessionId;
+    atBottomRef.current = true;
+  }
 
   // Merge thread messages + page-local ack chips into one time-sorted list.
   const rows = useMemo<Row[]>(() => {
@@ -80,13 +90,37 @@ export function ChatView({
     return out;
   }, [items, ackAts]);
 
-  // Stick to the bottom when already near it (don't yank the user mid-scroll).
-  useEffect(() => {
+  // Anchor to the bottom after any content change — but ONLY when the user was
+  // already at/near the bottom (captured before this layout by onScroll). Runs
+  // in a layout effect so the initial open paints at the bottom (no top flash).
+  useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    if (nearBottom) el.scrollTop = el.scrollHeight;
-  }, [rows.length, working, liveOn]);
+    if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
+  }, [agent.sessionId, rows.length, working, liveOn]);
+
+  // Keyboard show/hide (visualViewport) or any resize re-anchors to the bottom
+  // when parked there, so the newest messages stay in view above the composer.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    const reanchor = () => {
+      const el = scrollRef.current;
+      if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
+    };
+    vv?.addEventListener("resize", reanchor);
+    vv?.addEventListener("scroll", reanchor);
+    window.addEventListener("resize", reanchor);
+    return () => {
+      vv?.removeEventListener("resize", reanchor);
+      vv?.removeEventListener("scroll", reanchor);
+      window.removeEventListener("resize", reanchor);
+    };
+  }, []);
+
+  const onThreadScroll = () => {
+    const el = scrollRef.current;
+    if (el) atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
 
   let dot = "bg-fg-faint";
   let statusText = agent.state === "hand_raised" ? "update ready" : "ready";
@@ -177,7 +211,11 @@ export function ChatView({
       ) : null}
 
       {/* thread */}
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3">
+      <div
+        ref={scrollRef}
+        onScroll={onThreadScroll}
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3"
+      >
         {rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-fg-muted">No messages yet</p>
         ) : (
