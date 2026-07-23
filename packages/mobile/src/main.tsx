@@ -10,6 +10,7 @@ import "./styles.css";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { client } from "./client.js";
+import { audioController } from "./audio/controller.js";
 
 const appEl = document.getElementById("app");
 if (!appEl) throw new Error("#app root missing from index.html");
@@ -22,4 +23,6 @@ client.start();
 window.addEventListener("beforeunload", () => {
   root.unmount();
   client.dispose();
+  // Kill the controller's watchdog/tick intervals + audio (finding 8).
+  audioController.dispose();
 });

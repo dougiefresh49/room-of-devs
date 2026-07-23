@@ -595,3 +595,52 @@ Judgment calls:
    (`color-mix(accent 18%, surface)` via inline style, since the mix
    needs a runtime CSS var) with accent icon/text/border/focus-ring. The
    disabled "Working…" state keeps the neutral `surface-strong`.
+
+### Chunk D — Sol review round (fix commit)
+
+An independent gpt-5.6-sol review of the chunk-D diff found 6 major + 2
+minor concurrency/lifecycle bugs; all 8 fixed, one-adapter design kept.
+The unifying change is a single **source generation** (`srcGen`) bumped by
+the ONE `setSource()` mutator on every `<audio>.src` change/teardown, which
+every awaited `play()` continuation and delayed callback validates.
+
+1. **Stale grant pickup (major).** Pickups now carry a `pickupSeq` token
+   (bumped by any new pickup / manual play / Stop) and revalidate the live
+   frame after the `fetchReplayList` await (same key, still active,
+   still phone-routed, same file). A `handledPhoneKeys` set dedupes by
+   `nowPlayingKey` so a transient `nowPlaying=null` → same frame can't
+   re-arm; "already loaded this file" now returns regardless of paused
+   (killed the paused-is-idle restart).
+2. **Overlapping live reconnects (major).** `reconnectLive` is serialized
+   behind a `reconnecting` flag; `ended` + the delayed `error` retry + the
+   watchdog can no longer double-commit the consumed segment or race src
+   swaps. The consumed segment is committed exactly once — and ONLY on an
+   actual reconnect/switch, not on the stall path (else a user retry
+   double-counts the same anchor). Every src change bumps `srcGen`, so
+   stale `error` callbacks are rejected by generation.
+3. **Stop didn't invalidate pending work (major).** All teardown/source
+   changes go through `setSource`/`clear`, which advance `srcGen` (and
+   `pickupSeq`); every awaited `play()` rejection is gen-guarded, so a
+   late rejection after Stop can't set pending-tap on an empty player.
+4. **resume() bypassed arbitration + paused-finalized live (major).**
+   `resume()` now refuses while `isMacLive()`, and when a live clip
+   finalized while paused it resumes via the live→static switch at
+   `liveBaseSec + currentTime` instead of replaying the stale live URL.
+5. **Leaky catch-up cancellation (major).** `stopCatchUp()` now clears the
+   queue AND stops the current catch-up clip. New `onFilesRemoved(files)`
+   (called by App on Clear and on hide-dev) drops those files from the
+   queue and stops the current clip if it was one of them; App computes a
+   hidden dev's replay files and forwards them.
+6. **Illusory retry bound (major).** Replaced the single reset-on-1s
+   counter with a real budget: consecutive-zero-progress (reset on
+   progress) + a hard total-reconnect ceiling + a wall-clock ceiling.
+   Exhaustion sets `liveStalled` (stops the loop); an explicit user tap
+   resets the budget and retries.
+7. **Uncoordinated replay refreshes (minor).** `useReplayList` now
+   coalesces dirty signals: at most one fetch in flight, one queued rerun;
+   serialization means a stale response can never overwrite or
+   `pruneToFiles` from a superseded catalog.
+8. **Watchdog never disposed (minor).** `audioController.dispose()` is
+   called in `main.tsx`'s `beforeunload` alongside `client.dispose()`;
+   `dispose()` kills the tick + watchdog intervals, tears down the audio,
+   drops listeners, and is idempotent.

@@ -16,7 +16,7 @@
  *
  * Deferred to chunk E (clean seams): chat/thread, call view, reply composer.
  */
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { AgentView, Command } from "@room/protocol";
 import {
   selectConnected,
@@ -60,10 +60,21 @@ function useClock(intervalMs = 15_000): number {
  * The replay catalog for the history list. Fetches on mount, refetches whenever
  * the controller flags the catalog dirty (new frame, live finalize, track end),
  * and prunes stale listened/cleared entries on each load.
+ *
+ * Coalesced (Sol finding 7): at most one fetch in flight; overlapping dirty
+ * signals collapse into a single queued rerun. Serialization guarantees a
+ * stale response can never overwrite a newer catalog or prune from it.
  */
 function useReplayList(): { all: ReplayEntry[]; refresh: () => void } {
   const [all, setAll] = useState<ReplayEntry[]>([]);
-  const refresh = useCallback(() => {
+  const inFlight = useRef(false);
+  const queued = useRef(false);
+  const refresh = useCallback(function run() {
+    if (inFlight.current) {
+      queued.current = true;
+      return;
+    }
+    inFlight.current = true;
     void fetchReplayList()
       .then((list) => {
         pruneToFiles(list.map((e) => e.file));
@@ -71,6 +82,13 @@ function useReplayList(): { all: ReplayEntry[]; refresh: () => void } {
       })
       .catch(() => {
         /* keep prior list */
+      })
+      .finally(() => {
+        inFlight.current = false;
+        if (queued.current) {
+          queued.current = false;
+          run();
+        }
       });
   }, []);
   useEffect(() => refresh(), [refresh]);
@@ -167,6 +185,22 @@ export function App() {
     void audioController.startCatchUp([...unheardEntries].reverse());
   };
 
+  // "Clear messages": mark heard+cleared AND stop any cleared clip / catch-up.
+  const handleClear = () => {
+    const files = visibleReplays.map((e) => e.file);
+    clearFiles(files);
+    audioController.onFilesRemoved(files);
+  };
+
+  // Hiding a dev must also stop its playing clip + drop it from a catch-up run.
+  const handleHide = (rawName: string) => {
+    const files = replayAll
+      .filter((e) => entryRawName(e, allAgents) === rawName)
+      .map((e) => e.file);
+    setDevHidden(rawName, true);
+    audioController.onFilesRemoved(files);
+  };
+
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <Header
@@ -191,7 +225,7 @@ export function App() {
           isGrantPending={(sessionId) => selectGrantPending(state, sessionId)}
           onGrant={handleGrant}
           onReplayLast={handleReplayLast}
-          onHide={(rawName) => setDevHidden(rawName, true)}
+          onHide={handleHide}
         />
 
         <HiddenDevs
@@ -206,7 +240,7 @@ export function App() {
           listened={prefs.listened}
           unheardCount={unheardEntries.length}
           onPlay={handlePlayEntry}
-          onClear={() => clearFiles(visibleReplays.map((e) => e.file))}
+          onClear={handleClear}
           onPlayNewestUnheard={handlePlayNewestUnheard}
         />
       </main>

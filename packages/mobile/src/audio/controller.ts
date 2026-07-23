@@ -12,6 +12,15 @@
  *   - catch-up: sequential playback of a supplied unheard queue
  *   - markListened on completion / 80% progress (via prefs)
  *
+ * Concurrency model (hardened after the Sol review): EVERY `<audio>.src`
+ * change goes through `setSource()`, which bumps a monotonic `srcGen`. Any
+ * awaited `play()` continuation or delayed callback validates `srcGen` before
+ * acting, so a stale rejection can never mislabel a newer track or a stopped
+ * player. Live reconnects are serialized behind `reconnecting`. Grant pickups
+ * carry a `pickupSeq` token and a handled-key set, revalidated against the
+ * live frame after the enrichment await. A real retry budget (consecutive
+ * zero-progress + total reconnects + wall-clock) bounds live recovery.
+ *
  * NO React in here. Components read it through three tiny stores:
  *   - subscribe/getSnapshot  → PlayerSnapshot (the mini player)
  *   - subscribeNotice/getNotice → transient toast text
@@ -34,9 +43,16 @@ const SILENT_WAV =
 /** mp3_44100_128 is CBR 128 kbps → 16 kB/s; byte offset ≈ seconds × this. */
 const LIVE_BYTES_PER_SEC = 16000;
 const LIVE_STALL_MS = 5000;
-const LIVE_MAX_RETRIES = 5;
+/** Retry budget (Sol finding 6): consecutive zero-progress reconnects… */
+const LIVE_MAX_ZERO_PROGRESS = 5;
+/** …a hard total-reconnect ceiling regardless of intermittent progress… */
+const LIVE_MAX_TOTAL_RECONNECTS = 40;
+/** …and a wall-clock ceiling (> the 5-min live silence auto-off). */
+const LIVE_MAX_TOTAL_MS = 6 * 60_000;
 const HANDOFF_TIMEOUT_MS = 30000;
 const TICK_MS = 80;
+/** Keep the handled-phone-key set from growing without bound. */
+const HANDLED_KEYS_CAP = 64;
 
 export type PlayerStatus = "idle" | "loading" | "playing" | "paused" | "pending-tap";
 
@@ -101,7 +117,8 @@ export class AudioController {
   // playback state
   private status: PlayerStatus = "idle";
   private entry: ReplayEntry | null = null;
-  private loadGen = 0;
+  /** Bumped on EVERY src change/teardown; async continuations validate it. */
+  private srcGen = 0;
   private pendingSeekSec = 0;
   private audioUnlocked = false;
 
@@ -110,8 +127,14 @@ export class AudioController {
   private liveComplete = false;
   private liveBaseSec = 0;
   private liveNp: NowPlaying | null = null;
-  private liveRetries = 0;
   private liveProgressWall = 0;
+  /** Serializes reconnectLive — no overlapping segment commits / src swaps. */
+  private reconnecting = false;
+  /** Budget exhausted; only an explicit user retry resumes (finding 6). */
+  private liveStalled = false;
+  private zeroProgressReconnects = 0;
+  private totalReconnects = 0;
+  private liveStartWall = 0;
 
   // catch-up
   private catchUpMode = false;
@@ -120,6 +143,10 @@ export class AudioController {
   // snapshot-driven bookkeeping
   private lastFrame: PanelSnapshot | null = null;
   private lastNowPlayingKey: string | null = null;
+  /** Phone-frame keys already picked up — survives transient null frames. */
+  private readonly handledPhoneKeys = new Set<string>();
+  /** Invalidates an in-flight grant pickup (new pickup / manual play / stop). */
+  private pickupSeq = 0;
 
   // Mac↔phone handoff
   private handoffAwait: HandoffAwait | null = null;
@@ -133,6 +160,7 @@ export class AudioController {
   private readonly listDirtyListeners = new Set<() => void>();
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private watchdog: ReturnType<typeof setInterval> | null = null;
+  private disposed = false;
 
   constructor(audio?: HTMLAudioElement) {
     this.audio = audio ?? new Audio();
@@ -164,22 +192,47 @@ export class AudioController {
     return () => this.listDirtyListeners.delete(cb);
   }
 
+  /** App teardown (beforeunload / HMR): kill timers + audio, drop listeners. */
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
     if (this.tickTimer) clearInterval(this.tickTimer);
     if (this.watchdog) clearInterval(this.watchdog);
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
-    this.audio.pause();
-    this.audio.removeAttribute("src");
+    this.tickTimer = null;
+    this.watchdog = null;
+    this.handoffTimer = null;
+    this.entry = null;
+    this.setSource(null); // bumps srcGen → any pending continuation is stale
     this.listeners.clear();
     this.noticeListeners.clear();
     this.listDirtyListeners.clear();
+  }
+
+  // --- the ONE source mutator ----------------------------------------------
+
+  /**
+   * The only place `<audio>.src` changes. Bumps `srcGen` so every awaited
+   * `play()` or delayed callback can detect it was superseded. Passing null
+   * tears the element down (Stop / dispose / track end).
+   */
+  private setSource(url: string | null): number {
+    this.audio.muted = false;
+    if (url === null) {
+      this.audio.pause();
+      this.audio.removeAttribute("src");
+      this.audio.load();
+    } else {
+      this.audio.src = url;
+    }
+    return ++this.srcGen;
   }
 
   // --- priming -------------------------------------------------------------
 
   /** Unlock <audio> inside a user gesture so later SSE-driven play() works. */
   prime(): void {
-    if (this.audioUnlocked) return;
+    if (this.audioUnlocked || this.disposed) return;
     // A loaded track (playing OR paused) means the element already played real
     // audio once — it is unlocked; replacing its src with the silent primer
     // would clobber the clip. Only prime a truly idle element, so the primer's
@@ -194,11 +247,14 @@ export class AudioController {
       const p = this.audio.play();
       if (p && typeof p.then === "function") {
         p.then(() => {
-          this.audio.pause();
-          this.audio.muted = false;
           this.audioUnlocked = true;
+          // If a real track started during priming, DON'T pause/mute it.
+          if (!this.entry) {
+            this.audio.pause();
+            this.audio.muted = false;
+          }
         }).catch(() => {
-          this.audio.muted = false;
+          if (!this.entry) this.audio.muted = false;
         });
       }
     } catch {
@@ -219,34 +275,30 @@ export class AudioController {
       this.notify("Mac is speaking — stop it first");
       return { ok: false, reason: "mac-live" };
     }
-    if (!opts.fromCatchUp) {
-      this.catchUpMode = false;
-      this.catchUpQueue = [];
-    }
+    // A manual/explicit play supersedes any in-flight grant pickup.
+    this.pickupSeq++;
+    if (!opts.fromCatchUp) this.cancelCatchUp();
     this.entry = entry;
     this.status = "loading";
     this.liveMode = live;
     this.liveComplete = false;
     this.liveBaseSec = 0;
-    this.liveRetries = 0;
     this.liveNp = live ? (opts.np ?? null) : null;
+    this.resetLiveBudget();
     this.pendingSeekSec =
       Number.isFinite(opts.seekSec) && (opts.seekSec ?? 0) > 0 ? (opts.seekSec as number) : 0;
-    const gen = ++this.loadGen;
-    this.audio.muted = false;
     const file = encodeURIComponent(entry.file);
-    this.audio.src = live
-      ? `/live-audio/${file}?v=${Date.now()}`
-      : `/replay-audio/${file}`;
+    const gen = this.setSource(
+      live ? `/live-audio/${file}?v=${Date.now()}` : `/replay-audio/${file}`,
+    );
     this.applySpeed();
     this.emit();
     try {
       await this.audio.play();
     } catch {
-      // Autoplay rejected — but only if this is still the CURRENT load. A rapid
-      // track switch aborts the old play() (AbortError) and must not mislabel
-      // the new track.
-      if (gen === this.loadGen) {
+      // Autoplay rejected — but only if this src is still current. A rapid
+      // track switch / Stop advanced srcGen and must not be mislabeled.
+      if (gen === this.srcGen) {
         this.status = "pending-tap";
         this.notify("Ready — tap to play");
         this.emit();
@@ -267,18 +319,38 @@ export class AudioController {
 
   async resume(): Promise<void> {
     if (!this.entry) return;
+    // Never run phone audio on top of the Mac (finding 4).
+    if (this.isMacLive()) {
+      this.notify("Mac is speaking — stop it first");
+      return;
+    }
     this.prime();
+    // Live stream that finalized while paused → resume via the seekable static
+    // file at the exact position (legacy transition), not the stale live URL.
+    if (this.liveMode && this.liveComplete) {
+      await this.switchLiveToStatic(this.liveBaseSec + (this.audio.currentTime || 0));
+      return;
+    }
+    // Budget-exhausted live stream: an explicit tap is the sanctioned retry.
+    if (this.liveMode && this.liveStalled) {
+      this.resetLiveBudget();
+      await this.reconnectLive();
+      return;
+    }
+    const gen = this.srcGen;
     try {
       await this.audio.play();
     } catch {
-      this.status = "pending-tap";
-      this.emit();
+      if (gen === this.srcGen) {
+        this.status = "pending-tap";
+        this.emit();
+      }
     }
   }
 
   /** × / close: stop phone playback, clear the strip. */
   stop(): void {
-    this.stopCatchUp();
+    this.cancelCatchUp();
     this.clear();
   }
 
@@ -313,11 +385,39 @@ export class AudioController {
     return this.play(next, { fromCatchUp: true });
   }
 
+  /** Menu "Stop catch-up": halt the run AND stop the current catch-up clip. */
   stopCatchUp(): void {
     if (!this.catchUpMode && this.catchUpQueue.length === 0) return;
+    this.cancelCatchUp();
+    this.clear();
+  }
+
+  /**
+   * Files that just became unavailable (cleared, or their dev hidden). Drop
+   * them from the catch-up queue and stop the current clip if it was one of
+   * them — so cleared/hidden audio never keeps playing (finding 5).
+   */
+  onFilesRemoved(files: readonly string[]): void {
+    if (!files.length) return;
+    const set = new Set(files);
+    const before = this.catchUpQueue.length;
+    if (before) this.catchUpQueue = this.catchUpQueue.filter((e) => !set.has(e.file));
+    if (this.entry?.file && set.has(this.entry.file)) {
+      this.cancelCatchUp();
+      this.clear();
+      return;
+    }
+    if (this.catchUpMode && this.catchUpQueue.length === 0) {
+      this.cancelCatchUp();
+      this.emit();
+      return;
+    }
+    if (this.catchUpQueue.length !== before) this.emit();
+  }
+
+  private cancelCatchUp(): void {
     this.catchUpMode = false;
     this.catchUpQueue = [];
-    this.emit();
   }
 
   // --- snapshot integration (called every frame) ---------------------------
@@ -335,21 +435,40 @@ export class AudioController {
       this.lastNowPlayingKey = key;
       // A new frame usually means a new replay entry appeared on disk.
       this.markListDirty();
-      // Grant-to-phone: the daemon routed this exact file to the phone.
-      if (isNowPlayingActive(np) && np.output === "phone" && np.replayFile) {
-        void this.maybePlayGrantToPhone(np);
-      }
     } else if (!key) {
       this.lastNowPlayingKey = null;
+    }
+
+    // Grant-to-phone pickup, deduped by frame key so a transient null → same
+    // frame does NOT re-arm and restart the clip (finding 1).
+    if (key && isNowPlayingActive(np) && np.output === "phone" && np.replayFile) {
+      if (!this.handledPhoneKeys.has(key)) {
+        this.handledPhoneKeys.add(key);
+        this.pruneHandledKeys();
+        void this.maybePlayGrantToPhone(np, key);
+      }
+    }
+  }
+
+  private pruneHandledKeys(): void {
+    if (this.handledPhoneKeys.size <= HANDLED_KEYS_CAP) return;
+    // Sets iterate in insertion order — drop the oldest.
+    const drop = this.handledPhoneKeys.size - HANDLED_KEYS_CAP;
+    let i = 0;
+    for (const k of this.handledPhoneKeys) {
+      if (i++ >= drop) break;
+      this.handledPhoneKeys.delete(k);
     }
   }
 
   // --- grant-to-phone ------------------------------------------------------
 
-  private async maybePlayGrantToPhone(np: NowPlaying): Promise<void> {
+  private async maybePlayGrantToPhone(np: NowPlaying, key: string): Promise<void> {
     const file = np.replayFile;
     if (!file) return;
-    if (this.entry?.file === file && !this.isPhoneIdle()) return; // already on it
+    // Already loaded this exact file (even if paused) — never restart it.
+    if (this.entry?.file === file) return;
+    const token = ++this.pickupSeq;
     const live = np.synthesisComplete === false;
     let entry: ReplayEntry | null = null;
     // Enriching from the catalog is pointless while live (the .mp3 isn't on
@@ -362,8 +481,23 @@ export class AudioController {
         /* fall through to synthesized entry */
       }
     }
-    if (!entry) entry = this.entryFromFrame(file, np);
-    await this.play(entry, { gated: false, live, np });
+    // Revalidate AFTER the await: this pickup must still be current AND the
+    // same frame must still stand (finding 1). Otherwise a stale enrichment
+    // would replace a newer clip / a manual play / a Stop.
+    if (token !== this.pickupSeq) return;
+    const cur = this.lastFrame?.nowPlaying;
+    if (
+      !cur ||
+      nowPlayingKey(cur) !== key ||
+      !isNowPlayingActive(cur) ||
+      cur.output !== "phone" ||
+      cur.replayFile !== file
+    ) {
+      return;
+    }
+    if (this.entry?.file === file) return; // became loaded during the await
+    if (!entry) entry = this.entryFromFrame(file, cur);
+    await this.play(entry, { gated: false, live, np: cur });
   }
 
   private entryFromFrame(file: string, np: NowPlaying): ReplayEntry {
@@ -397,52 +531,92 @@ export class AudioController {
   private async switchLiveToStatic(seekSec: number): Promise<void> {
     if (!this.entry?.file) return;
     this.liveMode = false;
+    this.liveStalled = false;
     this.liveBaseSec = 0;
     this.pendingSeekSec = Math.max(0, seekSec);
-    this.audio.src = `/replay-audio/${encodeURIComponent(this.entry.file)}`;
+    const gen = this.setSource(`/replay-audio/${encodeURIComponent(this.entry.file)}`);
     this.applySpeed();
     try {
       await this.audio.play();
     } catch {
-      this.status = "pending-tap";
-      this.notify("Tap to play");
-      this.emit();
+      if (gen === this.srcGen) {
+        this.status = "pending-tap";
+        this.notify("Tap to play");
+        this.emit();
+      }
     }
   }
 
-  /** Live stream hit the growing edge — reconnect from our byte offset. */
+  /**
+   * Live stream hit the growing edge — reconnect from our byte offset.
+   * Serialized behind `reconnecting` so ended + delayed-error + watchdog can't
+   * double-commit the consumed segment or race competing src swaps (finding 2).
+   */
   private async reconnectLive(): Promise<void> {
+    if (this.reconnecting || this.disposed) return;
     if (!this.entry?.file || !this.liveMode) return;
-    this.liveProgressWall = Date.now();
-    this.liveBaseSec += this.audio.currentTime || 0;
-    if (this.liveComplete) {
-      await this.switchLiveToStatic(this.liveBaseSec);
-      return;
-    }
-    if (this.liveRetries++ >= LIVE_MAX_RETRIES) {
-      // No forward progress across several reconnects — stop looping; the
-      // finalize frame (or a manual tap) recovers playback.
-      this.status = this.audio.paused ? "paused" : this.status;
-      this.emit();
-      return;
-    }
-    const fromBytes = Math.floor(this.liveBaseSec * LIVE_BYTES_PER_SEC);
-    this.audio.src = `/live-audio/${encodeURIComponent(this.entry.file)}?from=${fromBytes}&v=${Date.now()}`;
-    this.applySpeed();
+    this.reconnecting = true;
     try {
-      await this.audio.play();
-    } catch {
-      this.status = "pending-tap";
-      this.notify("Tap to keep playing");
-      this.emit();
+      this.liveProgressWall = Date.now();
+      // How far the just-ended segment played. Only COMMIT it when we actually
+      // start a new stream (or switch to static) — the stall path leaves the
+      // element untouched so a user retry re-commits from the same anchor
+      // exactly once (no double-count on resume).
+      const consumed = this.audio.currentTime || 0;
+      if (this.liveComplete) {
+        this.liveBaseSec += consumed;
+        await this.switchLiveToStatic(this.liveBaseSec);
+        return;
+      }
+      if (!this.canReconnect()) {
+        // Budget exhausted — stop looping; an explicit tap resumes (finding 6).
+        this.liveStalled = true;
+        this.status = "pending-tap";
+        this.notify("Tap to keep playing");
+        this.emit();
+        return;
+      }
+      this.liveBaseSec += consumed;
+      this.totalReconnects++;
+      this.zeroProgressReconnects++;
+      const fromBytes = Math.floor(this.liveBaseSec * LIVE_BYTES_PER_SEC);
+      const gen = this.setSource(
+        `/live-audio/${encodeURIComponent(this.entry.file)}?from=${fromBytes}&v=${Date.now()}`,
+      );
+      this.applySpeed();
+      try {
+        await this.audio.play();
+      } catch {
+        if (gen === this.srcGen) {
+          this.status = "pending-tap";
+          this.notify("Tap to keep playing");
+          this.emit();
+        }
+      }
+    } finally {
+      this.reconnecting = false;
     }
+  }
+
+  private canReconnect(): boolean {
+    return (
+      this.zeroProgressReconnects < LIVE_MAX_ZERO_PROGRESS &&
+      this.totalReconnects < LIVE_MAX_TOTAL_RECONNECTS &&
+      Date.now() - this.liveStartWall < LIVE_MAX_TOTAL_MS
+    );
+  }
+
+  private resetLiveBudget(): void {
+    this.zeroProgressReconnects = 0;
+    this.totalReconnects = 0;
+    this.liveStalled = false;
+    this.liveStartWall = Date.now();
   }
 
   private checkLiveStall(): void {
-    if (!this.liveMode || this.liveComplete || this.audio.paused) return;
-    if (this.status === "pending-tap") return;
+    if (!this.liveMode || this.liveComplete || this.liveStalled || this.reconnecting) return;
+    if (this.audio.paused || this.status === "pending-tap") return;
     if (this.liveProgressWall && Date.now() - this.liveProgressWall > LIVE_STALL_MS) {
-      this.liveProgressWall = Date.now();
       void this.reconnectLive();
     }
   }
@@ -537,10 +711,6 @@ export class AudioController {
     return isNowPlayingActive(np) && np.output !== "phone";
   }
 
-  private isPhoneIdle(): boolean {
-    return !this.audio.src || this.audio.paused || this.audio.ended;
-  }
-
   // --- speed ---------------------------------------------------------------
 
   /**
@@ -583,10 +753,16 @@ export class AudioController {
     });
     this.audio.addEventListener("error", () => {
       if (this.liveMode && !this.liveComplete && this.entry?.file) {
-        const gen = this.loadGen;
+        // Guard the delayed retry against src changes / Stop (finding 3).
+        const gen = this.srcGen;
         const file = this.entry.file;
         setTimeout(() => {
-          if (gen === this.loadGen && this.liveMode && !this.liveComplete && this.entry?.file === file) {
+          if (
+            gen === this.srcGen &&
+            this.liveMode &&
+            !this.liveComplete &&
+            this.entry?.file === file
+          ) {
             void this.reconnectLive();
           }
         }, 500);
@@ -600,7 +776,9 @@ export class AudioController {
       if (!this.entry) return; // silent-primer event
       if (this.liveMode) {
         this.liveProgressWall = Date.now();
-        if (this.audio.currentTime > 1) this.liveRetries = 0;
+        // Forward progress clears the consecutive-zero-progress counter, but
+        // NOT the hard total/time budget (finding 6).
+        if (this.audio.currentTime > 1) this.zeroProgressReconnects = 0;
       }
       this.checkListenedProgress();
       // The 80ms tick drives karaoke; timeupdate (~4Hz) only bookkeeps, but
@@ -640,8 +818,7 @@ export class AudioController {
         return;
       }
     }
-    this.catchUpMode = false;
-    this.catchUpQueue = [];
+    this.cancelCatchUp();
     this.clear(); // strip hides when nothing plays (§B1)
   }
 
@@ -680,16 +857,15 @@ export class AudioController {
   // --- teardown / stores ---------------------------------------------------
 
   private clear(): void {
-    this.audio.pause();
-    this.audio.removeAttribute("src");
-    this.audio.load();
+    this.pickupSeq++; // invalidate any in-flight grant pickup
     this.entry = null;
     this.status = "idle";
     this.liveMode = false;
     this.liveComplete = false;
     this.liveBaseSec = 0;
     this.liveNp = null;
-    this.liveRetries = 0;
+    this.liveStalled = false;
+    this.setSource(null); // pause event now sees entry === null → ignored
     this.stopTick();
     this.emit();
     this.markListDirty();
