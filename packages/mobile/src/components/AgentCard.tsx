@@ -8,8 +8,10 @@
  * (selectGrantPending) it shows a disabled "Working…" state and ignores taps
  * — the single-dispatch guard lives in RoomClient.grant, this just reflects it.
  *
- * DEFERRED (chunk D/E, omitted not disabled): Replay last (idle audio), Chat,
- * Reply. Only the grant path and Hide exist here.
+ * Idle agents get "Replay last" (chunk D) → plays that agent's newest cached
+ * clip through the AudioController (App resolves the entry + primes audio).
+ *
+ * DEFERRED (chunk E, omitted not disabled): Chat, Reply.
  */
 import type { AgentView, NowPlaying } from "@room/protocol";
 import { AgentChips, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
@@ -25,6 +27,7 @@ interface AgentCardProps {
   output: OutputDevice;
   grantPending: boolean;
   onGrant: () => void;
+  onReplayLast: () => void;
   onHide: () => void;
 }
 
@@ -35,6 +38,7 @@ export function AgentCard({
   output,
   grantPending,
   onGrant,
+  onReplayLast,
   onHide,
 }: AgentCardProps) {
   const displayName = agent.label || agent.name;
@@ -101,22 +105,45 @@ export function AgentCard({
 
       {raised ? (
         <div className="mt-3">
+          {/*
+            Reviewed polish (live verification round): the old fully-saturated
+            #3ecf8e fill dominated the room. Now a darker green SURFACE (accent
+            mixed lightly over the card) with accent icon/text/ring/border.
+          */}
           <button
             type="button"
             disabled={grantPending}
             onClick={onGrant}
-            className="flex w-full flex-col items-center rounded-xl bg-accent px-4 py-2.5 font-semibold text-bg transition-colors hover:bg-accent/90 disabled:cursor-default disabled:bg-surface-strong disabled:text-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            style={
+              grantPending
+                ? undefined
+                : {
+                    backgroundColor: "color-mix(in srgb, var(--room-accent) 18%, var(--room-surface))",
+                    borderColor: "color-mix(in srgb, var(--room-accent) 40%, transparent)",
+                  }
+            }
+            className="flex w-full flex-col items-center rounded-xl border border-transparent px-4 py-2.5 font-semibold text-accent transition-colors hover:brightness-110 disabled:cursor-default disabled:border-transparent disabled:bg-surface-strong disabled:text-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {grantPending ? (
-              <span className="text-sm">Working…</span>
+              <span className="text-sm text-fg-muted">Working…</span>
             ) : (
               <>
                 <span className="flex items-center gap-2 text-sm">
                   <span aria-hidden="true">▶</span> Read update
                 </span>
-                <span className="text-[11px] font-medium opacity-80">{grantSub}</span>
+                <span className="text-[11px] font-medium text-accent/70">{grantSub}</span>
               </>
             )}
+          </button>
+        </div>
+      ) : !speaking ? (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={onReplayLast}
+            className="w-full rounded-xl border border-line-strong px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Replay last
           </button>
         </div>
       ) : null}

@@ -532,3 +532,66 @@ Judgment calls:
    not grown here. Hidden-devs key/seed (`mobile_hidden_dev_names_v1`,
    `["job-search-2026"]`) and output key (`mobile_output_device`)
    preserved byte-for-byte for cutover continuity.
+
+## Phase 5 chunk D (2026-07-22 night, fresh session)
+
+Player + replay history + phone-audio adapter (`packages/mobile/src/**`,
+additive only). Zero synthesis; no daemon, scripts, mobile.html, or panel
+touched. The whole phone audio engine from mobile.html (~1576–3300) ports
+behind ONE `src/audio/controller.ts` adapter (framework-free, owns the
+`<audio>`, abortable); React talks to it via `src/audio/react.ts` hooks.
+Judgment calls:
+
+1. **Speed multiplier is STATIC-only; live streams run at the base rate.**
+   `applySpeed()` sets `playbackRate = live ? base : base × speedMult`.
+   mobile.html's `applySpeed` applied the multiplier in live mode too
+   (its own comment even defended it), but its state comment says
+   "phone static playback only (live streams can't sustain >1×)" and the
+   phase-5 build directive says live = full rate. I honored the stated
+   contract (a corrected divergence from the shipped code, not a copy).
+   The speed control is hidden during live anyway, so the only behavioral
+   change is: a live stream started while `speedMult>1` now plays at 1×
+   base instead of racing the edge. Flag if the owner preferred the old
+   racing behavior.
+2. **A track ending hides the strip (entry cleared) instead of lingering
+   as "last spoken."** mobile.html kept `phoneMeta` after end for the
+   expanded player; §B1's contract is "strip hidden when nothing plays,"
+   so on natural end (no catch-up continuation) the controller clears and
+   the docked mini player disappears. Re-tapping the row in the history
+   replays it (fresh `play()`).
+3. **Mac↔phone handoff machinery is ported but dormant.** The task lists
+   `checkMacToPhoneHandoff` / `playHandoffFile` / `beginMacToPhone` /
+   `beginPhoneToMac` / `cancelHandoff` as controller responsibilities, so
+   they live in the adapter and `onSnapshot` runs the *detection* half
+   every frame. The *initiator* UI (a mac-live transport / "move to this
+   phone" button) is chunk E — `beginMacToPhone`/`beginPhoneToMac` have no
+   caller yet, so handoff can't be exercised until E wires the buttons.
+   Clean seam, no stub.
+4. **Docked mini player KEEPS a speed pill; the in-chat playback strip
+   (§B1) will not.** These are two different surfaces: the room-screen
+   docked player (this chunk, task item 3 explicitly lists speed) vs. the
+   chat-view playback strip (§B1, chunk E, explicitly no speed pill). No
+   conflict — §B1's no-scrub/no-timestamp/hidden-when-idle principles are
+   applied to the docked player; the speed control is the one addition.
+5. **A minimal `Toast` surfaces controller notices** ("Mac is speaking —
+   stop it first", "No replays yet for X", "Ready — tap to play"). The SPA
+   had no toast infra; rather than pull in the `@room/ui` sonner/Radix
+   toast (provider + portal for a handful of strings), the controller
+   carries a tiny `notice` store and `Toast.tsx` renders it. Swap to the
+   shared toast in chunk E if the call view needs richer notifications.
+6. **Karaoke stayed mobile-local** (`src/audio/karaoke.ts`, the pure
+   half of `karaokeFromAlignment`) rather than extracted to `@room/ui`.
+   The design allowed either ("shared `KaraokeLine` if extracted, else
+   mobile-local"); only mobile consumes it today, so extraction would be
+   speculative. Trivial to promote when the panel's stage layer wants it.
+7. **The replay catalog is fetched twice** (App's history list + the
+   controller's own enrichment fetch inside grant-pickup / handoff). Kept
+   the controller self-contained and delivery-neutral (it doesn't read
+   App's React state) at the cost of a second cheap `GET /replay-list`.
+   A shared reactive replay store is the obvious consolidation if the
+   double-fetch ever matters; it does not for a personal LAN tool.
+8. **Grant button recolored per the live-review polish note:** the
+   fully-saturated `#3ecf8e` fill became a darker green *surface*
+   (`color-mix(accent 18%, surface)` via inline style, since the mix
+   needs a runtime CSS var) with accent icon/text/border/focus-ring. The
+   disabled "Working…" state keeps the neutral `surface-strong`.

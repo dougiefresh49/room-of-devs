@@ -13,6 +13,7 @@ interface RoomGridProps {
   output: OutputDevice;
   isGrantPending: (sessionId: string) => boolean;
   onGrant: (sessionId: string) => void;
+  onReplayLast: (agent: AgentView) => void;
   onHide: (rawName: string) => void;
 }
 
@@ -23,6 +24,7 @@ export function RoomGrid({
   output,
   isGrantPending,
   onGrant,
+  onReplayLast,
   onHide,
 }: RoomGridProps) {
   if (agents.length === 0) {
@@ -39,6 +41,7 @@ export function RoomGrid({
           output={output}
           grantPending={isGrantPending(agent.sessionId)}
           onGrant={() => onGrant(agent.sessionId)}
+          onReplayLast={() => onReplayLast(agent)}
           onHide={() => onHide(agent.name)}
         />
       ))}

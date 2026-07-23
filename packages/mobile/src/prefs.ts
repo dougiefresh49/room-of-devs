@@ -10,9 +10,14 @@
  *   - mobile_flag_skip_perms      "1" | "0"              (default "1" / true)
  *   - mobile_flag_remote          "1" | "0"              (default "1" / true)
  *   - mobile_flag_model           "" | fable|opus|sonnet|haiku (default "")
+ *   - mobile_speed_mult           number in SPEED_STEPS  (default 1)
+ *   - mobile_listened_files       JSON string[] of replay filenames heard
+ *   - mobile_cleared_files        JSON string[] of replay filenames cleared
  *
  * Daemon-side migration of hidden-devs/output is a deliberate post-cutover
- * follow-up (owner decision #7); until then they stay device-local.
+ * follow-up (owner decision #7); until then they stay device-local. Speed,
+ * listened, and cleared are chunk-D additions consumed by the audio
+ * controller + replay history; same keys so history survives cutover.
  */
 
 export type OutputDevice = "mac" | "phone";
@@ -23,9 +28,15 @@ const HIDDEN_DEVS_KEY = "mobile_hidden_dev_names_v1";
 const FLAG_SKIP_PERMS = "mobile_flag_skip_perms";
 const FLAG_REMOTE = "mobile_flag_remote";
 const FLAG_MODEL = "mobile_flag_model";
+const SPEED_KEY = "mobile_speed_mult";
+const LISTENED_KEY = "mobile_listened_files";
+const CLEARED_KEY = "mobile_cleared_files";
 
 const INITIAL_HIDDEN_DEV_NAMES = ["job-search-2026"];
 const LAUNCH_MODELS: readonly LaunchModel[] = ["", "fable", "opus", "sonnet", "haiku"];
+
+/** Phone static-playback speed cycle (mobile.html SPEED_STEPS, byte-for-byte). */
+export const SPEED_STEPS: readonly number[] = [1, 1.25, 1.5, 1.75, 2];
 
 function read(key: string): string | null {
   try {
@@ -50,13 +61,25 @@ interface PrefsSnapshot {
   output: OutputDevice;
   /** Sorted list of hidden agent RAW names (agent.name, not label). */
   hiddenNames: readonly string[];
+  /** Phone static-playback speed multiplier (one of SPEED_STEPS). */
+  speed: number;
+  /** Replay filenames the user has heard (checkmark / unheard-count source). */
+  listened: ReadonlySet<string>;
+  /** Replay filenames hidden from the history list ("Clear messages"). */
+  cleared: ReadonlySet<string>;
 }
 
 let snapshot: PrefsSnapshot = loadSnapshot();
 const listeners = new Set<() => void>();
 
 function loadSnapshot(): PrefsSnapshot {
-  return { output: loadOutput(), hiddenNames: loadHiddenNames() };
+  return {
+    output: loadOutput(),
+    hiddenNames: loadHiddenNames(),
+    speed: loadSpeed(),
+    listened: loadStrSet(LISTENED_KEY),
+    cleared: loadStrSet(CLEARED_KEY),
+  };
 }
 
 function emit(next: PrefsSnapshot): void {
@@ -155,6 +178,104 @@ export function getModel(): LaunchModel {
 
 export function setModel(value: LaunchModel): void {
   write(FLAG_MODEL, value);
+}
+
+// --- speed (reactive; phone static playback only) --------------------------
+
+function loadSpeed(): number {
+  const value = parseFloat(read(SPEED_KEY) ?? "1");
+  return SPEED_STEPS.includes(value) ? value : 1;
+}
+
+export function setSpeed(value: number): void {
+  const speed = SPEED_STEPS.includes(value) ? value : 1;
+  if (speed === snapshot.speed) return;
+  write(SPEED_KEY, String(speed));
+  emit({ ...snapshot, speed });
+}
+
+/** Advance to the next speed step (wraps); returns the new value. */
+export function cycleSpeed(): number {
+  const i = SPEED_STEPS.indexOf(snapshot.speed);
+  const next = SPEED_STEPS[(i + 1) % SPEED_STEPS.length];
+  setSpeed(next);
+  return next;
+}
+
+export function getSpeed(): number {
+  return snapshot.speed;
+}
+
+// --- listened / cleared string sets ----------------------------------------
+
+function loadStrSet(key: string): ReadonlySet<string> {
+  try {
+    const raw = read(key);
+    const arr: unknown = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveStrSet(key: string, set: ReadonlySet<string>): void {
+  write(key, JSON.stringify([...set]));
+}
+
+export function isListened(file: string): boolean {
+  return snapshot.listened.has(file);
+}
+
+export function markListened(file: string): void {
+  if (!file || snapshot.listened.has(file)) return;
+  const listened = new Set(snapshot.listened);
+  listened.add(file);
+  saveStrSet(LISTENED_KEY, listened);
+  emit({ ...snapshot, listened });
+}
+
+export function isCleared(file: string): boolean {
+  return snapshot.cleared.has(file);
+}
+
+/** "Clear messages": mark every given file heard AND cleared (mobile.html). */
+export function clearFiles(files: readonly string[]): void {
+  let listenedChanged = false;
+  let clearedChanged = false;
+  const listened = new Set(snapshot.listened);
+  const cleared = new Set(snapshot.cleared);
+  for (const f of files) {
+    if (!f) continue;
+    if (!listened.has(f)) {
+      listened.add(f);
+      listenedChanged = true;
+    }
+    if (!cleared.has(f)) {
+      cleared.add(f);
+      clearedChanged = true;
+    }
+  }
+  if (!listenedChanged && !clearedChanged) return;
+  if (listenedChanged) saveStrSet(LISTENED_KEY, listened);
+  if (clearedChanged) saveStrSet(CLEARED_KEY, cleared);
+  emit({ ...snapshot, listened, cleared });
+}
+
+/**
+ * Drop listened/cleared entries whose files are no longer in the catalog —
+ * mobile.html's pruneAgainst, run whenever the replay list refreshes so the
+ * sets don't grow unbounded across the app's lifetime.
+ */
+export function pruneToFiles(files: readonly string[]): void {
+  const present = new Set(files);
+  const listened = new Set([...snapshot.listened].filter((f) => present.has(f)));
+  const cleared = new Set([...snapshot.cleared].filter((f) => present.has(f)));
+  const listenedChanged = listened.size !== snapshot.listened.size;
+  const clearedChanged = cleared.size !== snapshot.cleared.size;
+  if (!listenedChanged && !clearedChanged) return;
+  if (listenedChanged) saveStrSet(LISTENED_KEY, listened);
+  if (clearedChanged) saveStrSet(CLEARED_KEY, cleared);
+  emit({ ...snapshot, listened, cleared });
 }
 
 /** The spawn/resume flag block, exactly as mobile.html's launchFlags(). */

@@ -13,8 +13,12 @@ interface HeaderProps {
   connected: boolean;
   output: OutputDevice;
   held: boolean;
+  catchUp: boolean;
+  unheardCount: number;
   onSetOutput: (device: OutputDevice) => void;
   onToggleHold: () => void;
+  onCatchUp: () => void;
+  onStopCatchUp: () => void;
   onOpenPicker: () => void;
 }
 
@@ -22,8 +26,12 @@ export function Header({
   connected,
   output,
   held,
+  catchUp,
+  unheardCount,
   onSetOutput,
   onToggleHold,
+  onCatchUp,
+  onStopCatchUp,
   onOpenPicker,
 }: HeaderProps) {
   return (
@@ -50,7 +58,14 @@ export function Header({
         <IconPlus />
       </button>
 
-      <OverflowMenu held={held} onToggleHold={onToggleHold} />
+      <OverflowMenu
+        held={held}
+        onToggleHold={onToggleHold}
+        catchUp={catchUp}
+        unheardCount={unheardCount}
+        onCatchUp={onCatchUp}
+        onStopCatchUp={onStopCatchUp}
+      />
     </header>
   );
 }

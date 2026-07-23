@@ -1,13 +1,11 @@
 /**
- * Header overflow (⋮) menu. Hold room is fully wired here (toggle → daemon
- * hold_room, label reflects snapshot.roomHeld).
+ * Header overflow (⋮) menu. Hold room + Catch up.
  *
- * "Catch up" is DEFERRED: in mobile.html it posts nothing to the server — it
- * drives client-side playback of unheard replay clips, which belongs to the
- * chunk-D audio/replay layer that does not exist yet. Per the phase rule
- * (actions whose target doesn't exist are omitted, not disabled), it is left
- * out here; the menu is the seam where chunk D re-adds it. Logged in
- * decisions-overnight.md.
+ * Catch up (chunk D, re-added per its deferral note): client-side sequential
+ * playback of unheard replay clips — no server call. Shown as "Catch up (N
+ * unheard)" when there is unheard audio, "Stop catch-up" while a run is in
+ * progress; hidden otherwise. App computes the unheard queue and drives the
+ * AudioController.
  */
 import {
   DropdownMenu,
@@ -20,9 +18,20 @@ import { IconMore } from "../icons.js";
 interface OverflowMenuProps {
   held: boolean;
   onToggleHold: () => void;
+  catchUp: boolean;
+  unheardCount: number;
+  onCatchUp: () => void;
+  onStopCatchUp: () => void;
 }
 
-export function OverflowMenu({ held, onToggleHold }: OverflowMenuProps) {
+export function OverflowMenu({
+  held,
+  onToggleHold,
+  catchUp,
+  unheardCount,
+  onCatchUp,
+  onStopCatchUp,
+}: OverflowMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -35,6 +44,13 @@ export function OverflowMenu({ held, onToggleHold }: OverflowMenuProps) {
         <DropdownMenuItem onSelect={onToggleHold}>
           {held ? "Release room" : "Hold room"}
         </DropdownMenuItem>
+        {catchUp ? (
+          <DropdownMenuItem onSelect={onStopCatchUp}>Stop catch-up</DropdownMenuItem>
+        ) : unheardCount > 0 ? (
+          <DropdownMenuItem onSelect={onCatchUp}>
+            Catch up ({unheardCount} unheard)
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
