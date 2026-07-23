@@ -759,3 +759,33 @@ precedence, and the Mac-offset math.
 6. **MINOR — render-phase setState in MiniPlayer.** Replaced the in-render
    `setExpanded(false)` with an effect keyed on the boolean `hasDock`, so
    it fires only on the has→hasn't edge.
+
+### Chunk E — codex live round D2 (fixed in-branch)
+
+The codex live round PASSED the dispatch guards (5 rapid Mac taps → exactly
+ONE `play_replay` POST at offset 11.386; clean stop; no stale status nodes;
+real-session thread; SSE removal confirmed) but found one High defect.
+
+**D2 — Mac ownership never synchronized into the dock after phone→Mac.**
+Root cause (verified by reading `tts-server/src/audio.ts` `startPlayReplay`
+→ `beginSessionPlayback`/`writeNowPlaying`, no `phone` param): the daemon's
+Mac replay frame is a normal now-playing record (`output` ABSENT, `kind`
+undefined/"update", `replayFile` stamped via CAS) — my `isActiveMacClip`
+predicate already matches it. The real bug was on the CLIENT: `beginPhoneToMac`
+paused the local `<audio>` but KEPT `this.entry`, so `deriveDock`'s phone
+branch (`status !== "idle" && entry`) kept winning over the incoming Mac
+frame — dock stayed "on this phone", "Playing on Mac" never rendered, and
+"This phone" was a no-op (it's the active source in the phone dock).
+
+Fix (mobile only, matches legacy `clearLocalForHandoff`): the controller
+now ARMS a `phoneToMacHandoff { sessionId, file }` watch on the hop and,
+when the Mac's own now-playing frame arrives via SSE (matched by session id
+OR the exact `replayFile`), releases the stale local paused entry
+(`clear()`), so `deriveDock` falls through to the Mac frame → dock/PlayerSheet
+flip to Mac ownership and "This phone" (beginMacToPhone) becomes reachable.
+The watch is armed BEFORE the POST (the frame can beat the HTTP reply), kept
+on success (local stays a recovery source until the frame settles it),
+disarmed on refusal ("Mac is busy" — local kept so the phone can resume),
+on a 12s timeout, and on any local teardown/new play. No daemon change was
+needed — the frame shape was already correct; only client ownership
+handoff was missing.
