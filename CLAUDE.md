@@ -32,7 +32,7 @@ long-lived — maintainability matters now (see Refactor status).
   Fully React since Phase 4: component tree in `src/app/` over external
   stores (`view-state`, `server-data`, `ui-state` + the shared
   room-client store); all Tauri calls behind `src/platform/` (components
-  never import @tauri-apps/*). TWO windows, one bundle, two JS realms:
+  never import @tauri-apps/\*). TWO windows, one bundle, two JS realms:
   `main` = normal activating NSWindow with the standard titlebar; `dock`
   = NSPanel (float level, non-activating, all-Spaces) converted once at
   startup. Rust (`lib.rs`) is the mode authority — `set_room_mode` swaps
@@ -43,8 +43,17 @@ long-lived — maintainability matters now (see Refactor status).
   portaled popover content). The cross-realm grant belt
   (`grant-guard.ts`, localStorage) prevents double-dispatch around mode
   switches; the daemon's claim markers stay the billing authority.
-- **Mobile room** (`tts-server/mobile.html`): single-file HTML/CSS/JS served
-  raw over LAN, token-gated (refactor target → componentized build).
+- **Mobile room** (`packages/mobile/`, `@room/mobile`): Vite + React 19 SPA
+  served token-gated at `/` (and `/app`) by mobile-http from the committed
+  `dist/` (owner policy: dist is committed, rebuilt with
+  `pnpm --filter @room/mobile build`). Same architecture rules as the
+  panel: RoomClient store (SseTransport, `source:"mobile"`), components
+  never fetch; audio lives in one adapter (`src/audio/controller.ts` —
+  prime/live-stream/handoff/speaker-gate; only a client whose device
+  toggle is "phone" auto-plays routed audio). The legacy single-file
+  `tts-server/mobile.html` is served at `/legacy` as rollback ONLY —
+  delete it (+ the route + its tts-server.sh cp) once the SPA has proven
+  out; it's also still a behavior reference for the Phase 6 audit.
 - **Glue** (`scripts/`): bash utilities + Claude Code hooks; SwiftBar plugin
   (`plugins/`) is the legacy menu-bar UI, still installed.
 - **State/IPC**: JSON + lock/pid files under `~/.cursor/tts/` — this is the
@@ -69,12 +78,17 @@ start|restart` syncs `tts-server/src/*.ts` + `mobile.html` from the repo
 before launching. So:
 
 - Edit files **in the repo**, never in `~/.cursor/tts/`.
-- TypeScript/mobile.html changes take effect after
+- TypeScript changes take effect after
   `~/.cursor/tts/scripts/tts-server.sh restart`. That sync also stages the
   shared wire contract `packages/protocol/src/` → installed `src/protocol/`
   (in the repo, `tts-server/src/protocol` is a symlink to it). The installed
   daemon must never resolve modules back into the repo workspace — protocol
   deps (valibot) are direct deps of tts-server/package.json for that reason.
+- Mobile SPA changes need `pnpm --filter @room/mobile build` FIRST (dist is
+  committed; the sync rsyncs `packages/mobile/dist/` → installed
+  `mobile-dist/` and is FATAL if the repo dist is missing), then the same
+  `tts-server.sh restart`. Editing `packages/mobile/src` without rebuilding
+  deploys nothing.
 - `scripts/*.sh`, hooks, or SwiftBar changes take effect after re-running
   `scripts/setup.sh`.
 - Panel changes need a rebuild (`pnpm tauri build --debug` in `panel/`,
@@ -151,15 +165,17 @@ cd panel && pnpm tauri dev                    # panel: ordinary component work (
 - No CI/test-suite theater, but changed behavior gets verified (see
   Verifying below) and type checks stay clean.
 
-## Refactor status (2026-07-21)
+## Refactor status (2026-07-23)
 
-Owner-mandated refactor pending: componentize both UIs with shared pieces,
-split the monoliths (mobile.html ~4.3k lines, panel/src/main.ts ~2.5k,
-server hotspots audio.ts / panel-ws.ts / mobile-http.ts), audit + delete
-legacy scripts/dead code, and update this file's layout/commands sections
-as the architecture changes. Context + constraints live in the session
-memory ("Refactor Mandate"). A mobile build step will replace the raw
-mobile.html sync — keep this doc in lockstep when that lands.
+Phases 0-5 SHIPPED: shared protocol/client/ui packages, server services +
+recovery, React panel (two windows), mobile Vite SPA cut over to `/`
+(legacy mobile.html at `/legacy`, rollback-only — see deletion note in
+Tech Stack). Remaining: Phase 6 legacy audit/deletion (script caller
+manifest first; PTT plumbing is NOT a deletion candidate), optional
+Phase 7 server splits. Context in session memory ("Refactor Mandate");
+judgment calls in docs/reviews/refactor-2026-07/decisions-overnight.md.
+Free live-mode regression tooling: tts-server/scripts/mock-live.ts +
+docs/testing-live-mode.md.
 
 ## General preferences
 
@@ -208,16 +224,16 @@ Rankings, higher = better. Cost reflects what we actually pay
 Intelligence is how hard a problem you can hand the model unsupervised.
 Taste covers UI/UX, code quality, API design, and copy.
 
-| model          | cost | intelligence | taste | reachable via                    |
-| -------------- | ---- | ------------ | ----- | -------------------------------- |
-| composer-2.5   | 8    | 5            | 5     | cursor-agent CLI (`agent`)       |
-| grok-4.5       | 8    | 6            | 6     | cursor-agent CLI (`--model cursor-grok-4.5-high`; `-medium`/`-low` for lighter work) |
-| gpt-5.6 Sol    | 7    | 8\*          | 5     | codex CLI (`codex -m` Sol tier)  |
-| gpt-5.6 Terra  | 8    | 7\*          | 5     | codex CLI (default tier)         |
-| gpt-5.6 Luna   | 8    | 4\*          | 4     | codex CLI (`codex -m` Luna tier) |
-| sonnet-5       | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'` |
-| opus-4.8       | 4    | 7            | 8     | Agent/Workflow `model: 'opus'`   |
-| fable-5        | 2    | 9            | 9     | Agent/Workflow `model: 'fable'`  |
+| model         | cost | intelligence | taste | reachable via                                                                        |
+| ------------- | ---- | ------------ | ----- | ------------------------------------------------------------------------------------ |
+| composer-2.5  | 8    | 5            | 5     | cursor-agent CLI (`agent`)                                                           |
+| grok-4.5      | 8    | 6            | 6     | cursor-agent CLI (`--model cursor-grok-4.5-high`; `-medium`/`-low` for lighter work) |
+| gpt-5.6 Sol   | 7    | 8\*          | 5     | codex CLI (`codex -m` Sol tier)                                                      |
+| gpt-5.6 Terra | 8    | 7\*          | 5     | codex CLI (default tier)                                                             |
+| gpt-5.6 Luna  | 8    | 4\*          | 4     | codex CLI (`codex -m` Luna tier)                                                     |
+| sonnet-5      | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'`                                                     |
+| opus-4.8      | 4    | 7            | 8     | Agent/Workflow `model: 'opus'`                                                       |
+| fable-5       | 2    | 9            | 9     | Agent/Workflow `model: 'fable'`                                                      |
 
 \* Provisional (2026-07-11, unauditioned): GPT-5.6 replaced gpt-5.x with
 three tiers — **Sol** (flagship frontier reasoning), **Terra** (balanced
@@ -306,17 +322,19 @@ changing `~/.cursor/tts/config.json`.
 
 ## Docs index
 
-| Doc | What it covers |
-|---|---|
-| `docs/spec-live-mode-v2.md` | Current live-mode architecture (call/chat views, /thread, activity feed, panel rules) |
-| `docs/spec-live-mode.md` | v1 spec (superseded UI, still-valid server cost guards) |
-| `docs/mockups/live-mode-v2/` | Concept round + cross-reviews behind the current UI |
-| `docs/ideas-backlog.md` | Owner's someday list — check before proposing "new" ideas |
-| `docs/plan-room-of-devs.md` + phase/design docs | Earlier room architecture history |
+| Doc                                             | What it covers                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `docs/spec-live-mode-v2.md`                     | Current live-mode architecture (call/chat views, /thread, activity feed, panel rules) |
+| `docs/spec-live-mode.md`                        | v1 spec (superseded UI, still-valid server cost guards)                               |
+| `docs/mockups/live-mode-v2/`                    | Concept round + cross-reviews behind the current UI                                   |
+| `docs/ideas-backlog.md`                         | Owner's someday list — check before proposing "new" ideas                             |
+| `docs/plan-room-of-devs.md` + phase/design docs | Earlier room architecture history                                                     |
 
 ## Known issues / technical debt
 
-- The monoliths (see Refactor status) — biggest debt in the repo.
+- Legacy `mobile.html` still shipped/served at `/legacy` — delete after
+  the SPA proves out (Phase 6). Server hotspot `audio.ts` remains large
+  (optional Phase 7 split).
 - Legacy candidates to audit: `scripts/ingest_claude_code.sh` (bash
   fallback), piper-era leftovers, `build_read_aloud_notifier_app.sh`,
   `raycast/`, `clean_text.py`, the SwiftBar plugin's overlap with the

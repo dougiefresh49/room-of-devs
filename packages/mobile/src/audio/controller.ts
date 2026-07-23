@@ -1008,6 +1008,20 @@ export class AudioController {
       this.markListDirty();
     }
     if (this.entry?.file) prefs.markListened(this.entry.file);
+    // Tell the daemon a phone-routed clip finished so the frame gets its
+    // endedAt now instead of aging out on the 5-minute staleness belt (the
+    // "on phone" chip lingered for minutes after playback — owner report
+    // 2026-07-23). Best-effort: on failure the belt still expires it.
+    const np = this.lastFrame?.nowPlaying;
+    if (
+      this.entry?.file &&
+      np &&
+      !np.endedAt &&
+      np.output === "phone" &&
+      np.replayFile === this.entry.file
+    ) {
+      void postAction({ type: "phone_done", file: this.entry.file });
+    }
     if (this.catchUpMode && this.catchUpQueue.length) {
       const next = this.catchUpQueue.shift();
       if (next) {

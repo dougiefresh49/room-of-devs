@@ -436,7 +436,28 @@ async function handleRequest(
 
   const path = url.pathname;
 
+  // Phase 5 cutover (2026-07-23, owner-approved): `/` is the React SPA.
+  // The legacy single-file page stays at /legacy as the rollback for one
+  // release — delete mobile.html + this route once the SPA has proven out.
   if (method === "GET" && path === "/") {
+    if (!mobileDistReady) {
+      serveMobileAppMissing(res);
+      return;
+    }
+    const indexPath = join(MOBILE_DIST_DIR, "index.html");
+    if (!existsSync(indexPath) || !statSync(indexPath).isFile()) {
+      serveMobileAppMissing(res);
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-cache",
+    });
+    res.end(readFileSync(indexPath, "utf-8"));
+    return;
+  }
+
+  if (method === "GET" && (path === "/legacy" || path === "/legacy/")) {
     if (!existsSync(HTML_PATH)) {
       res.writeHead(500);
       res.end("mobile.html missing");
@@ -451,7 +472,8 @@ async function handleRequest(
     return;
   }
 
-  // Phase 5 Chunk B: Vite SPA under /app (token auth already enforced above).
+  // Pre-cutover SPA path — kept because bookmarks/open tabs use it (the
+  // bundle's base is /app/ so hashed assets live under /app/assets either way).
   if (method === "GET" && (path === "/app" || path === "/app/")) {
     if (!mobileDistReady) {
       serveMobileAppMissing(res);

@@ -104,6 +104,15 @@ export const PlayReplayCommandSchema = v.object({
   ...envelope,
 });
 
+/** Phone finished playing a phone-routed clip: stamp endedAt on the frame so
+ *  the "on phone" chip clears now instead of on the 5-min staleness belt. */
+export const PhoneDoneCommandSchema = v.object({
+  type: v.literal("phone_done"),
+  /** Bare replay filename — must match the current frame's replayFile. */
+  file: v.string(),
+  ...envelope,
+});
+
 export const SpawnSessionCommandSchema = v.object({
   type: v.literal("spawn_session"),
   dir: v.string(),
@@ -191,6 +200,7 @@ export const CommandSchema = v.variant("type", [
   bareCommand("list_voices"),
   bareCommand("learn_capture"),
   PlayReplayCommandSchema,
+  PhoneDoneCommandSchema,
   SpawnSessionCommandSchema,
   ResumeSessionCommandSchema,
   SetLiveCommandSchema,

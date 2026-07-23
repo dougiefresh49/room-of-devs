@@ -33,6 +33,7 @@ import {
   isUnexpiredPhoneGrant,
   supersedePhoneGrant,
   startPlayReplay,
+  markPhonePlaybackDone,
 } from "../audio.js";
 import {
   setLiveSession,
@@ -416,6 +417,18 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
       }
       return "bad_message";
     }
+    case "phone_done":
+      if (
+        keys.length !== 2 ||
+        typeof msg.file !== "string" ||
+        !msg.file ||
+        msg.file.includes("/") ||
+        msg.file.includes("\\") ||
+        msg.file.includes("\0")
+      ) {
+        return "bad_message";
+      }
+      return { type: "phone_done", file: msg.file };
     case "spawn_session":
       if (
         keys.length < 3 ||
@@ -755,6 +768,7 @@ const MOBILE_ACTION_TYPES = new Set([
   "replay_slower",
   "replay_session",
   "play_replay",
+  "phone_done",
   "pause",
   "stop",
   "hold_room",
@@ -803,6 +817,9 @@ export function dispatch(msg: PanelMessage): void {
       return;
     case "play_replay":
       // Handled synchronously in dispatchPanelAction (lock + file checks).
+      return;
+    case "phone_done":
+      markPhonePlaybackDone(msg.file);
       return;
     case "restart":
       runScript("restart.sh", []);

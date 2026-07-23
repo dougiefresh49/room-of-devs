@@ -151,6 +151,23 @@ export function supersedePhoneGrant(): boolean {
   }
 }
 
+/** Phone reports a routed clip finished: stamp endedAt IF the current frame
+ *  is still that phone playback (never clobbers a newer/other playback). The
+ *  5-min client staleness belt remains the fallback when this never arrives. */
+export function markPhonePlaybackDone(file: string): boolean {
+  try {
+    const cur = JSON.parse(readFileSync(NOW_PLAYING_PATH, "utf-8"));
+    if (cur?.endedAt || cur?.output !== "phone" || cur?.replayFile !== file) return false;
+    cur.endedAt = new Date().toISOString();
+    const tmp = `${NOW_PLAYING_PATH}.tmp.${process.pid}`;
+    writeFileSync(tmp, JSON.stringify(cur));
+    renameSync(tmp, NOW_PLAYING_PATH);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Playback over: don't delete — stamp endedAt so the panel can keep showing
 // the last message. The next playback overwrites the file.
 function clearNowPlaying(): void {
