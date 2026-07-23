@@ -329,7 +329,7 @@ changing `~/.cursor/tts/config.json`.
 
 ## Known issues / technical debt
 
-- Server hotspot `audio.ts` remains large (optional Phase 7 split).
+- `audio.ts` split in Phase 7 (playback-locks / now-playing / replay-store / player-process / stream-playback; audio.ts is the facade).
   `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
   future panel credits chip.
 - Cross-persona spawn race and subagent-finish announce filtering
