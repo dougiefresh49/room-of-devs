@@ -486,3 +486,49 @@ worktree; fable reviewed both diffs. Judgment calls:
    room view.
 7. `dist/` is globally gitignored; committed-dist policy implemented via
    `!packages/mobile/dist/` + `!packages/mobile/dist/**`.
+
+## Phase 5 chunk C (2026-07-22 night, fresh session)
+
+Room + picker views on shared components (`packages/mobile/src/**` +
+one additive `@room/ui` CSS export). Zero synthesis, no daemon touched.
+Judgment calls:
+
+1. **Chunk-B smell #6 resolved: leaf-component host CSS moved to
+   `@room/ui/src/components.css`** (`.badge`/`.state-*` + `.chip`
+   variants + `.queued-preview` + `.live-dot`, both keyframes). New
+   opt-in export `@room/ui/components.css`; mobile imports it, the
+   panel does NOT (it still ships an identical copy inside `style.css`
+   — importing there would double-apply). `--muted` referenced with a
+   `var(--muted, var(--room-muted))` fallback so the file is
+   self-sufficient; mobile also keeps the `--muted` alias.
+2. **"Catch up" is omitted from the overflow menu, not stubbed.** In
+   mobile.html mi-catchup posts NOTHING to the server — it drives
+   client-side playback of unheard replay clips, which is the chunk-D
+   audio/replay layer. Per the phase rule (actions whose target doesn't
+   exist yet are omitted, not disabled), the overflow menu ships with
+   Hold room only; the dropdown is the seam where chunk D re-adds Catch
+   up. Hold room is fully wired (toggle → `hold_room`, label from
+   `selectRoomHeld`).
+3. **Phone-grant works but there's no phone player yet.** Granting with
+   the device toggle on "phone" sends `output:"phone"` (daemon streams
+   to /live-audio and the snapshot shows the "on phone" chip), but the
+   mobile.html `primeAudio()`/player is deferred to chunk D — no audio
+   element is unlocked/consumed here. Clean seam, expected.
+4. **spawn/resume send `persona` only when one is selected** (matches
+   mobile.html exactly; the daemon's mobile handler tolerates its
+   absence). The shared `SpawnSessionCommandSchema` marks `persona`
+   required, so App casts the payload `as Command`. A picker persona is
+   always selected when `/picker` returns a non-empty `personas` list
+   (default = first), so the omission only occurs if the daemon returns
+   no personas.
+5. **Queue count uses the shared `AgentChips`** (renders `raisedCount>0`
+   as a number chip) rather than mobile.html's bespoke
+   ">1 → 'N queued'" text — per the chunk-C instruction to reuse the
+   `@room/ui` leaves. Muted is shown as an extra `.chip` + name
+   strike-through.
+6. **Launch flags stay device-local localStorage** (`mobile_flag_*`,
+   defaults preserved) — daemon-side migration of hidden-devs/output/
+   flags is the deferred post-cutover follow-up (owner decision #7),
+   not grown here. Hidden-devs key/seed (`mobile_hidden_dev_names_v1`,
+   `["job-search-2026"]`) and output key (`mobile_output_device`)
+   preserved byte-for-byte for cutover continuity.

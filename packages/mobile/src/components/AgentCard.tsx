@@ -1,0 +1,125 @@
+/**
+ * Room-grid agent card (mobile). Renders the shared @room/ui leaves
+ * (StateBadge, AgentChips, QueuedPreview, LiveBadge) plus the primary grant
+ * affordance.
+ *
+ * Grant: for a hand-raised agent the "Read update" button calls
+ * client.grant(sessionId, output). While a grant is optimistically pending
+ * (selectGrantPending) it shows a disabled "Working…" state and ignores taps
+ * — the single-dispatch guard lives in RoomClient.grant, this just reflects it.
+ *
+ * DEFERRED (chunk D/E, omitted not disabled): Replay last (idle audio), Chat,
+ * Reply. Only the grant path and Hide exist here.
+ */
+import type { AgentView, NowPlaying } from "@room/protocol";
+import { AgentChips, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
+import { isPhoneFrame } from "@room/room-client";
+import type { OutputDevice } from "../prefs.js";
+import { Avatar } from "./Avatar.js";
+
+interface AgentCardProps {
+  agent: AgentView;
+  nowPlaying: NowPlaying | null;
+  /** Shared clock for the phone-chip staleness belt. */
+  clock: number;
+  output: OutputDevice;
+  grantPending: boolean;
+  onGrant: () => void;
+  onHide: () => void;
+}
+
+export function AgentCard({
+  agent,
+  nowPlaying,
+  clock,
+  output,
+  grantPending,
+  onGrant,
+  onHide,
+}: AgentCardProps) {
+  const displayName = agent.label || agent.name;
+  const raised = agent.state === "hand_raised";
+  const speaking = agent.state === "speaking";
+  const onPhone = isPhoneFrame(nowPlaying, clock) && nowPlaying?.sessionId === agent.sessionId;
+  const grantSub = output === "phone" ? "on this phone" : "on Mac";
+
+  return (
+    <article
+      className={`rounded-2xl border border-line bg-surface p-4 state-${agent.state}`}
+      data-session={agent.sessionId}
+    >
+      <div className="flex items-start gap-3">
+        <div className="relative shrink-0">
+          <Avatar
+            agent={agent}
+            frame={speaking ? "speaking" : "idle"}
+            className="grid size-14 place-items-center overflow-hidden rounded-xl bg-surface-strong text-sm font-semibold text-fg-muted"
+          />
+          {raised ? (
+            <span
+              className="absolute -right-1.5 -top-1.5 text-lg leading-none drop-shadow"
+              aria-hidden="true"
+            >
+              ✋
+            </span>
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div
+            className={`truncate text-[15px] font-semibold ${agent.muted ? "text-fg-muted line-through decoration-fg-faint/60" : ""}`}
+            title={agent.name}
+          >
+            {displayName}
+          </div>
+          <StateBadge state={agent.state} />
+          <div className="chips">
+            {agent.muted ? (
+              <span className="chip" title="Muted">
+                muted
+              </span>
+            ) : null}
+            <AgentChips
+              raised={raised}
+              raisedCount={agent.raisedCount}
+              supersededCount={agent.supersededCount}
+              onPhone={onPhone}
+            />
+            <LiveBadge live={agent.live} />
+          </div>
+          {raised && agent.queuedPreview ? <QueuedPreview text={agent.queuedPreview} /> : null}
+        </div>
+
+        <button
+          type="button"
+          className="shrink-0 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          onClick={onHide}
+        >
+          Hide
+        </button>
+      </div>
+
+      {raised ? (
+        <div className="mt-3">
+          <button
+            type="button"
+            disabled={grantPending}
+            onClick={onGrant}
+            className="flex w-full flex-col items-center rounded-xl bg-accent px-4 py-2.5 font-semibold text-bg transition-colors hover:bg-accent/90 disabled:cursor-default disabled:bg-surface-strong disabled:text-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            {grantPending ? (
+              <span className="text-sm">Working…</span>
+            ) : (
+              <>
+                <span className="flex items-center gap-2 text-sm">
+                  <span aria-hidden="true">▶</span> Read update
+                </span>
+                <span className="text-[11px] font-medium opacity-80">{grantSub}</span>
+              </>
+            )}
+          </button>
+        </div>
+      ) : null}
+    </article>
+  );
+}
