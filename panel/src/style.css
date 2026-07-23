@@ -406,11 +406,6 @@ button,
     flex-basis 220ms ease;
 }
 
-.avatar-wrap.speaking-pop {
-  transform: scale(1.18);
-  z-index: 2;
-}
-
 .card.speaking-grow .avatar-wrap {
   width: 64px;
   height: 64px;
@@ -1213,13 +1208,6 @@ button,
 .dock-actions .icon-btn svg {
   width: 13px;
   height: 13px;
-}
-
-.dock-action-divider {
-  grid-column: 1 / -1;
-  height: 1px;
-  margin: 1px 1px;
-  background: color-mix(in srgb, var(--room-accent) 32%, transparent);
 }
 
 .dock-actions .dock-live-btn {
