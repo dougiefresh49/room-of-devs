@@ -143,12 +143,20 @@ function runScriptCaptured(
   }
 }
 
+/** spawnSync blocks the whole event loop — a wedged child freezes every WS/
+ *  HTTP request (2026-07-23: a hung `tmux send-keys` inside inject_prompt.sh
+ *  froze the daemon for 10+ minutes). Every sync run gets a hard timeout. */
+const SYNC_SCRIPT_TIMEOUT_MS = 10_000;
+
 export function runScriptSync(name: string, args: string[]): boolean {
   try {
     const result = spawnSync(join(SCRIPTS_DIR, name), args, {
       stdio: "ignore",
       env: scriptEnv(),
+      timeout: SYNC_SCRIPT_TIMEOUT_MS,
+      killSignal: "SIGKILL",
     });
+    if (result.error) log("commands", `${name} sync run error: ${result.error.message}`);
     return result.status === 0;
   } catch (err: any) {
     log("commands", `${name} sync spawn failed: ${err?.message ?? err}`);
@@ -162,7 +170,13 @@ function runScriptSyncStatus(name: string, args: string[]): number | null {
     const result = spawnSync(join(SCRIPTS_DIR, name), args, {
       stdio: "ignore",
       env: scriptEnv(),
+      timeout: SYNC_SCRIPT_TIMEOUT_MS,
+      killSignal: "SIGKILL",
     });
+    if (result.error) {
+      log("commands", `${name} sync run error: ${result.error.message}`);
+      return null;
+    }
     return result.status;
   } catch (err: any) {
     log("commands", `${name} sync spawn failed: ${err?.message ?? err}`);
@@ -515,8 +529,11 @@ const pendingPersonas = new Set<string>();
 
 function tmuxExists(tmuxName: string): boolean {
   try {
-    return spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], { stdio: "ignore" })
-      .status === 0;
+    return spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], {
+      stdio: "ignore",
+      timeout: 3_000,
+      killSignal: "SIGKILL",
+    }).status === 0;
   } catch {
     return false;
   }
@@ -715,7 +732,11 @@ export function killTeam(sessionId: string): void {
   const tmux = tmuxForSession(sessionId);
   if (tmux) {
     try {
-      spawnSync("tmux", ["kill-session", "-t", `=${tmux}`], { stdio: "ignore" });
+      spawnSync("tmux", ["kill-session", "-t", `=${tmux}`], {
+        stdio: "ignore",
+        timeout: 3_000,
+        killSignal: "SIGKILL",
+      });
     } catch (err: any) {
       log("commands", `kill_team failed: ${err?.message ?? err}`);
     }
