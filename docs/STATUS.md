@@ -15,8 +15,17 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
-- **Nothing actively in flight.** The July UI/server refactor (Phases
-  0-7) is COMPLETE and deployed (2026-07-23).
+- **Parallel round 1 in flight** (2026-07-23, per
+  [reference/worktree-parallel-flow.md](reference/worktree-parallel-flow.md)):
+  Lane A interpreter Stage 1 (grok-4.5,
+  [active/spec-interpreter-stage1.md](active/spec-interpreter-stage1.md));
+  Lane B desktop panel parity (opus: card icon polish, speaking-card
+  clipped buttons, new-session confirm step, bottom bar removal); Lane C
+  mobile (sonnet: new-session sheet overflow/model picker, spawn confirm
+  step). Integration + single deploy/verify round follows.
+- Also shipped today (uncommitted): mobile spawn fix — stale room cards
+  no longer block persona spawns; mobile SPA toasts server notices +
+  spawn failures.
 
 ## Awaiting owner
 
@@ -29,8 +38,10 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Next up (likely order)
 
-1. **Conversational layer** ("dev in the room") — consensus design ready:
-   [active/design-conversational-layer.md](active/design-conversational-layer.md).
+1. **Conversational layer** ("dev in the room") — consensus design:
+   [active/design-conversational-layer.md](active/design-conversational-layer.md);
+   **Stage 1 build spec ready**:
+   [active/spec-interpreter-stage1.md](active/spec-interpreter-stage1.md).
 2. **Phone image attachments** in live mode.
 3. Cross-persona spawn race + subagent-finish announce filtering (small
    daemon fixes — see backlog).

@@ -8,6 +8,36 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
 - **Donnie avatar art cleanup** (noted 2026-07-19): Donnie's current avatar image reads like he has a bird's beak — the nose/mouth area is drawn as a pointed yellow wedge that dominates the face. Regenerate or retouch the portrait so the face reads as a turtle (flatter snout, less pronounced point), keeping the purple mask, headphones, hoodie, and bo staff composition.
 - **Cross-persona spawn race** (noted 2026-07-19, from gpt-5.6 code review): two different personas spawned near-simultaneously can both bind to the same new `~/.claude/sessions` file — `team.sh` picks "first new registry file since launch" with no pane↔session association. The v2.3 pending-persona set serializes same-persona spawns only. Fix direction: serialize the launch-to-bind phase globally (lock file), or match the registry entry's pid to the tmux pane's process tree.
 - **Subagent-finish fires the room announce** (noted 2026-07-18, owner: "log for now"): when a Claude subagent completes, the Mac plays the "updates over here" notification — the afterAgentResponse hook doesn't distinguish subagent responses from main-loop ones. Investigate whether it also raises a hand. Fix direction: filter subagent events in the hook/ingest path.
+- **t3code borrowings** (noted 2026-07-23, from recon of
+  https://github.com/pingdotgg/t3code — MIT, code legally borrowable; owner
+  flagged it as "worth peeking"). t3code = open-source Node WS server
+  wrapping local agent CLIs (Codex/Claude/Cursor/Grok) with React web +
+  Electron + Expo mobile clients. No voice/audio anywhere — nobody else is
+  doing our concept. Items, roughly by when they'd matter:
+  - **Now-ish (Tailscale security round)**: their pairing-token auth —
+    5-min single-use bootstrap token delivered in the URL *hash* (QR),
+    exchanged for a session credential — beats our static token-in-URL
+    forever. Also `packages/tailscale/src/tailscale.ts`: clean wrappers for
+    `tailscale status --json` (MagicDNS/CGNAT-IP harvesting) and
+    `tailscale serve` for HTTPS in front of the local port. HTTPS matters
+    doubly: getUserMedia (phone push-to-talk mic, conversational-layer
+    Stage 4) requires a secure context, and it enables PWA install.
+  - **Conversational layer Stage 1**: their `CanonicalItemType` pattern —
+    normalize all provider events into a small closed vocabulary
+    (assistant_message / reasoning / plan / tool lifecycle / approval /
+    error) and route on type. Good shape for the rule-router's event
+    classification (never narrate `reasoning`, always surface approvals).
+  - **Spike-worthy**: they drive Claude via `@anthropic-ai/claude-agent-sdk`
+    `query()` with resume/interrupt/canUseTool — no tmux, no transcript
+    scraping (`apps/server/src/provider/Layers/ClaudeAdapter.ts`). Quiet
+    argument that our tmux layer is the legacy path for non-interactive
+    asks; feeds the cmux-vs-tmux question above.
+  - **Later**: git-ref checkpoints per turn ("undo what the agent did"
+    from the phone); APNs Live Activities via a thin hosted relay
+    (lock-screen agent status); ACP (`packages/effect-acp`) for driving
+    Cursor/Grok as sessions if non-Claude agents join the room; their
+    reconnect state machine docs (`docs/architecture/connection-runtime.md`)
+    as a checklist to diff room-client against.
 - **Multi-agent call / conference mode** (noted 2026-07-21): bring multiple
   agents onto the live call as named participants (e.g. Mikey = session
   lead, Donnie = gpt, Raph = grok) so the owner can address them by name

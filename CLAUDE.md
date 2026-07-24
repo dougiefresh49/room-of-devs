@@ -281,7 +281,9 @@ Mechanics:
   background them.
 - Claude models run via the Agent/Workflow `model` parameter.
 - Parallel implementation agents that write code use worktree isolation;
-  split work by file ownership so merges are trivial.
+  split work by file ownership so merges are trivial. Full parallel-round
+  flow (lanes, hot files, the single-deploy-target rule):
+  docs/reference/worktree-parallel-flow.md.
 
 Repo-specific rules for delegated agents:
 
