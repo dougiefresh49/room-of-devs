@@ -55,8 +55,19 @@ export function AgentCard({
   const mode = clusterMode(agent.sessionId);
   const onPhone = isPhoneFrame(nowPlaying, clock) && nowPlaying?.sessionId === agent.sessionId;
 
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const speaking = agent.state === "speaking";
+  useEffect(() => {
+    // A card that starts speaking grows (bigger avatar + stage action row);
+    // at the bottom of the scrollable card list that growth lands below the
+    // fold, leaving the pause/stop/replay row invisible exactly when it's
+    // needed. Nudge it into view.
+    if (speaking) cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [speaking]);
+
   return (
     <div
+      ref={cardRef}
       className={`card state-${agent.state}${greyed ? " disconnected" : ""}${stale ? " stale" : ""}${triageFocus ? " triage-focus" : ""}${grow ? " speaking-grow" : ""}`}
       data-session={agent.sessionId}
       role="button"
