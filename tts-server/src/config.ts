@@ -28,6 +28,9 @@ export const FAILED_DIR = join(TTS_DIR, "failed");
 export const STATE_DIR = join(TTS_DIR, "state");
 // Arcade encoder button map, written by `tsx src/hid.ts learn` (see hid.ts).
 export const ARCADE_BUTTONS_PATH = join(TTS_DIR, "arcade_buttons.json");
+// PTT intent drop dir — interpreter Stage 1 IPC (see interpreter/service.ts).
+export const INTENTS_DIR = join(TTS_DIR, "intents");
+export const INTENTS_DONE_DIR = join(INTENTS_DIR, "done");
 
 export interface Config {
   elevenlabs_voice_id: string;
@@ -58,6 +61,11 @@ export interface Config {
   dnd_apps: string[];
   // Play a cached in-character "done" phrase after a granted item (~25% chance).
   victory_lines: boolean;
+  // Conversational interpreter (Stage 1) — PTT intent routing in-daemon.
+  interpreter_enabled: boolean;
+  interpreter_model: string;
+  // On timeout the coordinator falls back to rules + bound-target inject.
+  interpreter_timeout_ms: number;
 }
 
 const DEFAULTS: Config = {
@@ -79,6 +87,9 @@ const DEFAULTS: Config = {
   dnd_auto: false,
   dnd_apps: ["zoom.us", "FaceTime", "Microsoft Teams", "Webex"],
   victory_lines: true,
+  interpreter_enabled: true,
+  interpreter_model: "gemini-3.1-flash-lite",
+  interpreter_timeout_ms: 4000,
 };
 
 let cachedConfig: Config | null = null;
