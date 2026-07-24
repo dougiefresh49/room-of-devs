@@ -341,7 +341,15 @@ button,
   min-width: 0;
   min-height: 96px;
   padding: 9px;
-  overflow: hidden;
+  /* overflow stays visible so the card grows to fit its content: when a card
+     is SPEAKING/spotlight the avatar enlarges and the stage action row
+     (pause/stop/replay) is added, which pushed the card past the grid row's
+     base height. `overflow: hidden` here clipped that row at the card edge;
+     the grid auto-row (minmax(96px, auto)) already sizes to content, so the
+     card just needs to not clip. The rounded background is clipped by
+     border-radius regardless, and the ::before accent bar is corner-rounded
+     below to keep the rounded-corner look. */
+  overflow: visible;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%),
     var(--surface);
@@ -368,6 +376,7 @@ button,
   inset: 0 auto 0 0;
   width: 2px;
   background: var(--state);
+  border-radius: 8px 0 0 8px;
   opacity: 0.78;
 }
 
@@ -646,9 +655,12 @@ button,
 .card-actions {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 5px;
+  gap: 6px;
   margin-top: 8px;
-  opacity: 0.56;
+  /* Resting contrast raised (was 0.56) so the row reads as buttons, not a
+     faint muted smudge — matches the mobile SPA's always-legible controls
+     while still lifting to full opacity on hover/focus. */
+  opacity: 0.82;
   transform: translateY(2px);
   transition:
     opacity 140ms ease,
@@ -693,14 +705,17 @@ button,
   height: 15px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  /* Unified 2px stroke (was 1.8) so every glyph reads at the same weight as
+     the mobile SPA's stroke-2 icon set. */
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .hover-btn {
   width: 100%;
-  height: 24px;
+  /* Roomier hit target (was 24px) so the card action row isn't cramped. */
+  height: 26px;
   border-radius: 6px;
 }
 
@@ -708,6 +723,14 @@ button,
   background-color: #263241;
   border-color: color-mix(in srgb, var(--state, var(--blue)) 42%, var(--border-strong));
   color: #ffffff;
+}
+
+/* Keyboard focus ring — parity with the mobile SPA's focus-visible:ring-2.
+   Uses the generic interactive token, not a raw color. */
+.icon-btn:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--room-interactive) 70%, var(--border-strong));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--room-interactive) 45%, transparent);
 }
 
 .icon-btn:active:not(:disabled) {
@@ -737,34 +760,6 @@ button,
   letter-spacing: 0.05em;
   text-align: center;
   text-transform: uppercase;
-}
-
-.controls {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 2px 0 1px;
-}
-
-.controls button {
-  width: 34px;
-  height: 28px;
-  border-radius: 7px;
-}
-
-.controls button:hover {
-  border-color: rgba(238, 243, 247, 0.32);
-}
-
-.controls .hold-control.active {
-  border-color: color-mix(in srgb, var(--blue) 72%, var(--border-strong));
-  background:
-    linear-gradient(180deg, rgba(102, 169, 255, 0.22), rgba(102, 169, 255, 0.08)),
-    #172336;
-  color: #cfe4ff;
-  box-shadow:
-    0 0 14px rgba(102, 169, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .card.state-speaking {
@@ -1551,6 +1546,142 @@ button,
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Select-then-confirm (New Session) ─────────────────────────────────── */
+
+.persona-chip.selected {
+  color: var(--text);
+}
+
+.persona-chip.selected .persona-chip-av {
+  border-color: color-mix(in srgb, var(--room-accent) 75%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--room-accent) 55%, transparent),
+    0 0 12px color-mix(in srgb, var(--room-accent) 30%, transparent);
+}
+
+.persona-chip:focus-visible .persona-chip-av {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--room-interactive) 55%, transparent);
+}
+
+.picker-row.selected-row {
+  border-color: color-mix(in srgb, var(--room-accent) 48%, var(--border-strong));
+  background-color: color-mix(in srgb, var(--room-accent) 10%, var(--surface));
+}
+
+/* Sticky footer that is the ONLY launch trigger — clicking a persona stages
+   the choice; Start fires it. Sits below the scrolling list, never scrolls. */
+.picker-confirm {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--room-accent) 40%, var(--border-strong));
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 60%),
+    color-mix(in srgb, var(--room-accent) 9%, var(--surface-strong));
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.28);
+}
+
+.picker-confirm-av {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)),
+    var(--surface-strong);
+}
+
+.picker-confirm-img,
+.picker-confirm-fallback {
+  width: 32px;
+  height: 32px;
+}
+
+.picker-confirm-fallback {
+  font-size: 11px;
+}
+
+.picker-confirm-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.picker-confirm-title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-confirm-sub {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-confirm-clear {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    color 130ms ease,
+    border-color 130ms ease;
+}
+
+.picker-confirm-clear:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.picker-confirm-start {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 18px;
+  border: 1px solid color-mix(in srgb, var(--room-accent) 55%, transparent);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 26%, transparent), color-mix(in srgb, var(--room-accent) 12%, transparent)),
+    var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition:
+    filter 130ms ease,
+    border-color 130ms ease;
+}
+
+.picker-confirm-start:hover {
+  filter: brightness(1.12);
+  border-color: color-mix(in srgb, var(--room-accent) 75%, transparent);
+}
+
+.picker-confirm-start:focus-visible,
+.picker-confirm-clear:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--room-interactive) 45%, transparent);
 }
 
 .swap-popover {

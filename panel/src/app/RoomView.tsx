@@ -1,11 +1,15 @@
 /**
- * The floating room: header strip, cards grid, optional summary pane,
- * transport footer. DOM mirrors the legacy renderView() exactly.
+ * The floating room: header strip, cards grid, optional summary pane.
+ *
+ * The global transport footer (pause/stop/replay/hold) was removed — the
+ * owner never used it and mobile has no equivalent. Those actions remain
+ * reachable elsewhere: pause/stop on the per-card stage cluster (a speaking
+ * card), replay-last on the dock spotlight summary cluster, and hold-room in
+ * Settings ("Hold the Room").
  */
 import type { PanelSnapshot } from "@room/protocol";
-import { SummaryText, TransportBar } from "@room/ui";
+import { SummaryText } from "@room/ui";
 import { nowPlayingKey } from "@room/room-client";
-import { client } from "../client.js";
 import { platform } from "../platform/tauri.js";
 import { AgentCard } from "./AgentCard.js";
 import { IconCc, IconClose, IconDock, IconGear, IconPlus } from "./icons.js";
@@ -44,7 +48,6 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
   const agents = snapshot?.agents ?? [];
   const nowPlaying = snapshot?.nowPlaying ?? null;
   const paused = snapshot?.paused === true;
-  const held = snapshot?.roomHeld === true;
   const triageFocus =
     typeof snapshot?.triageFocus === "string" && snapshot.triageFocus.trim()
       ? snapshot.triageFocus
@@ -112,16 +115,6 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
           <SummaryPane snapshot={snapshot} dismissedKey={view.dockSummaryDismissedKey} />
         ) : null}
       </div>
-      <footer className="controls no-drag">
-        <TransportBar
-          paused={paused}
-          held={held}
-          onPause={() => client.send({ type: "pause" })}
-          onStop={() => client.send({ type: "stop" })}
-          onReplay={() => client.send({ type: "replay" })}
-          onHold={() => client.send({ type: "hold_room" })}
-        />
-      </footer>
     </div>
   );
 }
