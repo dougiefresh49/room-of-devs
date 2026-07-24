@@ -18,6 +18,10 @@ PID_FILE="$TTS_DIR/.playback-pid"
 PAUSED_FLAG="$TTS_DIR/.playback-paused"
 TTS_SERVER_DIR="$TTS_DIR/tts-server"
 VOICE_TS="$TTS_SERVER_DIR/src/voice.ts"
+DAEMON_PID_FILE="$TTS_DIR/.tts-server.pid"
+INTENTS_DIR="$TTS_DIR/intents"
+# Async intent drop — coordinator owns un-duck (do not resume_if_ducked).
+ASYNC_INTENT_EXIT=20
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ptt: $*" >> "$LOG_FILE" 2>/dev/null || true; }
 
@@ -225,11 +229,59 @@ transcribe_wav() {
     echo "$transcript"
 }
 
+daemon_running() {
+    [ -f "$DAEMON_PID_FILE" ] && kill -0 "$(cat "$DAEMON_PID_FILE" 2>/dev/null)" 2>/dev/null
+}
+
+# Drop an intent file for the in-daemon interpreter. Includes duckToken so the
+# coordinator can un-duck on turn end (FLOOR_EXIT actions skip un-duck).
+queue_intent() {
+    local transcript="$1"
+    local target="${2:-}"
+    local duck_token="${3:-}"
+    local intent_id transcript_json target_json duck_json captured_at
+
+    mkdir -p "$INTENTS_DIR"
+    intent_id="$(date +%s)-$$"
+    captured_at=$(($(date +%s) * 1000))
+    transcript_json=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$transcript")
+    if [ -n "$target" ]; then
+        target_json=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$target")
+    else
+        target_json="null"
+    fi
+    if [ -n "$duck_token" ] && [ -f "$PTT_DIR/$duck_token.ducked" ]; then
+        duck_json=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$duck_token")
+    else
+        duck_json="null"
+    fi
+
+    cat > "$INTENTS_DIR/$intent_id.json.tmp" <<EOF
+{
+  "transcript": $transcript_json,
+  "boundTarget": $target_json,
+  "source": "voice",
+  "capturedAt": $captured_at,
+  "duckToken": $duck_json
+}
+EOF
+    mv "$INTENTS_DIR/$intent_id.json.tmp" "$INTENTS_DIR/$intent_id.json"
+    log "intent queued: $intent_id (target=${target:-none} duck=${duck_token:-none})"
+}
+
 route_transcript() {
     local transcript="$1"
     local target="${2:-}"
+    local duck_token="${3:-}"
     local route_exit=0
 
+    # Preferred path: daemon interpreter owns routing + un-duck.
+    if daemon_running; then
+        queue_intent "$transcript" "$target" "$duck_token"
+        return "$ASYNC_INTENT_EXIT"
+    fi
+
+    # Fallback: legacy voice.ts CLI (FLOOR_EXIT=10 contract unchanged).
     if [ -f "$VOICE_TS" ]; then
         if [ -n "$target" ]; then
             (cd "$TTS_SERVER_DIR" && pnpm exec tsx src/voice.ts route --target "$target" "$transcript") || route_exit=$?
@@ -260,10 +312,13 @@ transcribe_and_route() {
     local transcript route_exit=0
 
     transcript=$(transcribe_wav "$wav")
-    route_transcript "$transcript" "$target" || route_exit=$?
+    route_transcript "$transcript" "$target" "$id" || route_exit=$?
 
     if [ -n "$id" ]; then
-        resume_if_ducked "$id" "$route_exit"
+        # ASYNC_INTENT_EXIT: coordinator owns un-duck via duckToken.
+        if [ "$route_exit" -ne "$ASYNC_INTENT_EXIT" ]; then
+            resume_if_ducked "$id" "$route_exit"
+        fi
         clean_ptt_files "$id"
     fi
 
@@ -322,8 +377,10 @@ cmd_stop() {
     fi
 
     transcript=$(transcribe_wav "$wav")
-    route_transcript "$transcript" "$target" || route_exit=$?
-    resume_if_ducked "$id" "$route_exit"
+    route_transcript "$transcript" "$target" "$id" || route_exit=$?
+    if [ "$route_exit" -ne "$ASYNC_INTENT_EXIT" ]; then
+        resume_if_ducked "$id" "$route_exit"
+    fi
     clean_ptt_files "$id"
 
     echo "$transcript"

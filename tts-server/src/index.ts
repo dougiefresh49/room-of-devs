@@ -46,6 +46,7 @@ import { startHid, stopHid } from "./hid-device.js";
 import { startPanelWs, stopPanelWs } from "./panel-ws.js";
 import { startMobileHttp, stopMobileHttp } from "./mobile-http.js";
 import { startDnd, stopDnd } from "./dnd.js";
+import { startInterpreter, stopInterpreter } from "./interpreter/service.js";
 import { registryPidBySessionId, isPidAlive } from "./session-catalog.js";
 import { rotateLogIfLarge, runStartupRetention } from "./maintenance.js";
 import { log } from "./logger.js";
@@ -494,6 +495,9 @@ if (loadConfig().dnd_auto) startDnd();
 // Live-mode transcript tailer — no-op while live_sessions.json is empty.
 startLiveTail();
 
+// Conversational interpreter (Stage 1) — PTT intent file watcher.
+if (loadConfig().interpreter_enabled) startInterpreter();
+
 // Room-card reaper: Terminal.app quit can skip SessionEnd. Two consecutive
 // dead-pid passes required; cards younger than 2 min are never reaped (team.sh
 // bind can take ~90s). Side-effectful — NOT inside buildSnapshot().
@@ -597,6 +601,7 @@ process.on("SIGTERM", () => {
   clearInterval(reaperTimer);
   watcher.close();
   sessionsWatcher.close();
+  stopInterpreter();
   stopLiveTail();
   stopDnd();
   stopHid();
@@ -611,6 +616,7 @@ process.on("SIGINT", () => {
   clearInterval(reaperTimer);
   watcher.close();
   sessionsWatcher.close();
+  stopInterpreter();
   stopLiveTail();
   stopDnd();
   stopHid();
