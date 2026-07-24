@@ -15,17 +15,22 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
-- **Parallel round 1 in flight** (2026-07-23, per
-  [reference/worktree-parallel-flow.md](reference/worktree-parallel-flow.md)):
-  Lane A interpreter Stage 1 (grok-4.5,
-  [active/spec-interpreter-stage1.md](active/spec-interpreter-stage1.md));
-  Lane B desktop panel parity (opus: card icon polish, speaking-card
-  clipped buttons, new-session confirm step, bottom bar removal); Lane C
-  mobile (sonnet: new-session sheet overflow/model picker, spawn confirm
-  step). Integration + single deploy/verify round follows.
-- Also shipped today (uncommitted): mobile spawn fix — stale room cards
-  no longer block persona spawns; mobile SPA toasts server notices +
-  spawn failures.
+- **UI architecture review with the owner** — TODAY: owner flagged that
+  UI sharing between panel and mobile is too thin (duplicated domain
+  components, two styling systems). Concerns + ground-truth audit +
+  agenda: [active/ui-architecture-concerns-2026-07-24.md](active/ui-architecture-concerns-2026-07-24.md).
+  Owner also wants mattpocock/skills (codebase-design) set up first.
+- **Parallel round 1 MERGED + DEPLOYED** (overnight 2026-07-23→24):
+  interpreter Stage 1 (spec now shipped-in-code; codex visual verify
+  round pending report), panel parity fixes (icons, speaking-card clip,
+  new-session confirm, transport bar removed), mobile sheet fixes
+  (overflow/model picker, spawn confirm), plus the mobile spawn-failure
+  fix (ghost cards + toasts). Daemon restarted, panel reinstalled,
+  mobile dist rebuilt. Codex visual round: 6/8 pass; the speaking-card
+  finding led to a follow-up (card scrolls into view when it starts
+  speaking — shipped). Owner confirmed the phone New flow looks good.
+  Ghost state files cleaned. NOTE: **GitHub remote main is stale** (no
+  push since before the refactor) — push pending owner go-ahead.
 
 ## Awaiting owner
 
