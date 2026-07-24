@@ -18,7 +18,11 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
 import { TTS_DIR } from "../config.js";
-import { buildPanelSnapshotFresh, buildSnapshot } from "../state-watch.js";
+import {
+  buildPanelSnapshotFresh,
+  buildSnapshot,
+  sessionStateAgeMs,
+} from "../state-watch.js";
 import { log } from "../logger.js";
 import {
   isTeamSession,
@@ -552,6 +556,11 @@ function tmuxExists(tmuxName: string): boolean {
   }
 }
 
+/** A room card whose state file hasn't been touched by any hook for this
+ *  long is a ghost (session died without SessionEnd) — it must not hold its
+ *  persona hostage. Mirrors state-watch's 90-min working→idle demotion. */
+const GHOST_SESSION_MS = 90 * 60 * 1000;
+
 /** Persona already live in room / team_map / pending / tmux — sync reject. */
 function personaBusyReason(persona: string): string | null {
   const key = persona.toLowerCase();
@@ -559,9 +568,19 @@ function personaBusyReason(persona: string): string | null {
     return `${persona} is already in the room`;
   }
   for (const agent of buildSnapshot()) {
-    if (agent.character?.toLowerCase() === key) {
-      return `${persona} is already in the room`;
+    if (agent.character?.toLowerCase() !== key) continue;
+    // Team sessions are adjudicated by the tmux liveness checks below —
+    // a team card with dead tmux is a ghost, not a conflict.
+    if (agent.isTeam) continue;
+    const age = sessionStateAgeMs(agent.sessionId);
+    if (age !== null && age > GHOST_SESSION_MS) {
+      log(
+        "commands",
+        `ignoring stale room card for ${persona} (${agent.sessionId.slice(0, 12)}, idle ${Math.round(age / 60000)}m)`
+      );
+      continue;
     }
+    return `${persona} is already in the room`;
   }
   const team = loadTeamMap();
   for (const [p, entry] of Object.entries(team)) {

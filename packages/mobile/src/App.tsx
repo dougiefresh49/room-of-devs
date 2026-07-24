@@ -157,6 +157,21 @@ export function App() {
     return persona ? { ...flags, persona } : flags;
   };
 
+  // A refused spawn/resume must never be silent. The server broadcasts a
+  // specific notice (e.g. "Donnie is already in the room") for busy personas;
+  // the generic toast fires only if no notice explained the failure first.
+  const requestSpawn = (cmd: Command) => {
+    const fail = () =>
+      window.setTimeout(() => {
+        const n = audioController.getNotice();
+        if (n && Date.now() - n.at < 3000) return; // server already said why
+        audioController.announce("Couldn't start the session");
+      }, 500);
+    client.request(cmd).then((res) => {
+      if (!res.ok) fail();
+    }, fail);
+  };
+
   const handleGrant = (sessionId: string) => {
     audioController.prime(); // unlock <audio> in this tap for a later phone route
     client.grant(sessionId, prefs.output);
@@ -267,10 +282,10 @@ export function App() {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSpawn={({ dir, persona }) =>
-          void client.request({ type: "spawn_session", dir, ...spawnFlags(persona) } as Command)
+          requestSpawn({ type: "spawn_session", dir, ...spawnFlags(persona) } as Command)
         }
         onResume={({ sessionId, dir, persona }) =>
-          void client.request({
+          requestSpawn({
             type: "resume_session",
             sessionId,
             dir,

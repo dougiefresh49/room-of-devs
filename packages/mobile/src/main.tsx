@@ -12,6 +12,13 @@ import { App } from "./App.js";
 import { client } from "./client.js";
 import { audioController } from "./audio/controller.js";
 
+// Server notices (spawn refusals like "Donnie is already in the room",
+// dedup warnings) → toast. Legacy mobile.html rendered these; the SPA
+// cutover dropped them, which made failed spawns look like nothing happened.
+client.onEvent((ev) => {
+  if (ev.type === "notice") audioController.announce(ev.message);
+});
+
 const appEl = document.getElementById("app");
 if (!appEl) throw new Error("#app root missing from index.html");
 

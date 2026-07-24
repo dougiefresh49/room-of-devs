@@ -111,6 +111,16 @@ function scheduleNotify(): void {
   }, DEBOUNCE_MS);
 }
 
+/** Milliseconds since the session's state file was last touched by a hook;
+ *  null when the file is missing/unreadable. Spawn busy-checks use this to
+ *  ignore ghost cards from sessions that died without a SessionEnd hook. */
+export function sessionStateAgeMs(sessionId: string): number | null {
+  const state = readStateFile(sessionId);
+  if (!state) return null;
+  const age = Date.now() - new Date(state.updatedAt).getTime();
+  return Number.isFinite(age) ? age : null;
+}
+
 function readStateFile(sessionId: string): StateFile | null {
   try {
     const p = join(STATE_DIR, `${sessionId}.json`);
