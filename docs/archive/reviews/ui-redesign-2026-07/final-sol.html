@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Room of Devs — The Workbench</title>
+<style>
+:root{
+  --void:#090b0c;--floor:#101315;--panel:#171b1d;--lift:#202629;--line:#30383b;
+  --ink:#f3f0e7;--copy:#b8c0bd;--dim:#77817e;--paper:#e9e2d2;--graphite:#222824;
+  --air:#f7fbf8;--work:#53c4d2;--wait:#edb04d;--ask:#f06f72;--stale:#65706d;
+  --glance:#bd91e8;--you:#f0cc68;
+  --leo:#397fdd;--don:#955fd4;--mike:#df8b3b;--raph:#d8534d;--spl:#4f9a7a;--april:#d5b542;
+  --r1:5px;--r2:10px;--r3:16px;--r4:26px;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}html{background:var(--void);color:var(--ink);scroll-behavior:smooth}
+body{margin:0;font-family:var(--sans);background:
+ radial-gradient(900px 500px at 78% 2%,rgba(189,145,232,.07),transparent 65%),
+ linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),
+ var(--void);background-size:auto,48px 48px;overflow-x:hidden}
+button{font:inherit;color:inherit}.board{width:min(1240px,calc(100% - 32px));margin:auto;padding:56px 0 80px}
+.eyebrow,.label,.state,.meta{font-family:var(--mono);text-transform:uppercase;letter-spacing:.11em}
+.eyebrow{font-size:10px;color:var(--wait);display:flex;align-items:center;gap:10px}.eyebrow:before{content:"";width:28px;height:1px;background:currentColor}
+h1{font-size:clamp(48px,9vw,112px);line-height:.84;letter-spacing:-.075em;margin:26px 0 22px;max-width:950px}
+h1 span{display:block;color:var(--paper);font-family:Georgia,serif;font-style:italic;font-weight:400;margin-left:10%}
+.lede{font-size:clamp(18px,2.2vw,26px);line-height:1.45;max-width:830px;color:var(--copy);margin:0}.lede b{color:var(--ink)}
+.hero-note{margin:42px 0 0;display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:7px 10px;font:10px var(--mono);color:var(--copy);background:rgba(23,27,29,.8)}
+section{margin-top:100px}.section-head{display:grid;grid-template-columns:70px 1fr;gap:16px;margin-bottom:28px}.num{font:12px var(--mono);color:var(--wait);padding-top:8px}
+h2{font-size:clamp(28px,4vw,48px);line-height:1;letter-spacing:-.045em;margin:0 0 12px}
+.intro{color:var(--copy);font-size:16px;line-height:1.6;max-width:780px;margin:0}
+.token-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px}.token-card,.reason{border:1px solid var(--line);background:rgba(23,27,29,.82);border-radius:var(--r3);padding:18px}
+.token-card h3,.reason h3{font-size:14px;margin:0 0 14px}.swatches{display:grid;gap:8px}.swatch{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px;font-size:12px;color:var(--copy)}
+.swatch i{width:30px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,.12)}.swatch code{font:10px var(--mono);color:var(--dim)}
+.type-sample{border-top:1px solid var(--line);padding:10px 0;color:var(--copy)}.type-sample:first-of-type{border:0}.type-sample b{display:block;color:var(--ink);font-size:20px}.type-sample code{font:10px var(--mono);color:var(--dim)}
+.rule{font-size:13px;color:var(--copy);line-height:1.55;margin:0 0 12px}.rule b{color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.lamp{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--stale);margin-right:6px}.lamp.air{background:var(--air);box-shadow:0 0 9px var(--air)}.lamp.work{background:var(--work)}.lamp.wait{background:var(--wait)}.lamp.ask{background:var(--ask)}
+.frame{border:1px solid #3a4346;border-radius:18px;background:#0d1011;box-shadow:0 26px 70px rgba(0,0,0,.42);overflow:hidden}
+.mac{max-width:1080px;margin:auto}.titlebar{height:38px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:7px;background:#141819}.dot{width:9px;height:9px;border-radius:50%;background:#394143}.titlebar b{margin-left:9px;font-size:11px}.titlebar .grow{flex:1}.tiny{font:9px var(--mono);color:var(--dim)}
+.roombar{min-height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;padding:8px 12px}.brand{font-weight:760}.btn{height:30px;border:1px solid var(--line);background:var(--lift);border-radius:7px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:10px var(--mono);white-space:nowrap}.btn.primary{background:var(--ink);color:#111;border-color:var(--ink);font-weight:700}.btn.danger{color:#ff9a97;border-color:rgba(240,111,114,.45)}.btn.soft{background:transparent}.grow{flex:1}
+.roomgrid{display:grid;grid-template-columns:230px minmax(0,1fr) 240px;min-height:590px}
+.rail{border-right:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:7px}.seat{position:relative;display:grid;grid-template-columns:40px 1fr auto;gap:9px;align-items:center;min-height:58px;border:1px solid var(--line);border-radius:10px;padding:8px;background:#15191b}.seat:before{content:"";position:absolute;inset:7px auto 7px 0;width:2px;background:var(--persona)}.seat.active{background:#202527;border-color:#6a7473;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--persona);color:white;font-size:12px;font-weight:850;box-shadow:0 0 0 3px #111}.active .av{box-shadow:0 0 0 2px var(--air),0 0 16px rgba(255,255,255,.25)}
+.who b{display:block;font-size:12px}.meta{font-size:8px;color:var(--dim);margin-top:3px}.state{font-size:7.5px;color:var(--state);text-align:right}.preview{grid-column:2/4;color:var(--copy);font-size:10px;line-height:1.35;border-top:1px solid var(--line);padding-top:7px}
+.workbench{min-width:0;display:flex;flex-direction:column;background:radial-gradient(500px 280px at 50% 35%,rgba(255,255,255,.025),transparent)}
+.floorbar{padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}.floorbar b{font-size:12px}.floorbeam{height:2px;background:linear-gradient(90deg,var(--don) 0 54%,var(--air) 54% 58%,#333 58%);margin:0 12px}
+.paper{margin:12px;background:var(--paper);color:var(--graphite);border-radius:12px;min-height:280px;padding:14px;position:relative;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.paper:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(34,40,36,.055) 24px);pointer-events:none}.paperhead{display:flex;gap:8px;align-items:center;position:relative;z-index:1}.paperhead b{font-size:12px}.paperhead span{font:9px var(--mono);color:#667068}.consent{margin-left:auto;border:1px solid var(--glance);color:#68438a;background:#eee3f7;border-radius:999px;padding:5px 8px;font:8px var(--mono)}
+.code-shot{position:absolute;left:28px;top:62px;width:42%;height:130px;background:#1c2224;color:#91a09a;border-radius:8px;padding:12px;font:8px/1.8 var(--mono);z-index:1;transform:rotate(-1deg)}.code-shot em{color:#f08b7f;font-style:normal}.diagram{position:absolute;right:26px;top:62px;width:45%;height:150px;z-index:2}.box{position:absolute;border:2px solid #434b46;border-radius:8px;padding:10px;font:10px var(--mono);background:#f0e9da}.box.a{left:0;top:10px}.box.b{right:0;top:10px}.box.c{left:32%;bottom:4px}.arrow{position:absolute;height:2px;background:var(--don);transform-origin:left}.arrow.one{width:64px;left:68px;top:34px}.arrow.two{width:80px;left:145px;top:52px;transform:rotate(122deg)}.scribble{position:absolute;right:12%;bottom:20px;color:#bd6d33;font:italic 14px Georgia;transform:rotate(-5deg);z-index:3}.scribble:before{content:"";display:block;width:110px;height:30px;border:3px solid #d69248;border-radius:50%;transform:rotate(8deg);margin-bottom:-5px}
+.caption{margin:auto 12px 10px;border:1px solid var(--line);background:#181d1f;border-radius:10px;padding:11px;font-size:12px;line-height:1.5}.caption small{display:block;font:8px var(--mono);color:var(--air);margin-bottom:5px}.caption .past{color:#75807c}
+.composer{display:grid;grid-template-columns:auto 1fr auto auto;gap:7px;padding:10px 12px;border-top:1px solid var(--line);margin-top:auto}.input{height:34px;border:1px solid var(--line);border-radius:8px;background:#101415;color:var(--dim);display:flex;align-items:center;padding:0 10px;font-size:11px}.ptt{border-color:var(--don);color:#d8b9fa}
+.side{border-left:1px solid var(--line);display:flex;flex-direction:column}.sidehead{padding:12px;border-bottom:1px solid var(--line);font:9px var(--mono);color:var(--dim)}.tape{padding:9px;display:flex;flex-direction:column;gap:8px;overflow:hidden}.moment{border-left:2px solid var(--persona);padding:2px 6px 5px 9px}.moment b{font-size:10px}.moment p{font-size:9px;line-height:1.35;color:var(--copy);margin:3px 0}.moment .thumb{height:34px;border:1px solid var(--line);border-radius:5px;background:linear-gradient(135deg,#252c2e,#15191a);margin-top:5px}.nowline{margin:auto 10px 10px;padding:9px;border:1px solid rgba(237,176,77,.4);background:rgba(237,176,77,.06);border-radius:8px;font-size:9px;color:var(--copy)}
+.surface-note{max-width:1080px;margin:12px auto 0;color:var(--dim);font-size:11px;line-height:1.5}.surface-note b{color:var(--copy)}
+.call-layout,.dockrow,.phones,.pickerrow,.mini-grid{display:grid;gap:18px}.call-layout{grid-template-columns:1.4fr .6fr}.callstage{min-height:410px;padding:18px;background:radial-gradient(380px 250px at 50% 40%,rgba(189,145,232,.10),transparent)}
+.calltop{display:flex;align-items:center;gap:8px}.callcast{display:flex;justify-content:center;gap:32px;margin:34px 0 25px;flex-wrap:wrap}.caller{text-align:center;font-size:10px;color:var(--copy)}.caller .av{width:68px;height:68px;margin:0 auto 9px}.caller.speaks .av{box-shadow:0 0 0 3px var(--air),0 0 28px rgba(255,255,255,.3)}.you{width:68px;height:68px;border:1px dashed var(--you);border-radius:50%;display:grid;place-items:center;color:var(--you);font:10px var(--mono);margin-bottom:9px}
+.transcript{border:1px solid var(--line);border-radius:10px;background:#141819;padding:12px}.line{display:grid;grid-template-columns:55px 1fr;gap:8px;font-size:11px;color:var(--dim);padding:4px}.line.now{color:var(--ink)}.line b{font:9px var(--mono);color:var(--persona)}.callcontrols{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.plan{padding:14px}.heard{padding:12px;background:#202527;border-radius:10px;font-size:12px;line-height:1.45;margin-bottom:12px}.step{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line)}.check{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#29483c;color:#91e0bc;font-size:10px}.step b{display:block;font-size:10px}.step small{color:var(--dim);font-size:9px}.held{padding:10px;margin-top:10px;border:1px solid rgba(237,176,77,.3);color:var(--wait);font:9px var(--mono);border-radius:8px}
+.dockrow{grid-template-columns:1fr 1fr;align-items:start}.desktop-bg{min-height:260px;border-radius:18px;background:linear-gradient(135deg,#202629,#111516);padding:42px 24px;position:relative}.codeghost{font:10px/1.7 var(--mono);color:#64716d;white-space:pre-wrap}
+.dock{width:380px;max-width:100%;position:absolute;right:22px;bottom:20px;background:rgba(18,22,23,.98);border:1px solid #475154;border-radius:14px;box-shadow:0 16px 45px #000;overflow:hidden}.dockmain{display:grid;grid-template-columns:48px 1fr;gap:10px;padding:10px}.dockmain .av{width:48px;height:48px}.dockcap{font-size:11px;line-height:1.4;color:var(--copy)}.dockcap b{display:block;color:var(--ink);font-size:10px;margin-bottom:4px}.dockctl{display:flex;gap:5px;padding:0 10px 10px}.dockctl .ptt{margin-left:auto}.collapsed{padding:12px;display:flex;align-items:center;gap:9px}.collapsed .av{width:26px;height:26px;font-size:8px}.collapsed b{font-size:10px}.collapsed span{font-size:9px;color:var(--dim)}
+.phones{grid-template-columns:repeat(3,minmax(0,390px));justify-content:center}.phone{width:100%;aspect-ratio:390/760;min-height:650px;border-radius:34px;background:#070909;border:1px solid #3b4446;padding:7px;box-shadow:0 28px 70px #000}.screen{height:100%;border-radius:27px;background:var(--floor);overflow:hidden;display:flex;flex-direction:column;position:relative}.statusbar{height:25px;display:flex;justify-content:space-between;padding:7px 17px 0;font-size:8px;font-weight:700}.phonehead{display:flex;align-items:center;padding:10px 14px;gap:8px}.phonehead b{font-size:17px}.phonecontent{padding:5px 12px 125px;display:flex;flex-direction:column;gap:8px;overflow:hidden}.pcard{border:1px solid var(--line);border-radius:11px;background:#171b1d;padding:10px}.pcard.hot{border-color:#646e6b}.pcardtop{display:flex;align-items:center;gap:9px}.pcard .av{width:36px;height:36px}.pcard p{font-size:10px;color:var(--copy);line-height:1.4;margin:8px 0}.actions{display:flex;gap:6px}.actions .btn{height:26px;font-size:8px}
+.thumbrail{position:absolute;left:8px;right:8px;bottom:8px;border:1px solid var(--line);background:rgba(23,27,29,.97);border-radius:18px;padding:9px;display:grid;grid-template-columns:1fr 76px 1fr;align-items:center;text-align:center;font:8px var(--mono)}.talkorb{width:68px;height:68px;border-radius:50%;background:var(--ink);color:#101312;display:grid;place-items:center;font-weight:800;box-shadow:0 0 0 5px #2b3132}.miniplayer{position:absolute;left:8px;right:8px;bottom:100px;border:1px solid #515a58;background:#202527;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:center;font-size:9px}
+.playerbody{padding:20px}.bigav{width:92px;height:92px;margin:10px auto 18px}.karaoke{font-size:17px;line-height:1.65;color:#5f6966}.karaoke .done{color:#9ca6a2}.karaoke .now{color:var(--ink);background:rgba(255,255,255,.07);border-radius:4px}.scrub{height:3px;background:#343c3e;margin:24px 0;position:relative}.scrub:before{content:"";display:block;width:47%;height:100%;background:var(--ink)}
+.napkin-phone{margin:6px 12px;background:var(--paper);color:var(--graphite);height:290px;border-radius:12px;position:relative}.napkin-phone .box{transform:scale(.8)}.tools{display:flex;justify-content:center;gap:8px;margin:10px}.phonecompose{margin-top:auto;padding:10px 12px 16px}.phonecompose .input{height:42px}.attach-preview{display:flex;gap:7px;margin-bottom:8px}.file{border:1px solid var(--line);border-radius:7px;padding:7px;font:8px var(--mono);color:var(--copy)}
+.pickerrow{grid-template-columns:1.4fr .6fr}.picker{padding:16px}.steps{display:flex;gap:8px;margin-bottom:18px;color:var(--dim);font:9px var(--mono)}.steps b{color:var(--ink)}.choicegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.choice{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;font-size:10px}.choice.on{border-color:var(--don);background:rgba(149,95,212,.1)}.choice .av{margin:0 auto 8px}.field{margin-top:10px}.field label{display:block;font:8px var(--mono);color:var(--dim);margin-bottom:5px}.select{border:1px solid var(--line);border-radius:8px;padding:10px;font-size:11px;background:#111516}.confirm{margin-top:14px;border:1px solid #555f5d;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;background:#202527}.confirm b{font-size:11px}.confirm small{display:block;color:var(--dim);font-size:9px;margin-top:3px}
+.mini-grid{grid-template-columns:repeat(2,1fr)}.mini-shot{border:1px solid var(--line);border-radius:12px;background:#141819;padding:14px;min-height:150px}.mini-shot h4{margin:0 0 8px;font-size:12px}.mini-shot p{font-size:10px;color:var(--copy);line-height:1.45}.glance-frame{border:3px solid var(--glance);box-shadow:inset 0 0 18px rgba(189,145,232,.35);padding:12px;border-radius:8px}.glance-frame .label{font-size:8px;color:#d9baf5}.redaction{height:18px;width:46%;background:#0b0d0e;border-radius:4px;margin:12px 0}
+.reason-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.reason p{font-size:12px;color:var(--copy);line-height:1.55;margin:0}.reason em{color:var(--wait);font-style:normal;font:9px var(--mono)}
+table{width:100%;border-collapse:collapse;font-size:11px;background:rgba(23,27,29,.8);border:1px solid var(--line)}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{font:8px var(--mono);color:var(--dim)}td:nth-child(2){color:var(--wait);white-space:nowrap}td:last-child{color:var(--copy)}
+.footer{margin-top:80px;border-top:1px solid var(--line);padding-top:18px;display:flex;justify-content:space-between;font:9px var(--mono);color:var(--dim)}
+@media(max-width:900px){.token-grid,.call-layout,.pickerrow,.reason-grid{grid-template-columns:1fr}.roomgrid{grid-template-columns:190px 1fr}.side{grid-column:1/-1;border-left:0;border-top:1px solid var(--line)}.tape{display:grid;grid-template-columns:repeat(3,1fr)}.phones{grid-template-columns:repeat(2,minmax(0,390px))}.dockrow{grid-template-columns:1fr}.mini-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.board{width:min(100% - 20px,1240px);padding-top:34px}section{margin-top:70px}.section-head{grid-template-columns:36px 1fr}.roomgrid{display:block}.rail{border-right:0}.seat:nth-child(n+5){display:none}.paper{min-height:310px}.side{display:none}.roombar .tiny,.roombar .btn.soft{display:none}.phones{grid-template-columns:1fr}.phone{max-width:390px;margin:auto}.mini-grid{grid-template-columns:1fr}.choicegrid{grid-template-columns:repeat(2,1fr)}.tape{grid-template-columns:1fr}.desktop-bg{padding:20px 10px}.dock{position:relative;right:auto;bottom:auto;margin:80px auto 0}.footer{display:block;line-height:1.8}table{font-size:9px}th,td{padding:7px}.callcast{gap:14px}.caller .av,.you{width:54px;height:54px}.composer{grid-template-columns:auto 1fr auto}.composer .btn.primary{display:none}}
+</style>
+</head>
+<body>
+<main class="board">
+  <header>
+    <div class="eyebrow">Final synthesis · candidate lock</div>
+    <h1>The room has a <span>workbench.</span></h1>
+    <p class="lede"><b>Audio owns the floor; the workbench holds whatever the room is talking about.</b> A stable cast rail shows who is speaking, working, waiting, or blocked. In the middle, one shared object—screen glance, sketch, file, decision—lets agents and developer point at the same thing. Underneath, one room tape makes every solo exchange and group call replayable without turning the product into six chat tabs.</p>
+    <div class="hero-note"><span class="chip">one floor · several voices</span><span class="chip">one shared object</span><span class="chip">one room tape</span><span class="chip">three attention distances</span></div>
+  </header>
+
+  <section>
+    <div class="section-head"><div class="num">01</div><div><h2>Signal, identity, material</h2><p class="intro">Two color systems never trade jobs. Persona hue answers <i>who</i>; semantic lamps answer <i>what now</i>. Warm paper belongs only to shared work, so a diagram or screenshot feels physically present in the dark room.</p></div></div>
+    <div class="token-grid">
+      <div class="token-card"><h3>Semantic signal</h3><div class="swatches">
+        <div class="swatch"><i style="background:#f7fbf8"></i><span>On air · luminance</span><code>#F7FBF8</code></div>
+        <div class="swatch"><i style="background:#53c4d2"></i><span>Working · silent</span><code>#53C4D2</code></div>
+        <div class="swatch"><i style="background:#edb04d"></i><span>Hand up · one knock</span><code>#EDB04D</code></div>
+        <div class="swatch"><i style="background:#f06f72"></i><span>Asking · two notes</span><code>#F06F72</code></div>
+        <div class="swatch"><i style="background:#bd91e8"></i><span>Screen glance · consent</span><code>#BD91E8</code></div>
+      </div><div class="legend"><span class="chip"><i class="lamp air"></i>speaking</span><span class="chip"><i class="lamp work"></i>working</span><span class="chip"><i class="lamp wait"></i>waiting</span><span class="chip"><i class="lamp ask"></i>blocked</span></div></div>
+      <div class="token-card"><h3>Room material</h3><div class="swatches">
+        <div class="swatch"><i style="background:#090b0c"></i><span>Void</span><code>#090B0C</code></div><div class="swatch"><i style="background:#171b1d"></i><span>Furniture</span><code>#171B1D</code></div><div class="swatch"><i style="background:#202629"></i><span>Lift</span><code>#202629</code></div><div class="swatch"><i style="background:#e9e2d2"></i><span>Workbench paper</span><code>#E9E2D2</code></div>
+      </div><p class="rule"><b>Radius:</b> 5 controls · 10 seats · 16 panes · 26 device shells. Round is reserved for lamps, avatars, and pressable talk keys.</p></div>
+      <div class="token-card"><h3>Type & motion</h3><div class="type-sample"><b>The room is live.</b><code>DISPLAY · SYSTEM HEAVY · −4.5%</code></div><div class="type-sample">Donnie found the stale lease.<code>SPEECH · SYSTEM REGULAR · 1.55</code></div><div class="type-sample" style="font-family:var(--mono)">ON AIR · 00:14<code>TELEMETRY · UI MONO · CAPS</code></div><p class="rule"><b>Motion budget:</b> mouth-frame swap, one breathing lamp, one audio cursor. No competing card motion. State also has a word and posture; color is never load-bearing.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">02</div><div><h2>The Room · Mac</h2><p class="intro">A stable cast rail, a live workbench, and a chronological tape. The hot agent gets words without moving everyone else. The shared object makes glance, drawing, attachments, and decisions the same structural act: putting something on the table.</p></div></div>
+    <div class="frame mac">
+      <div class="titlebar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><b>Room of Devs</b><span class="grow"></span><span class="tiny">linked · 6 sessions · audio on Mac</span></div>
+      <div class="roombar"><b class="brand">night shift</b><span class="chip"><i class="lamp air"></i>room live</span><span class="chip">cue 3</span><span class="grow"></span><button class="btn soft">Hold room</button><button class="btn">Start huddle</button><button class="btn primary">＋ Session</button></div>
+      <div class="roomgrid">
+        <aside class="rail">
+          <div class="seat active" style="--persona:var(--don);--state:var(--air)"><div class="av">DN</div><div class="who"><b>Donnie</b><div class="meta">room-of-devs · 0:14</div></div><div class="state"><i class="lamp air"></i>on air</div></div>
+          <div class="seat" style="--persona:var(--raph);--state:var(--ask)"><div class="av">RA</div><div class="who"><b>Raph</b><div class="meta">media-server · blocked</div></div><div class="state"><i class="lamp ask"></i>asking</div><div class="preview">Migration deletes episodes before the copy. Fix order?</div></div>
+          <div class="seat" style="--persona:var(--mike);--state:var(--wait)"><div class="av">MI</div><div class="who"><b>Mikey</b><div class="meta">2 queued · 1 superseded</div></div><div class="state"><i class="lamp wait"></i>hand up</div><div class="preview">Dist is green—41 files, zero drama.</div></div>
+          <div class="seat" style="--persona:var(--leo);--state:var(--work)"><div class="av">LE</div><div class="who"><b>Leo</b><div class="meta">jellyfin · 6m08</div></div><div class="state"><i class="lamp work"></i>working</div></div>
+          <div class="seat" style="--persona:var(--spl);--state:var(--stale)"><div class="av">SP</div><div class="who"><b>Splinter</b><div class="meta">contextdb · voice off</div></div><div class="state">muted</div></div>
+          <div class="seat" style="--persona:var(--april);--state:var(--stale)"><div class="av">AP</div><div class="who"><b>April</b><div class="meta">last seen 41m</div></div><div class="state">stale</div></div>
+          <button class="btn soft">⋯ Focus · pause · swap · kill</button>
+        </aside>
+        <div class="workbench">
+          <div class="floorbar"><span class="av" style="--persona:var(--don);width:28px;height:28px;font-size:8px">DN</span><b>Donnie has the floor</b><span class="chip">drawing over your glance</span><span class="grow"></span><button class="btn">Ⅱ</button><button class="btn">■</button><button class="btn">↺</button></div>
+          <div class="floorbeam"></div>
+          <div class="paper">
+            <div class="paperhead"><b>retry queue · lease path</b><span>live ink follows speech</span><span class="consent">◱ saw Cursor for 14s · expired</span></div>
+            <div class="code-shot">claim = await queue.take(50)<br>if (!claim.lease) <em>throw stale</em><br>await drainer.reclaim(claim)<br><br>// frame redacted after glance</div>
+            <div class="diagram"><div class="box a">claim</div><div class="box b">lease</div><div class="box c">drainer</div><i class="arrow one"></i><i class="arrow two"></i></div>
+            <div class="scribble">guard here — before retry</div>
+          </div>
+          <div class="caption"><small>DONNIE · LIVE · STROKE 4 OF 7</small><span class="past">“The socket isn’t the problem. The old claim survives the epoch—</span> <b>so I’m putting the guard here, before retry schedules it again.</b>”</div>
+          <div class="composer"><button class="btn">📎</button><div class="input">Type to Donnie—or paste an image / file…</div><button class="btn">✎ Draw</button><button class="btn ptt">◉ Hold to talk</button></div>
+        </div>
+        <aside class="side"><div class="sidehead">THE ROOM TAPE · TODAY · ● LIVE</div><div class="tape">
+          <div class="moment" style="--persona:var(--leo)"><b>13:41 · Leo</b><p>Auth refactor is green. Sessions next?</p></div>
+          <div class="moment" style="--persona:var(--you)"><b>13:44 · You</b><p>Keep the cookie names.</p></div>
+          <div class="moment" style="--persona:var(--don)"><b>13:58 · Glance</b><p>Saw ECONNRESET in Cursor · 14s</p><div class="thumb"></div></div>
+          <div class="moment" style="--persona:var(--raph)"><b>14:02 · Decision</b><p>Delete or archive 412 snapshots?</p></div>
+          <div class="moment" style="--persona:var(--don)"><b>NOW · Donnie</b><p>Drawing the lease guard…</p></div>
+        </div><div class="nowline">↺ Scrub any voice, glance, or sketch in sync · cached replay, no new voice spend</div></aside>
+      </div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> Round 2’s shared Table/Napkin supplies the structural breakthrough; detailed synthesis boards supply stable state hierarchy, precise transport, queue trust, and summary depth. New resolution: preserve per-agent threads as tape filters—not separate rooms—so the full product remains addressable without breaking group conversation.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">03</div><div><h2>The Huddle</h2><p class="intro">A group call is the room narrowing around one problem—not several agents narrating in parallel. The floor is explicit, short interjections queue visibly, and everyone shares the workbench object and live transcript.</p></div></div>
+    <div class="call-layout">
+      <div class="frame callstage"><div class="calltop"><span class="chip"><i class="lamp air"></i>HUDDLE · 06:12</span><b>retry-queue lease design</b><span class="grow"></span><span class="tiny">3 voices + you · room murmurs held</span></div>
+        <div class="callcast">
+          <div class="caller" style="--persona:var(--leo)"><div class="av">LE</div>Leo<br><span class="tiny">listening</span></div>
+          <div class="caller speaks" style="--persona:var(--don)"><div class="av">DN</div>Donnie<br><span class="tiny">has the floor</span></div>
+          <div class="caller"><div class="you">YOU</div>You<br><span class="tiny">hold Space to cut in</span></div>
+          <div class="caller" style="--persona:var(--raph)"><div class="av">RA</div>Raph<br><span class="tiny">✋ wants in</span></div>
+        </div>
+        <div class="transcript"><div class="line" style="--persona:var(--leo)"><b>LEO</b><span>Who sweeps expired leases?</span></div><div class="line"><b style="color:var(--you)">YOU</b><span>Can the drainer own that? One less moving part.</span></div><div class="line now" style="--persona:var(--don)"><b>DONNIE</b><span>Yes. It reclaims on startup—drawing the guard now.</span></div><div class="line" style="--persona:var(--raph)"><b>RAPH ✋</b><span>wants to challenge the sweep interval</span></div></div>
+        <div class="callcontrols"><button class="btn ptt">◉ Hold to take floor</button><button class="btn">⌨ Type + attach</button><button class="btn">Let Raph in</button><button class="btn danger">End huddle</button></div>
+      </div>
+      <div class="frame plan"><span class="label" style="font-size:8px;color:var(--work)">COMMAND RECEIPT · EXECUTING</span><div class="heard">“Pause the room, replay Donnie’s last message slower, then bring Leo in.”</div>
+        <div class="step"><span class="check">✓</span><div><b>Hold the room</b><small>4 agents held · 2 clips queued</small></div></div>
+        <div class="step"><span class="check">✓</span><div><b>Resolve Donnie + replay at 0.75×</b><small>cached · no new spend</small></div></div>
+        <div class="step"><span class="check">3</span><div><b>Invite Leo to this huddle</b><small>queued when replay ends</small></div></div>
+        <div class="step"><span class="check">4</span><div><b>Resume the room</b><small>queued after huddle invite</small></div></div>
+        <div class="held">ROOM REMAINS HELD UNTIL STEP 4 · UNDO</div>
+      </div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> One Room/One Tape and The Table make multi-voice context real; prior “floor baton” concepts make turn-taking legible. The interpreter receipt keeps the strongest detailed-round trust model: only public operations and outcomes, destructive steps gated inline, durable state never hidden.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">04</div><div><h2>The Shoulder · Mac dock</h2><p class="intro">The non-activating surface shows the one sentence in flight and four muscle-memory targets. It contains no text input. Quiet, it becomes a compact “needs you” ticker instead of dead furniture.</p></div></div>
+    <div class="dockrow">
+      <div class="desktop-bg"><div class="codeghost">export async function drainQueue() {<br>  const claim = await take();<br>  // still typing in the active editor<br>  return schedule(claim);<br>}</div><div class="dock"><div class="dockmain"><div class="av" style="--persona:var(--don)">DN</div><div class="dockcap"><b>DONNIE · ON AIR · 0:14</b>“The old claim survives the epoch—<span style="color:#74807c">so I’m putting the guard here, before retry…”</span></div></div><div class="dockctl"><button class="btn">Ⅱ</button><button class="btn">■</button><button class="btn">↺</button><button class="btn ptt">◉ Talk</button></div></div></div>
+      <div class="frame" style="max-width:380px"><div class="collapsed"><div class="av" style="--persona:var(--mike)">MI</div><div><b>Room quiet · 4 working</b><br><span>Mikey hand ×2 · Raph needs a decision</span></div><span class="grow"></span><button class="btn">Cue 3</button></div></div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> Detailed round’s speaking dock and quiet ticker win. Round 1’s “visual echo of audio” sharpens the cut: no scroll, no composer, no miniature dashboard. Drop a file on a face is deliberately not offered here because a non-activating window must preserve the editor’s keyboard focus.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">05</div><div><h2>The Pocket · phone</h2><p class="intro">Not a smaller Mac. The phone’s three jobs are listen, unblock, and reply. Every required action sits in the bottom 40%; typed replies and attachments remain available from every reply surface.</p></div></div>
+    <div class="phones">
+      <div><div class="phone"><div class="screen"><div class="statusbar"><span>9:41</span><span>5G · 91%</span></div><div class="phonehead"><b>The Room</b><span class="chip"><i class="lamp air"></i>live</span><span class="grow"></span><button class="btn">Mac ▾</button></div><div class="phonecontent">
+        <div class="pcard hot"><div class="pcardtop"><div class="av" style="--persona:var(--don)">DN</div><div><b>Donnie</b><div class="meta">ON AIR · 0:14</div></div><span class="grow"></span><button class="btn">Ⅱ</button></div><p>“The old claim survives the epoch…”</p><div class="actions"><button class="btn">↺</button><button class="btn">Thread</button><button class="btn">Show table</button></div></div>
+        <div class="pcard"><div class="pcardtop"><div class="av" style="--persona:var(--raph)">RA</div><div><b>Raph</b><div class="meta" style="color:var(--ask)">ASKING · 0:22</div></div></div><p>Delete or archive 412 snapshots?</p><div class="actions"><button class="btn">Archive</button><button class="btn">Delete</button></div></div>
+        <div class="pcard"><div class="pcardtop"><div class="av" style="--persona:var(--mike)">MI</div><div><b>Mikey</b><div class="meta" style="color:var(--wait)">HAND UP · 2 QUEUED</div></div><span class="grow"></span><button class="btn">Play</button></div></div>
+      </div><div class="miniplayer">DN <b>lease guard · 0:14</b><span class="grow"></span>Ⅱ</div><div class="thumbrail"><span>🔊 PHONE<br>catch up 3</span><div class="talkorb">HOLD<br>TO TALK</div><span>⌨ TYPE<br>📎 ATTACH</span></div></div></div><p class="surface-note"><b>Room.</b> Stable identity order; hot states expand. Device lease and catch-up stay visible.</p></div>
+      <div><div class="phone"><div class="screen"><div class="statusbar"><span>9:43</span><span>playing · phone</span></div><div class="phonehead"><button class="btn">⌄</button><span class="grow"></span><button class="btn">⋯</button></div><div class="playerbody"><div class="av bigav" style="--persona:var(--don)">DN</div><div style="text-align:center"><b>Lease guard</b><div class="meta">DONNIE · 0:17 / 0:38 · CACHED</div></div><div class="karaoke"><span class="done">The old claim survives the epoch.</span> <span class="now">So I’m putting the guard here,</span> before retry schedules it again.</div><div class="scrub"></div><div class="callcontrols"><button class="btn">↺</button><button class="btn primary">Ⅱ</button><button class="btn">■</button><button class="btn">0.75×</button></div></div></div></div><p class="surface-note"><b>Player.</b> Line highlight follows the audio cursor; sketch strokes rewind with it.</p></div>
+      <div><div class="phone"><div class="screen"><div class="statusbar"><span>9:47</span><span>replying to Donnie</span></div><div class="phonehead"><button class="btn">‹</button><b>Draw back</b><span class="grow"></span><button class="btn primary">Send</button></div><div class="napkin-phone"><div class="box a" style="left:20px;top:55px">claim</div><div class="box b" style="right:20px;top:55px">lease</div><div class="box c" style="left:115px;bottom:70px">drainer</div><div class="scribble" style="right:18px;bottom:18px">move it here</div></div><div class="tools"><button class="btn">Pen</button><button class="btn">Arrow</button><button class="btn">Box</button><button class="btn">Erase</button></div><div class="phonecompose"><div class="attach-preview"><span class="file">IMG · napkin.png ×</span><span class="file">LOG · trace.txt ×</span></div><div class="input">Type while you draw… <span class="grow"></span> ◉</div></div></div></div><p class="surface-note"><b>Draw + reply.</b> Voice, type, ink, and files land as one tape moment.</p></div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> Round 1’s walkie-talkie posture and Round 2’s “three verbs” keep the phone focused; detailed boards restore the necessary room, player, thread, and picker depth. The shared object appears full-screen only when it deserves attention.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">06</div><div><h2>Consent is a visible gesture</h2><p class="intro">A glance is never an ambient permission. The developer initiates it, chooses who sees it, gets an unmistakable violet frame and countdown, can redact before sending, and leaves a thumbnail receipt on the tape.</p></div></div>
+    <div class="mini-grid">
+      <div class="mini-shot"><div class="glance-frame"><span class="label">DONNIE IS LOOKING · 00:11 · CLICK FRAME TO END</span><div class="redaction"></div><div class="codeghost">TypeError: cannot read 'url'<br>at resolveRedirect(checkout.tsx:84)</div></div><p>Live glance: 15 seconds by default, extend only while held. No violet frame means no access.</p></div>
+      <div class="mini-shot"><h4>Put this on the workbench?</h4><p>One frame from Cursor · passwords and terminal history redacted.</p><div class="actions"><button class="btn primary">Show Donnie for 15s</button><button class="btn">Edit redactions</button><button class="btn">Cancel</button></div><p class="tiny">Afterward: thumbnail expires in 5 minutes; audit moment remains without pixels.</p></div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> Round 2’s violet screen-edge frame and “turn the laptop” metaphor are retained. The final adds preflight redaction, named audience, pixel expiry, and a durable metadata receipt to make consent inspectable before, during, and after.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">07</div><div><h2>Thread, call, and session casting</h2><p class="intro">Individual threads remain useful as filtered tape views, not isolated conversational universes. The call uses the same floor and caption. New sessions end with an explicit sentence so persona, project, model, and risk flags cannot blur together.</p></div></div>
+    <div class="phones" style="grid-template-columns:repeat(2,minmax(0,390px));margin-bottom:22px">
+      <div><div class="phone"><div class="screen"><div class="statusbar"><span>9:48</span><span>room tape · Donnie</span></div><div class="phonehead"><button class="btn">‹</button><div class="av" style="--persona:var(--don);width:34px;height:34px;font-size:9px">DN</div><div><b style="font-size:14px">Donnie</b><div class="meta">FILTERED TAPE · WORKING</div></div><span class="grow"></span><button class="btn">Call</button></div><div class="phonecontent" style="padding-bottom:105px">
+        <div class="pcard" style="align-self:flex-start;max-width:88%"><p style="margin:0">The stale claim survives the epoch. I gated it before retry and drew the path.</p><div class="meta">9:42 · SPOKEN · ↺ REPLAY</div></div>
+        <div class="pcard" style="align-self:flex-end;max-width:82%;background:#27302c"><p style="margin:0">Nice. Run typecheck in all four packages.</p><div class="meta">9:43 · FROM PHONE</div></div>
+        <div class="pcard" style="align-self:flex-start;max-width:88%"><p style="margin:0">All four clean. I left grant-guard timing alone—that felt like your call.</p><div class="meta">9:45 · SPOKEN · ↺ REPLAY</div></div>
+      </div><div class="phonecompose" style="position:absolute;bottom:0;left:0;right:0;background:var(--floor);border-top:1px solid var(--line)"><div class="attach-preview"><span class="file">IMG · trace.png ×</span></div><div class="input">Reply to Donnie… <span class="grow"></span> 📎 &nbsp; ◉ &nbsp; ↑</div></div></div></div><p class="surface-note"><b>Filtered thread.</b> Replayable voice messages, typed replies, and attachments—still the same room tape.</p></div>
+      <div><div class="phone"><div class="screen" style="background:radial-gradient(260px 220px at 50% 28%,rgba(149,95,212,.18),var(--floor) 72%)"><div class="statusbar"><span>9:51</span><span>huddle · 06:12</span></div><div class="phonehead"><span class="chip"><i class="lamp air"></i>LIVE</span><span class="grow"></span><button class="btn danger">End</button></div><div class="callcast" style="gap:15px;margin:34px 0 20px"><div class="caller" style="--persona:var(--leo)"><div class="av" style="width:54px;height:54px">LE</div>Leo</div><div class="caller speaks" style="--persona:var(--don)"><div class="av" style="width:68px;height:68px">DN</div>Donnie</div><div class="caller" style="--persona:var(--raph)"><div class="av" style="width:54px;height:54px">RA</div>Raph ✋</div></div><div class="caption" style="font-size:14px;margin:0 16px"><small>DONNIE · HAS THE FLOOR</small>“Yes—the drainer reclaims on startup. Raph’s right that the interval still needs a ceiling.”</div><div class="transcript" style="margin:10px 16px"><div class="line"><b style="color:var(--leo)">LEO</b><span>Who owns the sweep?</span></div><div class="line now"><b style="color:var(--don)">DON</b><span>The drainer, on startup.</span></div></div><div class="thumbrail"><span>🔇 MUTE<br>✋ QUEUE</span><div class="talkorb">HOLD<br>TO CUT IN</div><span>⌨ TYPE<br>📎 ATTACH</span></div></div></div><p class="surface-note"><b>Phone huddle.</b> One conversation, a visible floor, short shared transcript, and thumb-reach interruption.</p></div>
+    </div>
+    <div class="pickerrow">
+      <div class="frame picker"><div class="steps"><b>1 PERSONA</b><span>→ 2 PROJECT</span><span>→ 3 BRAIN</span><span>→ 4 CONFIRM</span></div><h3 style="margin:0 0 14px">Add someone to the room</h3><div class="choicegrid">
+        <div class="choice"><div class="av" style="--persona:var(--leo)">LE</div>Leo</div><div class="choice on"><div class="av" style="--persona:var(--don)">DN</div>Donnie</div><div class="choice"><div class="av" style="--persona:var(--mike)">MI</div>Mikey</div><div class="choice"><div class="av" style="--persona:var(--raph)">RA</div>Raph</div>
+      </div><div class="field"><label>PROJECT FOLDER</label><div class="select">~/projects/jellyfin-streamline ▾</div></div><div class="field"><label>MODEL</label><div class="actions"><button class="btn primary">sonnet</button><button class="btn">opus</button><button class="btn">haiku</button></div></div><div class="field"><label>FLAGS</label><div class="actions"><button class="btn" style="color:var(--wait)">✓ skip permissions</button><button class="btn">remote</button><button class="btn">silent room</button></div></div><div class="confirm"><div class="av" style="--persona:var(--don)">DN</div><div><b>Start Donnie · sonnet · jellyfin-streamline</b><small>skip-permissions · local · voice on</small></div><span class="grow"></span><button class="btn primary">Send him in →</button></div></div>
+      <div class="phone" style="min-height:650px"><div class="screen"><div class="statusbar"><span>9:49</span><span>confirm</span></div><div class="phonehead"><button class="btn">×</button><b>Add to room</b></div><div class="phonecontent" style="padding-bottom:130px"><div class="pcard"><div class="pcardtop"><div class="av" style="--persona:var(--don)">DN</div><div><b>Donnie</b><div class="meta">ENGINEER VOICE</div></div></div></div><div class="select">jellyfin-streamline ▾</div><div class="select">sonnet · skip permissions</div><div class="attach-preview"><span class="file">BRIEF · retry-notes.md ×</span></div><p style="font-size:11px;color:var(--copy)">Opening line: “Trace the stale lease. Don’t change behavior until you can reproduce it.”</p></div><div class="thumbrail" style="grid-template-columns:1fr"><button class="btn primary" style="height:54px">Start Donnie · sonnet · jellyfin-streamline</button></div></div></div>
+    </div>
+    <p class="surface-note"><b>Provenance:</b> The detailed round’s complete New/Resume picker and universal confirm sentence are retained. Round 1’s “casting line” becomes an optional brief/attachment, so couch dispatch stays human while model and risk remain explicit.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><div class="num">08</div><div><h2>The decisions behind it</h2><p class="intro">This is a synthesis with cuts, not a museum of every idea. The product’s center is shared attention; operational completeness stays one layer away.</p></div></div>
+    <div class="reason-grid">
+      <div class="reason"><em>BET 01</em><h3>Objects, not bolt-ons</h3><p>Glances, drawings, files, decisions, and pasted images all enter conversation through the workbench. Audio explains the object; the tape keeps them synchronized.</p></div>
+      <div class="reason"><em>BET 02</em><h3>One room, filtered views</h3><p>A room tape enables real group context. Selecting Donnie filters the tape and targets the composer; it does not teleport into a separate chat universe.</p></div>
+      <div class="reason"><em>BET 03</em><h3>Stable people, dynamic attention</h3><p>The cast rail never reorders under the pointer. Hot seats expand in place. This keeps character presence without equal-card indifference or state-sorted pointer roulette.</p></div>
+      <div class="reason"><em>BET 04</em><h3>Speech is white light</h3><p>Achromatic on-air signal cannot collide with persona colors. Persona hue marks identity and authorship; semantic state uses lamp, word, posture, and sound.</p></div>
+      <div class="reason"><em>BET 05</em><h3>Audio etiquette is product design</h3><p>Working is silent. Waiting knocks once. Blocked repeats sparingly. PTT ducks the current voice and yields at a clause boundary. A lovable room is one you do not mute.</p></div>
+      <div class="reason"><em>BET 06</em><h3>Attention defines surfaces</h3><p>Room = work. Shoulder = glance. Pocket = remote. They share floor, cast, object, and tape—but reveal only what each distance can support.</p></div>
+    </div>
+    <h3 style="margin:34px 0 10px">Registry-first implementation map</h3>
+    <table><thead><tr><th>PRODUCT ELEMENT</th><th>SHADCN / AI ELEMENTS</th><th>CUSTOM DOMAIN BOUNDARY</th></tr></thead><tbody>
+      <tr><td>Cast rail / seats / state</td><td>Card · Badge · Button · DropdownMenu · Tooltip</td><td>Stable-seat expansion, semantic lamp, persona spine</td></tr>
+      <tr><td>Avatar / lip sync</td><td>Avatar shell + fallback</td><td>Plain &lt;img&gt; child; ~70ms src swap outside React; ring is sibling</td></tr>
+      <tr><td>Workbench / tape</td><td>Tabs · ScrollArea · ResizablePanel · Card</td><td>Timed object/audio cursor, ink authorship, tape seeking</td></tr>
+      <tr><td>Typed reply + files</td><td>AI Elements PromptInput · Message · Attachments</td><td>Target routing and voice/ink/file bundling into one turn</td></tr>
+      <tr><td>Huddle / thread / captions</td><td>Conversation · Message · Response · Sheet</td><td>Floor queue, ducking, clause-boundary interruption</td></tr>
+      <tr><td>Interpreter receipt</td><td>Task · ChainOfThought-style disclosure · AlertDialog</td><td>Only public operations/outcomes; undo transaction; destructive gate</td></tr>
+      <tr><td>Player / dock / PTT</td><td>Slider · ToggleGroup · Button · Sheet</td><td>Karaoke timing, non-activating events, pointer capture, drag-off cancel</td></tr>
+      <tr><td>Picker</td><td>Dialog · Sheet · Tabs · Command · Select · Switch</td><td>Confirmation-sentence composer</td></tr>
+    </tbody></table>
+    <h3 style="margin:34px 0 10px">Cut / demote / add</h3>
+    <div class="reason-grid">
+      <div class="reason"><em>CUT</em><h3>No equal agent grid</h3><p>It makes parallel work look like parallel speech. Stable seats keep identity; the floor and workbench establish attention.</p></div>
+      <div class="reason"><em>DEMOTE</em><h3>Rare controls leave the card face</h3><p>Focus terminal, status, persona swap, hide, and kill live in overflow; kill and swap confirm with consequences.</p></div>
+      <div class="reason"><em>ADD</em><h3>Trust infrastructure</h3><p>Playback lease, superseded counts, cached-spend notes, screen receipts, redaction, grouped undo, and persistent held-state receipts.</p></div>
+    </div>
+  </section>
+  <footer class="footer"><span>THE WORKBENCH · final synthesis concept</span><span>dark-first · system fonts · initials stand in for frame-swapped image avatars · no external assets</span></footer>
+</main>
+</body>
+</html>

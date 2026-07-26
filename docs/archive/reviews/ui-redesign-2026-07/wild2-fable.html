@@ -1,0 +1,652 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room of Devs — Concept: ONE ROOM, ONE TAPE</title>
+<style>
+  :root{
+    --night:#12141b; --night-2:#181b24; --night-3:#1f2330;
+    --panel:#232838; --line:#2e3447; --line-soft:#272c3c;
+    --ink:#eceef4; --ink-dim:#9aa1b5; --ink-faint:#646c84;
+    --lamp:#ffb454;            /* the warm lamp: attention, decisions */
+    --onair:#3ddc84;           /* on-air green: someone is speaking */
+    --work:#4cc3d9;            /* quiet teal: working, no need to look */
+    --block:#ff6478;           /* rose: blocked, needs you */
+    --glance:#c792ea;          /* violet: screen-glance / consent frame */
+    --leo:#3b7dd8; --raph:#d84a3b; --don:#8a5cd8; --mikey:#f0932b;
+    --spl:#8d9440; --apr:#e8b93c;
+    --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--night); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; overflow-x:hidden;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px 96px}
+  a{color:var(--work)}
+
+  /* ---------- headings & sections ---------- */
+  header.hero{padding:72px 0 40px;border-bottom:1px solid var(--line-soft)}
+  .kicker{font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--lamp);font-weight:700}
+  h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:.4em 0 .3em;font-weight:800;letter-spacing:-.02em}
+  h1 .dim{color:var(--ink-faint)}
+  .lede{font-size:1.15rem;color:var(--ink-dim);max-width:46em}
+  .lede strong{color:var(--ink)}
+  section{padding:56px 0;border-bottom:1px solid var(--line-soft)}
+  h2{font-size:1.5rem;margin:0 0 .35em;font-weight:800;letter-spacing:-.01em}
+  h3{font-size:1.05rem;margin:1.6em 0 .5em;font-weight:700}
+  .secnum{color:var(--ink-faint);font-weight:600;margin-right:.5em}
+  p.note{color:var(--ink-dim);max-width:44em}
+  .cap{font-size:.82rem;color:var(--ink-faint);margin-top:10px;max-width:44em}
+  .cap b{color:var(--ink-dim)}
+
+  /* ---------- thesis cards ---------- */
+  .three{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:22px}
+  .tcard{background:var(--night-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px}
+  .tcard .d{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+  .tcard h4{margin:.35em 0 .3em;font-size:1.05rem}
+  .tcard p{margin:0;font-size:.9rem;color:var(--ink-dim)}
+
+  /* ---------- tokens ---------- */
+  .swatches{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-top:18px}
+  .sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--night-2)}
+  .sw .chip{height:52px}
+  .sw .lbl{padding:8px 10px;font-size:.75rem}
+  .sw .lbl b{display:block;font-size:.8rem}
+  .sw .lbl span{color:var(--ink-faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .type-spec{margin-top:26px;background:var(--night-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+  .type-spec .row{padding:10px 0;border-bottom:1px dashed var(--line-soft)}
+  .type-spec .row:last-child{border:none}
+  .type-spec .tag{font-size:.7rem;color:var(--ink-faint);letter-spacing:.14em;text-transform:uppercase}
+  .t-display{font-size:1.9rem;font-weight:800;letter-spacing:-.02em}
+  .t-body{font-size:1rem}
+  .t-meta{font-size:.8rem;color:var(--ink-dim)}
+  .t-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;color:var(--work)}
+
+  /* ---------- avatar primitives ---------- */
+  .av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+      font-weight:800;color:#fff;flex:none;letter-spacing:.02em}
+  .av.s28{width:28px;height:28px;font-size:.7rem}
+  .av.s36{width:36px;height:36px;font-size:.8rem}
+  .av.s48{width:48px;height:48px;font-size:1rem}
+  .av.s64{width:64px;height:64px;font-size:1.25rem}
+  .leo{background:var(--leo)} .raph{background:var(--raph)} .don{background:var(--don)}
+  .mikey{background:var(--mikey)} .spl{background:var(--spl)} .apr{background:var(--apr);color:#3a2f08}
+  .ring-onair{box-shadow:0 0 0 3px var(--night-2),0 0 0 6px var(--onair)}
+  .ring-lamp{box-shadow:0 0 0 3px var(--night-2),0 0 0 6px var(--lamp)}
+  .ring-block{box-shadow:0 0 0 3px var(--night-2),0 0 0 6px var(--block)}
+  .dimmed{opacity:.45;filter:saturate(.5)}
+
+  .lamp-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+  .lamp-dot.g{background:var(--onair)} .lamp-dot.a{background:var(--lamp)}
+  .lamp-dot.r{background:var(--block)} .lamp-dot.t{background:var(--work)}
+  .lamp-dot.off{background:var(--ink-faint);opacity:.4}
+
+  .wave{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+  .wave i{width:3px;background:var(--onair);border-radius:2px;display:block}
+  .wave i:nth-child(1){height:5px}.wave i:nth-child(2){height:12px}.wave i:nth-child(3){height:8px}
+  .wave i:nth-child(4){height:14px}.wave i:nth-child(5){height:6px}.wave i:nth-child(6){height:10px}
+
+  /* ---------- device frames ---------- */
+  .stage{background:linear-gradient(180deg,#0c0e13,#10131b);border:1px solid var(--line);
+         border-radius:18px;padding:34px 22px;margin-top:24px}
+  .stage.desk{background:
+      radial-gradient(1200px 500px at 60% -10%, #1a2030 0%, transparent 60%),
+      linear-gradient(180deg,#0c0e13,#10131b)}
+  .macwin{background:var(--night-2);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+          box-shadow:0 24px 60px rgba(0,0,0,.5);max-width:900px;margin:0 auto}
+  .macbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--night-3);
+          border-bottom:1px solid var(--line);font-size:.8rem;color:var(--ink-dim)}
+  .macbar .dots{display:flex;gap:6px}
+  .macbar .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .macbar .dots i:nth-child(1){background:#ff5f57}.macbar .dots i:nth-child(2){background:#febc2e}
+  .macbar .dots i:nth-child(3){background:#28c840}
+  .macbar .title{margin:0 auto;transform:translateX(-18px)}
+
+  .phone{width:300px;background:#0b0d12;border:1px solid var(--line);border-radius:34px;padding:12px 10px 16px;
+         box-shadow:0 24px 60px rgba(0,0,0,.5);margin:0 auto}
+  .phone .notch{width:96px;height:22px;border-radius:12px;background:#000;margin:0 auto 10px}
+  .phone .scr{background:var(--night-2);border-radius:24px;overflow:hidden;border:1px solid var(--line-soft)}
+  .phones{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+  .phones figure{margin:0;max-width:300px}
+  .phones figcaption{font-size:.8rem;color:var(--ink-faint);margin-top:12px;text-align:center;padding:0 6px}
+
+  /* ---------- THE STRIP ---------- */
+  .desktop-sim{position:relative;max-width:900px;margin:0 auto;height:220px;border-radius:12px;
+      background:linear-gradient(180deg,#151821,#12141c);border:1px solid var(--line);overflow:hidden}
+  .fake-code{position:absolute;inset:16px;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;
+      color:#39415a;line-height:1.7;user-select:none}
+  .strip{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:10px;
+      background:rgba(18,20,28,.92);border:1px solid var(--line);border-radius:999px;
+      padding:8px 14px 8px 10px;box-shadow:0 10px 30px rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+  .strip .faces{display:flex}
+  .strip .faces .av{margin-left:-6px;border:2px solid var(--night)}
+  .strip .faces .av:first-child{margin-left:0}
+  .strip .hand{position:relative}
+  .strip .hand::after{content:"✋";position:absolute;top:-9px;right:-7px;font-size:.75rem;
+      background:var(--lamp);border-radius:50%;width:17px;height:17px;display:flex;align-items:center;
+      justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .strip .who{font-size:.78rem;line-height:1.15}
+  .strip .who b{display:block;font-size:.8rem}
+  .strip .who span{color:var(--ink-dim)}
+  .strip-anno{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;margin-top:20px;
+      font-size:.8rem;color:var(--ink-dim)}
+  .strip-anno div b{color:var(--ink)}
+
+  /* ---------- THE TABLE (main window) ---------- */
+  .table-grid{display:grid;grid-template-columns:190px 1fr;min-height:430px}
+  @media (max-width:720px){.table-grid{grid-template-columns:1fr}}
+  .seats{border-right:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;gap:6px;background:var(--night-2)}
+  @media (max-width:720px){.seats{border-right:none;border-bottom:1px solid var(--line);flex-direction:row;overflow-x:auto}}
+  .seat{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;min-width:0}
+  .seat .nm{font-size:.85rem;font-weight:700;line-height:1.2;white-space:nowrap}
+  .seat .st{font-size:.72rem;color:var(--ink-dim);display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .seat.sel{background:var(--night-3);outline:1px solid var(--line)}
+  .center{padding:18px 20px 14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+
+  .napkin{background:#f4f1e8;border-radius:12px;color:#3c3a33;padding:16px 18px;position:relative;
+      min-height:190px;box-shadow:inset 0 0 0 1px #d9d4c4}
+  .napkin .nap-title{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#8d8871;font-weight:700}
+  .napkin svg{display:block;max-width:100%;height:auto}
+  .napkin .nap-hand{position:absolute;right:14px;bottom:12px;font-size:.72rem;color:#8d8871;
+      display:flex;gap:10px;align-items:center}
+  .nap-tool{width:26px;height:26px;border-radius:8px;background:#e9e4d4;display:inline-flex;
+      align-items:center;justify-content:center;font-size:.85rem}
+
+  .decision{background:var(--night-3);border:1px solid var(--lamp);border-radius:12px;padding:14px 16px;
+      display:flex;gap:14px;align-items:flex-start}
+  .decision .txt{min-width:0}
+  .decision .who{font-size:.75rem;color:var(--lamp);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .decision .q{font-size:.95rem;margin:3px 0 10px}
+  .btn{display:inline-flex;align-items:center;gap:6px;border-radius:9px;padding:8px 14px;font-size:.85rem;
+      font-weight:700;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:default}
+  .btn.warm{background:var(--lamp);border-color:var(--lamp);color:#3a2503}
+  .btn.ghost{background:transparent;color:var(--ink-dim)}
+  .btn.danger{background:transparent;border-color:var(--block);color:var(--block)}
+
+  .composer{display:flex;align-items:center;gap:10px;background:var(--night-3);border:1px solid var(--line);
+      border-radius:12px;padding:10px 12px}
+  .composer .mode{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+  .composer .mode i{padding:6px 10px;font-size:.8rem;font-style:normal;color:var(--ink-faint)}
+  .composer .mode i.on{background:var(--panel);color:var(--ink)}
+  .composer .hint{flex:1;font-size:.85rem;color:var(--ink-faint);min-width:0;overflow:hidden;
+      text-overflow:ellipsis;white-space:nowrap}
+  .composer .clip{flex:none;font-size:1rem;color:var(--ink-dim)}
+  .att{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+      border-radius:8px;padding:4px 9px;font-size:.75rem;color:var(--ink-dim);flex:none}
+  .att .thumb{width:22px;height:16px;border-radius:3px;background:linear-gradient(135deg,#5a6488,#39415a)}
+
+  /* ---------- THE TAPE ---------- */
+  .tape-outer{border-top:1px solid var(--line);background:var(--night-2);padding:12px 14px 14px}
+  .tape-scroll{overflow-x:auto;padding-bottom:6px}
+  .tape{display:flex;gap:10px;align-items:stretch;min-width:640px}
+  .mo{flex:none;background:var(--night-3);border:1px solid var(--line);border-radius:10px;
+      padding:9px 11px;font-size:.75rem;min-width:120px;max-width:170px}
+  .mo .mh{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .mo .mh b{font-size:.75rem}
+  .mo .mh time{margin-left:auto;color:var(--ink-faint);font-size:.68rem}
+  .mo p{margin:0;color:var(--ink-dim);line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;
+      -webkit-box-orient:vertical;overflow:hidden}
+  .mo.audio{border-left:3px solid var(--onair)}
+  .mo.sketch{border-left:3px solid var(--don)}
+  .mo.glance{border-left:3px solid var(--glance)}
+  .mo.decide{border-left:3px solid var(--lamp)}
+  .mo.you{border-left:3px solid var(--ink-dim)}
+  .mo .dur{display:inline-flex;align-items:center;gap:5px;color:var(--onair);font-weight:700}
+  .mo .mini{height:34px;border-radius:6px;margin-top:2px;background:#f4f1e8;position:relative;overflow:hidden}
+  .mo .mini.shot{background:linear-gradient(135deg,#3c4666,#242b40)}
+  .mo .mini.shot::after{content:"⌖";position:absolute;inset:0;display:flex;align-items:center;
+      justify-content:center;color:var(--glance);font-size:1rem}
+  .mo .mini svg{position:absolute;inset:4px}
+  .tape-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.72rem;color:var(--ink-faint);
+      letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .tape-head .live{color:var(--onair);letter-spacing:.08em}
+  .tape-head .scrub{flex:1;height:3px;border-radius:2px;background:var(--line);position:relative}
+  .tape-head .scrub::after{content:"";position:absolute;right:18%;top:-4px;width:11px;height:11px;
+      border-radius:50%;background:var(--onair)}
+
+  /* ---------- group call ---------- */
+  .call-stage{max-width:640px;margin:0 auto;background:var(--night-2);border:1px solid var(--line);
+      border-radius:16px;padding:26px 22px 20px;text-align:center}
+  .call-ring{display:flex;justify-content:center;align-items:flex-end;gap:26px;flex-wrap:wrap;margin:10px 0 4px}
+  .call-p{display:flex;flex-direction:column;align-items:center;gap:8px;width:86px}
+  .call-p .nm{font-size:.78rem;font-weight:700}
+  .call-p .st{font-size:.68rem;color:var(--ink-dim)}
+  .youchip{width:64px;height:64px;border-radius:50%;background:var(--panel);border:2px dashed var(--ink-faint);
+      display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--ink-dim)}
+  .call-topic{font-size:.8rem;color:var(--ink-dim);margin-top:2px}
+  .call-topic b{color:var(--ink)}
+  .call-cc{margin-top:16px;background:var(--night-3);border:1px solid var(--line);border-radius:10px;
+      padding:12px 14px;text-align:left;font-size:.85rem}
+  .call-cc .ln{display:flex;gap:9px;padding:3px 0;align-items:baseline}
+  .call-cc .spk{font-weight:800;flex:none;font-size:.78rem}
+  .call-cc .spk.c-leo{color:var(--leo)}
+  .call-cc .spk.c-don{color:#b79bea}.call-cc .spk.c-raph{color:#ef8074}.call-cc .spk.c-you{color:var(--ink-dim)}
+  .call-cc .ln p{margin:0;color:var(--ink-dim)}
+  .call-cc .ln.now p{color:var(--ink)}
+  .call-controls{display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+  /* ---------- glance consent ---------- */
+  .glance-sim{position:relative;max-width:760px;margin:0 auto;height:230px;border-radius:12px;
+      background:linear-gradient(180deg,#151821,#12141c);border:2px solid var(--glance);overflow:hidden;
+      box-shadow:0 0 0 4px rgba(199,146,234,.15),0 0 44px rgba(199,146,234,.18)}
+  .glance-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;
+      gap:9px;background:rgba(24,20,34,.95);border:1px solid var(--glance);border-radius:999px;
+      padding:7px 14px;font-size:.8rem;white-space:nowrap}
+  .glance-badge b{color:var(--glance)}
+  .glance-badge .end{color:var(--ink-dim);border-left:1px solid var(--line);padding-left:10px;font-size:.75rem}
+
+  /* ---------- phone internals ---------- */
+  .p-head{display:flex;align-items:center;gap:9px;padding:13px 14px 10px;border-bottom:1px solid var(--line-soft)}
+  .p-head b{font-size:.9rem}
+  .p-head .sub{font-size:.68rem;color:var(--ink-dim);display:block}
+  .p-head .lamp-dot{margin-left:auto}
+  .p-cards{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .p-card{background:var(--night-3);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+      display:flex;gap:10px;align-items:center}
+  .p-card .t{min-width:0;flex:1}
+  .p-card .t b{font-size:.82rem;display:block}
+  .p-card .t span{font-size:.72rem;color:var(--ink-dim);display:block;overflow:hidden;
+      text-overflow:ellipsis;white-space:nowrap}
+  .p-card .act{flex:none;font-size:.9rem;color:var(--ink-dim)}
+  .p-card.warm{border-color:var(--lamp)}
+  .p-card.warm .t b{color:var(--lamp)}
+  .p-talkbar{margin:10px 12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:999px;
+      padding:13px;text-align:center;font-size:.83rem;font-weight:700;color:var(--ink-dim)}
+  .p-talkbar.live{background:var(--onair);color:#06341c;border-color:var(--onair)}
+  .p-body{padding:12px}
+  .p-q{font-size:.92rem;margin:8px 0 14px;line-height:1.45}
+  .p-bigbtn{display:block;width:100%;border-radius:12px;padding:13px;font-size:.9rem;font-weight:800;
+      text-align:center;margin-bottom:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .p-bigbtn.warm{background:var(--lamp);border-color:var(--lamp);color:#3a2503}
+  .p-bigbtn.quiet{background:transparent;color:var(--ink-dim)}
+  .p-nap{background:#f4f1e8;border-radius:10px;min-height:150px;position:relative;color:#3c3a33;padding:10px}
+  .p-nap .nap-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#8d8871;font-weight:700}
+  .p-tools{display:flex;justify-content:center;gap:8px;padding:10px 0 2px}
+  .p-tools i{width:34px;height:34px;border-radius:10px;background:var(--night-3);border:1px solid var(--line);
+      display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:.95rem}
+  .p-tools i.on{border-color:var(--don);color:#b79bea}
+
+  /* ---------- rationale ---------- */
+  .rat{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:22px}
+  .rat .r{background:var(--night-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .rat .r h4{margin:0 0 .4em;font-size:.98rem}
+  .rat .r p{margin:0;font-size:.87rem;color:var(--ink-dim)}
+  .rat .r b{color:var(--ink)}
+
+  .statebar{display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:18px;font-size:.82rem;color:var(--ink-dim)}
+  .statebar span{display:inline-flex;align-items:center;gap:7px}
+  footer{padding:40px 0 0;color:var(--ink-faint);font-size:.8rem}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">Room of Devs · Concept board · Round 2</div>
+  <h1>ONE ROOM, ONE TAPE<span class="dim">.</span></h1>
+  <p class="lede">The room is a <strong>place</strong>, and everything that happens in it — every spoken line, sketch,
+  screen-glance, decision, and reply — lands as a moment on <strong>one shared tape</strong>. There are no
+  per-agent threads to hunt through. You experience the same room at three distances:
+  <strong>overheard</strong> (a tiny strip over your other apps), <strong>at the table</strong> (the Mac window),
+  and <strong>pocketed</strong> (the phone). Sound tells you <em>that</em> something happened and <em>how it feels</em>;
+  the tape is there when your ears need receipts.</p>
+</header>
+
+<!-- ======================= THESIS ======================= -->
+<section>
+  <h2><span class="secnum">01</span>Thesis: three distances, one room</h2>
+  <p class="note">Every surface is the same room seen from a different distance — never a different app with
+  its own mental model. Anything you can hear, you can scrub back to. Anything an agent shows you
+  (a sketch, a glance at your screen) is pinned to the moment it was said, so audio and imagery never drift apart.</p>
+  <div class="three">
+    <div class="tcard"><div class="d">Distance 1 · Overheard</div>
+      <h4>The Strip</h4>
+      <p>A pill of faces floating over whatever you're doing. It never takes focus. It answers one question at a
+      glance: <em>who's talking, who's waiting, is anything burning?</em> Hold a face to talk. Drop a file on a face to hand it over.</p></div>
+    <div class="tcard"><div class="d">Distance 2 · At the table</div>
+      <h4>The Table</h4>
+      <p>The main window. Seats on the left, a shared paper <em>napkin</em> in the middle where anyone —
+      agent or you — can draw, decisions parked under the lamp, and the tape running along the bottom.</p></div>
+    <div class="tcard"><div class="d">Distance 3 · Pocketed</div>
+      <h4>The Earpiece</h4>
+      <p>The phone is not a mini dashboard — it's the room in your pocket. Listen live, thumb the talk bar,
+      settle decisions with one tap, sketch back with your thumb, spawn a new dev from the couch.</p></div>
+  </div>
+</section>
+
+<!-- ======================= TOKENS ======================= -->
+<section>
+  <h2><span class="secnum">02</span>Tokens</h2>
+  <p class="note">A dim studio at night, lit by lamps. Character colors are for <em>identity</em>;
+  the four lamp colors are for <em>state</em> — and each lamp color has a matching earcon, so the palette is
+  audible before it's visible. Neutral surfaces stay desaturated so a single lit lamp reads across the room.</p>
+
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#12141b"></div><div class="lbl"><b>Night</b><span>#12141B · room</span></div></div>
+    <div class="sw"><div class="chip" style="background:#232838"></div><div class="lbl"><b>Panel</b><span>#232838 · furniture</span></div></div>
+    <div class="sw"><div class="chip" style="background:#f4f1e8"></div><div class="lbl"><b>Napkin</b><span>#F4F1E8 · paper</span></div></div>
+    <div class="sw"><div class="chip" style="background:#3ddc84"></div><div class="lbl"><b>On-Air</b><span>#3DDC84 · speaking</span></div></div>
+    <div class="sw"><div class="chip" style="background:#ffb454"></div><div class="lbl"><b>Lamp</b><span>#FFB454 · waiting on you</span></div></div>
+    <div class="sw"><div class="chip" style="background:#ff6478"></div><div class="lbl"><b>Blocked</b><span>#FF6478 · can't continue</span></div></div>
+    <div class="sw"><div class="chip" style="background:#4cc3d9"></div><div class="lbl"><b>Working</b><span>#4CC3D9 · heads-down</span></div></div>
+    <div class="sw"><div class="chip" style="background:#c792ea"></div><div class="lbl"><b>Glance</b><span>#C792EA · screen consent</span></div></div>
+  </div>
+
+  <div class="statebar">
+    <span><span class="lamp-dot g"></span> On-air = soft click-in + voice</span>
+    <span><span class="lamp-dot a"></span> Lamp = one wooden knock, then silence (it waits)</span>
+    <span><span class="lamp-dot r"></span> Blocked = two-note descend, repeats every 5 min</span>
+    <span><span class="lamp-dot t"></span> Working = no sound, ever</span>
+    <span><span class="lamp-dot" style="background:var(--glance)"></span> Glance = shutter tick on start &amp; end</span>
+  </div>
+
+  <div class="type-spec">
+    <div class="row"><div class="tag">Display · system heavy, tight</div>
+      <div class="t-display">Donnie wants a decision</div></div>
+    <div class="row"><div class="tag">Body · system regular 16/1.55</div>
+      <div class="t-body">Migration's written. Two ways to run it — with downtime tonight, or the slow dual-write dance over a week.</div></div>
+    <div class="row"><div class="tag">Meta · 13px, dim ink</div>
+      <div class="t-meta">Raph · finished 4 min ago · waiting politely</div></div>
+    <div class="row"><div class="tag">Mono · timestamps, ids, code</div>
+      <div class="t-mono">tape 14:02:19 · glance #38 · retry-queue.ts:141</div></div>
+  </div>
+
+  <div style="margin-top:22px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+    <span class="av s48 leo">LN</span><span class="av s48 raph">RA</span><span class="av s48 don">DN</span>
+    <span class="av s48 mikey">MK</span><span class="av s48 spl">SP</span><span class="av s48 apr">AP</span>
+    <span class="cap" style="margin:0">Cast colors: Leonardo, Raphael, Donatello, Michelangelo, Splinter, April.
+    Avatar images swap frames for lip-sync; every placeholder here is the initials fallback.</span>
+  </div>
+</section>
+
+<!-- ======================= THE STRIP ======================= -->
+<section>
+  <h2><span class="secnum">03</span>The Strip — the room, overheard</h2>
+  <p class="note">Always on top, never focused, one row of faces. It's the visual proof of what your ears already
+  suspect. The whole interaction language is <b>hold</b> and <b>drop</b>: hold a face to talk to that dev, hold the
+  gap between faces to address the whole room, drop an image or file on a face to hand it over without a window switch.</p>
+
+  <div class="stage desk">
+    <div class="desktop-sim">
+      <div class="fake-code">
+        export async function drainRetryQueue(opts: DrainOpts) {<br>
+        &nbsp;&nbsp;const batch = await claims.take(opts.max ?? 50);<br>
+        &nbsp;&nbsp;// FIXME: partial failure leaves claims orphaned<br>
+        &nbsp;&nbsp;for (const job of batch) { …<br><br>
+        your editor, your terminal, your browser — the strip rides on top of all of it
+      </div>
+      <div class="strip">
+        <span class="lamp-dot g"></span>
+        <div class="faces">
+          <span class="av s36 don ring-onair">DN</span>
+          <span class="av s36 raph hand">RA</span>
+          <span class="av s36 leo">LN</span>
+          <span class="av s36 mikey dimmed">MK</span>
+        </div>
+        <div class="who"><b>Donnie · on air</b><span>Raph has a hand up</span></div>
+        <span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+    </div>
+    <div class="strip-anno">
+      <div><b>Hold a face</b> → talk to that dev (push-to-talk)</div>
+      <div><b>Hold the pill edge</b> → talk to the room ("pause everyone…")</div>
+      <div><b>Drop a file on a face</b> → attach &amp; hand over</div>
+      <div><b>Click ✋</b> → play what they've been waiting to say</div>
+      <div><b>Double-click pill</b> → open the Table</div>
+    </div>
+  </div>
+  <p class="cap"><b>Why a pill of faces and not a meter:</b> the strip is a cast list, not a dashboard.
+  Dim = idle, teal ring = working (silent), green ring + wave = speaking now, ✋ = finished and waiting politely,
+  rose ring = blocked. If nothing needs you, the strip is just quiet company.</p>
+</section>
+
+<!-- ======================= THE TABLE ======================= -->
+<section>
+  <h2><span class="secnum">04</span>The Table — the main window</h2>
+  <p class="note">One room, not N chat threads. Seats on the left tell you everyone's posture. The middle is
+  whatever the room is currently about — most of the time that's the <b>napkin</b>, the shared drawing surface.
+  Anything waiting on you parks under the lamp, above the composer. The tape runs along the bottom of everything.</p>
+
+  <div class="stage">
+    <div class="macwin">
+      <div class="macbar"><div class="dots"><i></i><i></i><i></i></div><div class="title">Room of Devs — the table</div></div>
+      <div class="table-grid">
+        <div class="seats">
+          <div class="seat"><span class="av s36 leo">LN</span><div><div class="nm">Leonardo</div><div class="st"><span class="lamp-dot t"></span>refactoring auth</div></div></div>
+          <div class="seat sel"><span class="av s36 don ring-onair">DN</span><div><div class="nm">Donatello</div><div class="st"><span class="lamp-dot g"></span>on air · sketching</div></div></div>
+          <div class="seat"><span class="av s36 raph ring-lamp">RA</span><div><div class="nm">Raphael</div><div class="st"><span class="lamp-dot a"></span>waiting · 4 min</div></div></div>
+          <div class="seat"><span class="av s36 mikey">MK</span><div><div class="nm">Michelangelo</div><div class="st"><span class="lamp-dot off"></span>idle</div></div></div>
+          <div class="seat"><span class="av s36 spl ring-block">SP</span><div><div class="nm">Splinter</div><div class="st"><span class="lamp-dot r"></span>blocked · needs key</div></div></div>
+        </div>
+        <div class="center">
+          <div class="napkin">
+            <div class="nap-title">The napkin · Donnie is drawing · retry queue fix</div>
+            <svg viewBox="0 0 520 130" aria-label="Donatello's boxes-and-arrows sketch">
+              <g fill="none" stroke="#4b4738" stroke-width="2">
+                <rect x="14" y="34" width="104" height="44" rx="6"/>
+                <rect x="208" y="34" width="104" height="44" rx="6"/>
+                <rect x="402" y="34" width="104" height="44" rx="6"/>
+                <path d="M118 56 h84 m-10 -6 l10 6 l-10 6"/>
+                <path d="M312 56 h84 m-10 -6 l10 6 l-10 6"/>
+                <path d="M260 78 q-6 34 -140 34 q-96 0 -102 -30" stroke="#b0483c" stroke-dasharray="6 5"/>
+                <path d="M22 86 l-5 -8 m5 8 l9 -4" stroke="#b0483c"/>
+              </g>
+              <g font-family="-apple-system,Helvetica" font-size="13" fill="#4b4738">
+                <text x="34" y="60">enqueue</text>
+                <text x="234" y="60">claim + run</text>
+                <text x="424" y="60">ack / done</text>
+                <text x="120" y="122" fill="#b0483c">on crash: claims never return — THE bug</text>
+              </g>
+            </svg>
+            <div class="nap-hand"><span>your ink is blue, theirs is pencil</span>
+              <span class="nap-tool">✏️</span><span class="nap-tool">⬚</span><span class="nap-tool">🧽</span></div>
+          </div>
+
+          <div class="decision">
+            <span class="av s48 raph ring-lamp">RA</span>
+            <div class="txt">
+              <div class="who">Raphael · under the lamp · 4 min</div>
+              <div class="q">"Found 412 stale snapshots eating 9&nbsp;GB. Want me to torch 'em, or archive to
+              cold storage first? Archiving takes maybe ten minutes."</div>
+              <span class="btn warm">Archive, then delete</span>
+              <span class="btn danger">Just delete</span>
+              <span class="btn ghost">🎙 Hold to answer aloud</span>
+            </div>
+          </div>
+
+          <div class="composer">
+            <div class="mode"><i class="on">🎙 Talk</i><i>⌨ Type</i></div>
+            <span class="att"><span class="thumb"></span>stacktrace.png ×</span>
+            <div class="hint">Hold Space to talk to Donnie · or type — the room stays silent while you have headphones on</div>
+            <span class="clip">📎</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tape-outer">
+        <div class="tape-head"><span>The tape</span><span class="live">● live</span><div class="scrub"></div><span style="letter-spacing:0">14:02</span></div>
+        <div class="tape-scroll"><div class="tape">
+          <div class="mo audio"><div class="mh"><span class="av s28 leo">LN</span><b>Leo</b><time>13:41</time></div>
+            <p><span class="dur">▸ 0:19</span> "Auth refactor's green. Sessions module next unless you object."</p></div>
+          <div class="mo you"><div class="mh"><span class="av s28" style="background:#4a5170">YOU</span><b>You</b><time>13:44</time></div>
+            <p>▸ 0:06 "Go ahead, but keep the cookie names."</p></div>
+          <div class="mo glance"><div class="mh"><span class="av s28 don">DN</span><b>Donnie · glance</b><time>13:58</time></div>
+            <div class="mini shot"></div><p>Saw your screen for 14s — the ECONNRESET trace</p></div>
+          <div class="mo sketch"><div class="mh"><span class="av s28 don">DN</span><b>Donnie · napkin</b><time>14:00</time></div>
+            <div class="mini"><svg viewBox="0 0 120 26"><g fill="none" stroke="#4b4738" stroke-width="2"><rect x="4" y="5" width="28" height="16" rx="3"/><rect x="76" y="5" width="28" height="16" rx="3"/><path d="M32 13h40m-8-5 8 5-8 5"/></g></svg></div>
+            <p>retry-queue diagram, v2</p></div>
+          <div class="mo decide"><div class="mh"><span class="av s28 raph">RA</span><b>Raph · lamp</b><time>14:02</time></div>
+            <p>Waiting: delete or archive 412 snapshots</p></div>
+          <div class="mo audio"><div class="mh"><span class="av s28 don">DN</span><b>Donnie</b><time>now</time></div>
+            <p><span class="dur">▸ live</span> "…so the claim table needs a lease column, look at the red arrow—"</p></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><b>Reading the room:</b> Donnie is on air and drawing; his voice and his pencil are the same turn.
+  Raph finished and sits under the amber lamp — one knock when he got there, silent since. Splinter is rose:
+  blocked on a credential, and his two-note nudge will repeat until fed. The tape below is the memory of all of it —
+  scrub left and every sketch and glance replays in sync with the audio that explained it.</p>
+</section>
+
+<!-- ======================= GLANCE ======================= -->
+<section>
+  <h2><span class="secnum">05</span>Screen glance — turning the laptop toward a coworker</h2>
+  <p class="note">Screen awareness is a <b>gesture with a lamp</b>, not a setting. You hold a face and say
+  "look at this" (or press ⌥G on a face). The violet frame lights around your actual screen for the duration —
+  the same violet everywhere it's mentioned — with a shutter tick at start and end. The glance becomes a tape
+  moment with a thumbnail, so "what exactly did Donnie see?" always has an answer.</p>
+  <div class="stage">
+    <div class="glance-sim">
+      <div class="fake-code">
+        Error: read ECONNRESET at TCP.onStreamRead (node:internal/stream_base_commons:217:20)<br>
+        &nbsp;&nbsp;at RetryQueue.claim (retry-queue.ts:141:11)<br>
+        &nbsp;&nbsp;at drainRetryQueue (drain.ts:12:29)&nbsp;&nbsp;× 47 in the last hour<br><br>
+        …the violet frame hugs the real screen edge while a glance is live…
+      </div>
+      <div class="glance-badge"><span class="av s28 don">DN</span><b>Donnie is looking</b><span>0:11</span><span class="end">click anywhere on frame to end</span></div>
+    </div>
+  </div>
+  <p class="cap"><b>Consent grammar:</b> glances are always started by you, always framed, always time-boxed
+  (15s default; hold longer to extend), and always logged on the tape. No frame, no glance — the frame IS the
+  permission indicator, not a notification about one.</p>
+</section>
+
+<!-- ======================= GROUP CALL ======================= -->
+<section>
+  <h2><span class="secnum">06</span>Table talk — the group call</h2>
+  <p class="note">When a problem needs more than one head, you pull chairs to the middle: "Leo, Donnie, table talk
+  about the retry queue." The room's audio ducks to those voices; characters can interject and build on each
+  other because they share one live transcript and the napkin. The call is a single stretch of tape, not three
+  parallel threads pretending to be a meeting.</p>
+  <div class="stage">
+    <div class="call-stage">
+      <div class="kicker" style="color:var(--onair)">● Table talk · 3 at the table · 6:12</div>
+      <div class="call-ring">
+        <div class="call-p"><span class="av s64 leo">LN</span><span class="nm">Leo</span><span class="st">listening</span></div>
+        <div class="call-p"><span class="av s64 don ring-onair">DN</span><span class="nm">Donnie</span><span class="st">speaking</span></div>
+        <div class="call-p"><div class="youchip">YOU</div><span class="nm">You</span><span class="st">hold Space to jump in</span></div>
+        <div class="call-p"><span class="av s64 raph">RA</span><span class="nm">Raph</span><span class="st">wants in ✋</span></div>
+      </div>
+      <div class="call-topic">On the napkin: <b>retry-queue lease design</b> · Mikey &amp; Splinter still at their desks, muted to a murmur</div>
+      <div class="call-cc">
+        <div class="ln"><span class="spk c-leo">LEO</span><p>Lease column works, but who sweeps expired leases?</p></div>
+        <div class="ln"><span class="spk c-you">YOU</span><p>Can the drainer own that? One less moving part.</p></div>
+        <div class="ln now"><span class="spk c-don">DONNIE</span><p>Yes — drainer reclaims anything past lease on startup. Drawing it… see the red loop become green.</p></div>
+        <div class="ln"><span class="spk c-raph">RAPH ✋</span><p style="font-style:italic">wants to push back on the sweep interval</p></div>
+      </div>
+      <div class="call-controls">
+        <span class="btn">Let Raph in</span><span class="btn">Park a decision</span>
+        <span class="btn ghost">⌨ Type into the call</span><span class="btn danger">End table talk</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><b>Turn-taking is the design:</b> agents raise hands instead of talking over each other; you're
+  the chair by default ("let Raph in") or you hand chairing to Splinter for standups. Interjections are allowed
+  when short (&lt;1 sentence) — that's what makes it feel like a call instead of queued monologues.</p>
+</section>
+
+<!-- ======================= PHONE ======================= -->
+<section>
+  <h2><span class="secnum">07</span>The Earpiece — the phone</h2>
+  <p class="note">One hand, three jobs: <b>know</b> (is anything under the lamp?), <b>answer</b> (talk bar and big
+  decision buttons live in the thumb zone), <b>send back</b> (voice, text, a photo, or a thumb-drawn scribble).
+  Everything above the thumb zone is glanceable; everything actionable is below it.</p>
+  <div class="phones">
+    <figure>
+      <div class="phone"><div class="notch"></div><div class="scr">
+        <div class="p-head"><span class="av s36 don ring-onair">DN</span><div><b>The room</b><span class="sub">Donnie on air · 2 under the lamp</span></div><span class="lamp-dot g"></span></div>
+        <div class="p-cards">
+          <div class="p-card"><span class="av s36 don">DN</span><div class="t"><b>Donnie · live</b><span>"…lease column, then the drainer reclaims…"</span></div><span class="act">🔊</span></div>
+          <div class="p-card warm"><span class="av s36 raph">RA</span><div class="t"><b>Raph · under the lamp</b><span>Delete or archive 412 snapshots?</span></div><span class="act">›</span></div>
+          <div class="p-card warm"><span class="av s36 spl">SP</span><div class="t"><b>Splinter · blocked</b><span>Needs the staging deploy key</span></div><span class="act">›</span></div>
+          <div class="p-card"><span class="av s36 leo">LN</span><div class="t"><b>Leo · working</b><span>sessions refactor · quiet</span></div><span class="act">·</span></div>
+          <div class="p-card"><span class="av s36 mikey" style="opacity:.5">MK</span><div class="t"><b>Mikey · idle</b><span>tap to hand him something</span></div><span class="act">+</span></div>
+        </div>
+        <div class="p-talkbar">● Hold anywhere here to talk to the room</div>
+      </div></div>
+      <figcaption><b>The room, pocketed.</b> Live card on top, lamps next, quiet workers last. The talk bar is the
+      whole bottom edge — no aiming required.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone"><div class="notch"></div><div class="scr">
+        <div class="p-head"><span class="av s36 raph ring-lamp">RA</span><div><b>Raphael</b><span class="sub">under the lamp · 6 min</span></div><span class="lamp-dot a"></span></div>
+        <div class="p-body">
+          <div class="p-q">"Found 412 stale snapshots eating 9&nbsp;GB. Torch 'em, or archive to cold storage first?
+          Archiving takes maybe ten minutes."</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <span class="btn ghost" style="font-size:.75rem">▸ replay his voice · 0:12</span>
+            <span class="btn ghost" style="font-size:.75rem">📎 attach</span>
+          </div>
+          <span class="p-bigbtn warm">Archive, then delete</span>
+          <span class="p-bigbtn">Just delete</span>
+          <span class="p-bigbtn quiet">🎙 Hold to answer in your own words</span>
+        </div>
+      </div></div>
+      <figcaption><b>A lamp, settled from the couch.</b> His voice replayable, the two paths as full-width thumb
+      targets, and "hold to answer" for anything the buttons don't cover.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone"><div class="notch"></div><div class="scr">
+        <div class="p-head"><span class="av s36 don">DN</span><div><b>Napkin · draw back</b><span class="sub">replying to Donnie's diagram</span></div><span class="lamp-dot" style="background:var(--don)"></span></div>
+        <div class="p-body">
+          <div class="p-nap">
+            <div class="nap-title">Donnie's sketch · your ink in blue</div>
+            <svg viewBox="0 0 260 108">
+              <g fill="none" stroke="#4b4738" stroke-width="2">
+                <rect x="10" y="26" width="62" height="30" rx="5"/>
+                <rect x="106" y="26" width="62" height="30" rx="5"/>
+                <rect x="200" y="26" width="50" height="30" rx="5"/>
+                <path d="M72 41h28m-7-5 7 5-7 5"/><path d="M168 41h26m-7-5 7 5-7 5"/>
+              </g>
+              <g fill="none" stroke="#2f6fd0" stroke-width="2.5" stroke-linecap="round">
+                <ellipse cx="137" cy="41" rx="44" ry="24"/>
+                <path d="M150 78 q10 20 44 18"/>
+              </g>
+              <text x="128" y="102" font-size="11" fill="#2f6fd0" font-family="-apple-system">this part — lease lives here?</text>
+              <g font-size="10" fill="#4b4738" font-family="-apple-system">
+                <text x="20" y="44">enqueue</text><text x="116" y="44">claim/run</text><text x="208" y="44">ack</text>
+              </g>
+            </svg>
+          </div>
+          <div class="p-tools"><i class="on">✏️</i><i>⬚</i><i>Aa</i><i>🧽</i><i style="border-color:var(--onair);color:var(--onair)">➤</i></div>
+          <div class="p-talkbar live">Talking while you draw · release to send both</div>
+        </div>
+      </div></div>
+      <figcaption><b>Drawing back, one-thumbed.</b> Circle the part you mean while you talk; your ink and your
+      voice land on the tape as one moment — same rule as Donnie's sketches.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= RATIONALE ======================= -->
+<section>
+  <h2><span class="secnum">08</span>Rationale — the five bets</h2>
+  <div class="rat">
+    <div class="r"><h4>1 · One tape beats N threads</h4>
+      <p>An audio-first tool lives or dies on <b>"wait, what did he say?"</b> A single time-ordered tape makes
+      replay, voice commands ("replay Donnie's last message"), sketches, and glances all the same operation:
+      seek. Per-agent history still exists — it's just a filter on the tape, never a separate place.</p></div>
+    <div class="r"><h4>2 · State is a lamp with a sound</h4>
+      <p>Four states, four colors, four earcons, everywhere identical. The crucial asymmetry: <b>working is
+      silent</b>, waiting knocks <b>once</b>, only blocked repeats. A room that respects your attention this
+      precisely is one you'll keep the volume up on.</p></div>
+    <div class="r"><h4>3 · The napkin makes drawing structural</h4>
+      <p>Drawing isn't an attachment type; it's the room's shared table-top, present in the main window's center
+      and in every reply surface. Agents sketch <b>while speaking</b>, you circle <b>while talking back</b> —
+      picture and voice are one moment, which is how explaining actually works.</p></div>
+    <div class="r"><h4>4 · Consent you can see from across the room</h4>
+      <p>The violet frame is the glance. No frame, no access — and every glance leaves a thumbnail on the tape.
+      That's what lets "look at this error" feel as casual as tilting a laptop: the trust is ambient, not
+      buried in a settings pane.</p></div>
+    <div class="r"><h4>5 · Distances, not features, define the surfaces</h4>
+      <p>Strip, Table, and Earpiece don't get their own concepts — the same seats, lamps, napkin, and tape
+      appear at every distance, scaled to attention available. Typed replies, attachments, and the group call
+      therefore exist everywhere by construction, not by porting.</p></div>
+  </div>
+  <footer>Concept board · "One Room, One Tape" · placeholder avatars are initials by design ·
+  all copy is sample, all lamps currently amber for Raph.</footer>
+</section>
+
+</div>

@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Room of Devs — Concept: Broadcast Den</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     Room of Devs — Concept board: "Broadcast Den"
+     Self-contained. No external assets. Dark-first.
+     ═══════════════════════════════════════════════════════════ */
+  :root {
+    /* Surfaces */
+    --ink: #0a0c10;
+    --board: #11141a;
+    --elev: #171b23;
+    --panel: #1c212b;
+    --panel-2: #232936;
+    --line: #2c3344;
+    --line-soft: #242a38;
+
+    /* Type */
+    --text: #e9ecf3;
+    --text-dim: #9aa3b5;
+    --text-faint: #6b7488;
+
+    /* Semantic broadcast lights (NOT persona accents) */
+    --speak: #f0a020;
+    --speak-glow: rgba(240, 160, 32, 0.35);
+    --work: #2ec4b6;
+    --work-glow: rgba(46, 196, 182, 0.28);
+    --hand: #ff5c45;
+    --hand-glow: rgba(255, 92, 69, 0.3);
+    --ask: #5b8cff;
+    --ask-glow: rgba(91, 140, 255, 0.28);
+    --idle: #6b7488;
+    --mute: #4a5163;
+    --stale: #8a6a5a;
+    --live: #ff3d6e;
+    --ok: #3dd68c;
+    --warn: #e8b339;
+
+    /* Persona accents — identity rings only */
+    --leo: #3d8bfd;
+    --don: #b16cff;
+    --mikey: #ff8a2b;
+    --raph: #ff4d4d;
+    --guest: #8fd3c8;
+
+    /* Geometry */
+    --r-xs: 4px;
+    --r-sm: 7px;
+    --r-md: 11px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+
+    --font: "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(240,160,32,0.07), transparent 55%),
+      radial-gradient(900px 500px at 90% 5%, rgba(46,196,182,0.05), transparent 50%),
+      var(--ink);
+    color: var(--text);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* noise grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* ── Board chrome ── */
+  .mast {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mast-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--speak);
+  }
+  .mast-kicker::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--speak);
+    box-shadow: 0 0 10px var(--speak-glow);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+  .mast h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .mast h1 em {
+    font-style: normal;
+    color: var(--speak);
+  }
+  .thesis {
+    max-width: 62ch;
+    font-size: 16px;
+    color: var(--text-dim);
+  }
+  .thesis strong { color: var(--text); font-weight: 600; }
+
+  /* ── Sections ── */
+  section { margin-bottom: 56px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .sec-head h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .sec-head p {
+    font-size: 13px;
+    color: var(--text-dim);
+    max-width: 48ch;
+  }
+
+  /* ── Tokens ── */
+  .token-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .token-card {
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-lg);
+    padding: 16px;
+  }
+  .token-card h3 {
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .swatch .chip {
+    height: 36px;
+    border-radius: var(--r-sm);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .swatch span {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.3;
+  }
+  .swatch strong {
+    display: block;
+    color: var(--text);
+    font-size: 11px;
+    font-family: var(--font);
+    font-weight: 600;
+  }
+  .type-scale {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px dashed var(--line-soft);
+    padding-bottom: 8px;
+  }
+  .type-row:last-child { border: 0; padding: 0; }
+  .type-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    min-width: 72px;
+  }
+  .t-display { font-size: 22px; font-weight: 650; letter-spacing: -0.03em; }
+  .t-title { font-size: 15px; font-weight: 600; }
+  .t-body { font-size: 13px; color: var(--text-dim); }
+  .t-mono { font-family: var(--mono); font-size: 11px; color: var(--speak); }
+  .phil {
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .phil li { list-style: none; padding-left: 14px; position: relative; }
+  .phil li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--speak);
+    font-size: 11px;
+    top: 1px;
+  }
+
+  /* ── Mock frame helpers ── */
+  .surfaces {
+    display: grid;
+    gap: 28px;
+  }
+  .surface-block {
+    background: var(--board);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    padding: 18px;
+    overflow: hidden;
+  }
+  .surface-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .surface-label h3 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .surface-label .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+  .surface-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 12px;
+    max-width: 70ch;
+  }
+
+  /* Desktop window chrome */
+  .win {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 24px 60px rgba(0,0,0,0.45);
+  }
+  .win-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    background: var(--elev);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .traffic { display: flex; gap: 6px; }
+  .traffic i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #3a4050;
+  }
+  .traffic i:nth-child(1) { background: #ff5f57; }
+  .traffic i:nth-child(2) { background: #febc2e; }
+  .traffic i:nth-child(3) { background: #28c840; }
+  .win-title {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+
+  /* Phone chrome */
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .phone {
+    width: 280px;
+    background: #050608;
+    border-radius: 28px;
+    padding: 10px;
+    border: 2px solid #2a2f3a;
+    box-shadow: 0 28px 50px rgba(0,0,0,0.5);
+  }
+  .phone-screen {
+    background: var(--ink);
+    border-radius: 20px;
+    overflow: hidden;
+    height: 520px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-notch {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-notch::after {
+    content: "";
+    width: 72px;
+    height: 8px;
+    background: #0a0c10;
+    border: 1px solid #1a1e28;
+    border-radius: 999px;
+  }
+  .phone-status {
+    position: absolute;
+    inset: 4px 14px auto;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .phone-home {
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .phone-home span {
+    width: 88px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.18);
+  }
+
+  /* Dock chrome */
+  .dock-stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .dock {
+    width: 360px;
+    background: rgba(18, 21, 28, 0.94);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 1px rgba(240,160,32,0.08),
+      0 18px 40px rgba(0,0,0,0.55);
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+  .dock.speaking {
+    border-color: rgba(240,160,32,0.45);
+    box-shadow:
+      0 0 0 1px rgba(240,160,32,0.2),
+      0 0 28px var(--speak-glow),
+      0 18px 40px rgba(0,0,0,0.55);
+  }
+
+  /* ── Shared UI atoms (mock) ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 550;
+    padding: 5px 9px;
+    border-radius: var(--r-sm);
+    cursor: default;
+    white-space: nowrap;
+    font-family: var(--font);
+  }
+  .btn.ghost { background: transparent; }
+  .btn.primary {
+    background: var(--speak);
+    border-color: #d48912;
+    color: #1a1205;
+  }
+  .btn.danger {
+    background: rgba(255,77,77,0.12);
+    border-color: rgba(255,77,77,0.35);
+    color: #ff8a8a;
+  }
+  .btn.sm { padding: 3px 7px; font-size: 10px; }
+  .btn.icon {
+    width: 26px; height: 26px; padding: 0;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+  .badge.speak { background: rgba(240,160,32,0.15); color: var(--speak); border-color: rgba(240,160,32,0.3); }
+  .badge.work { background: rgba(46,196,182,0.12); color: var(--work); border-color: rgba(46,196,182,0.28); }
+  .badge.hand { background: rgba(255,92,69,0.14); color: #ff8a78; border-color: rgba(255,92,69,0.3); }
+  .badge.ask { background: rgba(91,140,255,0.14); color: #8aafff; border-color: rgba(91,140,255,0.3); }
+  .badge.idle { background: rgba(107,116,136,0.15); color: var(--text-dim); border-color: rgba(107,116,136,0.25); }
+  .badge.mute { background: rgba(74,81,99,0.25); color: var(--mute); border-color: var(--line); }
+  .badge.stale { background: rgba(138,106,90,0.18); color: #c4a08e; border-color: rgba(138,106,90,0.3); }
+  .badge.live { background: rgba(255,61,110,0.15); color: #ff7a9c; border-color: rgba(255,61,110,0.35); }
+  .badge.phone { background: rgba(143,211,200,0.12); color: var(--guest); border-color: rgba(143,211,200,0.28); }
+  .badge.onair {
+    background: var(--speak);
+    color: #1a1205;
+    border: 0;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #0a0c10;
+    position: relative;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .avatar.sm { width: 28px; height: 28px; font-size: 10px; }
+  .avatar.lg { width: 72px; height: 72px; font-size: 22px; }
+  .avatar.xl { width: 112px; height: 112px; font-size: 34px; }
+  .avatar.leo { background: var(--leo); }
+  .avatar.don { background: var(--don); }
+  .avatar.mikey { background: var(--mikey); }
+  .avatar.raph { background: var(--raph); }
+  .avatar.guest { background: var(--guest); }
+  .avatar.ring-speak {
+    box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--speak), 0 0 16px var(--speak-glow);
+  }
+  .avatar.ring-work {
+    box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--work);
+  }
+  .avatar.ring-hand {
+    box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--hand);
+  }
+  .avatar.ring-ask {
+    box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--ask);
+  }
+  .avatar.ring-ptt {
+    box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px #fff, 0 0 20px rgba(255,255,255,0.25);
+  }
+  .avatar.dim { filter: grayscale(0.55) brightness(0.7); opacity: 0.75; }
+
+  /* mouth indicator for "lip-sync" design note — plain img swap target */
+  .avatar .mouth {
+    position: absolute;
+    bottom: 6px;
+    width: 10px; height: 4px;
+    background: rgba(0,0,0,0.45);
+    border-radius: 0 0 6px 6px;
+  }
+  .avatar.ring-speak .mouth {
+    animation: mouth 0.28s steps(2) infinite;
+  }
+  @keyframes mouth {
+    0% { height: 3px; }
+    50% { height: 7px; }
+    100% { height: 3px; }
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 1 — Desktop main
+     ══════════════════════════════════════ */
+  .room {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 460px;
+    background: var(--ink);
+  }
+  .room-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, #161a22, #12151c);
+    flex-wrap: wrap;
+  }
+  .room-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 650;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+  .room-brand .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 8px rgba(61,214,140,0.5);
+  }
+  .room-header .sep {
+    width: 1px; height: 16px; background: var(--line);
+  }
+  .mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .mode-pill span {
+    font-size: 10px;
+    padding: 4px 9px;
+    color: var(--text-faint);
+    font-weight: 550;
+  }
+  .mode-pill span.on {
+    background: rgba(240,160,32,0.15);
+    color: var(--speak);
+  }
+  .room-header .spacer { flex: 1; }
+  .conn {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ok);
+  }
+
+  .room-body {
+    display: grid;
+    grid-template-columns: 1fr 210px;
+    min-height: 0;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px;
+    overflow: auto;
+    align-content: start;
+  }
+  .agent-card {
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-md);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .agent-card.speaking {
+    border-color: rgba(240,160,32,0.5);
+    background:
+      radial-gradient(120px 60px at 12% 0%, rgba(240,160,32,0.12), transparent 70%),
+      var(--elev);
+  }
+  .agent-card.hand {
+    border-color: rgba(255,92,69,0.45);
+  }
+  .agent-card.ask {
+    border-color: rgba(91,140,255,0.45);
+  }
+  .agent-card.ptt {
+    border-color: rgba(255,255,255,0.55);
+    background:
+      radial-gradient(140px 70px at 50% 0%, rgba(255,255,255,0.08), transparent 70%),
+      var(--elev);
+  }
+  .agent-card.muted-card { opacity: 0.72; }
+  .agent-card.stale-card { opacity: 0.65; }
+
+  .card-top {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+  }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-name {
+    font-size: 13px;
+    font-weight: 650;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-name .nick {
+    color: var(--text-faint);
+    font-weight: 450;
+    font-size: 11px;
+  }
+  .card-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+  }
+  .chip-count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 999px;
+    padding: 1px 6px;
+  }
+  .chip-count.hot { color: #ff8a78; border-color: rgba(255,92,69,0.35); }
+
+  .preview {
+    background: rgba(255,92,69,0.08);
+    border: 1px solid rgba(255,92,69,0.2);
+    border-radius: var(--r-sm);
+    padding: 7px 8px;
+    font-size: 11px;
+    color: #ffc4ba;
+    line-height: 1.35;
+  }
+  .preview .who {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hand);
+    margin-bottom: 3px;
+  }
+
+  .ask-box {
+    background: rgba(91,140,255,0.08);
+    border: 1px solid rgba(91,140,255,0.25);
+    border-radius: var(--r-sm);
+    padding: 7px 8px;
+    font-size: 11px;
+    color: #c5d6ff;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+  .ptt-hint {
+    margin-top: 2px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+  }
+  .agent-card.ptt .ptt-hint {
+    color: #fff;
+  }
+  .ptt-live {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 650;
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--r-sm);
+    padding: 5px 8px;
+  }
+  .ptt-live .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+  }
+  .ptt-live .bars i {
+    width: 2px;
+    background: #fff;
+    border-radius: 1px;
+    animation: bar 0.5s ease-in-out infinite alternate;
+  }
+  .ptt-live .bars i:nth-child(1) { height: 4px; animation-delay: 0s; }
+  .ptt-live .bars i:nth-child(2) { height: 10px; animation-delay: 0.1s; }
+  .ptt-live .bars i:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+  .ptt-live .bars i:nth-child(4) { height: 12px; animation-delay: 0.05s; }
+  @keyframes bar {
+    from { opacity: 0.4; transform: scaleY(0.6); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+
+  .summary-pane {
+    border-left: 1px solid var(--line-soft);
+    background: #12151c;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .summary-pane .sp-head {
+    padding: 10px 12px 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .summary-body {
+    padding: 4px 12px 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    overflow: auto;
+    line-height: 1.5;
+  }
+  .summary-body .speaker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: var(--speak);
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .summary-body h4 {
+    color: var(--text);
+    font-size: 13px;
+    margin: 0 0 6px;
+  }
+  .summary-body ul {
+    margin: 6px 0 0 16px;
+    color: var(--text-dim);
+  }
+  .summary-body li { margin-bottom: 3px; }
+  .summary-body code {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--panel);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--work);
+  }
+
+  .room-footer {
+    border-top: 1px solid var(--line-soft);
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--elev);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .room-footer .hold {
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 2 — Dock
+     ══════════════════════════════════════ */
+  .dock-inner { padding: 10px 12px; }
+  .dock-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .dock-caption {
+    flex: 1;
+    min-width: 0;
+  }
+  .dock-caption .who {
+    font-size: 11px;
+    font-weight: 650;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .dock-caption .bubble {
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px 8px 8px 3px;
+    padding: 7px 9px;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.35;
+    max-height: 52px;
+    overflow: hidden;
+  }
+  .dock-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .dock.idle-state .bubble {
+    color: var(--text-faint);
+    font-style: italic;
+  }
+  .dock-label-mini {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 3 — Phone room
+     ══════════════════════════════════════ */
+  .ph-header {
+    padding: 6px 12px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ph-header h4 { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; }
+  .ph-tools {
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 8px;
+  }
+  .toggle-pair {
+    display: flex;
+    flex: 1;
+    background: var(--elev);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .toggle-pair span {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 6px 4px;
+    color: var(--text-faint);
+  }
+  .toggle-pair span.on {
+    background: rgba(240,160,32,0.18);
+    color: var(--speak);
+  }
+  .ph-cards {
+    flex: 1;
+    overflow: auto;
+    padding: 4px 10px 70px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ph-card {
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    padding: 10px;
+  }
+  .ph-card.hand { border-color: rgba(255,92,69,0.4); }
+  .ph-card.speak { border-color: rgba(240,160,32,0.45); }
+  .ph-card-top {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .ph-card-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .ph-card-actions .btn {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  .ph-card-actions .btn.grant {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .toast {
+    position: absolute;
+    left: 12px; right: 12px;
+    bottom: 58px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 11px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 3;
+  }
+  .mini-player {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #1a1f2a, #141820);
+    border-top: 1px solid var(--line);
+    padding: 8px 10px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+  .mini-player .track {
+    flex: 1;
+    min-width: 0;
+  }
+  .mini-player .track .t1 {
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mini-player .track .t2 {
+    font-size: 10px;
+    color: var(--text-faint);
+  }
+  .scrub {
+    height: 3px;
+    background: var(--line);
+    border-radius: 999px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .scrub i {
+    display: block;
+    height: 100%;
+    width: 42%;
+    background: var(--speak);
+    border-radius: 999px;
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 4 — Expanded player
+     ══════════════════════════════════════ */
+  .sheet {
+    position: absolute;
+    inset: 40px 0 0;
+    background: var(--elev);
+    border-radius: 16px 16px 0 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    z-index: 4;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.45);
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--line);
+    border-radius: 999px;
+    margin: 8px auto 4px;
+  }
+  .sheet-body {
+    padding: 8px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+  .karaoke {
+    flex: 1;
+    overflow: auto;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-faint);
+  }
+  .karaoke .line { margin-bottom: 6px; }
+  .karaoke .line.active {
+    color: var(--text);
+    background: rgba(240,160,32,0.1);
+    border-left: 2px solid var(--speak);
+    padding-left: 8px;
+    margin-left: -10px;
+  }
+  .karaoke .line.done { color: var(--text-dim); }
+  .speed {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+  .speed span {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text-faint);
+    border: 1px solid transparent;
+  }
+  .speed span.on {
+    color: var(--speak);
+    border-color: rgba(240,160,32,0.35);
+    background: rgba(240,160,32,0.1);
+  }
+  .transport-big {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    align-items: center;
+  }
+  .transport-big .btn.icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+  }
+  .transport-big .btn.play {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--speak);
+    border-color: #d48912;
+    color: #1a1205;
+    font-size: 16px;
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 5 — Chat / Call / Interpreter
+     ══════════════════════════════════════ */
+  .chat-head {
+    padding: 4px 12px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .chat-head .back { color: var(--text-dim); font-size: 18px; }
+  .thread {
+    flex: 1;
+    overflow: auto;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bubble {
+    max-width: 88%;
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .bubble.them {
+    align-self: flex-start;
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.me {
+    align-self: flex-end;
+    background: rgba(91,140,255,0.15);
+    border: 1px solid rgba(91,140,255,0.25);
+    border-bottom-right-radius: 4px;
+    color: #d4e0ff;
+  }
+  .bubble .meta {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .bubble .replay-link {
+    color: var(--speak);
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  .composer {
+    border-top: 1px solid var(--line-soft);
+    padding: 8px 10px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: #12151c;
+  }
+  .composer .field {
+    flex: 1;
+    background: var(--elev);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .composer .ptt-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+  }
+  .composer .ptt-btn.hot {
+    background: #fff;
+    color: #111;
+    border-color: #fff;
+    box-shadow: 0 0 16px rgba(255,255,255,0.25);
+  }
+
+  /* Interpreter plan */
+  .plan {
+    align-self: stretch;
+    background: #141820;
+    border: 1px solid rgba(240,160,32,0.25);
+    border-radius: 12px;
+    padding: 10px;
+    margin: 2px 0;
+  }
+  .plan-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 650;
+    color: var(--speak);
+    margin-bottom: 8px;
+  }
+  .plan-step {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 8px;
+    align-items: start;
+    padding: 6px 0;
+    border-top: 1px solid var(--line-soft);
+    font-size: 11px;
+  }
+  .plan-step:first-of-type { border-top: 0; }
+  .step-ico {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 9px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .step-ico.ok { background: rgba(61,214,140,0.2); color: var(--ok); }
+  .step-ico.run { background: rgba(240,160,32,0.2); color: var(--speak); }
+  .step-ico.wait { background: var(--panel); color: var(--text-faint); }
+  .step-out {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+  }
+  .step-out.ok { color: var(--ok); }
+
+  /* Call mode */
+  .call {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background:
+      radial-gradient(180px 180px at 50% 35%, rgba(177,108,255,0.12), transparent 70%),
+      var(--ink);
+  }
+  .call .live-cap {
+    text-align: center;
+    max-width: 220px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.45;
+    min-height: 60px;
+  }
+  .call .live-cap em {
+    color: var(--text);
+    font-style: normal;
+    background: rgba(240,160,32,0.12);
+    padding: 0 3px;
+    border-radius: 3px;
+  }
+  .call-controls {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .call-controls .btn {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 9px;
+    padding: 0;
+  }
+  .call-controls .btn.end {
+    background: var(--raph);
+    border-color: #cc3333;
+    color: #fff;
+  }
+
+  /* ══════════════════════════════════════
+     SURFACE 6 — Picker
+     ══════════════════════════════════════ */
+  .picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .picker { grid-template-columns: 1fr; }
+    .room-body { grid-template-columns: 1fr; }
+    .summary-pane { display: none; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+  .picker-form {
+    padding: 14px;
+    background: var(--ink);
+    min-height: 320px;
+  }
+  .field-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 12px 0 6px;
+  }
+  .field-label:first-child { margin-top: 0; }
+  .persona-row {
+    display: flex;
+    gap: 8px;
+  }
+  .persona-pick {
+    flex: 1;
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .persona-pick.on {
+    border-color: rgba(177,108,255,0.55);
+    background: rgba(177,108,255,0.08);
+    color: var(--text);
+  }
+  .persona-pick .avatar { margin: 0 auto 4px; }
+  .select-mock {
+    background: var(--elev);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+  }
+  .flag-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .flag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-sm);
+    padding: 8px 10px;
+  }
+  .flag .switch {
+    width: 28px; height: 16px;
+    border-radius: 999px;
+    background: var(--line);
+    margin-left: auto;
+    position: relative;
+  }
+  .flag .switch.on { background: rgba(240,160,32,0.5); }
+  .flag .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .flag .switch.on::after { left: 14px; }
+
+  .confirm-card {
+    margin-top: 16px;
+    background:
+      linear-gradient(135deg, rgba(177,108,255,0.12), transparent 50%),
+      var(--elev);
+    border: 1px solid rgba(177,108,255,0.35);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .confirm-card .c-title {
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 4px;
+  }
+  .confirm-card .c-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .confirm-card .btn { width: 100%; padding: 10px; font-size: 13px; }
+
+  .ph-picker {
+    padding: 8px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  .sheet-mini-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 650;
+    margin-bottom: 4px;
+  }
+
+  /* ── Rationale ── */
+  .rationale {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 800px) {
+    .rationale { grid-template-columns: 1fr; }
+  }
+  .rat-card {
+    background: var(--elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-lg);
+    padding: 16px;
+  }
+  .rat-card h3 {
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 10px;
+  }
+  .rat-card p, .rat-card li {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .rat-card ul { padding-left: 16px; }
+  .map-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .map-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .map-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+  .map-table td:first-child { color: var(--text); font-weight: 550; width: 38%; }
+  .map-table code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--work);
+  }
+
+  .cuts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cut {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .cut .verb {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 0;
+    font-weight: 700;
+  }
+  .cut .verb.keep { color: var(--ok); }
+  .cut .verb.cut { color: var(--hand); }
+  .cut .verb.add { color: var(--ask); }
+  .cut p { margin: 0; font-size: 12px; color: var(--text-dim); }
+
+  footer.board-end {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══════════ 1. THESIS ═══════════ -->
+  <header class="mast">
+    <div class="mast-kicker">Concept · Broadcast Den</div>
+    <h1>The Room is a <em>control booth</em>, not a dashboard.</h1>
+    <p class="thesis">
+      Agents are on-air talent. Hierarchy is driven by <strong>signal state</strong> —
+      who's speaking, who's waiting, who needs a decision — not by card chrome or persona flair.
+      Persona accents stay on the avatar ring; semantic lights (amber on-air, teal working, coral hand-raised)
+      own the glanceable read across a wall of cards. Playful voice, instrument precision.
+    </p>
+  </header>
+
+  <!-- ═══════════ 2. TOKENS ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>01 · Tokens</h2>
+      <p>Dark-first instrument panel. Semantic lights ≠ persona accents.</p>
+    </div>
+    <div class="token-grid">
+      <div class="token-card">
+        <h3>Surfaces</h3>
+        <div class="swatches">
+          <div class="swatch"><div class="chip" style="background:#0a0c10"></div><span><strong>Ink</strong>#0a0c10</span></div>
+          <div class="swatch"><div class="chip" style="background:#171b23"></div><span><strong>Elev</strong>#171b23</span></div>
+          <div class="swatch"><div class="chip" style="background:#1c212b"></div><span><strong>Panel</strong>#1c212b</span></div>
+          <div class="swatch"><div class="chip" style="background:#2c3344"></div><span><strong>Line</strong>#2c3344</span></div>
+        </div>
+      </div>
+      <div class="token-card">
+        <h3>Semantic (broadcast)</h3>
+        <div class="swatches">
+          <div class="swatch"><div class="chip" style="background:#f0a020"></div><span><strong>Speak</strong>#f0a020</span></div>
+          <div class="swatch"><div class="chip" style="background:#2ec4b6"></div><span><strong>Work</strong>#2ec4b6</span></div>
+          <div class="swatch"><div class="chip" style="background:#ff5c45"></div><span><strong>Hand</strong>#ff5c45</span></div>
+          <div class="swatch"><div class="chip" style="background:#5b8cff"></div><span><strong>Ask</strong>#5b8cff</span></div>
+        </div>
+      </div>
+      <div class="token-card">
+        <h3>Persona accents (rings only)</h3>
+        <div class="swatches">
+          <div class="swatch"><div class="chip" style="background:#3d8bfd"></div><span><strong>Leo</strong>#3d8bfd</span></div>
+          <div class="swatch"><div class="chip" style="background:#b16cff"></div><span><strong>Donnie</strong>#b16cff</span></div>
+          <div class="swatch"><div class="chip" style="background:#ff8a2b"></div><span><strong>Mikey</strong>#ff8a2b</span></div>
+          <div class="swatch"><div class="chip" style="background:#ff4d4d"></div><span><strong>Raph</strong>#ff4d4d</span></div>
+        </div>
+      </div>
+      <div class="token-card">
+        <h3>Type</h3>
+        <div class="type-scale">
+          <div class="type-row"><span class="type-meta">22 / 650</span><span class="t-display">Room title</span></div>
+          <div class="type-row"><span class="type-meta">13 / 650</span><span class="t-title">Agent name</span></div>
+          <div class="type-row"><span class="type-meta">13 / 400</span><span class="t-body">Summary &amp; captions</span></div>
+          <div class="type-row"><span class="type-meta">11 mono</span><span class="t-mono">ON AIR · state chips</span></div>
+        </div>
+      </div>
+      <div class="token-card">
+        <h3>Geometry</h3>
+        <ul class="phil">
+          <li>Radius ladder: 4 → 7 → 11 → 16. Cards at 11; sheets/dock at 14–16.</li>
+          <li>8px base rhythm. Dense cards, loose board chrome.</li>
+          <li>No soft purple wash. Amber is the only “live” glow.</li>
+        </ul>
+      </div>
+      <div class="token-card">
+        <h3>State vs accent rule</h3>
+        <ul class="phil">
+          <li>Persona color fills the avatar disc — never the card border.</li>
+          <li>State owns border + badge + optional glow. Speaking wins every conflict.</li>
+          <li>PTT is white (neutral mic) so it never collides with Raph/Leo red/blue.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 3. SURFACES ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>02 · Surfaces</h2>
+      <p>Six framed mocks. Real copy. One card per major state on the Room wall.</p>
+    </div>
+    <div class="surfaces">
+
+      <!-- ─── 1. Desktop main ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>1 · Desktop panel — The Room</h3>
+          <span class="tag">~900 × 640 · Card · Badge · ScrollArea</span>
+        </div>
+        <div class="win" style="max-width:900px;margin:0 auto">
+          <div class="win-bar">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="win-title">Room of Devs</div>
+          </div>
+          <div class="room">
+            <div class="room-header">
+              <div class="room-brand"><span class="dot"></span> Room</div>
+              <div class="sep"></div>
+              <div class="mode-pill">
+                <span>Idle</span>
+                <span class="on">Live</span>
+                <span>Held</span>
+              </div>
+              <span class="badge live">LIVE CALL · 2</span>
+              <div class="spacer"></div>
+              <span class="conn">ws · ok</span>
+              <button class="btn sm ghost">Hold room</button>
+              <button class="btn sm">+ Session</button>
+            </div>
+            <div class="room-body">
+              <div class="card-grid">
+
+                <!-- SPEAKING -->
+                <div class="agent-card speaking">
+                  <div class="card-top">
+                    <div class="avatar don ring-speak">D<span class="mouth"></span></div>
+                    <div class="card-meta">
+                      <div class="card-name">Donnie <span class="nick">· jellyfin</span></div>
+                      <div class="card-chips">
+                        <span class="badge onair">ON AIR</span>
+                        <span class="badge live">live</span>
+                        <span class="chip-count">↩ 1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-actions">
+                    <button class="btn sm icon" title="Pause">❚❚</button>
+                    <button class="btn sm icon" title="Stop">■</button>
+                    <button class="btn sm icon" title="Replay">↻</button>
+                    <button class="btn sm">0.8×</button>
+                    <button class="btn sm ghost">Focus</button>
+                  </div>
+                  <div class="ptt-hint">hold card → talk</div>
+                </div>
+
+                <!-- WORKING -->
+                <div class="agent-card">
+                  <div class="card-top">
+                    <div class="avatar leo ring-work">L</div>
+                    <div class="card-meta">
+                      <div class="card-name">Leo <span class="nick">· agent-bar</span></div>
+                      <div class="card-chips">
+                        <span class="badge work">WORKING</span>
+                        <span class="chip-count">↑ 2</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ptt-hint" style="color:var(--work)">wiring usage chips…</div>
+                  <div class="card-actions">
+                    <button class="btn sm ghost">Status</button>
+                    <button class="btn sm ghost">Focus</button>
+                    <button class="btn sm danger">Kill</button>
+                  </div>
+                </div>
+
+                <!-- HAND RAISED -->
+                <div class="agent-card hand">
+                  <div class="card-top">
+                    <div class="avatar mikey ring-hand">M</div>
+                    <div class="card-meta">
+                      <div class="card-name">Mikey <span class="nick">· cowabunga</span></div>
+                      <div class="card-chips">
+                        <span class="badge hand">HAND UP</span>
+                        <span class="chip-count hot">✋ 1</span>
+                        <span class="badge phone">on phone</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview">
+                    <div class="who">Queued · 12s ago</div>
+                    Shipped the toast stack. Wanna hear the victory lap or skip to the diff?
+                  </div>
+                  <div class="card-actions">
+                    <button class="btn sm primary">Play</button>
+                    <button class="btn sm">Replay</button>
+                    <button class="btn sm ghost">Swap</button>
+                  </div>
+                </div>
+
+                <!-- ASKING -->
+                <div class="agent-card ask">
+                  <div class="card-top">
+                    <div class="avatar raph ring-ask">R</div>
+                    <div class="card-meta">
+                      <div class="card-name">Raph <span class="nick">· auth-fix</span></div>
+                      <div class="card-chips">
+                        <span class="badge ask">ASKING</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ask-box">Force-push the hotfix branch, or open a PR like a civilized turtle?</div>
+                  <div class="card-actions">
+                    <button class="btn sm primary">Answer</button>
+                    <button class="btn sm ghost">Focus</button>
+                  </div>
+                </div>
+
+                <!-- PTT ACTIVE -->
+                <div class="agent-card ptt">
+                  <div class="card-top">
+                    <div class="avatar guest ring-ptt">S</div>
+                    <div class="card-meta">
+                      <div class="card-name">Splinter <span class="nick">· guest</span></div>
+                      <div class="card-chips">
+                        <span class="badge" style="background:#fff;color:#111;border:0">MIC LIVE</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ptt-live">
+                    <div class="bars"><i></i><i></i><i></i><i></i></div>
+                    Grant open · release to send
+                  </div>
+                </div>
+
+                <!-- MUTED + STALE -->
+                <div class="agent-card muted-card stale-card">
+                  <div class="card-top">
+                    <div class="avatar leo dim">L</div>
+                    <div class="card-meta">
+                      <div class="card-name">Leo-2 <span class="nick">· stale</span></div>
+                      <div class="card-chips">
+                        <span class="badge mute">MUTED</span>
+                        <span class="badge stale">STALE</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ptt-hint">no heartbeat · 4m</div>
+                  <div class="card-actions">
+                    <button class="btn sm ghost">Unmute</button>
+                    <button class="btn sm danger">Kill</button>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="summary-pane">
+                <div class="sp-head">
+                  Last spoken
+                  <span class="badge speak">Donnie</span>
+                </div>
+                <div class="summary-body">
+                  <div class="speaker">
+                    <div class="avatar don sm">D</div>
+                    jellyfin-streamline
+                  </div>
+                  <h4>Auth middleware is green.</h4>
+                  <p>Fixed the token refresh race — sessions no longer bounce on the second request.</p>
+                  <ul>
+                    <li>Added lock around <code>refresh()</code></li>
+                    <li>Replay path skips Gemini when muted</li>
+                    <li>Ready for your smoke check</li>
+                  </ul>
+                </div>
+              </aside>
+            </div>
+            <div class="room-footer">
+              <span>4 agents · 1 on air</span>
+              <span class="hold">· room live</span>
+              <div style="flex:1"></div>
+              <span>ElevenLabs · quiet night</span>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Hold-to-grant is a press-and-hold on the card body (not a separate mic button in the grid).
+          Active PTT flips to white “MIC LIVE” — neutral so it never fights persona red/blue.
+          Avatar remains a plain disc (<code>&lt;img&gt;</code> swap target); mouth frames animate outside React.
+        </p>
+      </div>
+
+      <!-- ─── 2. Dock ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>2 · Desktop dock / spotlight</h3>
+          <span class="tag">~380 × 150 · non-activating · no text inputs</span>
+        </div>
+        <div class="dock-stage">
+          <div>
+            <div class="dock-label-mini" style="margin-left:4px">Speaking</div>
+            <div class="dock speaking">
+              <div class="dock-inner">
+                <div class="dock-row">
+                  <div class="avatar don ring-speak">D<span class="mouth"></span></div>
+                  <div class="dock-caption">
+                    <div class="who">Donnie <span class="badge onair" style="font-size:9px">ON AIR</span></div>
+                    <div class="bubble">Auth middleware is green. Fixed the token refresh race — sessions no longer bounce…</div>
+                  </div>
+                </div>
+                <div class="dock-tools">
+                  <button class="btn sm icon">❚❚</button>
+                  <button class="btn sm icon">■</button>
+                  <button class="btn sm icon">↻</button>
+                  <button class="btn sm">0.8×</button>
+                  <div style="flex:1"></div>
+                  <button class="btn sm" style="border-color:rgba(255,255,255,0.35)">Hold PTT</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="dock-label-mini" style="margin-left:4px">Collapsed / quiet</div>
+            <div class="dock idle-state">
+              <div class="dock-inner">
+                <div class="dock-row">
+                  <div class="avatar guest dim sm" style="width:36px;height:36px">·</div>
+                  <div class="dock-caption">
+                    <div class="who" style="color:var(--text-faint)">Room quiet</div>
+                    <div class="bubble">Mikey has a hand up · Raph is asking</div>
+                  </div>
+                </div>
+                <div class="dock-tools">
+                  <button class="btn sm ghost">Open Room</button>
+                  <button class="btn sm">Catch up · 2</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Amber rim only while speaking — peripheral glance target while coding elsewhere.
+          PTT is a hold button (no composer). Quiet state surfaces who needs you, not empty chrome.
+        </p>
+      </div>
+
+      <!-- ─── 3. Phone room ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>3 · Phone room</h3>
+          <span class="tag">390 × 720 · thumb-reach actions · Toast</span>
+        </div>
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-notch"><div class="phone-status"><span>9:41</span><span>♩ 5G</span></div></div>
+              <div class="ph-header">
+                <h4>Room</h4>
+                <button class="btn sm">+ New</button>
+              </div>
+              <div class="ph-tools">
+                <div class="toggle-pair">
+                  <span>Mac</span>
+                  <span class="on">Phone</span>
+                </div>
+                <button class="btn sm">Hold</button>
+                <button class="btn sm" style="color:var(--hand)">Catch up · 2</button>
+              </div>
+              <div class="ph-cards">
+                <div class="ph-card speak">
+                  <div class="ph-card-top">
+                    <div class="avatar don ring-speak sm">D</div>
+                    <div style="flex:1">
+                      <div style="font-size:13px;font-weight:650">Donnie</div>
+                      <span class="badge speak">ON AIR</span>
+                    </div>
+                  </div>
+                  <div class="ph-card-actions">
+                    <button class="btn grant">Grant</button>
+                    <button class="btn">Chat</button>
+                    <button class="btn">Replay</button>
+                    <button class="btn ghost">Hide</button>
+                  </div>
+                </div>
+                <div class="ph-card hand">
+                  <div class="ph-card-top">
+                    <div class="avatar mikey ring-hand sm">M</div>
+                    <div style="flex:1">
+                      <div style="font-size:13px;font-weight:650">Mikey</div>
+                      <span class="badge hand">HAND UP</span>
+                    </div>
+                  </div>
+                  <div class="preview" style="margin-top:8px">Shipped the toast stack. Victory lap?</div>
+                  <div class="ph-card-actions">
+                    <button class="btn grant">Grant</button>
+                    <button class="btn primary">Play</button>
+                    <button class="btn">Chat</button>
+                    <button class="btn ghost">Hide</button>
+                  </div>
+                </div>
+                <div class="ph-card">
+                  <div class="ph-card-top">
+                    <div class="avatar leo ring-work sm">L</div>
+                    <div style="flex:1">
+                      <div style="font-size:13px;font-weight:650">Leo</div>
+                      <span class="badge work">WORKING</span>
+                    </div>
+                  </div>
+                  <div class="ph-card-actions">
+                    <button class="btn grant">Grant</button>
+                    <button class="btn">Chat</button>
+                    <button class="btn">Call</button>
+                    <button class="btn ghost">Hide</button>
+                  </div>
+                </div>
+              </div>
+              <div class="toast">
+                <span class="badge hand">✋</span>
+                Mikey raised a hand — toast stack shipped.
+              </div>
+              <div class="mini-player">
+                <div class="avatar don sm ring-speak">D</div>
+                <div class="track">
+                  <div class="t1">Auth middleware is green…</div>
+                  <div class="t2">Donnie · 0.8×</div>
+                  <div class="scrub"><i></i></div>
+                </div>
+                <button class="btn icon sm">❚❚</button>
+              </div>
+              <div class="phone-home"><span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Primary row (Grant / Play / Chat) sits in the lower half of each card for thumb reach.
+          Device toggle is a segmented control — Phone selected = this client auto-plays routed audio.
+        </p>
+      </div>
+
+      <!-- ─── 4. Phone player ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>4 · Phone player — mini + expanded sheet</h3>
+          <span class="tag">Sheet · Slider · karaoke lines</span>
+        </div>
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-notch"><div class="phone-status"><span>9:41</span><span>♩</span></div></div>
+              <div class="ph-header"><h4 style="opacity:0.35">Room</h4></div>
+              <div class="sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-body">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="avatar don lg ring-speak">D<span class="mouth"></span></div>
+                    <div>
+                      <div style="font-weight:650">Donnie</div>
+                      <div style="font-size:11px;color:var(--text-faint)">jellyfin-streamline</div>
+                      <span class="badge speak" style="margin-top:4px">ON AIR</span>
+                    </div>
+                  </div>
+                  <div class="karaoke">
+                    <div class="line done">Alright boss — auth middleware is green.</div>
+                    <div class="line active">Fixed the token refresh race — sessions no longer bounce on the second request.</div>
+                    <div class="line">Added a lock around refresh, and the replay path skips Gemini when you're muted.</div>
+                    <div class="line">Ready for your smoke check whenever you are.</div>
+                  </div>
+                  <div class="scrub" style="height:4px"><i style="width:38%"></i></div>
+                  <div class="speed">
+                    <span>0.7×</span><span class="on">0.8×</span><span>1×</span><span>1.25×</span>
+                  </div>
+                  <div class="transport-big">
+                    <button class="btn icon">■</button>
+                    <button class="btn play">❚❚</button>
+                    <button class="btn icon">↻</button>
+                  </div>
+                </div>
+              </div>
+              <div class="phone-home"><span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Karaoke is line-level highlight (not word karaoke) — cheap to sync from summary timestamps,
+          readable one-handed. Speed chips map to ToggleGroup; scrub to Slider.
+        </p>
+      </div>
+
+      <!-- ─── 5. Chat / Call / Interpreter ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>5 · Phone chat · call · voice interpreter</h3>
+          <span class="tag">Conversation · Message · PromptInput · ChainOfThought</span>
+        </div>
+        <div class="phone-wrap">
+          <!-- Chat + interpreter plan -->
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-notch"><div class="phone-status"><span>9:41</span><span>♩</span></div></div>
+              <div class="chat-head">
+                <span class="back">‹</span>
+                <div class="avatar don sm">D</div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:650">Donnie</div>
+                  <div style="font-size:10px;color:var(--text-faint)">thread · jellyfin</div>
+                </div>
+                <button class="btn sm">Call</button>
+              </div>
+              <div class="thread">
+                <div class="bubble them">
+                  <div class="meta"><span>Donnie</span><span>2m</span></div>
+                  Auth middleware is green. Ready for smoke check.
+                  <div class="replay-link">↻ Replay</div>
+                </div>
+                <div class="bubble me">
+                  <div class="meta"><span>You</span><span>just now</span></div>
+                  <span style="opacity:0.7">🎙</span> “Pause the room, then replay Donnie's last message.”
+                </div>
+                <!-- INTERPRETER PLAN -->
+                <div class="plan">
+                  <div class="plan-head">⚡ Interpreter plan</div>
+                  <div class="plan-step">
+                    <div class="step-ico ok">✓</div>
+                    <div>Hold the room</div>
+                    <div class="step-out ok">held</div>
+                  </div>
+                  <div class="plan-step">
+                    <div class="step-ico run">●</div>
+                    <div>Replay Donnie · last spoken</div>
+                    <div class="step-out" style="color:var(--speak)">playing</div>
+                  </div>
+                  <div class="plan-step">
+                    <div class="step-ico wait">3</div>
+                    <div>Confirm when clip ends</div>
+                    <div class="step-out">queued</div>
+                  </div>
+                </div>
+              </div>
+              <div class="composer">
+                <div class="ptt-btn hot">🎙</div>
+                <div class="field">Reply or hold mic…</div>
+                <button class="btn sm primary">Send</button>
+              </div>
+              <div class="phone-home"><span></span></div>
+            </div>
+          </div>
+
+          <!-- Call mode -->
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-notch"><div class="phone-status"><span>9:41</span><span>♩</span></div></div>
+              <div class="chat-head" style="border:0;justify-content:center">
+                <span class="badge live">LIVE CALL</span>
+              </div>
+              <div class="call">
+                <div class="avatar don xl ring-speak">D<span class="mouth"></span></div>
+                <div style="font-weight:650;font-size:18px">Donnie</div>
+                <div style="font-size:11px;color:var(--text-faint)">narrating · jellyfin-streamline</div>
+                <div class="live-cap">
+                  Digging into the race now… <em>found it in refresh()</em> — locking that down before the next request lands.
+                </div>
+                <div class="call-controls">
+                  <button class="btn">🔇<br>Mute</button>
+                  <button class="btn">⏸<br>Hold</button>
+                  <button class="btn end">✕<br>End</button>
+                </div>
+              </div>
+              <div class="phone-home"><span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Interpreter output is a first-class message type: a compact ChainOfThought step list with
+          live outcomes (held / playing / queued) — not a toast that vanishes. Call mode is a voice-call
+          screen: huge avatar, caption with the live clause highlighted, fat thumb controls.
+        </p>
+      </div>
+
+      <!-- ─── 6. Picker ─── -->
+      <div class="surface-block">
+        <div class="surface-label">
+          <h3>6 · Session picker — desktop + phone confirm</h3>
+          <span class="tag">Dialog / Sheet · Toggle · explicit confirm</span>
+        </div>
+        <div class="picker">
+          <div class="win">
+            <div class="win-bar">
+              <div class="traffic"><i></i><i></i><i></i></div>
+              <div class="win-title">New session</div>
+            </div>
+            <div class="picker-form">
+              <div class="field-label">Persona</div>
+              <div class="persona-row">
+                <div class="persona-pick"><div class="avatar leo sm">L</div>Leo</div>
+                <div class="persona-pick on"><div class="avatar don sm">D</div>Donnie</div>
+                <div class="persona-pick"><div class="avatar mikey sm">M</div>Mikey</div>
+                <div class="persona-pick"><div class="avatar raph sm">R</div>Raph</div>
+              </div>
+              <div class="field-label">Project</div>
+              <div class="select-mock">~/code/jellyfin-streamline <span style="color:var(--text-faint)">▾</span></div>
+              <div class="field-label">Model</div>
+              <div class="select-mock">sonnet <span style="color:var(--text-faint)">▾</span></div>
+              <div class="field-label">Flags</div>
+              <div class="flag-row">
+                <div class="flag">Skip permissions <div class="switch on"></div></div>
+                <div class="flag">Remote session <div class="switch"></div></div>
+              </div>
+              <div class="confirm-card">
+                <div class="c-title">Start Donnie · sonnet · jellyfin-streamline</div>
+                <div class="c-sub">skip-permissions · local tmux</div>
+                <button class="btn primary">Confirm start</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="phone-notch"><div class="phone-status"><span>9:41</span><span>♩</span></div></div>
+                <div style="flex:1;background:rgba(0,0,0,0.35)"></div>
+                <div class="sheet" style="inset:auto 0 0;height:340px;position:relative">
+                  <div class="sheet-handle"></div>
+                  <div class="ph-picker">
+                    <div class="sheet-mini-title">Confirm start</div>
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--panel);border-radius:12px;border:1px solid rgba(177,108,255,0.3)">
+                      <div class="avatar don">D</div>
+                      <div>
+                        <div style="font-weight:650;font-size:14px">Donnie</div>
+                        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:2px">
+                          sonnet · jellyfin-streamline
+                        </div>
+                        <div style="font-size:10px;color:var(--text-faint);margin-top:2px">skip-permissions</div>
+                      </div>
+                    </div>
+                    <button class="btn primary" style="width:100%;padding:12px;font-size:14px;margin-top:4px">
+                      Start Donnie
+                    </button>
+                    <button class="btn ghost" style="width:100%">Back</button>
+                  </div>
+                </div>
+                <div class="phone-home"><span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="surface-note">
+          Confirm is a sentence, not a form dump: “Start Donnie · sonnet · jellyfin-streamline.”
+          Desktop keeps the form + confirm card in one view; phone splits into sheet steps ending on confirm.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ 4. RATIONALE ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <h2>03 · Rationale</h2>
+      <p>Opinionated calls. What maps to shadcn. What I'd cut or add.</p>
+    </div>
+    <div class="rationale">
+      <div class="rat-card">
+        <h3>Key decisions</h3>
+        <ul>
+          <li><strong style="color:var(--text)">Broadcast lights over character chrome.</strong> Speaking is amber ON AIR everywhere — dock rim, card border, badge, summary accent. Persona color never owns the border; it stays on the avatar fill so six turtles don't become a rainbow traffic jam.</li>
+          <li><strong style="color:var(--text)">PTT is white, not accented.</strong> A held grant is a mic event, not a persona event. White ring + waveform reads as “you are live to this agent” without colliding with Raph red or Leo blue.</li>
+          <li><strong style="color:var(--text)">Quiet dock still earns its pixels.</strong> Collapsed state shows who needs you (hand / ask counts), not a dead logo. Glanceable while coding.</li>
+          <li><strong style="color:var(--text)">Interpreter plans are messages.</strong> Voice commands render as ChainOfThought steps with outcomes in the thread — durable, replayable, auditable. Not a disappearing toast.</li>
+          <li><strong style="color:var(--text)">Confirm is a spoken sentence.</strong> Spawn UX ends on “Start Donnie · sonnet · jellyfin-streamline” — the same cadence the product speaks in.</li>
+        </ul>
+      </div>
+
+      <div class="rat-card">
+        <h3>Cut / keep / add</h3>
+        <div class="cuts">
+          <div class="cut">
+            <div class="verb keep">Keep</div>
+            <p>Per-agent transport (pause/stop/replay/0.8×), hold-to-grant, live badge, hand preview, device toggle, catch-up.</p>
+          </div>
+          <div class="cut">
+            <div class="verb cut">Cut</div>
+            <p>Per-card “status info” as a permanent button — fold into a long-press / ··· menu. Grid is too precious for tertiary chrome.</p>
+          </div>
+          <div class="cut">
+            <div class="verb cut">Cut</div>
+            <p>Swap-persona on the card face. Move to card menu; accidental swaps mid-call are worse than one extra tap.</p>
+          </div>
+          <div class="cut">
+            <div class="verb add">Add</div>
+            <p>Quiet-dock “needs you” strip (hands + asks). Interpreter plan as a thread object. Confirm-as-sentence on picker.</p>
+          </div>
+          <div class="cut">
+            <div class="verb add">Add</div>
+            <p>Line-level karaoke only (not word). Sync cost stays low; readability stays high on a 390-wide screen.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rat-card" style="grid-column:1 / -1">
+        <h3>shadcn / AI Elements mapping</h3>
+        <table class="map-table">
+          <thead>
+            <tr><th>Surface / pattern</th><th>Compose from</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Agent card shell</td>
+              <td><code>Card</code> + <code>Badge</code> + <code>Avatar</code> (custom plain <code>&lt;img&gt;</code> child for lip-sync frame swap) + <code>Button</code> / <code>DropdownMenu</code> for overflow</td>
+            </tr>
+            <tr>
+              <td>State chips / live / on-phone</td>
+              <td><code>Badge</code> variants — semantic tokens, not persona tokens</td>
+            </tr>
+            <tr>
+              <td>Room header mode</td>
+              <td><code>ToggleGroup</code> (Idle / Live / Held) + connection <code>Badge</code></td>
+            </tr>
+            <tr>
+              <td>Summary pane</td>
+              <td><code>ScrollArea</code> + shared Markdown renderer; speaker row uses <code>Avatar</code></td>
+            </tr>
+            <tr>
+              <td>Dock transport</td>
+              <td><code>Button</code> icon set only — no <code>Input</code> (non-activating constraint)</td>
+            </tr>
+            <tr>
+              <td>Phone device toggle</td>
+              <td><code>ToggleGroup</code> type=single (Mac | Phone)</td>
+            </tr>
+            <tr>
+              <td>Toasts / catch-up</td>
+              <td><code>sonner</code> Toast</td>
+            </tr>
+            <tr>
+              <td>Expanded player</td>
+              <td><code>Sheet</code> + <code>Slider</code> (scrub) + <code>ToggleGroup</code> (speed) — karaoke lines custom</td>
+            </tr>
+            <tr>
+              <td>Chat thread</td>
+              <td>AI Elements: <code>Conversation</code>, <code>Message</code>, <code>PromptInput</code></td>
+            </tr>
+            <tr>
+              <td>Interpreter plan</td>
+              <td>AI Elements: <code>ChainOfThought</code> / <code>Task</code> steps with outcome slots</td>
+            </tr>
+            <tr>
+              <td>Call mode</td>
+              <td>Custom full-bleed layout; controls are fat <code>Button</code>s; captions custom</td>
+            </tr>
+            <tr>
+              <td>Kill confirm / picker</td>
+              <td>Desktop: <code>Dialog</code>. Phone: <code>Sheet</code>. Confirm CTA is a single primary <code>Button</code></td>
+            </tr>
+            <tr>
+              <td>PTT grant</td>
+              <td>Custom (press-hold + event firewall) — not a shadcn primitive; visual state is badge + ring only</td>
+            </tr>
+            <tr>
+              <td>Tooltips / menus</td>
+              <td><code>Tooltip</code>, <code>Popover</code>, <code>DropdownMenu</code> for card overflow (Focus, Swap, Kill…)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="board-end">
+    <span>Room of Devs · concept board · Broadcast Den</span>
+    <span>designer pass · dark-first · no external assets</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -8,6 +8,36 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
 - **Donnie avatar art cleanup** (noted 2026-07-19): Donnie's current avatar image reads like he has a bird's beak — the nose/mouth area is drawn as a pointed yellow wedge that dominates the face. Regenerate or retouch the portrait so the face reads as a turtle (flatter snout, less pronounced point), keeping the purple mask, headphones, hoodie, and bo staff composition.
 - **Cross-persona spawn race** (noted 2026-07-19, from gpt-5.6 code review): two different personas spawned near-simultaneously can both bind to the same new `~/.claude/sessions` file — `team.sh` picks "first new registry file since launch" with no pane↔session association. The v2.3 pending-persona set serializes same-persona spawns only. Fix direction: serialize the launch-to-bind phase globally (lock file), or match the registry entry's pid to the tmux pane's process tree.
 - **Subagent-finish fires the room announce** (noted 2026-07-18, owner: "log for now"): when a Claude subagent completes, the Mac plays the "updates over here" notification — the afterAgentResponse hook doesn't distinguish subagent responses from main-loop ones. Investigate whether it also raises a hand. Fix direction: filter subagent events in the hook/ingest path.
+- **Clicky-style screen awareness** (noted 2026-07-25, long-term): open
+  source "clicky" (https://github.com/farzaa/clicky; see also the
+  contextdb friend's fork branch
+  https://github.com/antiartificial/clicky/tree/agent/windows-clicky) —
+  an AI helper that follows the mouse and explains what's on screen.
+  Goal: move beyond mic-only interaction to screen context without
+  manual screenshots — "hey Mikey, what am I looking at here, is this
+  what I'm supposed to do?" Research the fork's updates when picked up.
+- **Whiteboard mode: agent visualization** (noted 2026-07-25, stretch):
+  agents only ever answer in text across all 12 concept boards. Idea:
+  agents can draw — shadcn canvas component, or mermaid for quick
+  diagrams — for "I don't understand, let's draw it out on the
+  whiteboard." Moves the product from app-that-codes to teammate.
+  (Distinct from attachments/typed input — that's an input-parity gap,
+  tracked in spec-ui-consolidation-round2.md as a target requirement.)
+- **Character packs** (noted 2026-07-25, solid future): personas as
+  swappable packs — TMNT today; a friend installs and wants Star Wars.
+  The tool ships a generation prompt describing every asset a pack
+  needs (avatar art, mouth frames for lip-sync, accent color, persona
+  blurb) + a config slot for an ElevenLabs voice id per character;
+  packs rotate in and out. Also enables multiple owner packs.
+- **Postplan hub-and-spokes** (noted 2026-07-24, owner thinking on it):
+  `docs:publish` currently renders STATUS + all of `docs/active/` into ONE
+  ever-growing draft (single stable URL was the original goal; single file
+  is script path-dependence). Proposed shape: stable draft becomes
+  STATUS-only (the index), each substantial spec publishes as its own post
+  linked from it; script tracks a `doc → draft ID` map in
+  `docs/.postplan-draft` instead of one ID so republishing updates
+  in place. ~30 min in `scripts/` publish tooling. Revisit when the owner
+  decides.
 - **t3code borrowings** (noted 2026-07-23, from recon of
   https://github.com/pingdotgg/t3code — MIT, code legally borrowable; owner
   flagged it as "worth peeking"). t3code = open-source Node WS server

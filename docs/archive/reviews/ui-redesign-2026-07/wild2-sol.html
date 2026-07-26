@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Room of Devs — The Studio</title>
+  <style>
+    :root{
+      --ink:#17201d;--paper:#f3f0e7;--panel:#fffdf6;--line:#c9c4b7;
+      --moss:#334a3c;--lime:#c8f26b;--aqua:#8edfd2;--coral:#ff806d;
+      --violet:#9b87ed;--gold:#f3c75f;--muted:#6e746f;--deep:#111916;
+      --r:22px;--shadow:0 18px 50px #17201d1c;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
+    button{font:inherit;color:inherit}
+    .wrap{width:min(1180px,calc(100% - 32px));margin:auto}
+    .eyebrow{font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--moss)}
+    .hero{padding:68px 0 54px;position:relative}
+    .hero:after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;background:var(--lime);filter:blur(1px);opacity:.22;right:-130px;top:-140px}
+    h1{font-size:clamp(58px,10vw,126px);line-height:.8;letter-spacing:-.085em;margin:24px 0 28px;max-width:980px}
+    h1 em{font-family:Georgia,serif;font-weight:400;color:var(--moss)}
+    .lede{font-size:clamp(19px,2.6vw,31px);line-height:1.22;letter-spacing:-.025em;max-width:800px}
+    .thesis-line{display:flex;gap:12px;align-items:center;margin-top:38px;font:700 12px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em}
+    .pulse{width:38px;height:38px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;background:var(--lime)}
+    .pulse i{display:block;width:4px;height:12px;background:var(--ink);box-shadow:7px -4px 0 var(--ink),-7px 3px 0 var(--ink)}
+    section{padding:70px 0;border-top:1px solid var(--line)}
+    .section-head{display:grid;grid-template-columns:1fr 2fr;gap:28px;margin-bottom:34px}
+    h2{font-size:clamp(36px,6vw,72px);letter-spacing:-.065em;line-height:.9;margin:0}
+    .section-copy{font-size:18px;line-height:1.55;max-width:620px;margin:0}
+    .tokens{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 2px 0 #fff inset;padding:24px}
+    .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:28px}
+    .swatch{min-height:128px;border-radius:14px;padding:12px;display:flex;align-items:flex-end;font:700 10px ui-monospace,monospace}
+    .type-sample{font-size:52px;line-height:.95;letter-spacing:-.06em;margin:27px 0 12px}
+    .mono{font:600 12px/1.6 ui-monospace,SFMono-Regular,monospace;color:var(--muted)}
+    .principles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+    .principle b{display:block;font-size:22px;margin:12px 0 8px}
+    .principle p{margin:0;color:var(--muted);line-height:1.45}
+    .stage{background:var(--deep);border-radius:30px;padding:18px;box-shadow:var(--shadow);color:#eff5ec}
+    .window{min-height:680px;border:1px solid #ffffff24;border-radius:20px;background:#17221d;display:grid;grid-template-columns:72px 1fr 310px;overflow:hidden}
+    .rail{border-right:1px solid #ffffff1a;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:16px}
+    .brand{width:38px;height:38px;border-radius:12px;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-weight:900}
+    .rail-icon{width:38px;height:38px;border-radius:12px;border:1px solid #ffffff20;display:grid;place-items:center;color:#aebbb3}
+    .rail-icon.active{background:#ffffff12;color:white}
+    .spacer{flex:1}
+    .room{padding:24px;position:relative;background-image:radial-gradient(#ffffff10 1px,transparent 1px);background-size:20px 20px}
+    .topbar{display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .topbar h3{font-size:25px;letter-spacing:-.04em;margin:3px 0}
+    .live{padding:8px 12px;border-radius:99px;background:#c8f26b19;border:1px solid #c8f26b55;color:var(--lime);font:700 10px ui-monospace,monospace;text-transform:uppercase}
+    .cast{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:24px}
+    .agent{min-height:184px;border:1px solid #ffffff1b;background:#ffffff0b;border-radius:18px;padding:18px;position:relative}
+    .agent.speaking{border-color:var(--lime);box-shadow:0 0 0 3px #c8f26b19}
+    .agent.waiting:after{content:"needs you";position:absolute;right:14px;top:14px;background:var(--gold);color:var(--ink);padding:5px 8px;border-radius:99px;font:800 9px ui-monospace,monospace;text-transform:uppercase}
+    .avatar{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:var(--ink);font-weight:900;font-size:18px;position:relative}
+    .speaking .avatar:after{content:"";position:absolute;inset:-6px;border:2px solid var(--lime);border-radius:50%;border-left-color:transparent}
+    .agent h4{margin:14px 0 3px;font-size:18px}.agent small{color:#aeb8b1}
+    .wave{height:24px;display:flex;align-items:center;gap:3px;margin-top:18px}
+    .wave i{width:3px;height:8px;background:var(--lime);border-radius:4px}
+    .wave i:nth-child(2n){height:19px}.wave i:nth-child(3n){height:13px}
+    .room-bottom{position:absolute;left:24px;right:24px;bottom:22px;display:flex;gap:10px}
+    .command{flex:1;background:#f7f5ed;color:var(--ink);border-radius:15px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+    .command span{color:var(--muted);font-size:13px}.key{margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:4px 7px;font:700 10px ui-monospace,monospace}
+    .round-btn{width:48px;height:48px;border-radius:15px;border:0;background:var(--lime);display:grid;place-items:center;font-weight:900}
+    .thread{border-left:1px solid #ffffff1a;background:#121a17;padding:22px 18px;display:flex;flex-direction:column}
+    .thread h3{margin:0 0 18px;font-size:15px}.message{border-left:2px solid var(--aqua);padding:2px 0 2px 12px;margin-bottom:20px}
+    .message b{font-size:12px}.message p{font-size:13px;line-height:1.42;color:#c5cec8;margin:6px 0}
+    .attach{background:#ffffff0c;border:1px solid #ffffff19;padding:10px;border-radius:10px;font-size:11px}
+    .composer{margin-top:auto;border:1px solid #ffffff26;border-radius:14px;padding:12px;color:#8c9a92;font-size:12px}
+    .composer .tools{display:flex;justify-content:space-between;margin-top:20px;color:#d8e3dc}
+    .caption{display:flex;justify-content:space-between;gap:30px;margin:18px 8px 0}
+    .caption p{max-width:680px;margin:0;color:var(--muted);line-height:1.5}
+    .caption b{font:700 11px ui-monospace,monospace;text-transform:uppercase}
+    .moments{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:48px}
+    .moment{min-height:355px;position:relative;overflow:hidden}
+    .moment h3{font-size:28px;margin:10px 0}.moment p{color:var(--muted);line-height:1.5;max-width:450px}
+    .share-sheet{margin-top:28px;border:1px solid var(--line);border-radius:16px;padding:14px;background:white}
+    .screen-preview{height:112px;background:linear-gradient(135deg,#e5e8e3,#cbd6d2);border-radius:10px;padding:16px;font:11px ui-monospace,monospace;color:#6d2722}
+    .consent{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px}.consent button{border:0;background:var(--ink);color:white;border-radius:9px;padding:9px 13px}
+    .canvas{height:210px;background:#fcfaf2;border:1px solid var(--line);border-radius:14px;margin-top:25px;position:relative}
+    .box{position:absolute;border:2px solid var(--violet);padding:9px;border-radius:6px;font:700 11px ui-monospace,monospace}
+    .arrow{position:absolute;height:2px;background:var(--coral);transform:rotate(15deg);transform-origin:left}.arrow:after{content:"›";position:absolute;right:-3px;top:-12px;color:var(--coral);font-size:24px}
+    .scribble{position:absolute;border:3px solid var(--aqua);width:100px;height:55px;border-radius:50%;transform:rotate(-8deg)}
+    .call{grid-column:1/-1;background:var(--moss);color:white;min-height:280px}
+    .call p{color:#d8e2dc}.call-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:32px}
+    .caller{text-align:center}.caller .avatar{margin:auto;border:3px solid #ffffff33}.caller.active .avatar{box-shadow:0 0 0 4px var(--lime)}.caller small{display:block;margin-top:9px}
+    .handoff{display:grid;grid-template-columns:1fr 320px;gap:60px;align-items:center}
+    .floater-demo{height:430px;border-radius:26px;background:linear-gradient(135deg,#cbd2dc,#e9e3d8);position:relative;overflow:hidden}
+    .fake-app{position:absolute;inset:28px;background:#f7f7f5;border-radius:14px;padding:22px;color:#9aa19d;font:12px ui-monospace,monospace}
+    .floater{position:absolute;right:18px;bottom:18px;width:330px;background:#111916;color:white;border-radius:20px;padding:12px;box-shadow:0 18px 60px #0005}
+    .floater-row{display:flex;align-items:center;gap:10px}.mini-avatar{width:36px;height:36px;border-radius:50%;background:var(--aqua);color:var(--ink);display:grid;place-items:center;font-weight:900}
+    .floater p{margin:0;font-size:12px}.floater small{color:#98a69e}.bars{margin-left:auto;color:var(--lime);letter-spacing:-2px}
+    .actions{display:flex;gap:7px;margin-top:10px}.actions button{flex:1;border:1px solid #ffffff25;background:#ffffff0d;color:white;border-radius:10px;padding:8px;font-size:11px}.actions .primary{background:var(--lime);color:var(--ink)}
+    .phone{width:290px;border:8px solid var(--deep);border-radius:44px;background:#f8f5ec;padding:19px 14px 14px;min-height:600px;box-shadow:var(--shadow);margin:auto;position:relative}
+    .island{width:78px;height:20px;background:var(--deep);border-radius:20px;margin:-12px auto 23px}
+    .phone-head{display:flex;justify-content:space-between;align-items:center}.phone h3{font-size:24px;margin:6px 0 14px;letter-spacing:-.04em}
+    .now{background:var(--moss);color:white;border-radius:20px;padding:16px}
+    .now .avatar{width:46px;height:46px}.now p{font-size:13px;line-height:1.4}.phone-agents{display:flex;gap:7px;margin:12px 0}.phone-agents .avatar{width:42px;height:42px;font-size:12px}
+    .quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}.quick button{border:1px solid var(--line);background:white;border-radius:12px;padding:11px 7px;font-size:11px}
+    .mobile-compose{position:absolute;left:14px;right:14px;bottom:14px;background:white;border:1px solid var(--line);border-radius:18px;padding:12px}
+    .mobile-compose span{font-size:12px;color:var(--muted)}.mobile-compose div{display:flex;justify-content:space-between;margin-top:18px}.mobile-compose button{border:0;border-radius:10px;padding:9px 12px;background:#e9e5da}.mobile-compose .talk{background:var(--coral);color:var(--ink)}
+    .rationale{display:grid;grid-template-columns:1fr 1fr;gap:45px}.rationale ol{margin:0;padding-left:20px}.rationale li{padding:0 0 20px 8px;line-height:1.5}
+    footer{padding:28px 0 44px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font:700 11px ui-monospace,monospace;text-transform:uppercase}
+    @media(max-width:850px){
+      .tokens,.handoff,.rationale{grid-template-columns:1fr}.section-head{grid-template-columns:1fr}.window{grid-template-columns:56px 1fr}.thread{display:none}.moments{grid-template-columns:1fr}.call{grid-column:auto}.call-grid{grid-template-columns:repeat(3,1fr)}.principles{grid-template-columns:1fr}.swatches{grid-template-columns:repeat(3,1fr)}.floater-demo{height:360px}
+    }
+    @media(max-width:560px){
+      .wrap{width:min(100% - 20px,1180px)}.hero{padding-top:48px}.card{padding:18px}.stage{padding:7px}.window{grid-template-columns:1fr;min-height:740px}.rail{display:none}.cast{grid-template-columns:1fr}.agent{min-height:140px}.agent:nth-child(n+3){display:none}.room-bottom{left:14px;right:14px}.caption{display:block}.caption b{display:block;margin-bottom:8px}.moments{margin-top:30px}.call-grid{grid-template-columns:repeat(3,1fr)}.caller:nth-child(n+4){display:none}.floater{left:12px;right:12px;width:auto}.swatch{min-height:100px}.phone{width:100%;max-width:290px}
+    }
+  </style>
+</head>
+<body>
+  <header class="hero wrap">
+    <div class="eyebrow">Blind concept / round 02</div>
+    <h1>The room is an <em>instrument.</em></h1>
+    <p class="lede">Room of Devs becomes a shared audio studio: four recognizable voices, one living conversation, and a quiet visual score you can glance at without leaving your work.</p>
+    <div class="thesis-line"><span class="pulse"><i></i></span> Hear the room · See the state · Join with any medium</div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head"><h2>Warm signal,<br>low noise.</h2><p class="section-copy">Play lives in voice, motion, and character—not chrome. A notebook-like ground keeps the product useful for ten-hour days; bright signals are reserved for speech, attention, and consent.</p></div>
+      <div class="tokens">
+        <div class="card">
+          <div class="eyebrow">Palette / studio utility</div>
+          <div class="swatches">
+            <div class="swatch" style="background:#17201d;color:white">INK<br>#17201D</div><div class="swatch" style="background:#f3f0e7">PAPER<br>#F3F0E7</div>
+            <div class="swatch" style="background:#c8f26b">VOICE<br>#C8F26B</div><div class="swatch" style="background:#8edfd2">GLANCE<br>#8EDF D2</div>
+            <div class="swatch" style="background:#ff806d">REPLY<br>#FF806D</div><div class="swatch" style="background:#9b87ed;color:white">DRAW<br>#9B87ED</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Type / native and immediate</div>
+          <div class="type-sample">Room<br>tone.</div>
+          <div class="mono">SYSTEM UI / DISPLAY<br>SF MONO / STATE + TELEMETRY<br>GEORGIA ITALIC / HUMAN INFLECTION</div>
+        </div>
+      </div>
+      <div class="principles">
+        <div class="card principle"><div class="eyebrow">01 / Audio leads</div><b>Speech has a shape.</b><p>Who, urgency, and turn-taking are readable before the transcript is.</p></div>
+        <div class="card principle"><div class="eyebrow">02 / Consent is visible</div><b>Looking is a moment.</b><p>A screen glance is previewed, scoped, and visibly ends—like turning a laptop back.</p></div>
+        <div class="card principle"><div class="eyebrow">03 / One grammar</div><b>Say, type, show, draw.</b><p>Every conversation accepts every medium. No mode maze, no “mobile-lite.”</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head"><h2>The Studio</h2><p class="section-copy">The primary Mac window is a spatial mixer, not a chat inbox. Each character is a channel. The transcript is supporting memory; the room itself shows who is speaking, thinking, done, or politely waiting.</p></div>
+      <div class="stage">
+        <div class="window">
+          <nav class="rail"><div class="brand">R</div><div class="rail-icon active">◉</div><div class="rail-icon">⌁</div><div class="rail-icon">▱</div><div class="spacer"></div><div class="rail-icon">···</div></nav>
+          <main class="room">
+            <div class="topbar"><div><div class="eyebrow" style="color:#91a297">Sat 2:14 pm / Checkout sprint</div><h3>Workshop floor</h3></div><div class="live">● room audible</div></div>
+            <div class="cast">
+              <div class="agent speaking"><div class="avatar" style="background:var(--violet)">D</div><h4>Donnie</h4><small>Explaining the fix</small><div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+              <div class="agent waiting"><div class="avatar" style="background:var(--aqua)">L</div><h4>Leo</h4><small>Ready with a decision</small></div>
+              <div class="agent"><div class="avatar" style="background:var(--coral)">R</div><h4>Raph</h4><small>Running tests · 08:42</small></div>
+              <div class="agent"><div class="avatar" style="background:var(--gold)">M</div><h4>Mikey</h4><small>Listening to Donnie</small></div>
+            </div>
+            <div class="room-bottom"><div class="command"><b>⌘</b><span>Talk, type, paste, or ask the room…</span><span class="key">hold R</span></div><button class="round-btn">↑</button></div>
+          </main>
+          <aside class="thread">
+            <h3>What you just heard</h3>
+            <div class="message"><b>DONNIE · NOW</b><p>I found the race. The optimistic update wins before the server response arrives.</p><div class="attach">⌁ race-condition.sketch</div></div>
+            <div class="message" style="border-color:var(--gold)"><b>LEO · 3M</b><p>I need a call: preserve the local edit, or trust the server?</p></div>
+            <div class="composer">Reply to Donnie…<div class="tools"><span>＋　▧　✎</span><span>hold to talk ●</span></div></div>
+          </aside>
+        </div>
+      </div>
+      <div class="caption"><b>Surface 01 / Full room</b><p>A dense-but-calm home for occasional attention. Agent cards behave like audio channels; the right rail is a rolling “what I heard” memory, not four fractured chat histories.</p></div>
+
+      <div class="moments">
+        <article class="card moment">
+          <div class="eyebrow">Turn the laptop / Screen glance</div><h3>“Look at this error.”</h3><p>The current app appears as a frozen preview before sharing. Choose the window and duration; the aqua frame stays visible for the entire glance.</p>
+          <div class="share-sheet"><div class="screen-preview">TypeError: Cannot read properties<br>of undefined (reading 'map')<br><br>CartPanel.tsx : 118</div><div class="consent"><span>Donnie · this window · 30 sec</span><button>Let Donnie look →</button></div></div>
+        </article>
+        <article class="card moment">
+          <div class="eyebrow">Shared scratchpad / Drawing</div><h3>Explain beside the code.</h3><p>A sketch is a message with a live canvas. Either person can point, circle, and revise while their voice continues underneath.</p>
+          <div class="canvas"><span class="box" style="left:18px;top:28px">local edit</span><span class="box" style="right:22px;top:118px">server state</span><span class="arrow" style="left:110px;top:67px;width:110px"></span><span class="scribble" style="right:7px;top:101px"></span></div>
+        </article>
+        <article class="card moment call">
+          <div class="eyebrow" style="color:var(--lime)">Room huddle / Group call</div><h3>One table. Overlapping intelligence.</h3><p>Invite by character, then talk naturally. Agents hear each other, reference earlier points, and show an intent-to-speak halo so the room feels conversational—not like a queue of voice notes.</p>
+          <div class="call-grid">
+            <div class="caller"><div class="avatar" style="background:#f1efe7">YOU</div><small>You · muted</small></div>
+            <div class="caller active"><div class="avatar" style="background:var(--violet)">D</div><small>Donnie · speaking</small></div>
+            <div class="caller"><div class="avatar" style="background:var(--aqua)">L</div><small>Leo · next</small></div>
+            <div class="caller"><div class="avatar" style="background:var(--coral)">R</div><small>Raph · listening</small></div>
+            <div class="caller"><div class="avatar" style="background:var(--gold)">M</div><small>Mikey · listening</small></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap handoff">
+      <div>
+        <div class="eyebrow">Surface 02 / Edge presence</div><h2 style="margin:15px 0 24px">The room,<br>in your periphery.</h2>
+        <p class="section-copy">A focus-safe “doorway” floats above other apps without ever taking focus. It expands only when someone finishes or needs you: hear, replay, hold a key to answer. Typing opens the full room—intentionally.</p>
+        <p class="mono" style="margin-top:25px">NEVER STEALS FOCUS · DRAG TO ANY EDGE<br>ONE ACTIVE VOICE · ATTENTION QUEUE</p>
+      </div>
+      <div class="floater-demo">
+        <div class="fake-app">checkout.ts<br><br>async function submitOrder() {<br>&nbsp;&nbsp;await validateCart();<br>&nbsp;&nbsp;return client.post('/orders')<br>}</div>
+        <div class="floater"><div class="floater-row"><div class="mini-avatar">D</div><p><b>Donnie found it</b><br><small>“The retry is duplicating orders…”</small></p><div class="bars">▂▆▃</div></div><div class="actions"><button>Replay</button><button>Open sketch</button><button class="primary">Hold D to reply</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap handoff">
+      <div>
+        <div class="eyebrow">Surface 03 / Phone</div><h2 style="margin:15px 0 24px">A remote,<br>not a replica.</h2>
+        <p class="section-copy">The phone is optimized for one thumb and ears: resume the room, scan attention, hold a character to talk, or start a fresh agent. Text, images, files, and sketches live in the same bottom composer.</p>
+      </div>
+      <div class="phone">
+        <div class="island"></div><div class="phone-head"><span class="eyebrow">Your room</span><span>•••</span></div><h3>Two things moved.</h3>
+        <div class="now"><div class="floater-row"><div class="avatar" style="background:var(--gold)">M</div><div><b>Mikey finished</b><br><small>Navigation polish</small></div><div class="bars">▂▆▃</div></div><p>“The mobile menu now keeps your place after back navigation.”</p></div>
+        <div class="phone-agents"><div class="avatar" style="background:var(--violet)">D</div><div class="avatar" style="background:var(--aqua)">L</div><div class="avatar" style="background:var(--coral)">R</div><div class="avatar" style="background:var(--gold)">M</div></div>
+        <div class="quick"><button>↻ Replay Donnie</button><button>Ⅱ Pause room</button><button>＋ New agent</button><button>◉ Start huddle</button></div>
+        <div class="mobile-compose"><span>Message Mikey…</span><div><button>＋ file</button><button>▧ image</button><button>✎ draw</button><button class="talk">● hold</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head"><h2>Why this<br>holds together.</h2><p class="section-copy">The concept makes a strong bet: the product is not four assistants with speech added. It is one ambient social space with four distinct collaborators.</p></div>
+      <div class="rationale">
+        <ol>
+          <li><b>State becomes spatial.</b> Character channels let a glance answer the only urgent questions: who’s talking, who’s working, and who needs me?</li>
+          <li><b>Media becomes conversational.</b> Screen, canvas, voice, text, and files are all message forms in one thread—available on every reply surface.</li>
+        </ol>
+        <ol start="3">
+          <li><b>The periphery stays respectful.</b> The doorway carries sound and urgency across apps while the full studio owns depth and history.</li>
+          <li><b>Play serves recall.</b> Color, voice, and character make parallel work legible; the quiet utility shell keeps it credible all day.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+  <footer class="wrap"><span>Room of Devs / The Studio</span><span>Hear work becoming done.</span></footer>
+</body>
+</html>

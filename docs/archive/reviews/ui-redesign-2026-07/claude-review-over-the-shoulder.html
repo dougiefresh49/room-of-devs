@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room of Devs — Over the Shoulder</title>
+<style>
+  :root{
+    --void:#0B0910; --floorc:#131019; --surface:#191420; --raise:#211B2A; --line:#2D2637;
+    --ink:#EFEAE3; --dim:#9A93A6; --faint:#6A6377;
+    --air:#F7F3EC; --work:#38C7DD; --hand:#B8E24C; --block:#FF6FA5;
+    --hazard:#F5A524; --consent:#4ADE80; --stale:#4C4653;
+    --leo:#5B8DEF; --don:#A176F5; --mikey:#FF9B42; --raph:#FF5D5D; --splinter:#8FA97C;
+    --add:#4ADE80; --del:#FF6FA5;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--void);color:var(--ink);font-family:var(--sans);font-size:15px;
+       line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 22px 120px}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  header.hero{padding:76px 0 46px;border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(36px,6.2vw,62px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 20px;font-weight:800}
+  h1 em{font-style:normal;color:var(--dim)}
+  .lede{font-size:19px;line-height:1.55;color:var(--dim);max-width:78ch}
+  .lede b{color:var(--ink);font-weight:650}
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:27px;letter-spacing:-.02em;margin:10px 0 12px;font-weight:750;max-width:28ch}
+  h3{font-size:15.5px;margin:26px 0 6px;font-weight:700}
+  p{max-width:80ch}
+  .muted{color:var(--dim)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
+  .card h4{margin:0 0 6px;font-size:15.5px;font-weight:700}
+  .card p{font-size:14px;color:var(--dim);margin:0}
+  ul{padding-left:18px;margin:8px 0}
+  li{margin:6px 0;max-width:78ch}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+     color:var(--faint);border-bottom:1px solid var(--line);padding:8px 10px 8px 0;font-weight:500}
+  td{padding:11px 10px 11px 0;border-bottom:1px solid rgba(45,38,55,.7);vertical-align:top}
+  .src{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .mono{font-family:var(--mono)}
+  .claim{border-left:3px solid var(--air);padding:2px 0 2px 18px;margin:22px 0;max-width:72ch}
+  .claim b{display:block;font-size:19px;letter-spacing:-.012em;margin-bottom:4px}
+  .claim span{color:var(--dim);font-size:14.5px}
+  .rule{font-family:var(--mono);font-size:11.5px;color:var(--faint);border-top:1px solid var(--line);
+        padding-top:12px;margin-top:22px;max-width:82ch;line-height:1.75}
+  .rule b{color:var(--hand);letter-spacing:.1em;text-transform:uppercase;font-size:10px}
+  .rule.warn b{color:var(--hazard)}
+  .pull{font-size:20px;line-height:1.45;border-left:3px solid var(--air);padding:4px 0 4px 18px;margin:26px 0;
+        max-width:70ch;font-weight:600;letter-spacing:-.012em}
+
+  .mock{background:var(--floorc);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:22px 0 8px;
+        box-shadow:0 24px 60px -30px rgba(0,0,0,.9)}
+  .mock .bar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface);
+             border-bottom:1px solid var(--line);font-size:12.5px}
+  .dots{display:flex;gap:5px;margin-right:4px}
+  .dots i{width:9px;height:9px;border-radius:999px;background:#3A3244;display:block}
+  .cap{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.06em;margin:6px 0 26px;line-height:1.8}
+  .cap b{color:var(--dim);font-weight:500}
+
+  .lamp{width:7px;height:7px;border-radius:999px;display:inline-block;flex:none}
+  .l-air{background:var(--air);box-shadow:0 0 10px rgba(247,243,236,.75)}
+  .l-work{background:var(--work)} .l-hand{background:var(--hand)} .l-block{background:var(--block)}
+  .l-stale{background:var(--stale)}
+  .st{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+  .av{width:32px;height:32px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;
+      font-family:var(--mono);font-size:10.5px;font-weight:700;color:#0B0910}
+  .av.don{background:var(--don)} .av.leo{background:var(--leo)} .av.mikey{background:var(--mikey)}
+  .av.raph{background:var(--raph)} .av.sp{background:var(--splinter)} .av.you{background:var(--air)}
+  .av.sm{width:23px;height:23px;border-radius:7px;font-size:8.5px}
+
+  /* interrupt */
+  .int{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  @media(max-width:900px){.int{grid-template-columns:1fr}}
+  .ic{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .ic .top{padding:13px 15px 12px}
+  .ic .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+  .ic.steer{border-color:rgba(184,226,76,.35)} .ic.steer .tag{color:var(--hand)}
+  .ic.stop{border-color:rgba(255,111,165,.35)} .ic.stop .tag{color:var(--block)}
+  .ic.aside{border-color:rgba(56,199,221,.3)} .ic.aside .tag{color:var(--work)}
+  .ic h4{margin:6px 0 6px;font-size:16.5px}
+  .ic p{font-size:13.5px;color:var(--dim);margin:0}
+  .ic .foot{border-top:1px solid var(--line);padding:11px 15px;background:rgba(0,0,0,.22);
+            font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.75}
+  .ic .foot b{color:var(--dim);font-weight:500}
+  .landed{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;margin-top:14px;
+          font-family:var(--mono);font-size:11px;background:rgba(184,226,76,.1);border:1px solid rgba(184,226,76,.3);
+          color:var(--hand)}
+
+  /* work view */
+  .room{display:grid;grid-template-columns:224px 1fr;min-height:400px}
+  .rail{border-right:1px solid var(--line);padding:10px;background:rgba(0,0,0,.18)}
+  .seat{display:flex;gap:9px;padding:8px;border-radius:10px;margin-bottom:4px;position:relative;border:1px solid transparent}
+  .seat .spine{position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px}
+  .seat.onair{background:linear-gradient(180deg,rgba(247,243,236,.1),rgba(247,243,236,.02));border-color:rgba(247,243,236,.24)}
+  .seat.sel{background:var(--raise);border-color:var(--line)}
+  .seat .nm{font-size:13px;font-weight:650}
+  .seat .sub{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.05em;margin-top:2px}
+  .seat.dim{opacity:.48}
+  .num{font-family:var(--mono);font-size:9px;color:var(--faint);margin-left:auto;align-self:flex-start}
+
+  .work{padding:0;display:flex;flex-direction:column}
+  .wtabs{display:flex;gap:2px;padding:8px 14px 0;border-bottom:1px solid var(--line)}
+  .wtab{font-family:var(--mono);font-size:10.5px;padding:7px 11px;border-radius:8px 8px 0 0;color:var(--faint)}
+  .wtab.on{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-bottom-color:var(--surface);
+           margin-bottom:-1px}
+  .wbody{padding:13px 15px;flex:1}
+  .nowline{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:10px;background:var(--raise);
+           border:1px solid var(--line);margin-bottom:12px}
+  .code{font-family:var(--mono);font-size:11.5px;line-height:1.75;background:rgba(0,0,0,.3);border:1px solid var(--line);
+        border-radius:10px;padding:11px 13px;overflow:hidden}
+  .code .ln{color:#4E4759;display:inline-block;width:26px;user-select:none}
+  .code .add{color:var(--add)} .code .del{color:var(--del)} .code .cmt{color:#6A6377}
+  .code .row{white-space:pre;display:block;border-radius:3px;padding:0 4px;margin:0 -4px}
+  .code .row.point{background:rgba(161,118,245,.16);box-shadow:inset 2px 0 0 var(--don)}
+  .filerow{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;padding:6px 8px;
+           border-radius:7px;color:var(--dim)}
+  .filerow.hot{background:rgba(161,118,245,.12);color:var(--ink)}
+  .plusminus{margin-left:auto;font-size:10px}
+  .tape{border-top:1px solid var(--line);padding:9px 15px;background:rgba(0,0,0,.22)}
+  .tapelane{display:flex;gap:2px;height:14px;margin:7px 0 5px}
+  .blk{border-radius:2px;flex:none}
+  .blk.away{background:repeating-linear-gradient(45deg,#211B2A,#211B2A 3px,#2D2637 3px,#2D2637 6px)}
+  .composer{border-top:1px solid var(--line);padding:10px 15px;display:flex;align-items:center;gap:10px;background:var(--surface)}
+  .mic{width:32px;height:32px;border-radius:999px;border:1.5px solid rgba(247,243,236,.35);flex:none;
+       display:flex;align-items:center;justify-content:center;color:var(--air);font-size:12px}
+  .field{flex:1;font-size:13px;color:var(--faint)}
+  .cbtn{font-family:var(--mono);font-size:11px;color:var(--dim)}
+
+  /* whiteboard */
+  .wb{background:var(--floorc);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .wbhead{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+  .md{padding:16px 18px;font-size:13.5px;line-height:1.75}
+  .md h5{margin:0 0 10px;font-size:15px}
+  .md .who{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+           padding:1px 6px;border-radius:4px;margin-right:7px}
+  .md .who.don{background:rgba(161,118,245,.18);color:var(--don)}
+  .md .who.leo{background:rgba(91,141,239,.18);color:var(--leo)}
+  .md .who.you{background:rgba(247,243,236,.16);color:var(--air)}
+  .md ul{margin:6px 0 12px}
+  .md li{color:var(--dim)}
+  .md li b{color:var(--ink);font-weight:600}
+  .md .strike{text-decoration:line-through;opacity:.5}
+
+  /* phone */
+  .phone{width:288px;border:1px solid var(--line);border-radius:26px;background:var(--floorc);overflow:hidden;flex:none}
+  .phead{display:flex;justify-content:space-between;padding:9px 14px 7px;font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+  .pbody{padding:4px 12px 12px}
+  .pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:7px}
+  .pcard.air{background:linear-gradient(180deg,rgba(247,243,236,.1),rgba(247,243,236,.02));border-color:rgba(247,243,236,.26)}
+  .thumb{border-top:1px solid var(--line);padding:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+         background:rgba(0,0,0,.26)}
+  .talkkey{width:76px;height:76px;border-radius:999px;border:2px solid rgba(247,243,236,.4);display:flex;
+           flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;
+           color:var(--air);letter-spacing:.1em;line-height:1.35;flex:none}
+  .talkkey.hot{background:var(--air);color:#0B0910;border-color:var(--air)}
+  .sidekey{width:44px;height:44px;border-radius:14px;background:var(--raise);border:1px solid var(--line);
+           display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:13px;flex:none}
+  .phones{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .mb{font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:6px;background:var(--raise);
+      border:1px solid var(--line);color:var(--dim)}
+  .mb.pri{background:rgba(184,226,76,.13);border-color:rgba(184,226,76,.34);color:var(--hand)}
+  .mb.dec{background:rgba(255,111,165,.12);border-color:rgba(255,111,165,.32);color:var(--block)}
+
+  /* budget */
+  .meter{height:10px;border-radius:999px;background:var(--raise);overflow:hidden;display:flex;margin:10px 0 6px;
+         border:1px solid var(--line)}
+  .meter i{display:block;height:100%}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+  .cutrow{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid rgba(45,38,55,.7)}
+  .cutrow .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+               color:var(--block);flex:none;width:56px;padding-top:3px}
+  .cutrow.keep .lbl{color:var(--hand)}
+  .cutrow b{font-size:15px}
+  .cutrow p{margin:2px 0 0;font-size:13.5px;color:var(--dim)}
+
+  .order{counter-reset:o}
+  .ostep{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid rgba(45,38,55,.7)}
+  .ostep .on{width:26px;height:26px;border-radius:999px;flex:none;background:var(--raise);border:1px solid var(--line);
+             display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .ostep b{font-size:16px}
+  .ostep p{margin:3px 0 0;color:var(--dim);font-size:14px}
+  .cost{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;
+        border-radius:999px;margin-left:8px;vertical-align:2px}
+  .cost.free{background:rgba(184,226,76,.13);color:var(--hand);border:1px solid rgba(184,226,76,.3)}
+  .cost.mid{background:rgba(56,199,221,.12);color:var(--work);border:1px solid rgba(56,199,221,.3)}
+  .cost.big{background:rgba(255,111,165,.12);color:var(--block);border:1px solid rgba(255,111,165,.3)}
+
+  footer{padding:46px 0;color:var(--faint);font-family:var(--mono);font-size:11px;line-height:1.85}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">Room of Devs · concept B · what I'd do instead</div>
+  <h1>Over the Shoulder<br><em>the room isn't furniture</em></h1>
+  <p class="lede">The four boards designed a <b>room</b> — floor, table, tape — and it's a good room. I'd keep the floor and
+  the tape and throw out the table, because the table is a canvas for features that don't exist yet, and meanwhile
+  <b>the thing the room is actually talking about is already on the machine: the work.</b> Three changes follow from that,
+  and one of them is the thing you said is missing.</p>
+
+  <div class="claim">
+    <b>01 — The unit is the interrupt, not the utterance.</b>
+    <span>All four boards design cutting in as an audio operation. The hard part isn't ducking the speaker, it's whether your
+    sentence reaches the <i>agent</i> in time to change what it does.</span>
+  </div>
+  <div class="claim">
+    <b>02 — The object on the table is the diff.</b>
+    <span>Not a napkin. What Donnie is touching right now — files, diff, last command, current tool call — is data your daemon
+    already tails. Make the centre useful today; glance and sketch become extra sources on the same surface later.</span>
+  </div>
+  <div class="claim">
+    <b>03 — The phone is the product; the Mac is the echo.</b>
+    <span>Every board orders it Mac → dock → phone, then admits the couch is where this tool wins. The Mac already has a
+    great UI for watching an agent work. It's called a terminal.</span>
+  </div>
+
+  <p class="rule"><b>kept from the four</b>The Floor (one voice, ever) · the Tape (turns as records; replay is seek) ·
+  ON AIR is achromatic and your mic inverts the surface · the politeness ladder and its sound tokens · lamp-plus-a-word ·
+  jersey-only persona hue · confirm-as-a-sentence · the receipt · the bare-&lt;img&gt; avatar contract. Those are settled.
+  Everything below is where I diverge.</p>
+</header>
+
+<section>
+  <div class="kicker">01 · the core</div>
+  <h2>Interruption has three outcomes and the UI must never guess</h2>
+  <p>You told me the live call is "mostly just the agent speaking and I listen." The talk button already exists, so the gap
+  isn't input — it's that <b>your sentence has three completely different fates and right now you can't tell which one you
+  got</b>. A room of devs is a place where you can say "wait, don't do that" and be heard <i>before</i> it happens. That is
+  the whole product, and no board designed it.</p>
+
+  <div class="int">
+    <div class="ic steer">
+      <div class="top">
+        <div class="tag">↝ steer · landed mid-turn</div>
+        <h4>It changes what happens next</h4>
+        <p>Injected between tool calls. The agent sees it before it decides its next move, and it is told explicitly that you
+        cut in mid-turn — so it can drop what it was about to do.</p>
+      </div>
+      <div class="foot"><b>window</b> the gap between tool calls (usually 1–10s)<br>
+        <b>you hear</b> the current sentence duck at a clause, then a soft click-in<br>
+        <b>you see</b> the agent's next line marked <span style="color:var(--hand)">↝ after you</span></div>
+    </div>
+    <div class="ic stop">
+      <div class="top">
+        <div class="tag">■ stop · immediate</div>
+        <h4>It halts the turn</h4>
+        <p>Hold the key past the arm ring and say nothing, or say "stop." Escape goes to the session; the agent stops where it
+        stands and reports what it had already done. Nothing is silently rolled back.</p>
+      </div>
+      <div class="foot"><b>window</b> always available<br>
+        <b>you hear</b> hard duck, no click-in<br>
+        <b>you see</b> <span style="color:var(--block)">stopped by you · 2 edits already written</span> on the tape</div>
+    </div>
+    <div class="ic aside">
+      <div class="top">
+        <div class="tag">↷ aside · queued</div>
+        <h4>It waits for the end of the turn</h4>
+        <p>The honest default. The agent is deep in a call you can't interrupt, so your line is held and delivered with the
+        next prompt. It <i>will</i> be read — just not now.</p>
+      </div>
+      <div class="foot"><b>window</b> whenever steer misses<br>
+        <b>you hear</b> a single soft squelch, no click-in<br>
+        <b>you see</b> <span style="color:var(--work)">held · delivers in ~40s</span> with one tap to escalate to stop</div>
+    </div>
+  </div>
+
+  <div class="mock" style="max-width:640px;margin-top:26px">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>
+      <b style="font-size:13px">Donnie</b><span class="src">working · editing migration.ts</span>
+      <span style="flex:1"></span><span class="src">⌘2 held</span></div>
+    <div style="padding:16px 18px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div class="av you">YOU</div>
+        <div style="flex:1">
+          <div style="font-size:15px;line-height:1.5">"wait — don't drop users_v1 yet, the rollback path needs it"</div>
+          <div class="src" style="margin-top:5px">◉ mic open 1.4s · room auto-held</div>
+        </div>
+      </div>
+      <div class="landed">↝ steered — landed before his next tool call (1.9s) · he had not run the drop</div>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-top:16px">
+        <div class="av don">DO</div>
+        <div style="flex:1">
+          <div class="st" style="margin-bottom:4px"><i class="lamp l-work" style="margin-right:5px"></i>working ·
+            <span style="color:var(--hand)">↝ after you</span></div>
+          <div style="font-size:14px;color:var(--dim);line-height:1.5">"Good catch — killing the drop, staging the rename
+          instead. I'll leave users_v1 until the guard lands."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><b>THE RECEIPT FOR CUTTING IN</b> · the same rigour the four boards demand of the voice interpreter, applied
+  to the thing that actually costs you something. A tool that lets you believe you steered when you only queued is worse than
+  one with no talk button.</div>
+
+  <p class="rule warn"><b>the engineering, named</b>Steer needs the daemon to know whether the target session is between tool
+  calls — which the transcript tail already tells you (<span class="mono">live-tail.ts</span> sees tool-use boundaries).
+  Steer = inject on the boundary. Stop = the session's own interrupt. Aside = hold and inject at the next prompt. If the
+  boundary is unknowable for a given agent, <b>the product says "aside" and means it</b>. Never promise steer you can't deliver.</p>
+
+  <p class="pull">Everything else on all five boards is a way of watching. This is the only part that's a way of
+  <i>working with</i>.</p>
+</section>
+
+<section>
+  <div class="kicker">02 · the centre</div>
+  <h2>The Shoulder — the object is the work</h2>
+  <p>Every board puts a shared canvas in the middle of the main window and justifies it by the four futures it unlocks. But
+  glance, napkin, huddle and paste are all unbuilt, so on day one that canvas holds a summary and an empty shelf. Meanwhile the
+  question you actually have thirty times a day — <b>"what is he doing right now?"</b> — is answered by data the daemon
+  already reads: tool calls, file paths, diffs, command output, all sitting in the transcript you tail for live mode.</p>
+  <p>So the centre pane isn't a canvas waiting for a feature. It's <b>a live view of the selected agent's work</b>. Glance,
+  sketch and paste land here later as <i>additional sources</i> — the surface is the same, but it's load-bearing from
+  day one instead of day two hundred.</p>
+
+  <div class="mock">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>
+      <b style="font-size:13px">The Room</b><span class="src">6 sessions · out loud</span>
+      <span style="flex:1"></span>
+      <span class="src" style="color:var(--hand)">3 unheard · catch up</span>
+      <span class="src">$1.12 of $6 today</span></div>
+
+    <div class="room">
+      <div class="rail">
+        <div class="seat onair"><i class="spine" style="background:var(--don)"></i>
+          <div class="av don">DO</div>
+          <div><div class="nm">Donnie</div><div class="sub"><i class="lamp l-air" style="margin-right:5px"></i>on air · 0:14</div></div>
+          <span class="num">⌘1</span></div>
+        <div class="seat sel"><i class="spine" style="background:var(--raph)"></i>
+          <div class="av raph">RA</div>
+          <div><div class="nm">Raph</div><div class="sub"><i class="lamp l-block" style="margin-right:5px"></i>at the door · 4m</div></div>
+          <span class="num">⌘2</span></div>
+        <div class="seat"><i class="spine" style="background:var(--mikey)"></i>
+          <div class="av mikey">MI</div>
+          <div><div class="nm">Mikey</div><div class="sub"><i class="lamp l-hand" style="margin-right:5px"></i>green room · 2m</div></div>
+          <span class="num">⌘3</span></div>
+        <div class="seat dim"><i class="spine" style="background:var(--leo)"></i>
+          <div class="av leo">LE</div>
+          <div><div class="nm">Leo</div><div class="sub"><i class="lamp l-work" style="margin-right:5px"></i>heads-down · 6m</div></div>
+          <span class="num">⌘4</span></div>
+        <div class="seat dim"><i class="spine" style="background:var(--splinter)"></i>
+          <div class="av sp">SP</div>
+          <div><div class="nm">Splinter</div><div class="sub"><i class="lamp l-stale" style="margin-right:5px"></i>muted</div></div>
+          <span class="num">⌘5</span></div>
+        <div class="src" style="padding:10px 6px 0;line-height:1.7">seats never reorder<br>⌘n is that face, forever</div>
+      </div>
+
+      <div class="work">
+        <div class="wtabs">
+          <span class="wtab on">the work</span><span class="wtab">whiteboard</span><span class="wtab">shelf · 3</span>
+          <span style="flex:1"></span><span class="wtab">Donnie · room-of-devs</span>
+        </div>
+        <div class="wbody">
+          <div class="nowline">
+            <div class="av don sm">DO</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;line-height:1.5">"Browser hits /session, /session hits the db — and right here,
+              when the token's already revoked, <b>the db hands back nothing at all.</b>"</div>
+              <div class="src" style="margin-top:5px">on air · pointing at <span style="color:var(--don)">session.ts:41</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:250px">
+              <div class="st" style="margin-bottom:7px">touched this turn</div>
+              <div class="filerow hot">◆ src/auth/session.ts <span class="plusminus"><span style="color:var(--add)">+14</span>
+                <span style="color:var(--del)">−3</span></span></div>
+              <div class="filerow">src/queue/drainer.ts <span class="plusminus"><span style="color:var(--add)">+6</span></span></div>
+              <div class="filerow">scripts/rollback_0712.sql <span class="plusminus"><span style="color:var(--add)">new</span></span></div>
+              <div class="st" style="margin:14px 0 7px">last command</div>
+              <div class="code"><span class="row"><span class="cmt">$ pnpm exec tsc --noEmit</span></span><span class="row"><span style="color:var(--add)">✓ 4 packages clean · 3.1s</span></span></div>
+            </div>
+            <div style="flex:1.3;min-width:280px">
+              <div class="st" style="margin-bottom:7px">session.ts · the diff so far</div>
+              <div class="code">
+<span class="row"><span class="ln">39</span>  <span class="cmt">export async function resolve(token: string) {</span></span>
+<span class="row"><span class="ln">40</span>    const session = await db.session.findFirst({</span>
+<span class="row point"><span class="ln">41</span>      where: { token, revokedAt: null },</span>
+<span class="row"><span class="ln">42</span>    })</span>
+<span class="row add"><span class="ln">43</span>  + if (!session) return null    <span class="cmt">// ← the guard</span></span>
+<span class="row"><span class="ln">44</span>    if (session.user.roles.includes('admin')) {</span>
+              </div>
+              <div class="src" style="margin-top:8px">the highlighted line is the one he's talking about right now</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tape">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="st">the tape · today</span>
+            <span class="src" style="color:var(--hand)">▸ catch up — 3 unheard · 1:56 at 1.25×</span></div>
+          <div class="tapelane">
+            <span class="blk" style="width:28px;background:var(--leo)"></span>
+            <span class="blk" style="width:12px;background:var(--air)"></span>
+            <span class="blk" style="width:44px;background:var(--don)"></span>
+            <span class="blk away" style="width:80px"></span>
+            <span class="blk" style="width:22px;background:var(--mikey)"></span>
+            <span class="blk" style="width:30px;background:var(--raph)"></span>
+            <span class="blk" style="width:52px;background:var(--don)"></span>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="mic">◉</div>
+          <div class="field">Hold ⌥space to cut in — or type to Donnie…</div>
+          <span class="cbtn">◱</span><span class="cbtn">📎</span><span class="cbtn">↑</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><b>THE ROOM</b> · left rail never reorders (⌘n is a face, permanently). Centre is the selected agent's live
+  work: files touched this turn, the diff so far, last command and its output. Tape underneath, one composer that cuts in.</div>
+
+  <p class="rule"><b>why this is cheap</b>Every field above comes from the transcript JSONL your Stop hook and
+  <span class="mono">live-tail.ts</span> already read — tool_use blocks carry file paths, edit payloads and command output.
+  No new capture surface, no consent problem, no canvas engine. The most useful pane in the product is a parser away.</p>
+</section>
+
+<section>
+  <div class="kicker">03 · instead of ink</div>
+  <h2>Pointing beats drawing</h2>
+  <p>"Ink timed to speech, and it rewinds when you scrub" is the most beautiful idea on the four boards and the most expensive:
+  it needs the model emitting stroke lists with clause anchors, Gemini preserving those anchors through the character rewrite,
+  ElevenLabs word-level timestamps, and a canvas replay engine on the audio clock. Four boards present it as a motion budget.</p>
+  <p><b>Take 10% of the machinery for 80% of the payoff.</b> Agents already say "in <span class="mono">session.ts:41</span>"
+  constantly — they do it unprompted, in every model, for free. So: the daemon extracts <b>anchors</b> from the raw text
+  before the Gemini rewrite (<span class="mono">file:line</span>, a diff hunk, a step in a fenced diagram), attaches them to
+  the turn, and the work pane highlights the anchor while that clause plays. Scrub the tape, the highlight moves with it.</p>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h4>What you keep</h4><p>The actual insight — that a spoken sentence should have a visual channel, and
+    that scrubbing the audio should move the picture. Same feeling, same "he's showing me while he tells me."</p></div>
+    <div class="card"><h4>What you drop</h4><p>Freehand stroke capture, per-stroke timing, a replay canvas, word-level TTS
+    timestamps, and asking a text model to be an illustrator. Clause-level granularity is plenty — you only need to know
+    <i>which line</i>, not which millisecond.</p></div>
+  </div>
+  <p class="rule"><b>and when you do want to draw</b>Your ink stays: circle a line in the work pane and talk, and the circle
+  plus the voice land as one turn — that half is cheap because <i>you</i> are the one drawing, in real time, with a real
+  clock. Agents point; you draw. That asymmetry is honest and it's how it works with a human colleague anyway.</p>
+</section>
+
+<section>
+  <div class="kicker">04 · whiteboarding</div>
+  <h2>The whiteboard is a file</h2>
+  <p>You named whiteboarding as an unbuilt goal, and all four boards answered with a freehand canvas. For a room of
+  <i>coding</i> agents that's the wrong medium. The thing you and four LLMs can genuinely co-author, in real time, that
+  survives the session and that every one of them is already excellent at, is <b>a markdown file in the repo</b>.</p>
+  <p><span class="mono" style="font-size:13px">.room/whiteboard.md</span> — the room writes to it, you write to it, the Room
+  panel renders it live with authorship colour, and it is committed like anything else. Agents get a tool to append and amend;
+  you get an editor. A group whiteboard falls out with zero extra machinery, because it's a file and files already have
+  concurrent-edit semantics you understand.</p>
+
+  <div class="wb" style="max-width:760px;margin-top:20px">
+    <div class="wbhead">
+      <span class="mono" style="font-size:11.5px;color:var(--dim)">.room/whiteboard.md</span>
+      <span class="src">· 3 authors · live</span>
+      <span style="flex:1"></span>
+      <span class="src">uncommitted · ⌘S writes it</span>
+    </div>
+    <div class="md">
+      <h5># Retry queue — lease design</h5>
+      <div style="margin-bottom:12px"><span class="who don">Donnie</span><span class="src">14:02</span></div>
+      <ul>
+        <li><b>Problem:</b> a claim survives the epoch, so the drainer never reclaims it after a crash.</li>
+        <li><b>Fix:</b> lease column on <span class="mono">claims</span>, reclaimed on drainer startup.</li>
+      </ul>
+      <div style="margin:14px 0 4px"><span class="who you">You</span><span class="src">14:06</span></div>
+      <ul><li>Who sweeps expired leases? <b>Not a cron.</b> One less moving part.</li></ul>
+      <div style="margin:14px 0 4px"><span class="who leo">Leo</span><span class="src">14:07</span></div>
+      <ul>
+        <li class="strike">Sweep on a 30s interval</li>
+        <li>Drainer reclaims on startup <i>and</i> opportunistically on every take() — <b>agreed with Donnie.</b></li>
+      </ul>
+      <div style="margin:14px 0 4px"><span class="who don">Donnie</span><span class="src">14:09</span></div>
+      <ul><li>Open: what's the ceiling on lease duration? → <b>parked, needs your call</b></li></ul>
+    </div>
+  </div>
+  <div class="cap"><b>THE WHITEBOARD</b> · authorship by colour, strikethrough for what got overruled, "parked, needs your
+  call" as a first-class marker that surfaces as an at-the-door state. Version history is git.</div>
+
+  <p class="rule"><b>the win</b>It persists past the session · it's diffable and reviewable · it's the artefact you actually
+  want at the end of a design conversation · and a huddle becomes "three agents and you editing one file while you talk,"
+  which needs no new canvas, no stroke sync, and no conflict UI beyond what a text file already implies.</p>
+</section>
+
+<section>
+  <div class="kicker">05 · the risky one</div>
+  <h2>The murmur — the room should sound occupied</h2>
+  <p>All four boards make <span class="mono">working</span> literally silent, and they're right that silence is designed. But
+  the premise of the product is a room of devs, and <b>a room with four people working in it is not silent</b> — it's the
+  reason open offices feel alive and empty ones feel like a Sunday. Right now four agents grinding away sound exactly like
+  zero agents.</p>
+  <p>So: an optional ambient bed at ~3%, per-agent, keyed to what they're doing — a faint texture while heads-down, a
+  half-second rustle when someone moves from working to the green room, nothing at all when the room is empty. You should be
+  able to <i>hear</i> that the room is busy without a single word being spoken, and hear it go quiet when everyone finishes.</p>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h4>Why it might be great</h4><p>It's the only idea in six boards that makes presence <i>felt</i> rather
+    than displayed. It costs no API credits — it's a looped local file, not synthesis. And it makes the politeness ladder
+    land better: a throat-clear reads as a person in a room, not a notification.</p></div>
+    <div class="card"><h4>Why it might be terrible</h4><p>It could be the single most annoying thing you ever ship, and
+    annoyance gets the product muted permanently. So it ships <b>off</b>, with one honest kill criterion: if you turn it on
+    and don't notice it within a day, it's working; if you notice it twice, delete the feature.</p></div>
+  </div>
+  <p class="rule warn"><b>flagged as speculative</b>This directly contradicts a rule all four boards agreed on ("working is
+  literally silent"). I think they're optimising for not-annoying and losing the premise. But it's a taste bet, it's cheap to
+  try, and it's the first thing I'd cut if it doesn't land in a week.</p>
+</section>
+
+<section>
+  <div class="kicker">06 · surfaces</div>
+  <h2>Phone first, and the Mac is the echo</h2>
+  <p>Design order matters because it decides what gets compromised. All four boards design the Mac window, then the dock, then
+  reduce it for the phone — and all four then say the phone is where the couch use lives. Invert it: <b>the phone is the
+  primary surface</b>. It's where you actually listen, it's where you have no better tool, and it's the surface in your own
+  screenshots. The Mac dock is the same design at 400px with fewer verbs, and the Room window is the place you go when you
+  want to <i>look</i> rather than listen.</p>
+
+  <div class="phones" style="margin-top:22px">
+    <div>
+      <div class="phone">
+        <div class="phead"><span>9:41</span><span>◉ the room · live</span><span>▮▮▮</span></div>
+        <div class="pbody">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 8px">
+            <b style="font-size:17px">4 working · 1 waiting</b><span class="src" style="color:var(--hand)">catch up · 3</span></div>
+          <div class="pcard air">
+            <div style="display:flex;gap:9px;align-items:center">
+              <div class="av don sm">DO</div>
+              <div style="flex:1"><b style="font-size:13px">Donnie</b>
+                <div class="st"><i class="lamp l-air" style="margin-right:5px"></i>on air · 0:14</div></div>
+              <span class="src">❙❙</span></div>
+            <div style="font-size:12.5px;color:var(--dim);margin-top:7px">"…the db hands back nothing at all — that's the
+            guard I'm adding."</div>
+            <div class="src" style="margin-top:6px;color:var(--don)">◆ session.ts:41 · tap to see it</div>
+          </div>
+          <div class="pcard">
+            <div style="display:flex;gap:9px;align-items:center">
+              <div class="av raph sm">RA</div>
+              <div style="flex:1"><b style="font-size:13px">Raph</b>
+                <div class="st"><i class="lamp l-block" style="margin-right:5px"></i>at the door · 4m</div></div></div>
+            <div style="font-size:12.5px;color:var(--dim);margin:7px 0">Migration drops episodes before the copy. Fix it?</div>
+            <div style="display:flex;gap:6px"><span class="mb dec">Fix it</span><span class="mb">Leave it</span>
+              <span class="mb">◉ answer</span></div>
+          </div>
+          <div class="pcard" style="display:flex;gap:9px;align-items:center;opacity:.6">
+            <div class="av leo sm">LE</div>
+            <div style="flex:1"><b style="font-size:13px">Leo</b>
+              <div class="st"><i class="lamp l-work" style="margin-right:5px"></i>heads-down · editing drainer.ts</div></div>
+            <span class="src">+2</span></div>
+        </div>
+        <div class="thumb">
+          <div class="sidekey">⌨</div>
+          <div class="talkkey">HOLD TO<br>CUT IN</div>
+          <div class="sidekey">📎</div>
+        </div>
+      </div>
+      <div class="cap"><b>HOME</b> · the key says CUT IN, not TALK — because that's the promise. Slide across it to retune;
+      hold with nobody tuned = the room.</div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="phead"><span>9:42</span><span>◉ mic open · room held</span><span>▮▮▮</span></div>
+        <div class="pbody" style="padding-top:30px;text-align:center">
+          <div class="av don" style="width:76px;height:76px;border-radius:24px;font-size:22px;margin:0 auto 14px;
+               box-shadow:0 0 0 3px rgba(247,243,236,.34)">DO</div>
+          <b style="font-size:16px">Donnie is hearing you</b>
+          <div class="src" style="margin:4px 0 22px">release to send · drag off to cancel</div>
+          <div style="background:var(--air);color:#0B0910;border-radius:14px;padding:13px 14px;text-align:left;
+               font-size:14px;line-height:1.45">"wait — don't drop users_v1 yet, the rollback path needs it"</div>
+          <div style="margin-top:16px;text-align:left">
+            <div class="src" style="margin-bottom:6px">it will land as</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="mb pri">↝ steer · he's between tool calls</span></div>
+            <div class="src" style="margin-top:8px;line-height:1.6">hold longer to force <span style="color:var(--block)">■ stop</span></div>
+          </div>
+        </div>
+        <div class="thumb">
+          <div class="sidekey">✕</div>
+          <div class="talkkey hot">RELEASE<br>TO SEND</div>
+          <div class="sidekey" style="color:var(--block)">■</div>
+        </div>
+      </div>
+      <div class="cap"><b>CUTTING IN, FROM THE COUCH</b> · the surface inverts (your mic = light) and it tells you the fate of
+      your sentence <i>before</i> you release it. That prediction is the feature.</div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="phead"><span>9:45</span><span>◉ donnie · the work</span><span>▮▮▮</span></div>
+        <div class="pbody">
+          <div style="display:flex;gap:8px;align-items:center;padding:4px 2px 10px">
+            <div class="av don sm">DO</div><b style="font-size:14px">session.ts</b>
+            <span class="src" style="margin-left:auto"><span style="color:var(--add)">+14</span> <span style="color:var(--del)">−3</span></span>
+          </div>
+          <div class="code" style="font-size:10.5px">
+<span class="row"><span class="ln">40</span> const session = await</span>
+<span class="row point"><span class="ln">41</span>  where: { token,</span>
+<span class="row"><span class="ln">42</span>    revokedAt: null },</span>
+<span class="row add"><span class="ln">43</span>+ if (!session)</span>
+<span class="row add"><span class="ln">44</span>+   return null</span>
+          </div>
+          <div class="src" style="margin-top:10px;line-height:1.6">↺ replay the sentence that pointed here · 0:06</div>
+          <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+            <span class="mb">✎ circle a line</span><span class="mb">📎 shelf</span><span class="mb">whiteboard</span>
+          </div>
+        </div>
+        <div class="thumb">
+          <div class="sidekey">⌨</div>
+          <div class="talkkey">TALK WHILE<br>YOU CIRCLE</div>
+          <div class="sidekey">↺</div>
+        </div>
+      </div>
+      <div class="cap"><b>THE WORK, POCKETED</b> · full-bleed only when there's something to see. Circle a line and talk —
+      your ink and your voice are one turn, same rule as the Mac.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">07 · money</div>
+  <h2>Spend is a ceiling, not a breadcrumb</h2>
+  <p>Three boards render cost as a mono footnote and one adds a huddle "spend tick." For a product whose first written rule is
+  credit efficiency — where every clip is a Gemini rewrite plus an ElevenLabs synthesis, and a three-voice huddle is
+  <i>six</i> API calls per round for six minutes — that's decoration. Give the room a <b>daily budget with a hard stop</b>,
+  and make every expensive gesture quote its price before you commit to it.</p>
+
+  <div class="mock" style="max-width:680px;padding:16px 18px 18px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <b style="font-size:15px">Today · $1.12 of $6.00</b>
+      <span class="src">resets at midnight · ⌘, to change</span></div>
+    <div class="meter">
+      <i style="width:34%;background:var(--don)"></i><i style="width:12%;background:var(--leo)"></i>
+      <i style="width:9%;background:var(--raph)"></i><i style="width:4%;background:var(--mikey)"></i>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--don)"></i>Donnie · $0.64</span>
+      <span><i class="sw" style="background:var(--leo)"></i>Leo · $0.23</span>
+      <span><i class="sw" style="background:var(--raph)"></i>Raph · $0.17</span>
+      <span><i class="sw" style="background:var(--mikey)"></i>Mikey · $0.08</span>
+      <span style="color:var(--hand)">· 41 replays from cache · $0.00</span>
+    </div>
+    <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:13px;display:flex;gap:10px;align-items:center;
+         flex-wrap:wrap;font-size:13.5px">
+      <span class="mono" style="font-size:11px;color:var(--faint)">confirm</span>
+      <b>Start a huddle</b> <span class="src">· Leo + Donnie · ~$0.09 a round ·</span>
+      <span style="color:var(--hazard);font-family:var(--mono);font-size:11px">cap 12 rounds ≈ $1.08</span>
+      <span style="flex:1"></span><span class="mb pri">Start it</span>
+    </div>
+  </div>
+  <div class="cap"><b>THE BUDGET</b> · huddles are capped in <i>rounds</i>, not minutes — minutes don't bill, turns do. At 80%
+  the room switches to cached-only replies and tells you. At 100% it goes silent and keeps queueing; nothing is lost, nothing
+  is spent.</div>
+
+  <p class="rule"><b>and the honest version of every confirm</b>The picker already reads as a sentence. Put the number in it:
+  "Start Donnie · sonnet · jellyfin-streamline · speaks on finish · <b style="color:var(--hazard)">~$0.03 a turn</b>." You
+  cannot train good habits with a UI that hides its own meter.</p>
+</section>
+
+<section>
+  <div class="kicker">08 · two smaller calls</div>
+  <h2>Places, and the thread question</h2>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h4>Seats are places, and they outlive the day</h4>
+      <p style="margin-top:8px">Three of the four boards sort seats by state; one says never reorder, and it's right. I'd go a
+      step further: a seat is assigned when you cast the character and <b>persists across sessions and across days</b>. Donnie
+      is seat one this week and next week. ⌘1 is a person, not a slot. Spatial memory is the entire dividend of giving agents
+      faces — you spend it the moment the rail re-sorts, and you spend it twice if it re-sorts differently tomorrow.</p>
+    </div>
+    <div class="card">
+      <h4>Keep the thread view; kill the thread storage</h4>
+      <p style="margin-top:8px">All four boards say "no per-agent threads anywhere" — and they've conflated a data-model
+      decision with a screen deletion. The storage call is right and worth making now: <b>one tape, turns as records, a thread
+      is a query</b>. But you shipped a thread view, it's on your phone, and a tape filtered to Donnie with a composer aimed at
+      Donnie <i>is</i> a thread. Ship the tape underneath; keep the screen. Nothing about a group call becomes impossible,
+      because the merge problem was never in the UI.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">09 · order</div>
+  <h2>What I'd build, in what order</h2>
+  <p class="muted">Sorted by value-per-unit-of-work, not by how good it looks on a board. The first two are daemon-only and
+  spend nothing.</p>
+
+  <div class="order" style="margin-top:20px">
+    <div class="ostep"><div class="on">1</div><div>
+      <b>The politeness ladder</b><span class="cost free">free · no new UI</span>
+      <p>Throat-clear at 45s in the agent's own voice, knock at 3m, silent glow forever, no earcon over speech, working is
+      truly silent. This is daemon logic plus cached phrase MP3s you already generate. It's the best idea on the four boards
+      and it's the cheapest — and it's the one that decides whether you keep the volume up.</p></div></div>
+
+    <div class="ostep"><div class="on">2</div><div>
+      <b>The interrupt ladder</b><span class="cost free">free · daemon + transcript tail</span>
+      <p>Steer / stop / aside, with the fate of your sentence shown before you release the key. No synthesis, no new capture,
+      no new surface — it's tmux injection timed against tool-call boundaries you already parse. This is the feature you said
+      is missing.</p></div></div>
+
+    <div class="ostep"><div class="on">3</div><div>
+      <b>The work pane</b><span class="cost mid">a parser · no API cost</span>
+      <p>Files touched, the diff so far, last command and output, from the transcript JSONL. Makes the centre of the Room
+      useful today and gives the phone something worth full-bleed. Everything later — glance, paste, sketch — lands on this
+      surface instead of needing one.</p></div></div>
+
+    <div class="ostep"><div class="on">4</div><div>
+      <b>Anchors</b><span class="cost mid">pre-Gemini extraction</span>
+      <p>Pull <span class="mono">file:line</span> out of the raw text before the rewrite, attach to the turn, highlight while
+      that clause plays, move on scrub. 10% of ink-timed-to-speech for most of the feeling.</p></div></div>
+
+    <div class="ostep"><div class="on">5</div><div>
+      <b>The whiteboard file</b><span class="cost mid">a tool + a renderer</span>
+      <p><span class="mono">.room/whiteboard.md</span>, agents append and amend, panel renders live with authorship colour.
+      Whiteboarding, shipped, with git as version history.</p></div></div>
+
+    <div class="ostep"><div class="on">6</div><div>
+      <b>The budget</b><span class="cost free">accounting you already have</span>
+      <p>Daily ceiling, per-agent breakdown, price in the confirm sentence, huddles capped in rounds. Do this
+      <i>before</i> huddles, not after.</p></div></div>
+
+    <div class="ostep" style="border-bottom:none"><div class="on">7</div><div>
+      <b>The huddle</b><span class="cost big">expensive per turn</span>
+      <p>Last, and only once the floor's manners are right and the meter exists. Three voices, visible baton, clause-boundary
+      cut-in, one shared whiteboard file, capped in rounds, auto-adjourn.</p></div></div>
+  </div>
+
+  <p class="rule"><b>the glance</b>Deliberately absent from this list. It's the highest-risk feature on all four boards — real
+  consent machinery, real redaction, real screen capture — for a payoff the work pane mostly delivers already. Build it when
+  you find yourself repeatedly wanting to show an agent something that <i>isn't</i> in the repo.</p>
+</section>
+
+<section>
+  <div class="kicker">10 · the deltas</div>
+  <h2>What I cut, what I kept, what I added</h2>
+
+  <div class="cutrow"><div class="lbl">cut</div><div>
+    <b>The Table as a blank canvas</b>
+    <p>Replaced by the work pane. Same location, same role as "the object the room is about" — but populated from day one by
+    data you already have, instead of waiting on four unbuilt features to justify it.</p></div></div>
+
+  <div class="cutrow"><div class="lbl">cut</div><div>
+    <b>Ink timed to speech</b>
+    <p>Replaced by anchors. Agents point; you draw. Keeps the payoff, drops word-level TTS timestamps, clause anchors surviving
+    the character rewrite, and a canvas replay engine.</p></div></div>
+
+  <div class="cutrow"><div class="lbl">cut</div><div>
+    <b>The freehand napkin as the whiteboard answer</b>
+    <p>Replaced by a markdown file in the repo. It persists, it diffs, it commits, and four LLMs are already better at it than
+    at drawing.</p></div></div>
+
+  <div class="cutrow"><div class="lbl">cut</div><div>
+    <b>Screen glance, for now</b>
+    <p>Not rejected — deferred. Highest consent risk, highest machinery, and the work pane covers most of the actual need
+    ("look at what he's touching") without a camera anywhere near the product.</p></div></div>
+
+  <div class="cutrow"><div class="lbl">cut</div><div>
+    <b>Designing the Mac first</b>
+    <p>The phone is the primary surface. The Room window is where you go to <i>look</i>; the dock is a 400px echo; the phone is
+    where the product is actually used.</p></div></div>
+
+  <div class="cutrow keep"><div class="lbl">kept</div><div>
+    <b>The Floor, the Tape, the light law, the ladder, the receipt, the sentence</b>
+    <p>One voice ever; turns as records with replay-as-seek; ON AIR is achromatic and your mic inverts the surface; states are
+    positions with sounds; commands produce receipts with outcomes; every destructive or billable action confirms as a
+    sentence. Four models converged on all of it and they were right.</p></div></div>
+
+  <div class="cutrow keep" style="border-bottom:none"><div class="lbl">added</div><div>
+    <b>The interrupt ladder · the work pane · the whiteboard file · the budget ceiling · the murmur</b>
+    <p>The first four are load-bearing. The fifth is a bet — the only idea here that could make the product worse, kept because
+    the alternative is a room that sounds empty while four people work in it.</p></div></div>
+
+  <p class="pull">The four boards asked "what should the room look like?" The better question is "what can you do in it that
+  you can't do by reading a terminal?" — and the answer is: <b>say something in the middle and be heard.</b></p>
+</section>
+
+<footer>
+  OVER THE SHOULDER · concept B · Room of Devs · builds on the settled parts of Floor &amp; Table (grok-4.5),
+  The Workbench (gpt-5.6 Sol), One Floor/One Table/One Tape (opus5) and The Den (fable-5), and diverges where noted.<br>
+  Placeholder avatars are initials in jersey discs. Sample content from one plausible working afternoon.
+  Self-contained · no external requests · dark-first.
+</footer>
+
+</div>
+</body>
+</html>

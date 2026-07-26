@@ -3,7 +3,7 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-23_
+_Last updated: 2026-07-25_
 
 ## Inbox
 
@@ -15,11 +15,29 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
-- **UI architecture review with the owner** — TODAY: owner flagged that
-  UI sharing between panel and mobile is too thin (duplicated domain
-  components, two styling systems). Concerns + ground-truth audit +
-  agenda: [active/ui-architecture-concerns-2026-07-24.md](active/ui-architecture-concerns-2026-07-24.md).
-  Owner also wants mattpocock/skills (codebase-design) set up first.
+- **UI consolidation round 2 — spec ready, awaiting owner OK**:
+  deep-module audit ran 2026-07-24 with the codebase-design skill
+  (mattpocock/skills now installed in ~/.claude/skills). Headline: nine
+  concepts built twice, transport controls ×4, style.css is 2,465 lines
+  and the top churn file. Plan = promote-and-replace (PlayerControls →
+  AgentCard → PickerFlow, deleting each style.css bucket on adoption):
+  [active/spec-ui-consolidation-round2.md](active/spec-ui-consolidation-round2.md).
+  Owner leaning yes ("I think number 1"); confirm before lanes launch.
+  Prior concerns doc:
+  [active/ui-architecture-concerns-2026-07-24.md](active/ui-architecture-concerns-2026-07-24.md).
+- **Design concept boards — 20 total; FINAL synthesis round done,
+  awaiting owner review + picks**: 4 blind-detailed + 4 synthesis +
+  4 wildcard + 4 wildcard-2 + **4 final-synthesis** (2026-07-25:
+  each model fused all prior rounds, anonymized, future goals
+  structural). Final boards:
+  [fable "The Den"](https://6jox1hvrceaf.postplan.dev) ·
+  [opus](https://d7wpykv0js50.postplan.dev) ·
+  [sol "Workbench"](https://v059dy7f78r7.postplan.dev) ·
+  [grok "Floor & Table"](https://ifjfe2tv0zim.postplan.dev).
+  fable + opus converged on the same floor/table/tape skeleton. All
+  20 grouped on the Postplan dashboard
+  (`room-of-devs-ui-concepts`); URLs + notes in the round-2 spec.
+  After picks: real React+shadcn mock → lock `design-ui-target.md`.
 - **Parallel round 1 MERGED + DEPLOYED** (overnight 2026-07-23→24):
   interpreter Stage 1 (spec now shipped-in-code; codex visual verify
   round pending report), panel parity fixes (icons, speaking-card clip,

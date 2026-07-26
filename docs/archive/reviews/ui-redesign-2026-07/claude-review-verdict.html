@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room of Devs — Review of the four final concepts</title>
+<style>
+  :root{
+    --void:#0C0A10; --surface:#14111A; --raise:#1C1824; --line:#2A2434;
+    --ink:#EDE8E1; --dim:#9A93A6; --faint:#6A6377;
+    --air:#F7F3EC; --work:#38C7DD; --hand:#B8E24C; --block:#FF6FA5;
+    --hazard:#F5A524; --consent:#4ADE80;
+    --leo:#5B8DEF; --don:#A176F5; --mikey:#FF9B42; --raph:#FF5D5D;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--void);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 120px}
+  a{color:var(--work)}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  header.hero{padding:72px 0 44px;border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(34px,5.6vw,54px);line-height:1.04;letter-spacing:-.025em;margin:16px 0 18px;font-weight:800}
+  .lede{font-size:19px;line-height:1.55;color:var(--dim);max-width:76ch}
+  .lede b{color:var(--ink);font-weight:650}
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:26px;letter-spacing:-.018em;margin:10px 0 10px;font-weight:750}
+  h3{font-size:16px;margin:26px 0 8px;font-weight:700}
+  p{max-width:80ch}
+  .muted{color:var(--dim)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 22px}
+  .card h4{margin:0 0 4px;font-size:17px;font-weight:750}
+  .by{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+  .verdict{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+           text-transform:uppercase;padding:3px 8px;border-radius:999px;margin:10px 0 12px}
+  .v-build{background:rgba(56,199,221,.14);color:var(--work);border:1px solid rgba(56,199,221,.35)}
+  .v-parts{background:rgba(184,226,76,.12);color:var(--hand);border:1px solid rgba(184,226,76,.3)}
+  .v-ref{background:rgba(154,147,166,.12);color:var(--dim);border:1px solid rgba(154,147,166,.28)}
+  ul{padding-left:18px;margin:8px 0}
+  li{margin:5px 0;max-width:78ch}
+  .plus li::marker{content:"+ ";color:var(--hand);font-family:var(--mono)}
+  .minus li::marker{content:"− ";color:var(--block);font-family:var(--mono)}
+  .take{border-left:2px solid var(--don);padding-left:12px;margin-top:14px;font-size:14px}
+  .take b{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--don);display:block;margin-bottom:2px}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+     color:var(--faint);border-bottom:1px solid var(--line);padding:8px 10px 8px 0;font-weight:500}
+  td{padding:11px 10px 11px 0;border-bottom:1px solid rgba(42,36,52,.6);vertical-align:top}
+  td.pick{color:var(--ink);font-weight:600}
+  .src{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .agree{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:999px;
+        background:var(--raise);border:1px solid var(--line);color:var(--dim)}
+  .chip b{color:var(--ink);font-weight:600}
+  .gap{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--block);
+       border-radius:0 12px 12px 0;padding:16px 18px;margin:12px 0}
+  .gap h4{margin:0 0 4px;font-size:16px}
+  .n{font-family:var(--mono);font-size:11px;color:var(--block);letter-spacing:.1em}
+  .pull{font-size:20px;line-height:1.45;color:var(--ink);border-left:3px solid var(--air);
+        padding:4px 0 4px 18px;margin:26px 0;max-width:70ch;font-weight:600;letter-spacing:-.01em}
+  footer{padding:44px 0;color:var(--faint);font-family:var(--mono);font-size:11px;line-height:1.8}
+  .links a{display:inline-block;margin-right:14px;font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">Room of Devs · review of four final synthesis boards</div>
+  <h1>Four boards.<br>One design.</h1>
+  <p class="lede">Floor &amp; Table, The Workbench, One Floor/One Table/One Tape, and The Den are not four concepts — they are
+  <b>one concept at four levels of detail</b>. All four land on the same trinity, the same achromatic ON AIR, the same
+  luminance inversion for talkback, the same "no per-agent threads," the same three-voice huddle, the same
+  confirm-as-a-sentence picker. That convergence is real evidence and you should bank it. But it also means the
+  interesting question isn't <i>which board wins</i> — it's <b>the eight places they actually disagree</b>, and
+  <b>the five things none of them designed</b>.</p>
+</header>
+
+<section>
+  <div class="kicker">01 · the convergence</div>
+  <h2>Settled. Stop re-litigating these.</h2>
+  <p class="muted">Every one of these appears in all four boards, arrived at independently. Treat them as decided and spend
+  your design budget elsewhere.</p>
+  <div class="agree">
+    <span class="chip"><b>Floor</b> — one voice, ever</span>
+    <span class="chip"><b>Tape</b> — one time-ordered record; replay is seek</span>
+    <span class="chip"><b>Table</b> — objects enter the conversation in one place</span>
+    <span class="chip"><b>ON AIR is achromatic</b> — luminance, never hue</span>
+    <span class="chip"><b>Talkback inverts</b> — output = light on; input = becomes light</span>
+    <span class="chip">lamp <b>+ a mono word</b>, never color alone</span>
+    <span class="chip">persona hue = <b>jersey only</b> (avatar, spine, meter, ink)</span>
+    <span class="chip">dock = <b>4 earned states, no scroll</b></span>
+    <span class="chip"><b>"Play it / Later"</b> two-button decision dock</span>
+    <span class="chip">phone = <b>3 verbs, bottom 40%</b></span>
+    <span class="chip">huddle = <b>3 voices max</b>, clause-boundary cut-in, auto-adjourn</span>
+    <span class="chip">interpreter = <b>a receipt</b>, not a toast</span>
+    <span class="chip">picker <b>confirms as a sentence</b>, persona first</span>
+    <span class="chip">kill-confirm <b>names what you lose</b></span>
+    <span class="chip">avatar = bare <b>&lt;img&gt;</b>, siblings do the chrome</span>
+  </div>
+  <p class="pull">The strongest signal in the whole program: four independent models, given the same brief, all decided the
+  main window should stop being a grid of agent cards.</p>
+</section>
+
+<section>
+  <div class="kicker">02 · board by board</div>
+  <h2>What works, what doesn't</h2>
+
+  <div class="grid2" style="margin-top:22px">
+
+    <div class="card">
+      <h4>Floor &amp; Table</h4>
+      <div class="by">grok-4.5 · 2,300 words</div>
+      <span class="verdict v-ref">reference · thinnest</span>
+      <ul class="plus">
+        <li><b>The clearest statement of the idea.</b> "Three objects; every surface is a different distance from them" is the
+        one-sentence version of what the other three take 7,000 words to say. If you ever pitch this tool, pitch it in these words.</li>
+        <li>"Three distances" (Strip / Den / Earpiece) is a better mental model than the others' "three surfaces" —
+        distance implies the same content at different resolution, which is exactly right.</li>
+        <li>Honest about its own rejections: naming what it threw away and why is why the board is trustworthy.</li>
+      </ul>
+      <ul class="minus">
+        <li><b>It's a summary, not a design.</b> Almost every hard part is named and not solved — the glance is a screenshot
+        of a screenshot, the huddle floor is a row of pills, the interpreter receipt has three rows and no destructive gate.</li>
+        <li>Keeps <b>violet</b> for glance consent while Donatello is purple. Two boards caught this collision; this one didn't.</li>
+        <li>The Strip is input-free "and that's the design" — but typed reply is called structural three sections earlier.
+        The contradiction is unresolved.</li>
+      </ul>
+      <div class="take"><b>keep</b>"Same room at three distances," the table shelf (one object live, the rest on a shelf), and
+      huddle auto-adjourn. Read it first, build from another.</div>
+    </div>
+
+    <div class="card">
+      <h4>The Workbench</h4>
+      <div class="by">gpt-5.6 Sol · 2,100 words</div>
+      <span class="verdict v-parts">two ideas worth stealing</span>
+      <ul class="plus">
+        <li><b>BET 03 — the cast rail never reorders.</b> This is the single most contrarian call in the program and I think
+        it's <i>correct</i>, against the other three. Stable position is the entire payoff of giving agents faces; a rail that
+        re-sorts on state change throws away the spatial memory you paid for. Hot seats should expand <i>in place</i>.</li>
+        <li><b>The consent stack is the most complete.</b> Preflight redaction editing, a <i>named</i> audience, pixel expiry
+        separate from record expiry, and a durable metadata receipt — "inspectable before, during, and after." The others
+        have three of those four at best.</li>
+        <li>"Audio etiquette is product design" and "a lovable room is one you do not mute" — the right frame, stated more
+        plainly than anywhere else.</li>
+      </ul>
+      <ul class="minus">
+        <li>Thinnest treatment of the tape — it's a sidebar list, not a scrubbable object, which quietly loses the
+        replay/catch-up/history unification the other boards get for free.</li>
+        <li>Hand-up in <b>amber</b> collides with its own hazard usage and with Mikey.</li>
+        <li>The workbench/room/shoulder/pocket naming is generic where the others' is specific. Minor, but naming is
+        most of what a concept board does.</li>
+      </ul>
+      <div class="take"><b>keep</b>The stable rail (over three boards' state-sorted ladder) and the full four-stage consent
+      model. Discard the rest.</div>
+    </div>
+
+    <div class="card">
+      <h4>One Floor, One Table, One Tape</h4>
+      <div class="by">opus5 · 7,200 words</div>
+      <span class="verdict v-build">strongest · build from this</span>
+      <ul class="plus">
+        <li><b>"Six places to stand" + the politeness ladder.</b> States as <i>positions in a room</i> with a location, a lamp,
+        a posture and a sound, plus a concrete escalation (45s throat-clear in their own voice → 3m knock → silent glow
+        forever, never twice at the same volume). This is the best idea in the entire program and it is also nearly free to
+        build — it's daemon logic plus cached phrase MP3s you already generate.</li>
+        <li><b>The baton as one object</b> — speak, type, attach, show, all through a single component rendered at three
+        sizes. This is what actually makes "typed replies and attachments everywhere" structural instead of a feature request.</li>
+        <li><b>It does the engineering.</b> Type-through on a non-activating panel is spelled out as a contract (global key
+        monitor, self-drawn caret, Esc releases, named fallback) instead of waved at. Kill-confirm names the cost.
+        Scroll-the-dock-to-scrub is a real gesture nobody else found.</li>
+        <li>Only board with a <b>build order</b>, and it's the right one: floor + queue + ladder alone for a week, and if that
+        feels like directing rather than falling behind, everything else follows.</li>
+      </ul>
+      <ul class="minus">
+        <li><b>"Amber is you"</b> — a third color system is one too many, and the board admits the problem in the same
+        paragraph ("Mikey's orange lives nearby"). Amber is also its hazard color and its skip-permissions flag.</li>
+        <li>Longest and densest; the sheer volume makes it hard to tell load-bearing from decorative.</li>
+      </ul>
+      <div class="take"><b>keep</b>Nearly all of it. The state model, the ladder, the sound tokens, the baton, the tape-as-turns,
+      the ears-only phone screen, the build order.</div>
+    </div>
+
+    <div class="card">
+      <h4>The Den</h4>
+      <div class="by">fable-5 · 5,300 words</div>
+      <span class="verdict v-build">strongest on taste · nearly a twin</span>
+      <ul class="plus">
+        <li><b>The best-looking room.</b> Warm aubergine over blue-black, "a den at 1am, not a terminal theme" — and it's the
+        palette closest to what your product already looks like on the phone.</li>
+        <li><b>"Your ink is light."</b> One law instead of two: everything that comes from you is luminance — your mic, your
+        ink, your circle. This beats a third color system and it costs nothing.</li>
+        <li><b>Glance-green</b> as a reserved consent color, freeing violet for Donnie and amber for hazard. Correct.</li>
+        <li><b>The only board that designed call mode</b> — the thing you actually shipped. Caption fade-stack (newest bright,
+        older fading, so you can rejoin a call you half-heard) and ghost tape moments for non-billing intermediates.</li>
+        <li>Agent-initiated glance requests as a dock state: "asking is their move, showing is always yours."</li>
+      </ul>
+      <ul class="minus">
+        <li>Rejects dock type-through hard and routes typing to the Room composer — defensible, but it hand-waves the
+        cost (you just lost focus, which is the whole thing the dock exists to protect).</li>
+        <li>Adopts everything from prior rounds so faithfully that its own additions are hard to find. The provenance
+        rigor is admirable and it slightly crowds out invention.</li>
+      </ul>
+      <div class="take"><b>keep</b>The palette, "your ink is light," glance-green, call mode with the caption fade-stack,
+      and the agent-initiated glance ask.</div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="kicker">03 · the forks</div>
+  <h2>Eight real disagreements, decided</h2>
+  <p class="muted">These are the only places the four boards actually diverge. Everything else is phrasing. My call on each,
+  with the reason — this table <i>is</i> the reused-parts design.</p>
+
+  <table>
+    <thead><tr><th style="width:20%">Fork</th><th style="width:34%">The split</th><th style="width:20%">Pick</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Seat order</b></td>
+        <td>State-sorted density ladder <span class="src">(F&amp;T, 1F1T1T, Den)</span> vs. stable rail that never reorders
+        <span class="src">(Workbench)</span></td>
+        <td class="pick">Stable rail</td>
+        <td>Faces exist so you can find someone without reading. Re-sorting deletes that. Three boards hedge with
+        "freeze the top slot while the pointer's inside," which protects the click and not the mental map. Let hot seats
+        <i>expand</i>, never move.</td>
+      </tr>
+      <tr>
+        <td><b>Your color</b></td>
+        <td>"Amber is you" as a third system <span class="src">(1F1T1T)</span> vs. "your ink is light"
+        <span class="src">(Den)</span> vs. nothing <span class="src">(F&amp;T, Workbench)</span></td>
+        <td class="pick">Your ink is light</td>
+        <td>One law — everything from you is luminance — instead of two systems that fight. Amber stays hazard-only, which
+        is the only way it survives next to Mikey.</td>
+      </tr>
+      <tr>
+        <td><b>Consent color</b></td>
+        <td>Violet <span class="src">(F&amp;T, Workbench)</span> vs. amber <span class="src">(1F1T1T)</span> vs. green
+        <span class="src">(Den)</span></td>
+        <td class="pick">Green</td>
+        <td>Violet is Donatello. Amber is hazard. Green is free, reads as "permitted," and survives on a screen edge.</td>
+      </tr>
+      <tr>
+        <td><b>Dock typing</b></td>
+        <td>Type-through via global key monitor <span class="src">(1F1T1T)</span> vs. no inputs, ever
+        <span class="src">(Den, F&amp;T, Workbench)</span></td>
+        <td class="pick">No inputs — with the fallback promoted</td>
+        <td>The dock's job is not stealing focus; a self-drawn caret over a captured global key monitor is a lot of
+        fragility for one field. Take opus5's <i>fallback</i> as the design: ⌥⏎ summons the Room with the baton already
+        armed and aimed. One keystroke, no NSPanel heroics.</td>
+      </tr>
+      <tr>
+        <td><b>Palette</b></td>
+        <td>Cool charcoal <span class="src">(three boards)</span> vs. warm aubergine <span class="src">(Den)</span></td>
+        <td class="pick">Aubergine</td>
+        <td>It's a den, and it's what your phone UI already leans toward. Cool charcoal is every developer tool ever made.</td>
+      </tr>
+      <tr>
+        <td><b>Consent depth</b></td>
+        <td>Timed glance + expiry <span class="src">(all)</span> vs. + preflight redaction, named audience, separate pixel
+        expiry, durable receipt <span class="src">(Workbench)</span></td>
+        <td class="pick">The full stack</td>
+        <td>Screen access is the one feature that can genuinely hurt you. "Inspectable before, during, and after" is the
+        right bar and it's only four extra states.</td>
+      </tr>
+      <tr>
+        <td><b>Hand-up hue</b></td>
+        <td>Lime <span class="src">(three boards)</span> vs. amber <span class="src">(Workbench)</span></td>
+        <td class="pick">Lime</td>
+        <td>Amber has to stay reserved for hazard or the held-room bar stops meaning anything.</td>
+      </tr>
+      <tr>
+        <td><b>Threads</b></td>
+        <td>Delete per-agent threads entirely <span class="src">(all four, emphatically)</span></td>
+        <td class="pick">Half of it</td>
+        <td>The <i>storage</i> call is right and expensive and worth making now: one tape, turns as records, a thread is a
+        query. The <i>UI</i> call is wrong — you shipped a thread view, it's on your phone, and a tape filter with a
+        composer aimed at one agent <b>is</b> a thread. Four boards mistook a data-model decision for a screen deletion.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <div class="kicker">04 · the gaps</div>
+  <h2>Five things none of the four designed</h2>
+  <p class="muted">This is where I'd spend the next round. Each of these is either the thing you actually said is missing, or
+  a place where all four boards specified something they can't afford.</p>
+
+  <div class="gap">
+    <div class="n">GAP 01</div>
+    <h4>Interruption is designed at the wrong layer</h4>
+    <p>You said the live call is "mostly just the agent speaking and I listen." The fix isn't a talk button — you have one.
+    It's what happens <i>downstream</i> of it. All four boards define cutting in as an audio operation: duck to 20% in 120ms,
+    stop at a clause boundary. That's TTS. The actual question is whether your sentence reaches the <i>agent</i> before it
+    finishes the turn — and whether it lands as a course correction, a stop, or a note it reads at the end. Those are three
+    completely different outcomes and the UI must never confuse them. Zero of four boards mention it.</p>
+  </div>
+
+  <div class="gap">
+    <div class="n">GAP 02</div>
+    <h4>The Table is empty on day one</h4>
+    <p>All four put a shared canvas in the middle of the main window and justify it as "the four futures fall out of it."
+    Fine — but glance, napkin, huddle and paste are all unbuilt. Ship any of these boards tomorrow and the center of your
+    primary surface holds the last spoken summary and a shelf with nothing on it. Not one board says what the Table shows
+    before the futures arrive, which is a real hole in the only layout decision that matters.</p>
+  </div>
+
+  <div class="gap">
+    <div class="n">GAP 03</div>
+    <h4>Ink timed to speech is the most expensive idea in the program and nobody priced it</h4>
+    <p>"Each stroke lands on the beat of the clause that explains it, and rewinds when you scrub" requires: the model
+    emitting a structured stroke list with clause anchors, Gemini preserving those anchors through the character rewrite,
+    ElevenLabs <i>word-level timestamps</i> (a different endpoint than the stream you use), and a canvas replay engine bound
+    to the audio clock. It is presented as a motion-budget decision. It is a subsystem — and it's the single item least
+    likely to survive contact with real model output.</p>
+  </div>
+
+  <div class="gap">
+    <div class="n">GAP 04</div>
+    <h4>Money is decoration</h4>
+    <p>Three boards show spend as a mono breadcrumb and one shows a huddle "spend tick." But a three-voice huddle is three
+    Gemini rewrites plus three ElevenLabs syntheses <i>per round</i>, and the boards let it run six minutes. For a product
+    whose first documented rule is credit efficiency, cost should be a <b>ceiling</b>, not a garnish.</p>
+  </div>
+
+  <div class="gap">
+    <div class="n">GAP 05</div>
+    <h4>The Mac gets designed first and the phone gets designed third</h4>
+    <p>Every board orders it Room → dock → Pocket, and every board then admits the phone is where the couch use happens.
+    Your own screenshots are all phone. The Mac already has a perfectly good UI for watching an agent work: the terminal.
+    The phone is the only surface where this tool has no competition.</p>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">05 · what's next</div>
+  <h2>Two boards follow</h2>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h4>The Reused Room</h4>
+      <p class="muted" style="margin:6px 0 0">Strictly assembled from the four. Every element cited to its source, the eight
+      forks decided as above, nothing invented. This is the buildable one.</p>
+    </div>
+    <div class="card">
+      <h4>Over the Shoulder</h4>
+      <p class="muted" style="margin:6px 0 0">What I'd do instead. Turn-taking as the unit, the agent's live work as the
+      object on the table, the whiteboard as a file in the repo, and the phone designed first.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Review of four final-synthesis concept boards for Room of Devs · authored boards: Floor &amp; Table (grok-4.5),
+  The Workbench (gpt-5.6 Sol), One Floor/One Table/One Tape (opus5), The Den (fable-5).<br>
+  Self-contained · no external requests · dark-first.
+</footer>
+
+</div>
+</body>
+</html>

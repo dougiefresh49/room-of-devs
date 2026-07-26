@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Footlights — Room of Devs concept</title>
+<style>
+  :root {
+    /* Stage black + tungsten — not "AI dark mode", a theater */
+    --ink: #0e0c0a;
+    --stage: #161310;
+    --wing: #1f1a15;
+    --rail: #2a241c;
+    --paper: #efe6d6;
+    --paper-dim: #c9bba6;
+    --tungsten: #e8a54b;
+    --tungsten-hot: #ffc56e;
+    --quiet: #6b7a62;
+    --hold: #d9773a;
+    --live: #f0d9a8;
+    --danger: #c44b3a;
+
+    /* Cast — TMNT-adjacent, initials only */
+    --leo: #3a6ea5;
+    --raph: #c45c48;
+    --don: #6b5b8a;
+    --mikey: #d4893a;
+    --casey: #4a7c59;
+    --april: #b86b7a;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+
+    --radius: 14px;
+    --hair: 1px solid rgba(239, 230, 214, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(232, 165, 75, 0.08), transparent 55%),
+      radial-gradient(900px 500px at 90% 0%, rgba(58, 110, 165, 0.06), transparent 50%),
+      var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 48px 20px 96px;
+  }
+
+  /* ——— Masthead ——— */
+  .mast {
+    display: grid;
+    gap: 28px;
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: var(--hair);
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--tungsten);
+    font-weight: 600;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1.05;
+    margin: 8px 0 0;
+    letter-spacing: -0.02em;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--tungsten-hot);
+  }
+  .thesis {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+    color: var(--paper-dim);
+    max-width: 38em;
+    margin: 0;
+  }
+  .thesis strong {
+    color: var(--paper);
+    font-weight: 600;
+  }
+
+  /* ——— Tokens ——— */
+  section { margin-bottom: 72px; }
+  .sec-label {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .sec-label h2 {
+    font-family: var(--serif);
+    font-size: 1.55rem;
+    font-weight: 400;
+    margin: 0;
+  }
+  .sec-label p {
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.92rem;
+  }
+
+  .token-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 760px) {
+    .token-grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--stage);
+    border: var(--hair);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .panel h3 {
+    margin: 0 0 14px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+    font-weight: 600;
+  }
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .swatch {
+    width: 72px;
+  }
+  .swatch i {
+    display: block;
+    height: 40px;
+    border-radius: 8px;
+    border: var(--hair);
+  }
+  .swatch span {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--paper-dim);
+    font-family: var(--mono);
+  }
+  .type-sample {
+    display: grid;
+    gap: 16px;
+  }
+  .type-sample .big {
+    font-family: var(--serif);
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+  .type-sample .ui {
+    font-size: 0.95rem;
+  }
+  .type-sample .cap {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--tungsten);
+    letter-spacing: 0.04em;
+  }
+  .cast-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: #fff;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+  }
+  .avatar.sm { width: 28px; height: 28px; font-size: 10px; }
+  .avatar.md { width: 56px; height: 56px; font-size: 16px; }
+  .avatar.lg { width: 88px; height: 88px; font-size: 26px; }
+  .avatar.xl { width: 120px; height: 120px; font-size: 36px; }
+  .a-leo { background: var(--leo); }
+  .a-raph { background: var(--raph); }
+  .a-don { background: var(--don); }
+  .a-mikey { background: var(--mikey); }
+  .a-casey { background: var(--casey); }
+  .a-april { background: var(--april); }
+
+  /* ——— Principle strip ——— */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 800px) {
+    .principles { grid-template-columns: 1fr; }
+  }
+  .principle {
+    background: linear-gradient(160deg, rgba(232,165,75,0.08), transparent 60%), var(--wing);
+    border: var(--hair);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .principle b {
+    display: block;
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  .principle p {
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.92rem;
+  }
+
+  /* ——— Mock chrome ——— */
+  .mock-wrap {
+    display: grid;
+    gap: 28px;
+  }
+  .mock-block {
+    display: grid;
+    gap: 12px;
+  }
+  .mock-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .mock-meta h3 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+  }
+  .mock-meta .tag {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tungsten);
+    border: 1px solid rgba(232,165,75,0.35);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .mock-note {
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.9rem;
+    max-width: 52em;
+  }
+
+  .desktop-frame {
+    background: #2c2823;
+    border-radius: 12px;
+    padding: 14px 14px 18px;
+    border: var(--hair);
+    overflow: hidden;
+  }
+  .desktop-menubar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(239,230,214,0.45);
+    padding: 0 6px 10px;
+    font-family: var(--mono);
+  }
+  .ide-fake {
+    background: #1a1815;
+    border-radius: 8px;
+    min-height: 220px;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.35);
+    background-image:
+      linear-gradient(90deg, #141210 220px, transparent 220px),
+      repeating-linear-gradient(
+        transparent,
+        transparent 21px,
+        rgba(239,230,214,0.04) 21px,
+        rgba(239,230,214,0.04) 22px
+      );
+  }
+  .ide-gutter {
+    position: absolute;
+    left: 12px;
+    top: 16px;
+    width: 180px;
+    color: rgba(239,230,214,0.25);
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  .ide-code {
+    position: absolute;
+    left: 240px;
+    top: 16px;
+    right: 16px;
+    color: rgba(239,230,214,0.35);
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.75;
+  }
+
+  /* FOOTLIGHTS — the always-visible strip */
+  .footlights {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    height: 52px;
+    background: rgba(14, 12, 10, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(232, 165, 75, 0.28);
+    border-radius: 10px;
+    display: flex;
+    align-items: stretch;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.4),
+      0 12px 40px rgba(0,0,0,0.45),
+      0 -8px 28px rgba(232,165,75,0.06);
+    z-index: 2;
+  }
+  .fl-slot {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    border-right: 1px solid rgba(239,230,214,0.06);
+    min-width: 0;
+  }
+  .fl-slot:last-child { border-right: none; }
+  .fl-slot.speaking {
+    background: linear-gradient(180deg, rgba(232,165,75,0.18), transparent);
+  }
+  .fl-slot.speaking::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: var(--tungsten-hot);
+    box-shadow: 0 0 12px var(--tungsten);
+  }
+  .fl-slot.hold {
+    background: linear-gradient(180deg, rgba(217,119,58,0.22), transparent);
+  }
+  .fl-slot.hold::after {
+    content: "HOLD";
+    position: absolute;
+    top: 3px;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: var(--hold);
+    font-weight: 700;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .fl-mouth {
+    width: 22px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .fl-slot.speaking .fl-mouth {
+    animation: mouth 0.35s steps(2) infinite;
+  }
+  @keyframes mouth {
+    0% { transform: scaleY(0.45); }
+    100% { transform: scaleY(1); }
+  }
+  .fl-name {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(239,230,214,0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+  }
+  .fl-slot.speaking .fl-name { color: var(--live); }
+  .fl-slot.hold .fl-name { color: var(--hold); }
+  .fl-caption {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ink);
+    border: 1px solid rgba(232,165,75,0.4);
+    color: var(--paper);
+    font-family: var(--serif);
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    max-width: min(420px, 70vw);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .fl-caption b {
+    color: var(--tungsten);
+    font-weight: 600;
+    margin-right: 6px;
+  }
+
+  /* Variants of footlights */
+  .fl-variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 720px) {
+    .fl-variants { grid-template-columns: 1fr; }
+  }
+  .fl-solo {
+    background: var(--stage);
+    border: var(--hair);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    min-height: 100px;
+  }
+  .fl-solo .label {
+    font-size: 11px;
+    color: var(--paper-dim);
+    margin-bottom: 28px;
+  }
+  .footlights.static {
+    position: relative;
+    left: auto; right: auto; bottom: auto;
+  }
+
+  /* STAGE — main Mac window */
+  .stage-window {
+    background: var(--stage);
+    border-radius: 12px;
+    border: var(--hair);
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+  .stage-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--wing);
+    border-bottom: var(--hair);
+    font-size: 12px;
+    color: var(--paper-dim);
+  }
+  .dots { display: flex; gap: 6px; }
+  .dots i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(239,230,214,0.2);
+  }
+  .stage-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    min-height: 420px;
+  }
+  @media (max-width: 800px) {
+    .stage-body { grid-template-columns: 1fr; }
+  }
+  .proscenium {
+    padding: 28px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232,165,75,0.12), transparent 70%),
+      var(--stage);
+    border-right: var(--hair);
+  }
+  .now-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--tungsten);
+  }
+  .now-cast {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .now-copy h4 {
+    margin: 0 0 6px;
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    font-weight: 400;
+  }
+  .now-copy p {
+    margin: 0;
+    color: var(--paper-dim);
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    max-width: 28em;
+  }
+  .lipsync-ring {
+    position: relative;
+  }
+  .lipsync-ring::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--tungsten);
+    opacity: 0.7;
+    animation: pulse 1.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1.12); opacity: 0; }
+  }
+  .script-roll {
+    margin-top: auto;
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--serif);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    max-height: 140px;
+    overflow: hidden;
+    position: relative;
+  }
+  .script-roll::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 36px;
+    background: linear-gradient(transparent, var(--paper));
+  }
+  .script-roll .line {
+    margin-bottom: 8px;
+  }
+  .script-roll .who {
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+  .who.leo { color: var(--leo); }
+  .who.raph { color: var(--raph); }
+  .who.don { color: var(--don); }
+  .who.mikey { color: var(--mikey); }
+
+  .wings-rail {
+    background: var(--wing);
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .wings-rail h4 {
+    margin: 0 0 4px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  .cue {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid transparent;
+  }
+  .cue.urgent {
+    border-color: rgba(217,119,58,0.55);
+    background: rgba(217,119,58,0.12);
+  }
+  .cue .meta {
+    min-width: 0;
+  }
+  .cue .meta strong {
+    display: block;
+    font-size: 0.85rem;
+  }
+  .cue .meta span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--paper-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cue .state {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--quiet);
+  }
+  .cue.urgent .state { color: var(--hold); font-weight: 700; }
+  .talkback {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: var(--hair);
+  }
+  .ptt {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    background: var(--tungsten);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: default;
+  }
+  .ptt small {
+    display: block;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-top: 4px;
+    opacity: 0.75;
+    font-size: 0.75rem;
+  }
+
+  /* Decision intrusion — stage takes over */
+  .decision {
+    background: var(--ink);
+    border: 1px solid rgba(217,119,58,0.45);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+  }
+  .decision .ask {
+    font-family: var(--serif);
+    font-size: clamp(1.2rem, 3vw, 1.55rem);
+    max-width: 22em;
+    margin: 0;
+  }
+  .decision .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .decision button {
+    border: 1px solid rgba(239,230,214,0.25);
+    background: var(--wing);
+    color: var(--paper);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: default;
+  }
+  .decision button.primary {
+    background: var(--tungsten);
+    color: var(--ink);
+    border-color: var(--tungsten);
+    font-weight: 700;
+  }
+
+  /* Plan chip — voice command executing */
+  .plan-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background: var(--wing);
+    border: var(--hair);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+  .plan-bar .heard {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--paper-dim);
+  }
+  .step {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.3);
+    font-size: 12px;
+  }
+  .step.done { color: var(--quiet); }
+  .step.active {
+    background: rgba(232,165,75,0.2);
+    color: var(--tungsten-hot);
+    outline: 1px solid rgba(232,165,75,0.4);
+  }
+  .step.todo { color: var(--paper-dim); }
+
+  /* PHONE */
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .phones { grid-template-columns: 1fr; justify-items: center; }
+  }
+  .phone {
+    width: min(260px, 100%);
+    background: #0a0908;
+    border-radius: 36px;
+    border: 3px solid #3a342c;
+    padding: 12px 10px 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .notch {
+    width: 96px;
+    height: 22px;
+    background: #0a0908;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto 10px;
+    border: 2px solid #3a342c;
+    border-top: none;
+  }
+  .phone-screen {
+    background: var(--stage);
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-top {
+    padding: 16px 14px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--paper-dim);
+  }
+  .phone-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 12px 16px 20px;
+    text-align: center;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 30%, rgba(58,110,165,0.25), transparent 70%),
+      var(--stage);
+  }
+  .phone-stage.raph-bg {
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 30%, rgba(196,92,72,0.28), transparent 70%),
+      var(--stage);
+  }
+  .phone-stage.hold-bg {
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 30%, rgba(217,119,58,0.3), transparent 70%),
+      var(--stage);
+  }
+  .phone-line {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    margin: 0;
+    max-width: 16em;
+  }
+  .phone-sub {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tungsten);
+  }
+  .chorus {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 8px;
+  }
+  .chorus .avatar {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  .chorus .avatar.on {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 2px var(--tungsten);
+  }
+  .thumb-zone {
+    padding: 12px 14px 16px;
+    background: var(--wing);
+    border-top: var(--hair);
+  }
+  .ptt-phone {
+    width: 100%;
+    height: 64px;
+    border-radius: 16px;
+    border: none;
+    background: var(--tungsten);
+    color: var(--ink);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+  .ptt-phone.ghost {
+    background: transparent;
+    border: 1.5px solid rgba(239,230,214,0.25);
+    color: var(--paper);
+  }
+  .swipe-hint {
+    text-align: center;
+    font-size: 10px;
+    color: var(--paper-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .decision-phone {
+    padding: 8px;
+    display: grid;
+    gap: 8px;
+  }
+  .decision-phone button {
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid rgba(239,230,214,0.2);
+    background: var(--rail);
+    color: var(--paper);
+    font-size: 0.9rem;
+  }
+  .decision-phone button.yes {
+    background: var(--tungsten);
+    color: var(--ink);
+    font-weight: 700;
+    border: none;
+  }
+
+  /* Rationale */
+  .rationale {
+    background:
+      linear-gradient(135deg, rgba(232,165,75,0.07), transparent 40%),
+      var(--stage);
+    border: var(--hair);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+  }
+  .rationale ol {
+    margin: 0;
+    padding-left: 1.2em;
+    color: var(--paper-dim);
+  }
+  .rationale li {
+    margin-bottom: 12px;
+    padding-left: 6px;
+  }
+  .rationale li strong {
+    color: var(--paper);
+  }
+  .rationale .out {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: var(--hair);
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--tungsten-hot);
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: var(--hair);
+    font-size: 12px;
+    color: rgba(239,230,214,0.4);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="mast">
+      <div>
+        <div class="eyebrow">Concept · Room of Devs</div>
+        <h1>Footlights — <em>the room lives in the margin</em></h1>
+      </div>
+      <p class="thesis">
+        <strong>Thesis:</strong> Stop building a place you visit. Build an edge of light
+        that rides under every other app — a theater’s footlights — where each character
+        is a warm slot that brightens when they speak and blinks when they need you.
+        Audio is the show. Sight is attribution, interruption, and decision. The full
+        “stage” only opens when a turtle is waiting in the wings.
+      </p>
+    </header>
+
+    <section>
+      <div class="sec-label">
+        <h2>How attention works</h2>
+        <p>Three states. Almost never a dashboard.</p>
+      </div>
+      <div class="principles">
+        <div class="principle">
+          <b>1 · Drift</b>
+          <p>Agents talk while you code. You hear them. Footlights pulse. No window. No glance required.</p>
+        </div>
+        <div class="principle">
+          <b>2 · Glance</b>
+          <p>A caption floats above the strip for the line being spoken. Enough to credit the voice without leaving the IDE.</p>
+        </div>
+        <div class="principle">
+          <b>3 · Intrude</b>
+          <p>Someone needs a decision or has finished and waits. Their slot goes HOLD. Stage opens — or the phone fills with one question.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">
+        <h2>Tokens</h2>
+        <p>Tungsten on stage black. Characters own color; chrome does not.</p>
+      </div>
+      <div class="token-grid">
+        <div class="panel">
+          <h3>Palette</h3>
+          <div class="swatches">
+            <div class="swatch"><i style="background:var(--ink)"></i><span>ink</span></div>
+            <div class="swatch"><i style="background:var(--stage)"></i><span>stage</span></div>
+            <div class="swatch"><i style="background:var(--wing)"></i><span>wing</span></div>
+            <div class="swatch"><i style="background:var(--paper)"></i><span>paper</span></div>
+            <div class="swatch"><i style="background:var(--tungsten)"></i><span>tungsten</span></div>
+            <div class="swatch"><i style="background:var(--hold)"></i><span>hold</span></div>
+            <div class="swatch"><i style="background:var(--quiet)"></i><span>quiet</span></div>
+          </div>
+          <h3 style="margin-top:22px">Cast</h3>
+          <div class="cast-row">
+            <div class="avatar a-leo" title="Leonardo">L</div>
+            <div class="avatar a-raph" title="Raphael">R</div>
+            <div class="avatar a-don" title="Donatello">D</div>
+            <div class="avatar a-mikey" title="Michelangelo">M</div>
+            <div class="avatar a-casey" title="Casey">C</div>
+            <div class="avatar a-april" title="April">A</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Type</h3>
+          <div class="type-sample">
+            <div class="big">Donnie’s last line, printed like a script.</div>
+            <div class="ui">UI chrome · Avenir Next / system-ui · 13–15px</div>
+            <div class="cap">CAPTIONS · SF Mono · tracking wide · tungsten</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">
+        <h2>Surface 1 — Footlights</h2>
+        <p>Always visible. Never activates. Never steals focus.</p>
+      </div>
+      <div class="mock-wrap">
+        <div class="mock-block">
+          <div class="mock-meta">
+            <h3>Riding under the IDE</h3>
+            <span class="tag">Mac · NSPanel / Accessory</span>
+          </div>
+          <p class="mock-note">
+            A ~52px strip pinned to the bottom of the display. Six character slots.
+            Speaking = tungsten crown + lip-sync mouth frames. Waiting = HOLD blink.
+            Quiet = dark initials only. The strip never becomes a key window.
+          </p>
+          <div class="desktop-frame">
+            <div class="desktop-menubar">
+              <span>Code · agent-usage-bar</span>
+              <span>Sat 2:04 AM</span>
+            </div>
+            <div class="ide-fake">
+              <div class="ide-gutter">
+                src/<br />
+                &nbsp;&nbsp;audio/<br />
+                &nbsp;&nbsp;panel/<br />
+                &nbsp;&nbsp;hooks/
+              </div>
+              <div class="ide-code">
+                function claimGrant(id) {<br />
+                &nbsp;&nbsp;if (muted) return;<br />
+                &nbsp;&nbsp;markers.lock(id);<br />
+                &nbsp;&nbsp;return streamTTS(text);<br />
+                }
+              </div>
+              <div class="footlights">
+                <div class="fl-slot">
+                  <div class="avatar sm a-leo">L</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">Leo</div>
+                </div>
+                <div class="fl-slot speaking">
+                  <div class="fl-caption"><b>Donnie</b> Fixed the race — claim markers stay billing authority.</div>
+                  <div class="avatar sm a-don">D</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">Donnie</div>
+                </div>
+                <div class="fl-slot hold">
+                  <div class="avatar sm a-raph">R</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">Raph</div>
+                </div>
+                <div class="fl-slot">
+                  <div class="avatar sm a-mikey">M</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">Mikey</div>
+                </div>
+                <div class="fl-slot">
+                  <div class="avatar sm a-casey">C</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">Casey</div>
+                </div>
+                <div class="fl-slot">
+                  <div class="avatar sm a-april">A</div>
+                  <div class="fl-mouth"></div>
+                  <div class="fl-name">April</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fl-variants">
+          <div class="fl-solo">
+            <div class="label">All quiet — periphery only</div>
+            <div class="footlights static">
+              <div class="fl-slot"><div class="avatar sm a-leo">L</div><div class="fl-name">Leo</div></div>
+              <div class="fl-slot"><div class="avatar sm a-raph">R</div><div class="fl-name">Raph</div></div>
+              <div class="fl-slot"><div class="avatar sm a-don">D</div><div class="fl-name">Donnie</div></div>
+              <div class="fl-slot"><div class="avatar sm a-mikey">M</div><div class="fl-name">Mikey</div></div>
+            </div>
+          </div>
+          <div class="fl-solo">
+            <div class="label">Voice plan — heard, then executed as steps</div>
+            <div class="plan-bar">
+              <span class="heard">“Pause the room, then replay Donnie’s last.”</span>
+              <span class="step done">1 pause</span>
+              <span class="step active">2 replay Donnie</span>
+              <span class="step todo">3 done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">
+        <h2>Surface 2 — The Stage</h2>
+        <p>Main Mac window. Opens on HOLD, or when you choose to look.</p>
+      </div>
+      <div class="mock-wrap">
+        <div class="mock-block">
+          <div class="mock-meta">
+            <h3>Call sheet, not a card grid</h3>
+            <span class="tag">Mac · Regular window</span>
+          </div>
+          <p class="mock-note">
+            Left: whoever is on-air, oversized, with lip-sync and a rolling paper script
+            of recent lines. Right: the wings — a cue stack of who’s waiting, working, or
+            done. Talk-back is one big press targeting the selected cue, not a chat box.
+          </p>
+          <div class="stage-window">
+            <div class="stage-titlebar">
+              <div class="dots"><i></i><i></i><i></i></div>
+              <span>Room · Stage</span>
+            </div>
+            <div class="stage-body">
+              <div class="proscenium">
+                <div class="now-label">Now speaking</div>
+                <div class="now-cast">
+                  <div class="lipsync-ring"><div class="avatar lg a-don">D</div></div>
+                  <div class="now-copy">
+                    <h4>Donatello</h4>
+                    <p>“Race is gone. Claim markers stay the billing authority — panel belt is just the double-dispatch guard.”</p>
+                  </div>
+                </div>
+                <div class="script-roll">
+                  <div class="line"><span class="who leo">Leo</span> Alright team, ship the panel strip first — keep the stage for decisions only.</div>
+                  <div class="line"><span class="who mikey">Mikey</span> I can stub the HOLD blink in an hour, easy.</div>
+                  <div class="line"><span class="who don">Donnie</span> Fixed the race — claim markers stay billing authority.</div>
+                  <div class="line"><span class="who raph">Raph</span> Need a call: kill the old dock realm or keep it for a week?</div>
+                </div>
+              </div>
+              <aside class="wings-rail">
+                <h4>In the wings</h4>
+                <div class="cue urgent">
+                  <div class="avatar sm a-raph">R</div>
+                  <div class="meta">
+                    <strong>Raphael</strong>
+                    <span>Kill dock realm or keep a week?</span>
+                  </div>
+                  <div class="state">Hold</div>
+                </div>
+                <div class="cue">
+                  <div class="avatar sm a-mikey">M</div>
+                  <div class="meta">
+                    <strong>Michelangelo</strong>
+                    <span>Stubbing HOLD blink…</span>
+                  </div>
+                  <div class="state">Working</div>
+                </div>
+                <div class="cue">
+                  <div class="avatar sm a-leo">L</div>
+                  <div class="meta">
+                    <strong>Leonardo</strong>
+                    <span>Shipped strip guidance</span>
+                  </div>
+                  <div class="state">Done</div>
+                </div>
+                <div class="cue">
+                  <div class="avatar sm a-april">A</div>
+                  <div class="meta">
+                    <strong>April</strong>
+                    <span>Quiet</span>
+                  </div>
+                  <div class="state">Idle</div>
+                </div>
+                <div class="talkback">
+                  <button class="ptt">Hold to talk · Raph
+                    <small>Selected cue gets the reply</small>
+                  </button>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+
+        <div class="mock-block">
+          <div class="mock-meta">
+            <h3>Decision intrusion</h3>
+            <span class="tag">When HOLD escalates</span>
+          </div>
+          <p class="mock-note">
+            If you ignore the blink long enough, the Stage doesn’t show a dashboard —
+            it becomes a single question with thumb-sized answers. Everything else dims.
+          </p>
+          <div class="decision">
+            <div class="avatar md a-raph">R</div>
+            <div class="now-label">Raphael is waiting</div>
+            <p class="ask">Kill the old dock realm this week, or keep it as a fallback for seven days?</p>
+            <div class="choices">
+              <button class="primary">Kill it — Stage only</button>
+              <button>Keep seven days</button>
+              <button>Ask me later</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">
+        <h2>Surface 3 — Pocket Stage</h2>
+        <p>Phone is not a tiny desktop. It’s one character, one thumb.</p>
+      </div>
+      <div class="mock-wrap">
+        <div class="mock-block">
+          <div class="mock-meta">
+            <h3>Couch listening · reply · decide</h3>
+            <span class="tag">iPhone · one-handed</span>
+          </div>
+          <p class="mock-note">
+            Vertical spotlight: the speaking (or waiting) character fills the glass.
+            Others are a tiny chorus you can swipe. Bottom third is sacred thumb land —
+            push-to-talk, or yes/no when a decision lands. No card grid. No scrolling hunt.
+          </p>
+          <div class="phones">
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="phone-screen">
+                <div class="phone-top"><span>Room</span><span>Live · Mac</span></div>
+                <div class="phone-stage">
+                  <div class="phone-sub">On air</div>
+                  <div class="lipsync-ring"><div class="avatar xl a-don">D</div></div>
+                  <p class="phone-line">“Claim markers stay the billing authority.”</p>
+                  <div class="chorus">
+                    <div class="avatar sm a-leo">L</div>
+                    <div class="avatar sm a-raph">R</div>
+                    <div class="avatar sm a-don on">D</div>
+                    <div class="avatar sm a-mikey">M</div>
+                  </div>
+                </div>
+                <div class="thumb-zone">
+                  <div class="swipe-hint">Swipe for cast · hold below</div>
+                  <button class="ptt-phone">Hold to talk</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="phone-screen">
+                <div class="phone-top"><span>Room</span><span>Needs you</span></div>
+                <div class="phone-stage hold-bg">
+                  <div class="phone-sub">Hold</div>
+                  <div class="avatar xl a-raph">R</div>
+                  <p class="phone-line">Kill the dock realm, or keep it a week?</p>
+                </div>
+                <div class="thumb-zone">
+                  <div class="decision-phone">
+                    <button class="yes">Kill it</button>
+                    <button>Keep a week</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="phone-screen">
+                <div class="phone-top"><span>Room</span><span>Command</span></div>
+                <div class="phone-stage raph-bg">
+                  <div class="phone-sub">Listening</div>
+                  <div class="avatar xl a-mikey">M</div>
+                  <p class="phone-line">“Pause everyone except Donnie.”</p>
+                  <div class="plan-bar" style="margin-top:8px;text-align:left;width:100%">
+                    <span class="step active">mute room</span>
+                    <span class="step todo">keep Donnie</span>
+                  </div>
+                </div>
+                <div class="thumb-zone">
+                  <button class="ptt-phone ghost">Release to run plan</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">
+        <h2>Rationale</h2>
+        <p>Why this, not another wall of persona cards.</p>
+      </div>
+      <div class="rationale">
+        <ol>
+          <li><strong>Audio-first means the UI should feel guilty taking space.</strong> Footlights are a confession that most of the day you shouldn’t look. Cards pretend equal visual weight for every agent; sound doesn’t work that way.</li>
+          <li><strong>HOLD is the product’s only “notification.”</strong> Working and speaking stay peripheral. Waiting for a human is the one time the room is allowed to be rude — blink, then intrude with one question.</li>
+          <li><strong>The Stage is a call sheet because sequences matter more than status.</strong> You care who just spoke, who’s blocked on you, and what to say next — not a grid of identical tiles.</li>
+          <li><strong>Phone = spotlight, not dashboard.</strong> One-handed use collapses to one face, one line, one thumb action. Couch time is listening and deciding, not managing a roster.</li>
+          <li><strong>Voice commands become visible plans.</strong> “Pause, then replay Donnie” isn’t a chat message — it’s a three-step strip you can cancel mid-flight. Sight serves the ear’s intentions.</li>
+        </ol>
+        <p class="out">
+          Build the margin, not the room. Let the turtles earn the center of the screen.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      Footlights · open concept pass · self-contained · no external assets
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Room of Devs — "The Booth" concept board</title>
+<style>
+/* ============================================================
+   THE BOOTH — Room of Devs redesign concept
+   Design language: a broadcast/live-room console.
+   ============================================================ */
+
+:root{
+  /* surfaces — dark first, near-neutral with a cool cast */
+  --bg:        #0B0D10;
+  --surface-1: #12151A;
+  --surface-2: #171B21;
+  --surface-3: #1E232B;
+  --line:      #262C35;
+  --line-soft: #1C222A;
+
+  /* text */
+  --fg:        #E8ECF2;
+  --fg-2:      #9AA6B4;
+  --fg-3:      #6A7686;
+
+  /* semantic STATE colors — the tally system. Never used as decoration. */
+  --st-idle:    #64748B;
+  --st-working: #22D3EE;
+  --st-onair:   #F2F6FF;   /* on air = light, not hue. See rationale. */
+  --st-hand:    #FFB020;
+  --st-asking:  #FF5FA2;
+  --st-stale:   #46505E;
+  --st-muted:   #5A6472;
+
+  /* persona ACCENTS — identity only. Ring, edge bar, nameplate. */
+  --p-leo:    #3B82F6;
+  --p-don:    #A855F7;
+  --p-mikey:  #FB923C;
+  --p-raph:   #EF4444;
+  --p-splint: #2DD4BF;
+  --p-april:  #A3E635;
+
+  /* radii — hardware-ish. Panels square-ish, lamps round. */
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 12% -10%, #141A24 0%, transparent 60%),
+    radial-gradient(900px 500px at 92% 4%, #16121E 0%, transparent 55%),
+    var(--bg);
+  color:var(--fg);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 100px}
+
+/* ---------- board chrome ---------- */
+.board-head{padding:64px 0 20px;border-bottom:1px solid var(--line-soft)}
+.kicker{
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-3);display:flex;align-items:center;gap:10px;
+}
+.kicker .lamp{width:7px;height:7px;border-radius:var(--r-pill);background:var(--st-working);
+  box-shadow:0 0 10px var(--st-working);animation:breathe 2.6s ease-in-out infinite}
+h1{font-size:52px;line-height:1.03;letter-spacing:-.03em;margin:14px 0 0;font-weight:700}
+h1 .sub{display:block;font-size:20px;letter-spacing:.02em;color:var(--fg-2);font-weight:500;margin-top:12px}
+.thesis{max-width:760px;margin:26px 0 0;font-size:17px;color:var(--fg-2);line-height:1.65}
+.thesis strong{color:var(--fg);font-weight:600}
+
+section{padding:60px 0 0}
+h2{
+  font-size:13px;font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--fg-3);margin:0 0 6px;font-weight:600;
+}
+h2 .num{color:var(--st-working);margin-right:10px}
+.sec-title{font-size:26px;letter-spacing:-.02em;margin:0 0 8px;font-weight:650}
+.sec-note{color:var(--fg-2);max-width:720px;margin:0 0 26px;font-size:15px}
+.caption{font-family:var(--mono);font-size:11px;color:var(--fg-3);letter-spacing:.06em;
+  text-transform:uppercase;margin:10px 0 0}
+.caption b{color:var(--fg-2);font-weight:600}
+
+/* horizontal scroller so the page never scrolls sideways */
+.scroller{overflow-x:auto;overflow-y:hidden;padding-bottom:14px;margin:0 -20px;padding-left:20px;padding-right:20px}
+.scroller::-webkit-scrollbar{height:8px}
+.scroller::-webkit-scrollbar-thumb{background:var(--line);border-radius:var(--r-pill)}
+.row{display:flex;gap:24px;align-items:flex-start;width:max-content}
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+.tokgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+.tokcard{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.tokcard h3{margin:0 0 14px;font-size:11px;font-family:var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.sw{display:flex;align-items:center;gap:11px;padding:7px 0}
+.sw .chipc{width:26px;height:26px;border-radius:7px;flex:none;border:1px solid rgba(255,255,255,.10)}
+.sw .nm{font-size:13px;color:var(--fg);flex:1}
+.sw .hex{font-family:var(--mono);font-size:11px;color:var(--fg-3)}
+.lamprow{display:flex;align-items:center;gap:11px;padding:7px 0}
+.lamprow .l{width:9px;height:9px;border-radius:var(--r-pill);flex:none}
+.lamprow .nm{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;flex:1}
+.lamprow .hex{font-family:var(--mono);font-size:11px;color:var(--fg-3)}
+.typerow{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.typerow:last-child{border-bottom:0}
+.typerow .meta{font-family:var(--mono);font-size:10px;color:var(--fg-3);letter-spacing:.08em;white-space:nowrap}
+.stack-note{color:var(--fg-2);font-size:13.5px;line-height:1.6;margin:0}
+.stack-note code{font-family:var(--mono);font-size:12px;background:var(--surface-3);
+  padding:1px 5px;border-radius:4px;color:#C9D4E2}
+
+/* ============================================================
+   SHARED APP PRIMITIVES (used inside every mock)
+   ============================================================ */
+.frame{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);
+  overflow:hidden;flex:none;box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
+
+/* mac titlebar */
+.tb{height:30px;background:linear-gradient(180deg,#1B2028,#141920);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:0 11px;gap:8px}
+.tl{display:flex;gap:6px}
+.tl i{width:11px;height:11px;border-radius:50%;display:block}
+.tl i:nth-child(1){background:#FF5F57}.tl i:nth-child(2){background:#FEBC2E}.tl i:nth-child(3){background:#28C840}
+.tb .t{flex:1;text-align:center;font-size:11.5px;color:var(--fg-3);font-family:var(--mono);letter-spacing:.06em}
+
+/* lamps + state chips */
+.lamp{width:8px;height:8px;border-radius:var(--r-pill);flex:none;display:inline-block}
+.lamp.idle{background:var(--st-idle)}
+.lamp.working{background:var(--st-working);box-shadow:0 0 9px var(--st-working);animation:breathe 1.7s ease-in-out infinite}
+.lamp.onair{background:var(--st-onair);box-shadow:0 0 12px rgba(242,246,255,.85)}
+.lamp.hand{background:var(--st-hand);box-shadow:0 0 9px var(--st-hand)}
+.lamp.asking{background:var(--st-asking);box-shadow:0 0 9px var(--st-asking);animation:breathe 1.1s ease-in-out infinite}
+.lamp.stale{background:transparent;border:1.5px dashed var(--st-stale)}
+.lamp.muted{background:var(--st-muted)}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.35}}
+
+.state{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:3px 8px 3px 7px;border-radius:var(--r-sm);
+  background:var(--surface-3);color:var(--fg-2);border:1px solid var(--line)}
+.state.onair{background:#EEF3FF;color:#0B0D10;border-color:#EEF3FF;font-weight:700}
+.state.hand{color:var(--st-hand);border-color:rgba(255,176,32,.34);background:rgba(255,176,32,.10)}
+.state.working{color:var(--st-working);border-color:rgba(34,211,238,.30);background:rgba(34,211,238,.08)}
+.state.asking{color:var(--st-asking);border-color:rgba(255,95,162,.34);background:rgba(255,95,162,.10)}
+.state.stale{color:var(--st-stale);border-style:dashed}
+.state.muted{color:var(--st-muted)}
+
+/* small pill chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:2.5px 7px}
+.chip.warn{color:var(--st-hand);border-color:rgba(255,176,32,.3)}
+.chip.live{color:var(--st-working);border-color:rgba(34,211,238,.35)}
+.chip.phone{color:#9AA6B4}
+
+/* avatars — always a plain img-shaped box (frame-swappable) */
+.av{border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--mono);
+  font-weight:700;letter-spacing:.02em;color:#0B0D10;position:relative;overflow:visible}
+.av .ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:.55}
+.av.leo{background:linear-gradient(160deg,#6BA5FF,#2563EB);color:var(--p-leo)}
+.av.don{background:linear-gradient(160deg,#C89BFF,#8B31E8);color:var(--p-don)}
+.av.mikey{background:linear-gradient(160deg,#FFC07A,#F97316);color:var(--p-mikey)}
+.av.raph{background:linear-gradient(160deg,#FF8A85,#DC2626);color:var(--p-raph)}
+.av.splint{background:linear-gradient(160deg,#7BEFDF,#0D9488);color:var(--p-splint)}
+.av.april{background:linear-gradient(160deg,#CBF07B,#84CC16);color:var(--p-april)}
+.av .ini{color:#0B0D10;mix-blend-mode:normal}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:26px;padding:0 10px;
+  border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface-2);color:var(--fg-2);
+  font-size:11.5px;font-family:var(--sans);cursor:default;white-space:nowrap}
+.btn.icon{width:26px;padding:0;font-family:var(--mono);font-size:11px}
+.btn.ghost{background:transparent}
+.btn.primary{background:#EEF3FF;color:#0B0D10;border-color:#EEF3FF;font-weight:600}
+.btn.danger{color:#FF8A85;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.07)}
+.btn.tall{height:32px;padding:0 14px;font-size:13px}
+.tgroup{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface-2)}
+.tgroup b{padding:0 10px;height:26px;display:grid;place-items:center;font-size:11px;font-weight:500;
+  color:var(--fg-3);border-right:1px solid var(--line);font-family:var(--mono);letter-spacing:.05em}
+.tgroup b:last-child{border-right:0}
+.tgroup b.on{background:var(--surface-3);color:var(--fg);font-weight:600}
+
+/* meters / waveform */
+.meter{display:flex;align-items:flex-end;gap:2px;height:18px}
+.meter i{width:3px;background:currentColor;border-radius:1px;display:block;opacity:.9}
+.meter.sm{height:12px}
+.meter.sm i{width:2.5px}
+
+/* ============================================================
+   1 · DESKTOP PANEL
+   ============================================================ */
+.panel{width:900px;height:640px;display:flex;flex-direction:column;background:var(--bg)}
+
+/* room bar */
+.roombar{height:46px;flex:none;display:flex;align-items:center;gap:12px;padding:0 14px;
+  border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface-2),var(--surface-1))}
+.roombar .brand{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-3)}
+.roombar .spacer{flex:1}
+.conn{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
+.roombar.held{background:
+  repeating-linear-gradient(135deg,rgba(255,176,32,.10) 0 10px,transparent 10px 20px),
+  linear-gradient(180deg,var(--surface-2),var(--surface-1));border-bottom-color:rgba(255,176,32,.35)}
+
+.cols{flex:1;display:flex;min-height:0}
+.channels{flex:1;min-width:0;overflow:hidden;padding:10px;display:flex;flex-direction:column;gap:8px;
+  background:linear-gradient(180deg,#0D1015,#0B0D10)}
+.program{width:296px;flex:none;border-left:1px solid var(--line);background:var(--surface-1);
+  display:flex;flex-direction:column}
+
+/* channel strip */
+.strip{position:relative;display:flex;gap:12px;padding:11px 12px 11px 14px;border:1px solid var(--line);
+  border-radius:var(--r-md);background:var(--surface-1);align-items:flex-start}
+.strip::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;
+  background:currentColor;opacity:.95}
+.strip.c-leo{color:var(--p-leo)}.strip.c-don{color:var(--p-don)}.strip.c-mikey{color:var(--p-mikey)}
+.strip.c-raph{color:var(--p-raph)}.strip.c-splint{color:var(--p-splint)}.strip.c-april{color:var(--p-april)}
+.strip .body{flex:1;min-width:0}
+.strip .nameline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.strip .name{font-size:15px;font-weight:640;letter-spacing:-.01em;color:var(--fg)}
+.strip .real{font-family:var(--mono);font-size:10px;color:var(--fg-3);letter-spacing:.06em}
+.strip .metaline{font-family:var(--mono);font-size:10.5px;color:var(--fg-3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .chips{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.strip .acts{display:flex;gap:5px;align-items:center;flex:none;opacity:.55}
+.strip.hot .acts{opacity:1}
+.strip.stale{opacity:.55;border-style:dashed}
+.strip.muted-s .name{color:var(--fg-2)}
+
+/* ON AIR strip */
+.strip.onair{background:linear-gradient(180deg,#232A34,#191E26);border-color:#39424F;
+  box-shadow:0 0 0 1px rgba(242,246,255,.08), 0 12px 40px -18px rgba(150,180,255,.35)}
+.strip.onair .name{color:#FFF}
+.strip.onair::before{opacity:1;box-shadow:0 0 14px currentColor}
+.caption-live{margin-top:9px;font-size:13px;line-height:1.5;color:#DCE4EF}
+.caption-live .said{color:var(--fg-3)}
+.caption-live .now{color:#FFF;background:rgba(242,246,255,.12);border-radius:3px;
+  box-shadow:0 0 0 3px rgba(242,246,255,.12)}
+
+/* hand raised preview */
+.preview{margin-top:9px;border-left:2px solid var(--st-hand);background:rgba(255,176,32,.06);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;padding:7px 10px;font-size:12.5px;color:#D9CFBB;line-height:1.45}
+.preview .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--st-hand);display:block;margin-bottom:3px}
+.ask{margin-top:9px;border-left:2px solid var(--st-asking);background:rgba(255,95,162,.06);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;padding:7px 10px;font-size:12.5px;color:#E9CBD8}
+.ask .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--st-asking);display:block;margin-bottom:3px}
+.ask .opts{display:flex;gap:6px;margin-top:7px}
+
+/* talkback (PTT) */
+.talkback{margin-top:9px;height:26px;border:1px dashed var(--line);border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+.strip.ptt{border-color:#EEF3FF;box-shadow:0 0 0 2px rgba(238,243,255,.55),0 0 40px -8px rgba(238,243,255,.35)}
+.talkback.live{border:1px solid #EEF3FF;background:#EEF3FF;color:#0B0D10;font-weight:700}
+
+/* program pane */
+.program .ph{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.program .pt{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3)}
+.program .pbody{flex:1;padding:14px;overflow:hidden}
+.program h4{margin:0 0 8px;font-size:14px;font-weight:640;letter-spacing:-.01em}
+.program p{margin:0 0 10px;font-size:12.5px;line-height:1.6;color:var(--fg-2)}
+.program ul{margin:0 0 10px;padding-left:16px;font-size:12.5px;line-height:1.6;color:var(--fg-2)}
+.program code{font-family:var(--mono);font-size:11px;background:var(--surface-3);padding:1px 4px;
+  border-radius:3px;color:#C9D4E2}
+.program .pfoot{border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:6px;align-items:center}
+
+/* ============================================================
+   2 · DOCK
+   ============================================================ */
+.dock{width:380px;border-radius:14px;background:rgba(17,20,26,.94);border:1px solid #2C333D;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.03) inset;overflow:hidden}
+.dock .grab{height:5px;background:linear-gradient(90deg,transparent,#2C333D,transparent);margin:6px auto 0;width:52px;border-radius:3px}
+.dock-body{padding:12px 13px 11px;display:flex;gap:11px}
+.bubble{flex:1;min-width:0}
+.bubble .hd{display:flex;align-items:center;gap:7px}
+.bubble .txt{margin-top:6px;font-size:12.5px;line-height:1.45;color:#D8E0EC}
+.bubble .txt .now{color:#FFF;background:rgba(242,246,255,.13);border-radius:3px;box-shadow:0 0 0 3px rgba(242,246,255,.13)}
+.dock-foot{display:flex;align-items:center;gap:6px;padding:0 11px 11px}
+.dock .pttbar{flex:1;height:28px;border-radius:var(--r-sm);border:1px dashed #39424F;display:flex;
+  align-items:center;justify-content:center;gap:7px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+.dock.collapsed{height:auto}
+.dock .slim{display:flex;align-items:center;gap:10px;padding:9px 12px}
+
+/* ============================================================
+   3-5 · PHONE
+   ============================================================ */
+.phone{width:390px;height:720px;border-radius:34px;border:1px solid #2A313B;background:var(--bg);
+  overflow:hidden;position:relative;box-shadow:0 30px 80px -30px #000}
+.notch{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  font-family:var(--mono);font-size:10.5px;color:var(--fg-3)}
+.pscreen{height:calc(100% - 30px);display:flex;flex-direction:column;position:relative}
+.phead{padding:8px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex:none}
+.phead .h{font-size:19px;font-weight:680;letter-spacing:-.02em}
+.pbody{flex:1;overflow:hidden;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.pfoot{flex:none;border-top:1px solid var(--line);background:rgba(14,17,21,.96);
+  backdrop-filter:blur(12px);padding:9px 12px 14px}
+
+/* phone card = same channel strip, denser */
+.pstrip{position:relative;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-1);
+  padding:11px 12px 11px 14px;display:flex;gap:11px;align-items:flex-start}
+.pstrip::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:currentColor}
+.pstrip.c-leo{color:var(--p-leo)}.pstrip.c-don{color:var(--p-don)}.pstrip.c-mikey{color:var(--p-mikey)}
+.pstrip.c-raph{color:var(--p-raph)}.pstrip.c-splint{color:var(--p-splint)}
+.pstrip.onair{background:linear-gradient(180deg,#242B36,#191E26);border-color:#3A434F}
+.pstrip .body{flex:1;min-width:0}
+.pstrip .name{font-size:15.5px;font-weight:650;color:var(--fg)}
+.pstrip .metaline{font-family:var(--mono);font-size:10px;color:var(--fg-3);margin-top:2px}
+
+/* thumb rail */
+.thumbrail{display:flex;align-items:center;gap:8px}
+.ptt-round{width:62px;height:62px;border-radius:50%;background:#EEF3FF;color:#0B0D10;display:grid;
+  place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;font-weight:700;flex:none;
+  box-shadow:0 0 0 6px rgba(238,243,255,.10),0 8px 26px -8px rgba(238,243,255,.5);text-align:center;line-height:1.2}
+.ptt-round.armed{background:#0B0D10;color:#EEF3FF;border:2px solid #EEF3FF}
+
+/* mini player */
+.mini{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:var(--r-md);background:linear-gradient(180deg,#20262F,#171B21);margin-bottom:9px}
+.progress{height:2px;background:var(--line);border-radius:2px;margin-top:7px;overflow:hidden}
+.progress i{display:block;height:100%;background:#EEF3FF;width:46%}
+
+/* expanded player sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface-1);border-top:1px solid var(--line);
+  border-radius:20px 20px 0 0;box-shadow:0 -30px 60px -20px rgba(0,0,0,.9)}
+.grabber{width:38px;height:4px;border-radius:3px;background:#39424F;margin:9px auto 0}
+.karaoke{font-size:16px;line-height:1.62;letter-spacing:-.01em}
+.karaoke .done{color:#5D6879}
+.karaoke .now{color:#FFF;background:rgba(242,246,255,.14);border-radius:4px;box-shadow:0 0 0 4px rgba(242,246,255,.14)}
+.karaoke .next{color:#8A94A3}
+
+/* chat */
+.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.5}
+.msg.them{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:5px;color:#DCE3EC}
+.msg.me{background:#EEF3FF;color:#0B0D10;margin-left:auto;border-bottom-right-radius:5px;font-weight:500}
+.msgrow{display:flex;gap:8px;align-items:flex-end}
+.msgmeta{font-family:var(--mono);font-size:9.5px;color:var(--fg-3);letter-spacing:.06em;margin-top:4px}
+.composer{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--surface-2);
+  border-radius:var(--r-pill);padding:6px 6px 6px 14px}
+.composer .ph{flex:1;color:var(--fg-3);font-size:13.5px}
+
+/* call mode */
+.call{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:22px 18px;background:radial-gradient(420px 320px at 50% 18%,rgba(168,85,247,.16),transparent 70%)}
+.call .cap{margin-top:18px;text-align:center;font-size:15.5px;line-height:1.55;color:#D9E1EC;max-width:300px}
+.call .cap .now{color:#FFF;background:rgba(242,246,255,.13);border-radius:4px;box-shadow:0 0 0 4px rgba(242,246,255,.13)}
+.callbtns{display:flex;gap:16px;justify-content:center;padding:0 0 6px}
+.cbtn{width:58px;height:58px;border-radius:50%;background:var(--surface-3);border:1px solid var(--line);
+  display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--fg-2);
+  text-align:center;line-height:1.15}
+.cbtn.end{background:#DC2626;border-color:#DC2626;color:#fff;font-weight:700}
+
+/* interpreter plan */
+.plan{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-1);overflow:hidden}
+.plan .ph2{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg,#1B2029,#161A21)}
+.plan .heard{padding:10px 12px;font-size:13.5px;color:#DDE4EE;line-height:1.5;border-bottom:1px solid var(--line-soft)}
+.plan .heard q{color:#FFF;font-style:italic}
+.steps{padding:6px 12px 10px}
+.step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.step:last-child{border-bottom:0}
+.step .dot{width:16px;height:16px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:9px;font-family:var(--mono);margin-top:1px;border:1px solid var(--line);color:var(--fg-3);background:var(--surface-2)}
+.step .dot.ok{background:rgba(34,211,238,.12);border-color:rgba(34,211,238,.5);color:var(--st-working)}
+.step .dot.run{background:#EEF3FF;border-color:#EEF3FF;color:#0B0D10;font-weight:700}
+.step .dot.skip{border-style:dashed}
+.step .t{font-size:13px;color:var(--fg);line-height:1.4}
+.step .o{font-family:var(--mono);font-size:10.5px;color:var(--fg-3);margin-top:3px;line-height:1.45}
+.step .o.ok{color:var(--st-working)}
+
+/* picker */
+.picker{width:720px;height:520px;display:flex;flex-direction:column;background:var(--bg)}
+.pk-body{flex:1;display:flex;min-height:0}
+.pk-left{width:196px;flex:none;border-right:1px solid var(--line);background:var(--surface-1);padding:12px}
+.pk-main{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.field{display:flex;flex-direction:column;gap:6px}
+.field .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+.input{height:32px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);
+  display:flex;align-items:center;padding:0 11px;font-size:13px;color:var(--fg);gap:8px}
+.input .mut{color:var(--fg-3);font-family:var(--mono);font-size:11px}
+.personapick{display:flex;gap:8px}
+.pp{flex:1;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-1);padding:10px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:7px}
+.pp.sel{border-color:currentColor;box-shadow:0 0 0 1px currentColor inset}
+.pp .n{font-size:11.5px;color:var(--fg-2)}
+.pp.sel .n{color:var(--fg);font-weight:600}
+.confirm{border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;
+  background:linear-gradient(180deg,var(--surface-1),var(--surface-2))}
+.confirm .sum{flex:1;font-family:var(--mono);font-size:11.5px;color:var(--fg-2);letter-spacing:.03em}
+.confirm .sum b{color:var(--fg)}
+
+/* toast */
+.toast{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:rgba(23,27,33,.97);
+  border-radius:var(--r-md);padding:9px 12px;font-size:12.5px;color:var(--fg-2);
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.9)}
+.toast b{color:var(--fg);font-weight:600}
+
+/* ============================================================
+   RATIONALE
+   ============================================================ */
+.rat{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px;margin-bottom:34px}
+.rcard{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.rcard h3{margin:0 0 9px;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.rcard p{margin:0;color:var(--fg-2);font-size:13.5px;line-height:1.65}
+.rcard p + p{margin-top:9px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+td:first-child{color:var(--fg);font-weight:550;width:31%}
+td:nth-child(2){font-family:var(--mono);font-size:11.5px;color:#B9C6D6;width:34%}
+td:last-child{color:var(--fg-2)}
+.tablewrap{border:1px solid var(--line);border-radius:var(--r-lg);overflow-x:auto;background:var(--surface-1)}
+.tablewrap table{min-width:640px}
+.cutadd{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px;margin-top:24px}
+.cutadd ul{margin:8px 0 0;padding-left:18px;color:var(--fg-2);font-size:13.5px;line-height:1.7}
+.cutadd li b{color:var(--fg);font-weight:600}
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line-soft);color:var(--fg-3);
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+
+@media (max-width:640px){
+  h1{font-size:34px}
+  .board-head{padding:40px 0 16px}
+  .thesis{font-size:15.5px}
+  .sec-title{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============================ HEAD / THESIS ============================ -->
+<header class="board-head">
+  <div class="kicker"><span class="lamp"></span> Room of Devs · redesign concept · dark-first</div>
+  <h1>The Booth
+    <span class="sub">Your agents aren't cards in a dashboard. They're channels on a live board — and exactly one of them is on air.</span>
+  </h1>
+  <p class="thesis">
+    <strong>Thesis.</strong> Every screen in this product answers one question first: <em>who is talking right now, and what did they just say?</em>
+    So the room is built like a broadcast console — horizontal <strong>channel strips</strong> instead of a grid of equal tiles, a
+    <strong>tally system</strong> where state is a lamp plus a word (never color alone), and a single <strong>ON AIR</strong> treatment that wins by
+    <em>light</em>, not by hue, so it can never collide with Raph's red or Donnie's purple. Personas own identity — ring, edge bar, voice —
+    and nothing else; semantics own everything that has to be read across a wall at a glance. And the mic is a <strong>talkback bar</strong>:
+    the same hold-to-talk affordance on every surface, always the widest target on the card.
+  </p>
+</header>
+
+<!-- ============================ TOKENS ============================ -->
+<section>
+  <h2><span class="num">01</span> Tokens</h2>
+  <div class="sec-title">Two color systems that never touch</div>
+  <p class="sec-note">Persona accent lives on the avatar ring and the 3px left edge of a strip. Semantic state lives in lamps, chips and surface luminance. If you deleted every persona color the room would still be perfectly readable — that's the test.</p>
+
+  <div class="tokgrid">
+    <div class="tokcard">
+      <h3>Persona accent — identity only</h3>
+      <div class="sw"><span class="chipc" style="background:#3B82F6"></span><span class="nm">Leonardo · leader</span><span class="hex">#3B82F6</span></div>
+      <div class="sw"><span class="chipc" style="background:#A855F7"></span><span class="nm">Donatello · engineer</span><span class="hex">#A855F7</span></div>
+      <div class="sw"><span class="chipc" style="background:#FB923C"></span><span class="nm">Michelangelo · wildcard</span><span class="hex">#FB923C</span></div>
+      <div class="sw"><span class="chipc" style="background:#EF4444"></span><span class="nm">Raphael · hothead</span><span class="hex">#EF4444</span></div>
+      <div class="sw"><span class="chipc" style="background:#2DD4BF"></span><span class="nm">Splinter · guest</span><span class="hex">#2DD4BF</span></div>
+      <div class="sw"><span class="chipc" style="background:#A3E635"></span><span class="nm">April · guest</span><span class="hex">#A3E635</span></div>
+    </div>
+
+    <div class="tokcard">
+      <h3>Tally — semantic state</h3>
+      <div class="lamprow"><span class="l" style="background:#64748B"></span><span class="nm" style="color:#64748B">idle</span><span class="hex">#64748B</span></div>
+      <div class="lamprow"><span class="l" style="background:#22D3EE;box-shadow:0 0 9px #22D3EE"></span><span class="nm" style="color:#22D3EE">working</span><span class="hex">#22D3EE</span></div>
+      <div class="lamprow"><span class="l" style="background:#F2F6FF;box-shadow:0 0 12px rgba(242,246,255,.9)"></span><span class="nm" style="color:#F2F6FF">on air</span><span class="hex">#F2F6FF</span></div>
+      <div class="lamprow"><span class="l" style="background:#FFB020;box-shadow:0 0 9px #FFB020"></span><span class="nm" style="color:#FFB020">hand up</span><span class="hex">#FFB020</span></div>
+      <div class="lamprow"><span class="l" style="background:#FF5FA2;box-shadow:0 0 9px #FF5FA2"></span><span class="nm" style="color:#FF5FA2">asking</span><span class="hex">#FF5FA2</span></div>
+      <div class="lamprow"><span class="l" style="border:1.5px dashed #46505E"></span><span class="nm" style="color:#46505E">stale</span><span class="hex">#46505E</span></div>
+      <div class="lamprow"><span class="l" style="background:#5A6472"></span><span class="nm" style="color:#5A6472">muted</span><span class="hex">#5A6472</span></div>
+      <p class="stack-note" style="margin-top:12px">ON AIR is deliberately <em>achromatic</em>. It's the brightest thing on screen and it's the only element allowed to glow white — so it stays legible even when the persona is Raph.</p>
+    </div>
+
+    <div class="tokcard">
+      <h3>Surfaces &amp; line</h3>
+      <div class="sw"><span class="chipc" style="background:#0B0D10"></span><span class="nm">bg / room floor</span><span class="hex">#0B0D10</span></div>
+      <div class="sw"><span class="chipc" style="background:#12151A"></span><span class="nm">surface-1 / strip</span><span class="hex">#12151A</span></div>
+      <div class="sw"><span class="chipc" style="background:#171B21"></span><span class="nm">surface-2 / control</span><span class="hex">#171B21</span></div>
+      <div class="sw"><span class="chipc" style="background:#1E232B"></span><span class="nm">surface-3 / raised</span><span class="hex">#1E232B</span></div>
+      <div class="sw"><span class="chipc" style="background:#262C35"></span><span class="nm">line</span><span class="hex">#262C35</span></div>
+      <div class="sw"><span class="chipc" style="background:#E8ECF2"></span><span class="nm">fg</span><span class="hex">#E8ECF2</span></div>
+      <div class="sw"><span class="chipc" style="background:#9AA6B4"></span><span class="nm">fg-2 / summary body</span><span class="hex">#9AA6B4</span></div>
+      <div class="sw"><span class="chipc" style="background:#6A7686"></span><span class="nm">fg-3 / mono meta</span><span class="hex">#6A7686</span></div>
+    </div>
+
+    <div class="tokcard">
+      <h3>Type scale</h3>
+      <div class="typerow"><span style="font-size:26px;font-weight:650;letter-spacing:-.02em">Room of Devs</span><span class="meta">26 / 650 / -2%</span></div>
+      <div class="typerow"><span style="font-size:19px;font-weight:680;letter-spacing:-.02em">Donatello</span><span class="meta">19 / 680 · phone title</span></div>
+      <div class="typerow"><span style="font-size:15px;font-weight:640">Michelangelo</span><span class="meta">15 / 640 · strip name</span></div>
+      <div class="typerow"><span style="font-size:16px">Karaoke transcript line</span><span class="meta">16 / 400 · 1.62</span></div>
+      <div class="typerow"><span style="font-size:13px">Summary body &amp; bubbles</span><span class="meta">13 / 400 · 1.55</span></div>
+      <div class="typerow"><span class="meta" style="font-size:10.5px;color:#9AA6B4">sonnet · 4m12s · jellyfin-streamline</span><span class="meta">10.5 mono · meta</span></div>
+      <div class="typerow"><span class="state working"><span class="lamp working"></span>working</span><span class="meta">9.5 mono · .14em caps</span></div>
+      <p class="stack-note" style="margin-top:12px">System sans for anything a human wrote or an agent said. <code>ui-monospace</code> for anything the machine knows: state, timers, model, path, counts. That split alone tells you what's speech and what's telemetry.</p>
+    </div>
+
+    <div class="tokcard">
+      <h3>Spacing &amp; radius</h3>
+      <p class="stack-note">4px base. Strip padding <code>11/12</code>, gaps of <code>8</code> between strips, <code>14/16</code> for pane padding, <code>22</code> for phone sheet breathing room. Nothing is centered that could be left-aligned.</p>
+      <p class="stack-note" style="margin-top:10px">Radius is <em>equipment-grade</em>: <code>5px</code> on controls, <code>8px</code> on strips, <code>12px</code> on panes, <code>20px</code> only where iOS demands it (sheets), <code>999px</code> reserved for two things — lamps and the round talkback key. Rounder = more physical = touch it.</p>
+      <p class="stack-note" style="margin-top:10px">Motion budget: lamps breathe (1.7s), the on-air meter animates, nothing else moves. The avatar's 70ms frame swap is the only fast thing on screen and it must never compete.</p>
+    </div>
+
+    <div class="tokcard">
+      <h3>The avatar contract</h3>
+      <p class="stack-note">Every avatar is a bare square <code>&lt;img&gt;</code> in a round mask with a 2px persona ring drawn by the <em>parent</em>. No React state, no CSS transitions, no filters on the image itself — the ring, glow, and lamp all live on sibling elements so the 70ms frame swap stays a single <code>img.src</code> write outside the render tree.</p>
+      <p class="stack-note" style="margin-top:10px">Sizes: <code>44</code> panel strip, <code>40</code> phone strip, <code>52</code> dock, <code>132</code> call screen. Placeholders below are initials-in-a-disc.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 1 · PANEL ============================ -->
+<section>
+  <h2><span class="num">02</span> Surface 1 — Desktop panel · the Room</h2>
+  <div class="sec-title">900 × 640 · channel strips + program pane</div>
+  <p class="sec-note">A grid of square cards makes six agents look equally important. They aren't: one is speaking, one is waiting on you, four are noise. Strips give the wall a reading order, let the on-air channel physically expand, and leave room for the thing you actually want — the words.</p>
+
+  <div class="scroller"><div class="row">
+    <div>
+      <div class="frame panel">
+        <div class="tb"><div class="tl"><i></i><i></i><i></i></div><div class="t">room of devs — the den</div><div style="width:44px"></div></div>
+
+        <!-- room bar -->
+        <div class="roombar">
+          <span class="brand">the den</span>
+          <span class="conn"><span class="lamp working"></span>linked · 6 sessions</span>
+          <div class="spacer"></div>
+          <div class="tgroup"><b class="on">mac</b><b>phone</b></div>
+          <span class="btn"><span class="lamp working" style="margin-right:2px"></span>live mode</span>
+          <span class="btn">hold room</span>
+          <span class="chip warn">cue 2</span>
+          <span class="btn primary">+ session</span>
+        </div>
+
+        <div class="cols">
+          <!-- channel list -->
+          <div class="channels">
+
+            <!-- ON AIR -->
+            <div class="strip onair c-don hot">
+              <div class="av don" style="width:44px;height:44px;font-size:14px">
+                <span class="ring"></span><span class="ini">DO</span>
+              </div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">Donnie</span>
+                  <span class="real">donatello</span>
+                  <span class="state onair"><span class="lamp" style="background:#0B0D10;box-shadow:none"></span>on air</span>
+                  <span class="chip live">live</span>
+                  <span class="chip phone">on phone</span>
+                </div>
+                <div class="metaline">sonnet · room-of-devs · 0:14 / 0:38 · rewrote in-character</div>
+                <div class="caption-live">
+                  <span class="said">Backoff's in — three retries with jitter, then it </span><span class="now">stops pretending</span><span class="said"> the socket is coming back…</span>
+                </div>
+                <div class="talkback">◉ hold to talk to donnie</div>
+              </div>
+              <div class="acts" style="flex-direction:column;align-items:flex-end;gap:6px">
+                <div style="display:flex;gap:5px">
+                  <span class="btn icon">❙❙</span><span class="btn icon">■</span><span class="btn icon">↺</span><span class="btn icon">½</span>
+                </div>
+                <div class="meter" style="color:#EEF3FF">
+                  <i style="height:6px"></i><i style="height:13px"></i><i style="height:18px"></i><i style="height:9px"></i>
+                  <i style="height:16px"></i><i style="height:11px"></i><i style="height:5px"></i><i style="height:14px"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- HAND RAISED -->
+            <div class="strip c-mikey">
+              <div class="av mikey" style="width:44px;height:44px;font-size:14px"><span class="ring"></span><span class="ini">MI</span></div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">Mikey</span><span class="real">michelangelo</span>
+                  <span class="state hand"><span class="lamp hand"></span>hand up</span>
+                  <span class="chip warn">2 waiting</span>
+                  <span class="chip">1 superseded</span>
+                </div>
+                <div class="metaline">haiku · agent-usage-bar · idle 3m41s</div>
+                <div class="preview">
+                  <span class="lbl">queued · tap to hear</span>
+                  Dist is rebuilt, dude — 41 files, zero drama. Menu bar's showing the Cursor quota again.
+                </div>
+              </div>
+              <div class="acts">
+                <span class="btn icon">▶</span><span class="btn icon">i</span><span class="btn icon">&gt;_</span><span class="btn icon">⇄</span>
+              </div>
+            </div>
+
+            <!-- ASKING -->
+            <div class="strip c-raph">
+              <div class="av raph" style="width:44px;height:44px;font-size:14px"><span class="ring"></span><span class="ini">RA</span></div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">Raph</span><span class="real">raphael</span>
+                  <span class="state asking"><span class="lamp asking"></span>asking</span>
+                </div>
+                <div class="metaline">opus · media-server · blocked 0m22s</div>
+                <div class="ask">
+                  <span class="lbl">needs a call</span>
+                  Your migration drops <code style="font-family:var(--mono);font-size:11px">episodes</code> before the copy runs. Want me to fix it or are you feeling lucky?
+                  <div class="opts"><span class="btn primary" style="height:24px">Fix it</span><span class="btn" style="height:24px">Leave it</span><span class="btn ghost" style="height:24px">Reply…</span></div>
+                </div>
+              </div>
+              <div class="acts"><span class="btn icon">i</span><span class="btn icon">&gt;_</span></div>
+            </div>
+
+            <!-- WORKING -->
+            <div class="strip c-leo">
+              <div class="av leo" style="width:44px;height:44px;font-size:14px"><span class="ring"></span><span class="ini">LE</span></div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">Leo</span><span class="real">leonardo</span>
+                  <span class="state working"><span class="lamp working"></span>working</span>
+                  <span class="chip live">live</span>
+                </div>
+                <div class="metaline">opus · jellyfin-streamline · 6m08s · editing kids-theme.css</div>
+              </div>
+              <div class="acts" style="align-items:center">
+                <div class="meter sm" style="color:#22D3EE;margin-right:4px">
+                  <i style="height:4px"></i><i style="height:9px"></i><i style="height:6px"></i><i style="height:11px"></i><i style="height:5px"></i>
+                </div>
+                <span class="btn icon">i</span><span class="btn icon">&gt;_</span>
+              </div>
+            </div>
+
+            <!-- MUTED -->
+            <div class="strip c-splint muted-s">
+              <div class="av splint" style="width:44px;height:44px;font-size:14px;filter:saturate(.45)"><span class="ini">SP</span></div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">Splinter</span><span class="real">guest</span>
+                  <span class="state muted"><span class="lamp muted"></span>muted</span>
+                  <span class="chip">writes only</span>
+                </div>
+                <div class="metaline">composer · contextdb · 12m idle · voice off</div>
+              </div>
+              <div class="acts"><span class="btn icon">♪</span><span class="btn icon">&gt;_</span></div>
+            </div>
+
+            <!-- STALE -->
+            <div class="strip c-april stale">
+              <div class="av april" style="width:44px;height:44px;font-size:14px;filter:grayscale(.7)"><span class="ini">AP</span></div>
+              <div class="body">
+                <div class="nameline">
+                  <span class="name">April</span><span class="real">guest</span>
+                  <span class="state stale"><span class="lamp stale"></span>stale</span>
+                </div>
+                <div class="metaline">last seen 41m ago · tmux pane gone</div>
+              </div>
+              <div class="acts"><span class="btn icon">↺</span><span class="btn icon danger">✕</span></div>
+            </div>
+          </div>
+
+          <!-- program pane -->
+          <aside class="program">
+            <div class="ph">
+              <span class="lamp onair"></span><span class="pt">program · last spoken</span>
+              <div style="flex:1"></div><span class="btn icon ghost">⤢</span>
+            </div>
+            <div class="pbody">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <div class="av don" style="width:22px;height:22px;font-size:8px"><span class="ini">DO</span></div>
+                <span style="font-size:12px;color:var(--fg-2)">Donnie · 14s ago</span>
+              </div>
+              <h4>SSE reconnect, but polite</h4>
+              <p>Swapped the reconnect loop to exponential backoff with jitter — <code>3</code> retries, then it stops pretending the socket is coming back and surfaces a stale badge instead.</p>
+              <ul>
+                <li>Dropped the 200ms hot-retry that was hammering the daemon</li>
+                <li>Snapshot epoch check now runs <em>before</em> the rev gate</li>
+                <li><code>pnpm typecheck</code> clean across all four packages</li>
+              </ul>
+              <p>The one thing I'd want your eyes on: I kept the old grant-guard timing. Felt like your call, not mine.</p>
+            </div>
+            <div class="pfoot">
+              <span class="btn">↺ replay</span><span class="btn">½ slower</span>
+              <div style="flex:1"></div><span class="btn ghost icon">⧉</span>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <p class="caption"><b>Panel · main window.</b> Six states visible at once: on air · hand up · asking · working · muted · stale. The room bar carries connection, device routing, live mode, hold, and the cue count.</p>
+    </div>
+
+    <!-- held + PTT variants -->
+    <div style="width:420px">
+      <div class="frame" style="width:420px">
+        <div class="roombar held">
+          <span class="brand">the den</span>
+          <span class="conn" style="color:var(--st-hand)"><span class="lamp hand"></span>room held · 3 queued</span>
+          <div class="spacer"></div>
+          <span class="btn primary" style="height:24px">resume</span>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:9px;background:#0D1015">
+
+          <div class="strip ptt c-don hot" style="background:linear-gradient(180deg,#252C37,#1A1F27)">
+            <div class="av don" style="width:44px;height:44px;font-size:14px"><span class="ring"></span><span class="ini">DO</span></div>
+            <div class="body">
+              <div class="nameline">
+                <span class="name">Donnie</span>
+                <span class="state onair">◉ mic live</span>
+                <span class="chip live">listening</span>
+              </div>
+              <div class="metaline">release to send · 0:03 · everyone else on hold</div>
+              <div class="talkback live">◉ talking to donnie — release to send</div>
+            </div>
+            <div class="acts" style="align-items:center">
+              <div class="meter" style="color:#EEF3FF">
+                <i style="height:9px"></i><i style="height:17px"></i><i style="height:12px"></i><i style="height:18px"></i><i style="height:7px"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="strip c-leo" style="opacity:.45">
+            <div class="av leo" style="width:44px;height:44px;font-size:14px"><span class="ini">LE</span></div>
+            <div class="body">
+              <div class="nameline"><span class="name">Leo</span><span class="state">held</span></div>
+              <div class="metaline">audio suspended while mic is live</div>
+            </div>
+          </div>
+
+          <div class="strip c-mikey" style="border-style:dashed;border-color:#39424F">
+            <div class="av mikey" style="width:44px;height:44px;font-size:14px"><span class="ini">MI</span></div>
+            <div class="body">
+              <div class="nameline"><span class="name">Mikey</span><span class="state">hover</span></div>
+              <div class="metaline">grant affordance appears on hover / space-hold</div>
+              <div class="talkback">◉ hold to talk to mikey</div>
+            </div>
+          </div>
+
+          <div style="margin-top:4px">
+            <div class="toast"><span class="lamp hand"></span><span><b>Raph</b> needs a decision — migration order.</span><span class="btn" style="height:22px;margin-left:auto">Open</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Room held + active talkback.</b> Hazard stripes on the bar are the only place the room ever gets textured — you cannot miss that audio is stopped. While the mic is live everything else dims to 45% and the strip takes a white ring: one channel, one mic.</p>
+
+      <div class="frame" style="width:420px;margin-top:24px;padding:14px">
+        <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Persona swap · popover</div>
+        <div style="display:flex;gap:8px">
+          <div class="pp c-don" style="color:var(--p-don)"><div class="av don" style="width:34px;height:34px;font-size:10px"><span class="ini">DO</span></div><span class="n">Donnie</span></div>
+          <div class="pp sel" style="color:var(--p-raph)"><div class="av raph" style="width:34px;height:34px;font-size:10px"><span class="ring"></span><span class="ini">RA</span></div><span class="n">Raph</span></div>
+          <div class="pp" style="color:var(--p-leo)"><div class="av leo" style="width:34px;height:34px;font-size:10px"><span class="ini">LE</span></div><span class="n">Leo</span></div>
+          <div class="pp" style="color:var(--p-splint)"><div class="av splint" style="width:34px;height:34px;font-size:10px"><span class="ini">SP</span></div><span class="n">Splinter</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+          <span style="font-size:12.5px;color:var(--fg-2);flex:1">Re-cast this session as <b style="color:var(--fg)">Raph</b>. Voice changes on the next turn.</span>
+          <span class="btn primary">Swap</span>
+        </div>
+      </div>
+      <p class="caption"><b>Swap persona</b> — shadcn Popover + a radio-group of avatar tiles. Nickname is edited inline on the strip name, not in a modal.</p>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ 2 · DOCK ============================ -->
+<section>
+  <h2><span class="num">03</span> Surface 2 — Dock / spotlight</h2>
+  <div class="sec-title">380 × ~150 · the tally strip that floats over your editor</div>
+  <p class="sec-note">The dock is the product's true home screen — it's what you see 95% of the day. It is a caption, an avatar, four buttons and a talkback bar. No text inputs (non-activating window), no scroll, no state that requires reading twice.</p>
+
+  <div class="scroller"><div class="row">
+    <div>
+      <div class="dock" style="width:380px">
+        <div class="grab"></div>
+        <div class="dock-body">
+          <div style="position:relative;flex:none">
+            <div class="av don" style="width:52px;height:52px;font-size:15px"><span class="ring"></span><span class="ini">DO</span></div>
+            <span class="lamp onair" style="position:absolute;right:-1px;bottom:1px;width:11px;height:11px;border:2px solid #11141A"></span>
+          </div>
+          <div class="bubble">
+            <div class="hd">
+              <span style="font-size:14px;font-weight:650">Donnie</span>
+              <span class="state onair">on air</span>
+              <div style="flex:1"></div>
+              <span class="meter sm" style="color:#EEF3FF"><i style="height:4px"></i><i style="height:10px"></i><i style="height:7px"></i><i style="height:12px"></i><i style="height:5px"></i></span>
+            </div>
+            <div class="txt"><span style="color:#7C8798">Backoff's in — three retries with jitter, then it </span><span class="now">stops pretending</span> the socket is coming back.</div>
+          </div>
+        </div>
+        <div class="dock-foot">
+          <span class="btn icon">❙❙</span><span class="btn icon">■</span><span class="btn icon">↺</span><span class="btn icon">½</span>
+          <div class="pttbar">◉ hold ⌥space to talk</div>
+        </div>
+      </div>
+      <p class="caption"><b>Dock · speaking.</b> Caption tracks the audio word-by-word (same karaoke engine as the phone). Buttons are 26px hit targets with no focus ring — clicks are handled by the non-activating panel.</p>
+    </div>
+
+    <div>
+      <div class="dock" style="width:380px">
+        <div class="grab"></div>
+        <div class="slim">
+          <div class="av leo" style="width:26px;height:26px;font-size:9px"><span class="ini">LE</span></div>
+          <span style="font-size:13px;font-weight:600">Leo</span>
+          <span class="state working"><span class="lamp working"></span>working</span>
+          <div style="flex:1"></div>
+          <span class="chip warn">cue 2</span>
+          <span class="btn icon ghost">⌃</span>
+        </div>
+      </div>
+      <p class="caption"><b>Dock · collapsed (nobody on air).</b> Drops to a 44px sliver: who's active, how many are queued, one chevron. It never shows an empty caption bubble.</p>
+
+      <div class="dock" style="width:380px;margin-top:22px;border-color:#EEF3FF;box-shadow:0 0 0 2px rgba(238,243,255,.45),0 24px 60px -20px #000">
+        <div class="grab"></div>
+        <div class="dock-body">
+          <div class="av don" style="width:52px;height:52px;font-size:15px"><span class="ring"></span><span class="ini">DO</span></div>
+          <div class="bubble">
+            <div class="hd"><span style="font-size:14px;font-weight:650">Donnie</span><span class="state onair">◉ mic live</span></div>
+            <div class="txt" style="color:var(--fg-3);font-family:var(--mono);font-size:11px;letter-spacing:.06em">listening · 0:02 · room auto-held</div>
+          </div>
+        </div>
+        <div class="dock-foot"><div class="pttbar" style="border-style:solid;border-color:#EEF3FF;background:#EEF3FF;color:#0B0D10;font-weight:700">◉ release to send</div></div>
+      </div>
+      <p class="caption"><b>Dock · talkback held.</b> The whole strip takes the white ring — peripheral vision confirms the mic is hot without moving your eyes off your editor.</p>
+    </div>
+
+    <div>
+      <div class="dock" style="width:380px">
+        <div class="grab"></div>
+        <div class="dock-body">
+          <div class="av mikey" style="width:52px;height:52px;font-size:15px"><span class="ring"></span><span class="ini">MI</span></div>
+          <div class="bubble">
+            <div class="hd"><span style="font-size:14px;font-weight:650">Mikey</span><span class="state hand"><span class="lamp hand"></span>hand up</span><div style="flex:1"></div><span class="chip warn">+1</span></div>
+            <div class="txt">Dist is rebuilt, dude — 41 files, zero drama.</div>
+          </div>
+        </div>
+        <div class="dock-foot">
+          <span class="btn primary" style="flex:1;height:28px">▶ Play it</span>
+          <span class="btn" style="height:28px">Later</span>
+          <span class="btn icon" style="height:28px">⤢</span>
+        </div>
+      </div>
+      <p class="caption"><b>Dock · someone's waiting.</b> When nothing is on air but the cue isn't empty, the transport row becomes a two-button decision: hear it now, or push it back. This is the highest-value 380px in the product.</p>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ 3 · PHONE ROOM ============================ -->
+<section>
+  <h2><span class="num">04</span> Surface 3 — Phone room</h2>
+  <div class="sec-title">390 × 720 · same console, one thumb</div>
+  <p class="sec-note">The phone inherits the strip language exactly — a person shouldn't have to relearn state. What changes is the bottom: a fixed thumb rail with the round talkback key dead center, device routing on the left, hold on the right.</p>
+
+  <div class="scroller"><div class="row">
+
+    <!-- room -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ den · linked</span></div>
+        <div class="pscreen">
+          <div class="phead">
+            <div class="h">The Den</div>
+            <span class="state working"><span class="lamp working"></span>6 live</span>
+            <div style="flex:1"></div>
+            <span class="btn icon">+</span>
+          </div>
+          <div class="pbody">
+            <div class="toast" style="border-color:rgba(255,176,32,.35)">
+              <span class="lamp hand"></span><span><b>3 unheard</b> while you were out.</span>
+              <span class="btn" style="height:22px;margin-left:auto">Catch up</span>
+            </div>
+
+            <div class="pstrip onair c-don">
+              <div class="av don" style="width:40px;height:40px;font-size:13px"><span class="ring"></span><span class="ini">DO</span></div>
+              <div class="body">
+                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                  <span class="name">Donnie</span><span class="state onair">on air</span><span class="chip live">live</span>
+                </div>
+                <div class="metaline">room-of-devs · 0:14 / 0:38</div>
+                <div style="font-size:12.5px;line-height:1.45;margin-top:7px;color:#D8E0EC">
+                  <span style="color:#7C8798">Backoff's in — three retries, then it </span><span style="color:#fff;background:rgba(242,246,255,.13);border-radius:3px">stops pretending</span>…
+                </div>
+              </div>
+            </div>
+
+            <div class="pstrip c-mikey">
+              <div class="av mikey" style="width:40px;height:40px;font-size:13px"><span class="ring"></span><span class="ini">MI</span></div>
+              <div class="body">
+                <div style="display:flex;align-items:center;gap:7px"><span class="name">Mikey</span><span class="state hand"><span class="lamp hand"></span>hand up</span><span class="chip warn">2</span></div>
+                <div class="metaline">agent-usage-bar · 3m ago</div>
+                <div class="preview" style="font-size:12px">Dist is rebuilt, dude — 41 files, zero drama.</div>
+                <div style="display:flex;gap:6px;margin-top:8px">
+                  <span class="btn" style="height:28px;flex:1">▶ Play</span>
+                  <span class="btn" style="height:28px;flex:1">💬 Chat</span>
+                  <span class="btn icon" style="height:28px">↺</span>
+                  <span class="btn icon" style="height:28px">⌄</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstrip c-raph">
+              <div class="av raph" style="width:40px;height:40px;font-size:13px"><span class="ring"></span><span class="ini">RA</span></div>
+              <div class="body">
+                <div style="display:flex;align-items:center;gap:7px"><span class="name">Raph</span><span class="state asking"><span class="lamp asking"></span>asking</span></div>
+                <div class="metaline">media-server · blocked 22s</div>
+                <div class="ask" style="font-size:12px">Migration drops <code style="font-family:var(--mono)">episodes</code> first. Fix it?
+                  <div class="opts"><span class="btn primary" style="height:26px;flex:1">Fix it</span><span class="btn" style="height:26px;flex:1">Leave it</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstrip c-leo">
+              <div class="av leo" style="width:40px;height:40px;font-size:13px"><span class="ini">LE</span></div>
+              <div class="body">
+                <div style="display:flex;align-items:center;gap:7px"><span class="name">Leo</span><span class="state working"><span class="lamp working"></span>working</span></div>
+                <div class="metaline">jellyfin-streamline · 6m08s</div>
+              </div>
+            </div>
+
+            <div class="pstrip c-splint" style="opacity:.6">
+              <div class="av splint" style="width:40px;height:40px;font-size:13px;filter:saturate(.4)"><span class="ini">SP</span></div>
+              <div class="body">
+                <div style="display:flex;align-items:center;gap:7px"><span class="name">Splinter</span><span class="state muted"><span class="lamp muted"></span>hidden</span></div>
+                <div class="metaline">contextdb · you hid this one</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pfoot">
+            <div class="mini">
+              <div class="av don" style="width:30px;height:30px;font-size:10px"><span class="ini">DO</span></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">SSE reconnect, but polite</div>
+                <div class="progress"><i></i></div>
+              </div>
+              <span class="btn icon" style="height:30px;width:30px">❙❙</span>
+              <span class="btn icon" style="height:30px;width:30px">■</span>
+            </div>
+            <div class="thumbrail">
+              <div style="flex:1"><div class="tgroup"><b class="on">📱 phone</b><b>💻 mac</b></div></div>
+              <div class="ptt-round">HOLD<br>TO TALK</div>
+              <div style="flex:1;display:flex;justify-content:flex-end"><span class="btn" style="height:30px">⏸ hold room</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Phone room.</b> Device toggle, talkback key, hold — all inside the bottom 96px. Cards scroll under the mini-player; the mini-player never covers the last card (list gets bottom padding).</p>
+    </div>
+
+    <!-- expanded player -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ playing</span></div>
+        <div class="pscreen" style="background:radial-gradient(360px 260px at 50% 0%,rgba(168,85,247,.14),transparent 70%)">
+          <div class="phead" style="border:0">
+            <span class="btn icon ghost">⌄</span>
+            <div style="flex:1;text-align:center">
+              <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3)">now playing · donnie</div>
+            </div>
+            <span class="btn icon ghost">⋯</span>
+          </div>
+          <div style="flex:1;padding:8px 22px 0;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+              <div class="av don" style="width:56px;height:56px;font-size:16px"><span class="ring"></span><span class="ini">DO</span></div>
+              <div>
+                <div style="font-size:18px;font-weight:670;letter-spacing:-.02em">SSE reconnect, but polite</div>
+                <div class="metaline" style="font-family:var(--mono);font-size:10.5px;color:var(--fg-3);margin-top:3px">Donatello · room-of-devs · 38s</div>
+              </div>
+            </div>
+
+            <div class="karaoke">
+              <span class="done">Swapped the reconnect loop to exponential backoff with jitter.</span>
+              <span class="now">Three retries, then it stops pretending the socket is coming back</span>
+              <span class="next"> and surfaces a stale badge instead. Typecheck's clean across all four packages — the one thing I'd want your eyes on is the grant-guard timing.</span>
+            </div>
+          </div>
+
+          <div style="padding:0 22px 18px">
+            <div class="progress" style="height:3px"><i style="width:46%"></i></div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--fg-3);margin-top:6px"><span>0:17</span><span>-0:21</span></div>
+
+            <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:16px">
+              <span class="btn icon" style="width:44px;height:44px;border-radius:50%;font-size:14px">↺</span>
+              <span style="width:66px;height:66px;border-radius:50%;background:#EEF3FF;color:#0B0D10;display:grid;place-items:center;font-size:20px;font-weight:700">❙❙</span>
+              <span class="btn icon" style="width:44px;height:44px;border-radius:50%;font-size:12px">■</span>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin-top:18px">
+              <div class="tgroup" style="flex:1"><b>0.75×</b><b class="on">1×</b><b>1.25×</b><b>1.5×</b></div>
+              <span class="btn" style="height:26px">💻 to mac</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Player · expanded sheet.</b> Karaoke is three spans — spoken / current / upcoming — driven by the same word timings the dock caption uses. Speed is a ToggleGroup, not a slider: four values you'd actually pick.</p>
+    </div>
+
+    <!-- chat thread -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ den</span></div>
+        <div class="pscreen">
+          <div class="phead">
+            <span class="btn icon ghost">‹</span>
+            <div class="av don" style="width:30px;height:30px;font-size:10px"><span class="ring"></span><span class="ini">DO</span></div>
+            <div>
+              <div style="font-size:15px;font-weight:650;line-height:1.2">Donnie</div>
+              <div style="font-family:var(--mono);font-size:9.5px;color:var(--st-working);letter-spacing:.08em">working · room-of-devs</div>
+            </div>
+            <div style="flex:1"></div>
+            <span class="btn icon">📞</span>
+          </div>
+
+          <div class="pbody" style="gap:12px">
+            <div>
+              <div class="msgrow"><div class="av don" style="width:22px;height:22px;font-size:8px"><span class="ini">DO</span></div>
+                <div class="msg them">Reconnect storm's fixed. Backoff with jitter, 3 tries, then a stale badge instead of a zombie socket.</div></div>
+              <div class="msgmeta" style="margin-left:30px">9:38 · spoken · <span style="color:var(--fg-2)">↺ replay</span></div>
+            </div>
+
+            <div>
+              <div class="msg me">nice. did typecheck pass in all four packages?</div>
+              <div class="msgmeta" style="text-align:right">9:39 · sent from phone</div>
+            </div>
+
+            <div>
+              <div class="msgrow"><div class="av don" style="width:22px;height:22px;font-size:8px"><span class="ini">DO</span></div>
+                <div class="msg them">All four, clean. I left the grant-guard timing alone — that felt like your call.</div></div>
+              <div class="msgmeta" style="margin-left:30px">9:40 · spoken · <span style="color:var(--fg-2)">↺ replay</span></div>
+            </div>
+
+            <div style="text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--fg-3);letter-spacing:.1em;padding:4px 0">
+              — donnie is working · live captions on —
+            </div>
+
+            <div>
+              <div class="msgrow"><div class="av don" style="width:22px;height:22px;font-size:8px"><span class="ini">DO</span></div>
+                <div class="msg them" style="border-style:dashed;color:var(--fg-2)">reading <code style="font-family:var(--mono);font-size:11px">transports/sse.ts</code>…</div></div>
+            </div>
+          </div>
+
+          <div class="pfoot">
+            <div class="composer">
+              <span class="ph">Say something to Donnie…</span>
+              <span class="btn icon" style="border-radius:50%;width:30px;height:30px">◉</span>
+              <span class="btn primary icon" style="border-radius:50%;width:30px;height:30px">↑</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Chat thread.</b> Spoken messages carry a replay affordance in their metadata line, not a button in the bubble. Intermediate live-mode narration renders as dashed ghost bubbles that never bill a replay.</p>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ 5 · CALL + INTERPRETER ============================ -->
+<section>
+  <h2><span class="num">05</span> Surface 5 — Call mode &amp; the voice interpreter</h2>
+  <div class="sec-title">Hold the key, say the sentence, watch the room obey</div>
+  <p class="sec-note">The interpreter is the feature that makes this a tool rather than a novelty, so it gets the most explicit rendering in the product: your words verbatim at the top, then a numbered plan with a real outcome under each step, then one undo. Never a spinner and a shrug.</p>
+
+  <div class="scroller"><div class="row">
+
+    <!-- call -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ call · 04:12</span></div>
+        <div class="pscreen">
+          <div class="call">
+            <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--st-working)">◉ live · narrating</div>
+            <div style="margin-top:20px;position:relative">
+              <div class="av don" style="width:132px;height:132px;font-size:34px;box-shadow:0 0 0 8px rgba(168,85,247,.14),0 0 70px -10px rgba(168,85,247,.6)">
+                <span class="ring" style="inset:-8px;border-width:2px"></span><span class="ini">DO</span>
+              </div>
+            </div>
+            <div style="margin-top:16px;font-size:22px;font-weight:680;letter-spacing:-.02em">Donnie</div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--fg-3);letter-spacing:.06em;margin-top:3px">opus · room-of-devs · 04:12</div>
+
+            <div class="cap">
+              <span style="color:#6D7A8B">Okay, I'm in the transport file. The reconnect is </span><span class="now">hard-coded to 200 milliseconds</span><span style="color:#6D7A8B">, which explains the storm…</span>
+            </div>
+
+            <div class="meter" style="color:#A855F7;margin-top:20px;height:26px;gap:3px">
+              <i style="height:8px"></i><i style="height:19px"></i><i style="height:26px"></i><i style="height:13px"></i><i style="height:22px"></i>
+              <i style="height:9px"></i><i style="height:17px"></i><i style="height:24px"></i><i style="height:11px"></i><i style="height:6px"></i>
+            </div>
+          </div>
+
+          <div class="pfoot" style="padding-bottom:18px">
+            <div class="callbtns" style="margin-bottom:14px">
+              <div class="cbtn">MUTE</div>
+              <div class="cbtn">HOLD</div>
+              <div class="cbtn">1.25×</div>
+              <div class="cbtn end">END</div>
+            </div>
+            <div class="thumbrail" style="justify-content:center">
+              <div class="ptt-round armed" style="width:74px;height:74px">◉ HOLD<br>TO TALK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Call mode.</b> A voice-call screen, not a chat screen: big avatar, one live caption line, four round controls, talkback armed at the bottom. The waveform is persona-colored — the only place accent gets to be big.</p>
+    </div>
+
+    <!-- interpreter -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ den</span></div>
+        <div class="pscreen">
+          <div class="phead">
+            <span class="btn icon ghost">‹</span><div class="h" style="font-size:17px">Interpreter</div>
+            <div style="flex:1"></div><span class="chip live">◉ heard you</span>
+          </div>
+          <div class="pbody">
+
+            <div class="plan">
+              <div class="ph2">
+                <span class="lamp working"></span>
+                <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2)">plan · 3 steps · 1.2s</span>
+                <div style="flex:1"></div>
+                <span class="btn ghost" style="height:22px">Undo all</span>
+              </div>
+              <div class="heard">
+                <q>Pause the room, then replay Donnie's last message — slower.</q>
+              </div>
+              <div class="steps">
+                <div class="step">
+                  <span class="dot ok">✓</span>
+                  <div><div class="t">Hold the room</div><div class="o ok">4 agents holding · 2 clips queued</div></div>
+                </div>
+                <div class="step">
+                  <span class="dot ok">✓</span>
+                  <div><div class="t">Resolve “Donnie”</div><div class="o ok">→ Donatello · room-of-devs · last spoke 2m ago</div></div>
+                </div>
+                <div class="step">
+                  <span class="dot run">▶</span>
+                  <div><div class="t">Replay last message at 0.75×</div><div class="o">“SSE reconnect, but polite” · 0:03 / 0:51 · from cache, no spend</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="plan" style="opacity:.85">
+              <div class="ph2">
+                <span class="lamp hand"></span>
+                <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--st-hand)">plan · needs a call</span>
+                <div style="flex:1"></div>
+                <span class="chip">2m ago</span>
+              </div>
+              <div class="heard"><q>Kill the media-server one and spawn Mikey there instead.</q></div>
+              <div class="steps">
+                <div class="step">
+                  <span class="dot ok">✓</span>
+                  <div><div class="t">Match session “media-server”</div><div class="o ok">→ Raph · tmux <code style="font-family:var(--mono)">den:3</code></div></div>
+                </div>
+                <div class="step">
+                  <span class="dot" style="border-color:var(--st-hand);color:var(--st-hand)">?</span>
+                  <div><div class="t">Kill it</div><div class="o" style="color:var(--st-hand)">destructive — confirm before I do it</div>
+                    <div style="display:flex;gap:6px;margin-top:8px"><span class="btn danger" style="height:26px">Kill Raph</span><span class="btn" style="height:26px">Skip</span></div>
+                  </div>
+                </div>
+                <div class="step">
+                  <span class="dot skip">·</span>
+                  <div><div class="t">Spawn Mikey in <code style="font-family:var(--mono)">media-server</code></div><div class="o">waiting on step 2</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="toast"><span class="lamp working"></span><span>Heard 3 commands today. <b>Zero</b> misfires.</span></div>
+          </div>
+
+          <div class="pfoot">
+            <div class="thumbrail" style="justify-content:center;gap:14px">
+              <span class="btn tall">History</span>
+              <div class="ptt-round">HOLD<br>TO TALK</div>
+              <span class="btn tall">Room</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Interpreter · executed plan.</b> Steps are ChainOfThought/Task items with a mandatory outcome line. Anything destructive stops the plan and asks — the interpreter is allowed to be fast, never allowed to be surprising. “from cache, no spend” is deliberate: this product bills per sentence and the UI should say so.</p>
+    </div>
+
+    <!-- ptt listening overlay -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ mic live</span></div>
+        <div class="pscreen" style="background:radial-gradient(400px 400px at 50% 78%,rgba(238,243,255,.10),transparent 70%)">
+          <div class="phead" style="border:0"><div style="flex:1"></div><span class="btn icon ghost">✕</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;text-align:center">
+            <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--fg-3)">room held · listening</div>
+            <div style="font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.35;margin-top:22px">
+              “pause the room, then replay Donnie's last<span style="color:var(--fg-3)"> message — slower</span>”
+            </div>
+            <div class="meter" style="color:#EEF3FF;margin-top:28px;height:30px;gap:3px">
+              <i style="height:10px"></i><i style="height:22px"></i><i style="height:30px"></i><i style="height:16px"></i><i style="height:26px"></i>
+              <i style="height:12px"></i><i style="height:20px"></i><i style="height:28px"></i><i style="height:14px"></i><i style="height:8px"></i>
+            </div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--fg-3);margin-top:20px;letter-spacing:.06em">0:04 · release to run</div>
+          </div>
+          <div class="pfoot" style="padding-bottom:20px">
+            <div style="display:flex;justify-content:center">
+              <div class="ptt-round armed" style="width:88px;height:88px;font-size:10px">◉<br>LISTENING</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Talkback held (phone).</b> Live transcription at 24px so you can read it at arm's length — the grey tail is the low-confidence region. Release runs it; drag off the key cancels.</p>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ 6 · PICKER ============================ -->
+<section>
+  <h2><span class="num">06</span> Surface 6 — The picker</h2>
+  <div class="sec-title">Casting call: pick a face, a place, a brain — then confirm out loud</div>
+  <p class="sec-note">Spawning is casting. Persona first (it's the memorable part), then folder, then model and flags, and a permanent confirm bar that spells the whole decision back in one mono line — because the flags here can cost money or skip permissions.</p>
+
+  <div class="scroller"><div class="row">
+    <div>
+      <div class="frame picker">
+        <div class="tb"><div class="tl"><i></i><i></i><i></i></div><div class="t">new session</div><div style="width:44px"></div></div>
+        <div style="padding:12px 16px 0;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line)">
+          <div class="tgroup" style="height:30px"><b class="on" style="height:28px">new</b><b style="height:28px">resume</b></div>
+          <div style="flex:1"></div>
+          <span class="chip">6 running · 2 idle</span>
+        </div>
+        <div class="pk-body">
+          <div class="pk-left">
+            <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">recent rooms</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="input" style="height:30px;font-size:12px;background:var(--surface-3)">jellyfin-streamline</div>
+              <div class="input" style="height:30px;font-size:12px">room-of-devs</div>
+              <div class="input" style="height:30px;font-size:12px">media-server</div>
+              <div class="input" style="height:30px;font-size:12px">agent-usage-bar</div>
+              <div class="input" style="height:30px;font-size:12px;color:var(--fg-3)">＋ browse…</div>
+            </div>
+          </div>
+          <div class="pk-main">
+            <div class="field">
+              <span class="lb">who's taking it</span>
+              <div class="personapick">
+                <div class="pp" style="color:var(--p-leo)"><div class="av leo" style="width:38px;height:38px;font-size:11px"><span class="ini">LE</span></div><span class="n">Leo</span></div>
+                <div class="pp sel" style="color:var(--p-don)"><div class="av don" style="width:38px;height:38px;font-size:11px"><span class="ring"></span><span class="ini">DO</span></div><span class="n">Donnie</span></div>
+                <div class="pp" style="color:var(--p-mikey)"><div class="av mikey" style="width:38px;height:38px;font-size:11px"><span class="ini">MI</span></div><span class="n">Mikey</span></div>
+                <div class="pp" style="color:var(--p-raph)"><div class="av raph" style="width:38px;height:38px;font-size:11px"><span class="ini">RA</span></div><span class="n">Raph</span></div>
+                <div class="pp" style="color:var(--p-splint)"><div class="av splint" style="width:38px;height:38px;font-size:11px"><span class="ini">SP</span></div><span class="n">Splinter</span></div>
+                <div class="pp" style="color:var(--fg-3)"><div style="width:38px;height:38px;border-radius:50%;border:1px dashed var(--line);display:grid;place-items:center;font-size:14px;color:var(--fg-3)">＋</div><span class="n">Guest</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:12px">
+              <div class="field" style="flex:2">
+                <span class="lb">project folder</span>
+                <div class="input"><span>jellyfin-streamline</span><span class="mut">~/projects/jellyfin-streamline</span></div>
+              </div>
+              <div class="field" style="flex:1">
+                <span class="lb">brain</span>
+                <div class="input"><span>sonnet</span><div style="flex:1"></div><span class="mut">⌄</span></div>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="lb">flags</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="btn" style="height:30px;border-color:rgba(255,176,32,.4);color:var(--st-hand)">⚠ skip permissions</span>
+                <span class="btn" style="height:30px">remote</span>
+                <span class="btn" style="height:30px;background:var(--surface-3);color:var(--fg)">✓ reply-capable (tmux)</span>
+                <span class="btn" style="height:30px;background:var(--surface-3);color:var(--fg)">✓ speaks on finish</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="lb">opening line <span style="color:var(--fg-3);text-transform:none;letter-spacing:0">· optional</span></span>
+              <div class="input" style="height:56px;align-items:flex-start;padding-top:9px;color:var(--fg-3)">Pick up the kids-theme delivery — series detail page is the POC.</div>
+            </div>
+          </div>
+        </div>
+        <div class="confirm">
+          <span class="lamp" style="background:var(--p-don);box-shadow:0 0 10px var(--p-don)"></span>
+          <span class="sum">start <b>Donnie</b> · <b>sonnet</b> · <b>jellyfin-streamline</b> · tmux · speaks</span>
+          <span class="btn tall">Cancel</span>
+          <span class="btn primary tall">Start Donnie ↵</span>
+        </div>
+      </div>
+      <p class="caption"><b>Picker · desktop, confirm step.</b> The confirm bar is always visible and always reads like a sentence — no “Create” button that leaves you guessing what you configured. Destructive-ish flags (skip permissions) are the only amber thing on the screen.</p>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>◉ den</span></div>
+        <div class="pscreen" style="background:rgba(11,13,16,.6)">
+          <div style="flex:1;padding:14px 12px;opacity:.32;pointer-events:none;display:flex;flex-direction:column;gap:8px">
+            <div class="pstrip c-don"><div class="av don" style="width:40px;height:40px;font-size:13px"><span class="ini">DO</span></div><div class="body"><span class="name">Donnie</span><div class="metaline">room-of-devs</div></div></div>
+            <div class="pstrip c-mikey"><div class="av mikey" style="width:40px;height:40px;font-size:13px"><span class="ini">MI</span></div><div class="body"><span class="name">Mikey</span><div class="metaline">agent-usage-bar</div></div></div>
+          </div>
+          <div class="sheet" style="padding-bottom:16px">
+            <div class="grabber"></div>
+            <div style="padding:12px 18px 0;display:flex;align-items:center;gap:10px">
+              <div style="font-size:19px;font-weight:680;letter-spacing:-.02em">Cast a session</div>
+              <div style="flex:1"></div>
+              <div class="tgroup"><b class="on">new</b><b>resume</b></div>
+            </div>
+            <div style="padding:14px 18px 0;display:flex;flex-direction:column;gap:13px">
+              <div class="field">
+                <span class="lb">who</span>
+                <div class="personapick">
+                  <div class="pp" style="color:var(--p-leo)"><div class="av leo" style="width:34px;height:34px;font-size:10px"><span class="ini">LE</span></div><span class="n">Leo</span></div>
+                  <div class="pp sel" style="color:var(--p-don)"><div class="av don" style="width:34px;height:34px;font-size:10px"><span class="ring"></span><span class="ini">DO</span></div><span class="n">Donnie</span></div>
+                  <div class="pp" style="color:var(--p-mikey)"><div class="av mikey" style="width:34px;height:34px;font-size:10px"><span class="ini">MI</span></div><span class="n">Mikey</span></div>
+                  <div class="pp" style="color:var(--p-raph)"><div class="av raph" style="width:34px;height:34px;font-size:10px"><span class="ini">RA</span></div><span class="n">Raph</span></div>
+                </div>
+              </div>
+              <div class="field"><span class="lb">where</span><div class="input" style="height:38px"><span>jellyfin-streamline</span><div style="flex:1"></div><span class="mut">⌄</span></div></div>
+              <div class="field"><span class="lb">brain</span><div class="tgroup" style="width:100%"><b style="flex:1;height:34px">haiku</b><b class="on" style="flex:1;height:34px">sonnet</b><b style="flex:1;height:34px">opus</b></div></div>
+              <div class="field"><span class="lb">flags</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span class="btn" style="height:32px;border-color:rgba(255,176,32,.4);color:var(--st-hand)">⚠ skip perms</span>
+                  <span class="btn" style="height:32px">remote</span>
+                  <span class="btn" style="height:32px;background:var(--surface-3);color:var(--fg)">✓ tmux</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:16px 18px 0">
+              <div style="font-family:var(--mono);font-size:11.5px;color:var(--fg-2);letter-spacing:.03em;text-align:center;margin-bottom:10px">
+                start <b style="color:var(--fg)">Donnie</b> · <b style="color:var(--fg)">sonnet</b> · <b style="color:var(--fg)">jellyfin-streamline</b>
+              </div>
+              <div style="display:flex;gap:10px">
+                <span class="btn tall" style="flex:1;height:46px;border-radius:var(--r-md)">Cancel</span>
+                <span class="btn primary tall" style="flex:2;height:46px;border-radius:var(--r-md);font-size:15px">Start Donnie</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Picker · phone sheet.</b> Same order, same confirm sentence, but the model becomes a three-up ToggleGroup and the confirm button owns the bottom 46px — nothing above the fold requires two hands.</p>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ RATIONALE ============================ -->
+<section>
+  <h2><span class="num">07</span> Rationale</h2>
+  <div class="sec-title">Why this instead of a nicer grid</div>
+
+  <div class="rat" style="margin-top:24px">
+    <div class="rcard">
+      <h3>Strips, not tiles</h3>
+      <p>A tile grid forces every agent into the same rectangle, which means the speaking agent — the only one with content worth reading — gets the same 180px as the one that's been idle for an hour. Strips are full width, so the on-air channel can grow a caption line, a preview, and a talkback bar without reflowing the wall.</p>
+      <p>It also matches how the room actually behaves: a list has a top, and the top is “who's up.” Sort order is state-driven (on air → asking → hand up → working → idle → stale), so the thing you need is always the first strip.</p>
+    </div>
+    <div class="rcard">
+      <h3>ON AIR is light, not hue</h3>
+      <p>With four saturated persona accents in play, any hue chosen for “speaking” eventually collides with a persona. So the most important state in the system is achromatic: brighter surface, white lamp, white ring, white transport. It reads across the room and it works identically for Raph and Donnie.</p>
+      <p>The rest of the tally set is chosen to be far from the persona palette: cyan (working) and amber (hand up) belong to no character, and asking gets hot pink — loud, unmistakable, and never an accent.</p>
+    </div>
+    <div class="rcard">
+      <h3>Every state is a lamp <em>and</em> a word</h3>
+      <p>Semantic color is never load-bearing alone. Each state renders as a lamp plus a mono uppercase label, so state survives colorblindness, a dimmed display, and the 26px dock sliver. It also means new states can be added without hunting for an unused hue.</p>
+    </div>
+    <div class="rcard">
+      <h3>One talkback affordance, four surfaces</h3>
+      <p>The mic is always the widest target on its container: a full-width bar on the desktop strip, a full-width bar in the dock, a 62–88px round key on the phone. Hold to open, release to send, drag-off to cancel — one muscle memory. Grant state is expressed the same way everywhere (white ring + “release to send”) so you never have to check whether you're actually hot.</p>
+      <p>The dock's bar is a bar, not a button, because a non-activating panel gets no focus ring and no hover cursor to lean on — the target has to be big enough to hit blind.</p>
+    </div>
+    <div class="rcard">
+      <h3>The words are the product</h3>
+      <p>Three surfaces render the same spoken text at three densities: one clipped line in the dock, a scrolling markdown block in the program pane, a 16px karaoke transcript on the phone. All three share the word-timing stream, so the highlight is consistent — and when audio is off, the highlight still tells you where you'd be.</p>
+      <p>Markdown renders with real hierarchy (h4, bullets, inline code) because agents write like devs. A summary that flattens code spans to plain text is a worse summary.</p>
+    </div>
+    <div class="rcard">
+      <h3>Cost is visible, quietly</h3>
+      <p>“from cache, no spend” on an interpreter replay, “superseded ×1” on a stale queue item, ghost bubbles for live narration that never bills a rerun. This app charges per sentence; a UI that hides that trains bad habits. It's one mono line, never a warning banner.</p>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:34px">shadcn / AI Elements mapping</div>
+  <p class="sec-note">Registry-first. Custom code is confined to four things the registry genuinely can't do: the frame-swapping avatar, the talkback press-and-hold, the karaoke span splitter, and the level meter.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Element in this board</th><th>shadcn / AI Elements</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Channel strip</td><td>Card + Badge + Tooltip</td><td>Card with a custom <code>::before</code> accent edge; no shadow variant — elevation is reserved for on-air.</td></tr>
+        <tr><td>State tally chip</td><td>Badge (variants: idle/working/onair/hand/asking/stale/muted)</td><td>One Badge component, seven variants via <code>cva</code>. Lamp is a span child.</td></tr>
+        <tr><td>Room bar toggles (mac/phone, model)</td><td>ToggleGroup</td><td>Single-select, mono labels.</td></tr>
+        <tr><td>Hold room / live mode</td><td>Toggle + Button</td><td>Held state paints the bar background, not just the button.</td></tr>
+        <tr><td>Per-agent actions</td><td>Button (icon size) + DropdownMenu for overflow</td><td>Four inline, the rest (status info, focus terminal, kill, swap) in a menu.</td></tr>
+        <tr><td>Kill confirm</td><td>AlertDialog</td><td>Types nothing; one destructive button, persona name in the title.</td></tr>
+        <tr><td>Swap persona</td><td>Popover + RadioGroup of avatar tiles</td><td>Popover so it can open from the strip without losing the wall.</td></tr>
+        <tr><td>Summary / program pane</td><td>ScrollArea + Markdown renderer</td><td>Existing sanitized markdown component drops straight in.</td></tr>
+        <tr><td>Toasts (unheard, needs decision)</td><td>sonner</td><td>Max two stacked; a third collapses to “+2 more.”</td></tr>
+        <tr><td>Phone player sheet</td><td>Sheet (side=bottom) + Slider (scrub) + ToggleGroup (speed)</td><td>Sheet snaps to mini/expanded — same component, two heights.</td></tr>
+        <tr><td>Chat thread</td><td>AI Elements <code>Conversation</code> + <code>Message</code></td><td>Ghost/dashed variant for live intermediates.</td></tr>
+        <tr><td>Composer</td><td>AI Elements <code>PromptInput</code></td><td>Plus a mic button that arms talkback instead of dictating.</td></tr>
+        <tr><td>Interpreter plan</td><td>AI Elements <code>ChainOfThought</code> + <code>Task</code></td><td>Task per step with a required outcome slot; destructive steps render an inline confirm.</td></tr>
+        <tr><td>Live narration in call mode</td><td>AI Elements <code>Reasoning</code> (streaming text)</td><td>Captions are the streaming target; audio timing drives the highlight.</td></tr>
+        <tr><td>Picker</td><td>Dialog (desktop) / Sheet (phone) + Tabs + Command (folder search)</td><td>Command palette for the folder field — you have more projects than a select can hold.</td></tr>
+        <tr><td>Tooltips on icon buttons</td><td>Tooltip</td><td>Disabled inside the dock — non-activating window, no hover contract.</td></tr>
+        <tr><td><b>Custom:</b> avatar</td><td>—</td><td>Plain <code>&lt;img&gt;</code> + ref; ring/lamp/glow are siblings so the 70ms <code>src</code> swap never touches React.</td></tr>
+        <tr><td><b>Custom:</b> talkback</td><td>—</td><td>Pointer capture, drag-off cancel, cross-realm grant guard. No Radix primitive models press-and-hold.</td></tr>
+        <tr><td><b>Custom:</b> karaoke</td><td>—</td><td>Three spans (done/now/next) driven by a word-timing cursor outside render.</td></tr>
+        <tr><td><b>Custom:</b> level meter</td><td>—</td><td>Eight bars, CSS-animated; decorative only, never an input.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cutadd">
+    <div class="rcard">
+      <h3>What I'd cut</h3>
+      <ul>
+        <li><b>The separate transport bar.</b> Transport belongs to a channel, not to the room. It lives on the on-air strip, in the dock, and in the player — three places you're already looking.</li>
+        <li><b>“Replay slower” as a peer button.</b> On the phone it's one press of the speed ToggleGroup. It only stays as its own control on desktop and dock, where there's no speed UI.</li>
+        <li><b>Grid density options / card size settings.</b> Strips are one size. The wall's information density is set by state sort order, not by a preference.</li>
+        <li><b>The room-level “current mode” label.</b> Mode is implied by what's lit: hazard stripes = held, cyan pill = live. A word that says “normal” earns nothing.</li>
+        <li><b>Hide-agent as a top-level phone action.</b> Demoted into the overflow menu — hiding a dev is rare, and it currently costs a thumb-reachable slot that chat deserves.</li>
+      </ul>
+    </div>
+    <div class="rcard">
+      <h3>What I'd add</h3>
+      <ul>
+        <li><b>Cue count as a first-class room object.</b> One number in the bar, one “catch up” action on the phone: play everything unheard in order, oldest first, at 1.25×.</li>
+        <li><b>Interpreter history.</b> Every plan is kept — the second panel in surface 5. It's the only way to trust a voice command layer: you can see what it did, and undo it.</li>
+        <li><b>Destructive-step gating in plans.</b> Kill/spawn stop the plan and ask inline rather than executing and apologising.</li>
+        <li><b>“Superseded” shown on the strip, not buried.</b> If an agent spoke three times and you only get the last, the wall should say so — that's a genuine trust issue with a queue.</li>
+        <li><b>Spend breadcrumbs</b> (“from cache, no spend”) anywhere a replay could have cost money.</li>
+        <li><b>Sorted-by-state wall with a frozen top slot</b> so the on-air strip never jumps out from under your cursor mid-click.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>The Booth · Room of Devs redesign concept · dark-first · self-contained, no external assets</footer>
+</div>
+</body>
+</html>

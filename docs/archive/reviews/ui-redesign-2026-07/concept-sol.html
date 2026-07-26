@@ -1,0 +1,1871 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Room of Devs — Signal Desk Concept</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #080a0c;
+      --ink-2: #0d1013;
+      --panel: #12161a;
+      --panel-2: #171c21;
+      --panel-3: #1d2329;
+      --line: #2b3239;
+      --line-soft: #20262c;
+      --paper: #f3efe5;
+      --muted: #9aa4ad;
+      --muted-2: #69747d;
+      --green: #6fe0a7;
+      --amber: #f5c451;
+      --cyan: #63c7e8;
+      --red: #ff706b;
+      --violet: #b697ff;
+      --leo: #4a8fff;
+      --donnie: #a873ff;
+      --mikey: #ff9f43;
+      --raph: #f15b5d;
+      --guest: #71d4bd;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
+      --r-xl: 26px;
+      --shadow: 0 28px 80px rgba(0,0,0,.46);
+      --mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 11% 4%, rgba(74,143,255,.11), transparent 29rem),
+        radial-gradient(circle at 89% 19%, rgba(255,159,67,.08), transparent 31rem),
+        linear-gradient(180deg, #0b0e11 0%, #080a0c 52%, #0d0f12 100%);
+      color: var(--paper);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+      z-index: 20;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .board {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 72px 0 120px;
+      position: relative;
+      z-index: 1;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--amber);
+      font: 700 11px/1 var(--mono);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 14px currentColor;
+    }
+    .hero {
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 80px;
+      align-items: end;
+      padding: 56px 0 72px;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero h1 {
+      max-width: 940px;
+      margin: 26px 0 30px;
+      font-size: clamp(64px, 10vw, 142px);
+      line-height: .82;
+      letter-spacing: -.075em;
+      font-weight: 820;
+    }
+    .hero h1 span {
+      display: block;
+      color: transparent;
+      -webkit-text-stroke: 1px #7b8790;
+      letter-spacing: -.06em;
+    }
+    .hero-copy {
+      max-width: 640px;
+      color: #d3d8dc;
+      font-size: clamp(18px, 2vw, 24px);
+      line-height: 1.5;
+      letter-spacing: -.015em;
+    }
+    .manifesto {
+      align-self: center;
+      display: grid;
+      gap: 20px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      background: rgba(18,22,26,.72);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow);
+      transform: rotate(1.5deg);
+    }
+    .manifesto strong {
+      font: 700 12px/1.3 var(--mono);
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .manifesto p {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.45;
+    }
+    .signal-key {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 600 11px/1 var(--mono);
+    }
+    .signal-key span { display: inline-flex; align-items: center; gap: 6px; }
+    .signal-key i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .signal-key span:nth-child(2) i { background: var(--amber); }
+    .signal-key span:nth-child(3) i { background: var(--red); }
+
+    section { padding: 92px 0; border-bottom: 1px solid var(--line); }
+    .section-head {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr);
+      gap: 32px;
+      margin-bottom: 42px;
+      align-items: start;
+    }
+    .section-no {
+      color: var(--muted-2);
+      font: 700 12px/1 var(--mono);
+      letter-spacing: .14em;
+    }
+    .section-title {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 64px);
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+    .section-deck {
+      max-width: 700px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .caption {
+      margin: 14px 2px 0;
+      color: var(--muted-2);
+      font: 600 10px/1.5 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .frame {
+      background: #080a0c;
+      border: 1px solid #353d44;
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 1px rgba(255,255,255,.055);
+    }
+
+    /* Tokens */
+    .token-layout {
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 22px;
+    }
+    .token-card {
+      min-width: 0;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      background: var(--panel);
+    }
+    .token-card h3 {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font: 700 11px/1 var(--mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .swatch {
+      min-height: 132px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 12px;
+      color: #fff;
+      font: 600 10px/1.4 var(--mono);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .swatch.dark { background: #080a0c; }
+    .swatch.paper { background: #f3efe5; color: #111; }
+    .swatch.work { background: #63c7e8; color: #071014; }
+    .swatch.wait { background: #f5c451; color: #151005; }
+    .swatch.speak { background: #6fe0a7; color: #06110b; }
+    .persona-swatches {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .persona-swatch {
+      height: 44px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      color: #0a0a0a;
+      font: 800 10px/1 var(--mono);
+    }
+    .type-samples { display: grid; gap: 15px; }
+    .type-row {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 16px;
+      align-items: baseline;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .type-row:last-child { border: 0; padding-bottom: 0; }
+    .type-row span { color: var(--muted-2); font: 600 10px/1 var(--mono); }
+    .type-row b { font-size: 32px; letter-spacing: -.035em; }
+    .type-row:nth-child(2) b { font-size: 18px; letter-spacing: -.01em; }
+    .type-row:nth-child(3) b { font: 600 12px/1.5 var(--mono); letter-spacing: .04em; }
+    .space-note {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    .space-item {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      background: #101418;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .space-item strong {
+      display: block;
+      color: var(--paper);
+      font: 700 12px/1 var(--mono);
+      margin-bottom: 8px;
+    }
+
+    /* shared UI */
+    .app-topbar {
+      height: 50px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0d1013;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .traffic { display: flex; gap: 7px; margin-right: 3px; }
+    .traffic i { width: 10px; height: 10px; border-radius: 50%; background: #384047; }
+    .app-name { font-size: 12px; font-weight: 750; letter-spacing: -.01em; }
+    .app-status {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .status-pill, .chip, .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #161b20;
+      color: #b6bec5;
+      font: 650 9px/1 var(--mono);
+      padding: 6px 8px;
+    }
+    .status-pill i, .badge i { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .hold-button {
+      border: 1px solid #584a26;
+      background: #251f10;
+      color: var(--amber);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font: 700 9px/1 var(--mono);
+    }
+    .icon-btn, .text-btn {
+      min-width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #171c20;
+      color: #c0c7cd;
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .icon-btn:hover, .text-btn:hover { border-color: #65717b; background: #20262b; transform: translateY(-1px); }
+    .text-btn { padding: 0 10px; font-size: 10px; font-weight: 750; }
+    .icon { font-size: 12px; line-height: 1; }
+    .avatar {
+      display: block;
+      width: 54px;
+      height: 54px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--persona, var(--muted));
+      box-shadow: 0 0 0 4px rgba(255,255,255,.035);
+      background: var(--panel-3);
+    }
+    .avatar.lg { width: 96px; height: 96px; border-width: 3px; }
+    .avatar.xl { width: 136px; height: 136px; border-width: 4px; }
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--state, var(--muted));
+      box-shadow: 0 0 12px color-mix(in srgb, var(--state) 70%, transparent);
+    }
+    .meter {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 16px;
+    }
+    .meter i {
+      width: 2px;
+      border-radius: 2px;
+      background: var(--green);
+      animation: meter .72s ease-in-out infinite alternate;
+    }
+    .meter i:nth-child(1) { height: 5px; }
+    .meter i:nth-child(2) { height: 13px; animation-delay: -.35s; }
+    .meter i:nth-child(3) { height: 8px; animation-delay: -.15s; }
+    .meter i:nth-child(4) { height: 15px; animation-delay: -.5s; }
+    @keyframes meter { to { height: 3px; opacity: .55; } }
+
+    /* Desktop room */
+    .desktop-stage {
+      width: min(100%, 1040px);
+      margin: 0 auto;
+    }
+    .desktop-window {
+      aspect-ratio: 900 / 640;
+      min-height: 620px;
+    }
+    .desktop-content {
+      height: calc(100% - 50px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.75fr) minmax(220px, .75fr);
+    }
+    .room-zone { padding: 18px; min-width: 0; }
+    .room-titlebar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .room-titlebar h3 { margin: 0; font-size: 21px; letter-spacing: -.035em; }
+    .room-titlebar p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .room-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .agent-card {
+      --state: var(--muted);
+      min-width: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: 4px minmax(0, 1fr);
+      min-height: 180px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #181d22, #111519);
+      transition: border .2s ease, transform .2s ease;
+    }
+    .agent-card:hover { transform: translateY(-2px); border-color: #515b64; }
+    .agent-card.speaking {
+      border-color: color-mix(in srgb, var(--green) 55%, #2b3239);
+      background:
+        radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--persona) 18%, transparent), transparent 42%),
+        linear-gradient(145deg, #19221f, #111817);
+      box-shadow: inset 0 0 0 1px rgba(111,224,167,.08), 0 14px 30px rgba(0,0,0,.18);
+    }
+    .agent-card.asking { border-color: rgba(245,196,81,.42); }
+    .agent-card.stale { opacity: .58; filter: saturate(.55); }
+    .state-rail { background: var(--state); box-shadow: 0 0 18px color-mix(in srgb, var(--state) 38%, transparent); }
+    .card-inner { padding: 13px 13px 11px; min-width: 0; display: flex; flex-direction: column; }
+    .card-main { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; }
+    .avatar-wrap { position: relative; width: max-content; }
+    .avatar-wrap .state-dot {
+      position: absolute;
+      right: -1px;
+      bottom: 1px;
+      outline: 3px solid #151a1e;
+    }
+    .agent-meta { min-width: 0; }
+    .agent-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .agent-title b { font-size: 14px; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; }
+    .agent-state {
+      margin-top: 5px;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      color: var(--state);
+      font: 700 9px/1.2 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+    .agent-task {
+      margin-top: 7px;
+      color: #aeb7be;
+      font-size: 10px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chip-row { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { font-size: 8px; padding: 4px 6px; }
+    .chip.hot { color: var(--amber); border-color: #5c4d28; background: #272110; }
+    .chip.live { color: var(--red); border-color: #60302e; background: #291514; }
+    .chip.phone { color: var(--cyan); border-color: #285263; background: #10242b; }
+    .queue-preview {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #211c10;
+      border-left: 2px solid var(--amber);
+      color: #d5cba9;
+      font-size: 9px;
+      line-height: 1.45;
+    }
+    .card-actions {
+      margin-top: auto;
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-top: 1px solid var(--line-soft);
+    }
+    .card-actions .spacer { flex: 1; }
+    .ptt-grant {
+      height: 30px;
+      border: 1px solid color-mix(in srgb, var(--persona) 48%, #2b3239);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--persona) 10%, #12161a);
+      color: color-mix(in srgb, var(--persona) 80%, white);
+      padding: 0 9px;
+      font: 750 9px/1 var(--mono);
+      cursor: pointer;
+      user-select: none;
+    }
+    .ptt-grant.is-live {
+      background: var(--red);
+      border-color: var(--red);
+      color: #170706;
+      box-shadow: 0 0 0 4px rgba(255,112,107,.12), 0 0 28px rgba(255,112,107,.24);
+    }
+    .summary-pane {
+      min-width: 0;
+      padding: 18px;
+      border-left: 1px solid var(--line-soft);
+      background: #0e1114;
+      display: flex;
+      flex-direction: column;
+    }
+    .pane-label {
+      color: var(--muted-2);
+      font: 700 9px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .now-speaking {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .now-speaking .avatar { width: 38px; height: 38px; }
+    .now-speaking b { display: block; font-size: 12px; }
+    .now-speaking span { color: var(--green); font: 700 8px/1 var(--mono); }
+    .summary-copy {
+      padding: 16px 0;
+      color: #cbd2d7;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .summary-copy h4 { margin: 0 0 9px; color: var(--paper); font-size: 15px; letter-spacing: -.02em; }
+    .summary-copy p { margin: 0 0 12px; }
+    .summary-copy ul { padding-left: 16px; margin: 0; }
+    .summary-copy li { margin: 5px 0; }
+    .summary-copy code {
+      font: 9px/1.4 var(--mono);
+      color: var(--cyan);
+      background: #172027;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+    .summary-meta {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted-2);
+      font: 600 8px/1 var(--mono);
+    }
+
+    .state-legend {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .legend-item {
+      min-width: 0;
+      min-height: 68px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 3px 34px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      background: #111519;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .legend-item > i { width: 3px; height: 38px; border-radius: 6px; background: var(--state); box-shadow: 0 0 12px color-mix(in srgb, var(--state) 35%, transparent); }
+    .legend-item .avatar { width: 34px; height: 34px; border-width: 1px; }
+    .legend-item b { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #d9dee1; font-size: 10px; white-space: nowrap; }
+    .legend-item span { display: block; margin-top: 4px; color: var(--state); font: 700 8px/1 var(--mono); text-transform: uppercase; }
+
+    /* Dock */
+    .dock-showcase {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 28px;
+      align-items: center;
+    }
+    .dock {
+      border-radius: 19px;
+      border: 1px solid #404950;
+      background: rgba(13,16,19,.96);
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      overflow: hidden;
+    }
+    .dock.collapsed {
+      width: min(100%, 244px);
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+    }
+    .dock.collapsed .avatar { width: 40px; height: 40px; }
+    .dock-label { min-width: 0; }
+    .dock-label b { display: block; font-size: 11px; }
+    .dock-label span { color: var(--muted); font-size: 9px; }
+    .dock.speaking {
+      width: min(100%, 500px);
+      min-height: 164px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 12px;
+    }
+    .dock-persona {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: linear-gradient(150deg, rgba(168,115,255,.18), #111519);
+    }
+    .dock-persona .avatar { width: 68px; height: 68px; }
+    .live-pin {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      color: var(--green);
+      font: 750 7px/1 var(--mono);
+      letter-spacing: .08em;
+    }
+    .dock-copy { min-width: 0; display: flex; flex-direction: column; }
+    .caption-bubble {
+      position: relative;
+      padding: 10px 12px;
+      min-height: 80px;
+      border: 1px solid #343d44;
+      border-radius: 12px 12px 12px 3px;
+      background: #191e23;
+      color: #e0e4e7;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .caption-bubble b { color: var(--donnie); }
+    .dock-controls { margin-top: auto; display: flex; align-items: center; gap: 6px; padding-top: 8px; }
+    .dock-controls .non-focus {
+      margin-left: auto;
+      color: var(--muted-2);
+      font: 650 7px/1 var(--mono);
+      text-transform: uppercase;
+    }
+    .dock-ptt {
+      width: 54px;
+      height: 30px;
+      border: 1px solid #3e5360;
+      border-radius: 8px;
+      background: #14232a;
+      color: var(--cyan);
+      font: 750 9px/1 var(--mono);
+    }
+
+    /* phones */
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 390px));
+      justify-content: center;
+      gap: 28px;
+      align-items: start;
+    }
+    .phone-wrap { min-width: 0; }
+    .phone {
+      width: 100%;
+      aspect-ratio: 390 / 720;
+      min-height: 650px;
+      padding: 8px;
+      border-radius: 38px;
+      background: #050607;
+      border: 1px solid #40474d;
+      box-shadow: var(--shadow);
+    }
+    .phone-screen {
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      border-radius: 31px;
+      border: 1px solid #1f252a;
+      background:
+        radial-gradient(circle at 90% 4%, rgba(74,143,255,.12), transparent 42%),
+        #0e1114;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-status {
+      height: 26px;
+      padding: 7px 17px 0;
+      display: flex;
+      justify-content: space-between;
+      color: #c3c9ce;
+      font: 700 9px/1 var(--sans);
+    }
+    .phone-head {
+      padding: 12px 16px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .phone-head h3 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+    .phone-head p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+    .device-toggle {
+      display: flex;
+      padding: 3px;
+      border-radius: 9px;
+      background: #181d21;
+      border: 1px solid var(--line);
+    }
+    .device-toggle button {
+      padding: 6px 8px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: 700 8px/1 var(--mono);
+    }
+    .device-toggle button.active { background: #303840; color: var(--paper); }
+    .catchup {
+      margin: 0 14px 10px;
+      padding: 10px 12px;
+      border: 1px solid #514525;
+      border-radius: 11px;
+      background: linear-gradient(90deg, #211c10, #151710);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .catchup strong { display: block; font-size: 10px; }
+    .catchup span { display: block; margin-top: 2px; color: #a7a18d; font-size: 8px; }
+    .catchup button {
+      margin-left: auto;
+      padding: 7px 9px;
+      border: 0;
+      border-radius: 7px;
+      background: var(--amber);
+      color: #191205;
+      font: 800 8px/1 var(--mono);
+    }
+    .mobile-cards {
+      padding: 0 14px 92px;
+      display: grid;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .mobile-card {
+      display: grid;
+      grid-template-columns: 3px 42px minmax(0, 1fr);
+      gap: 10px;
+      min-height: 106px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #161a1e;
+    }
+    .mobile-card .rail { background: var(--state); }
+    .mobile-card .avatar { width: 42px; height: 42px; margin-top: 12px; }
+    .mobile-card-content { min-width: 0; padding: 11px 11px 9px 0; }
+    .mobile-card-title { display: flex; align-items: center; justify-content: space-between; }
+    .mobile-card-title b { font-size: 12px; }
+    .mobile-card-title span { color: var(--state); font: 750 8px/1 var(--mono); text-transform: uppercase; }
+    .mobile-card p {
+      margin: 5px 0 8px;
+      color: #aeb6bc;
+      font-size: 9px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mobile-actions { display: flex; gap: 5px; }
+    .mobile-actions button {
+      height: 25px;
+      border: 1px solid #323941;
+      border-radius: 7px;
+      background: #111519;
+      color: #aab3ba;
+      padding: 0 7px;
+      font: 700 8px/1 var(--mono);
+    }
+    .mobile-actions button.grant { color: var(--cyan); border-color: #305463; }
+    .mini-player {
+      position: absolute;
+      z-index: 3;
+      left: 9px;
+      right: 9px;
+      bottom: 48px;
+      height: 54px;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: center;
+      padding: 7px 10px 7px 8px;
+      border: 1px solid #4a535b;
+      border-radius: 14px;
+      background: rgba(25,30,35,.96);
+      box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    }
+    .mini-player .avatar { width: 36px; height: 36px; }
+    .mini-copy { min-width: 0; }
+    .mini-copy b { display: block; font-size: 9px; }
+    .mini-copy span { display: block; color: var(--muted); font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-progress { height: 2px; margin-top: 5px; background: #343b41; overflow: hidden; }
+    .mini-progress i { display: block; width: 46%; height: 100%; background: var(--green); }
+    .tab-bar {
+      position: absolute;
+      z-index: 2;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      padding: 8px 18px 10px;
+      display: flex;
+      justify-content: space-around;
+      background: #0b0e10;
+      border-top: 1px solid var(--line);
+    }
+    .tab-item { color: var(--muted-2); text-align: center; font: 700 8px/1.2 var(--mono); }
+    .tab-item i { display: block; font-style: normal; font-size: 14px; margin-bottom: 4px; }
+    .tab-item.active { color: var(--paper); }
+    .toast {
+      position: absolute;
+      z-index: 5;
+      top: 63px;
+      left: 28px;
+      right: 28px;
+      padding: 10px 12px;
+      border: 1px solid #3d6553;
+      border-radius: 11px;
+      background: #14251d;
+      color: #d8f2e4;
+      box-shadow: 0 12px 28px rgba(0,0,0,.4);
+      font-size: 9px;
+    }
+    .toast b { color: var(--green); }
+
+    /* player */
+    .player-screen { background: linear-gradient(180deg, #151a1f, #0c0f12 56%); }
+    .sheet-handle { width: 38px; height: 4px; margin: 6px auto 16px; border-radius: 8px; background: #3b4349; }
+    .player-sheet { padding: 0 18px 18px; flex: 1; display: flex; flex-direction: column; }
+    .player-persona { text-align: center; }
+    .player-persona .avatar { margin: 0 auto 10px; }
+    .player-persona h3 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
+    .player-persona p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+    .waveform { height: 32px; margin: 18px 0 6px; display: flex; align-items: center; justify-content: center; gap: 2px; overflow: hidden; }
+    .waveform i { width: 2px; border-radius: 2px; background: #39434a; }
+    .waveform i:nth-child(3n) { height: 26px; }
+    .waveform i:nth-child(3n+1) { height: 12px; }
+    .waveform i:nth-child(3n+2) { height: 19px; }
+    .waveform i.played { background: var(--green); }
+    .time-row { display: flex; justify-content: space-between; color: var(--muted-2); font: 650 8px/1 var(--mono); }
+    .karaoke {
+      margin: 18px 0 12px;
+      padding: 12px 14px;
+      min-height: 124px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #111519;
+      overflow: hidden;
+    }
+    .karaoke p { margin: 0 0 8px; color: #555f67; font-size: 13px; line-height: 1.42; font-weight: 640; letter-spacing: -.01em; }
+    .karaoke p.past { color: #87929a; }
+    .karaoke p.current { color: var(--paper); }
+    .karaoke p.current mark {
+      color: #0b120e;
+      background: var(--green);
+      border-radius: 4px;
+      padding: 1px 3px;
+    }
+    .transport {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-top: auto;
+    }
+    .transport button {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid #3a434a;
+      background: #171c20;
+      font-size: 14px;
+    }
+    .transport .primary {
+      width: 58px;
+      height: 58px;
+      border: 0;
+      background: var(--paper);
+      color: #0b0d0f;
+      font-size: 20px;
+    }
+    .speed-control {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .speed-control span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #171c20;
+      border: 1px solid var(--line);
+      color: #b9c1c7;
+      font: 700 9px/1 var(--mono);
+    }
+
+    /* chat and call */
+    .chat-head {
+      padding: 7px 14px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .back { color: var(--muted); font-size: 18px; }
+    .chat-head .avatar { width: 36px; height: 36px; }
+    .chat-head b { display: block; font-size: 12px; }
+    .chat-head span { color: var(--cyan); font: 700 8px/1 var(--mono); }
+    .chat-head .icon-btn { margin-left: auto; }
+    .messages {
+      padding: 16px 13px 112px;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .message { max-width: 84%; font-size: 10px; line-height: 1.5; }
+    .message.agent { align-self: flex-start; }
+    .message.user { align-self: flex-end; }
+    .bubble {
+      padding: 10px 12px;
+      border-radius: 14px 14px 14px 4px;
+      background: #1a2025;
+      border: 1px solid var(--line);
+      color: #d6dce0;
+    }
+    .message.user .bubble {
+      border-radius: 14px 14px 4px 14px;
+      background: #173141;
+      border-color: #27516a;
+    }
+    .message-meta { margin-top: 4px; color: var(--muted-2); font: 650 7px/1 var(--mono); }
+    .message.user .message-meta { text-align: right; }
+    .message-replay { color: var(--green); }
+    .composer {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      padding: 8px;
+      border: 1px solid #3a434a;
+      border-radius: 16px;
+      background: #171c20;
+      box-shadow: 0 -12px 30px rgba(0,0,0,.35);
+    }
+    .composer-box { color: var(--muted); font-size: 10px; padding: 4px 5px 10px; }
+    .composer-actions { display: flex; align-items: center; gap: 6px; }
+    .composer-actions button { border: 0; border-radius: 8px; height: 29px; padding: 0 9px; background: #252c32; color: #bdc5cb; font: 700 8px/1 var(--mono); }
+    .composer-actions .send { margin-left: auto; background: var(--paper); color: #0a0c0e; }
+    .composer-actions .mic { color: var(--cyan); border: 1px solid #305366; background: #14262f; }
+
+    .call-screen {
+      background:
+        radial-gradient(circle at 50% 24%, rgba(74,143,255,.22), transparent 32%),
+        linear-gradient(180deg, #121a22, #0b0e11 60%);
+      text-align: center;
+    }
+    .call-top {
+      padding: 14px 18px 0;
+      color: var(--muted);
+      font: 700 9px/1 var(--mono);
+    }
+    .call-top b { display: block; color: var(--green); margin-top: 7px; letter-spacing: .1em; text-transform: uppercase; }
+    .call-avatar { margin-top: 28px; position: relative; display: inline-block; }
+    .call-avatar::before, .call-avatar::after {
+      content: "";
+      position: absolute;
+      inset: -14px;
+      border: 1px solid rgba(74,143,255,.28);
+      border-radius: 50%;
+      animation: pulse 2s ease-out infinite;
+    }
+    .call-avatar::after { inset: -28px; animation-delay: .55s; }
+    @keyframes pulse { 70%,100% { transform: scale(1.12); opacity: 0; } }
+    .call-screen h3 { margin: 20px 0 4px; font-size: 24px; letter-spacing: -.04em; }
+    .call-screen .sub { color: var(--muted); font-size: 9px; }
+    .live-caption {
+      margin: 18px 22px;
+      padding: 12px;
+      min-height: 68px;
+      border-radius: 13px;
+      background: rgba(21,26,31,.82);
+      border: 1px solid #38434b;
+      text-align: left;
+      color: #dce1e4;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .live-caption span { color: var(--green); }
+    .call-actions {
+      margin-top: auto;
+      padding: 0 30px 26px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .call-action { font: 700 8px/1 var(--mono); color: var(--muted); }
+    .call-action button {
+      display: block;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 7px;
+      border-radius: 50%;
+      border: 1px solid #3a434a;
+      background: #1d2328;
+      color: var(--paper);
+      font-size: 15px;
+    }
+    .call-action.end button { background: var(--red); border-color: var(--red); color: #1b0807; }
+
+    /* interpreter */
+    .interpreter-layout {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 24px;
+      align-items: center;
+    }
+    .voice-orb {
+      min-height: 420px;
+      padding: 34px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid #2f505f;
+      border-radius: var(--r-xl);
+      background:
+        radial-gradient(circle, rgba(99,199,232,.16), transparent 33%),
+        #0e1519;
+    }
+    .orb {
+      width: 156px;
+      height: 156px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(99,199,232,.7);
+      box-shadow: 0 0 0 14px rgba(99,199,232,.06), 0 0 0 28px rgba(99,199,232,.025), 0 0 70px rgba(99,199,232,.14);
+      color: var(--cyan);
+      font-size: 32px;
+    }
+    .voice-orb h3 { margin: 40px 0 8px; font-size: 22px; letter-spacing: -.03em; }
+    .voice-orb p { max-width: 320px; margin: 0; color: #b9c4ca; font-size: 14px; line-height: 1.5; }
+    .voice-orb small { display: block; margin-top: 18px; color: var(--cyan); font: 700 9px/1 var(--mono); letter-spacing: .08em; }
+    .plan {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-xl);
+      background: var(--panel);
+    }
+    .plan-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .plan-head h3 { margin: 0; font-size: 23px; letter-spacing: -.035em; }
+    .plan-head p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .plan-status { color: var(--green); border-color: #325c49; background: #14271e; }
+    .steps { margin-top: 26px; position: relative; }
+    .steps::before { content: ""; position: absolute; left: 15px; top: 17px; bottom: 17px; width: 1px; background: #34413b; }
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 31px minmax(0, 1fr) auto;
+      gap: 13px;
+      align-items: start;
+      padding: 0 0 24px;
+    }
+    .step:last-child { padding-bottom: 0; }
+    .step-dot {
+      position: relative;
+      z-index: 1;
+      width: 31px;
+      height: 31px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #173224;
+      border: 1px solid #3d7759;
+      color: var(--green);
+      font-size: 12px;
+    }
+    .step-copy h4 { margin: 1px 0 4px; font-size: 13px; }
+    .step-copy p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .step-time { color: var(--muted-2); font: 650 9px/1 var(--mono); padding-top: 4px; }
+    .plan-foot {
+      margin-top: 24px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #101519;
+      border: 1px solid var(--line-soft);
+      color: #aab4bb;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .plan-foot b { color: var(--paper); }
+
+    /* pickers */
+    .picker-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 390px);
+      gap: 32px;
+      align-items: center;
+    }
+    .picker-window { min-height: 580px; }
+    .picker-body { padding: 26px; display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; }
+    .picker-steps { border-right: 1px solid var(--line); padding-right: 18px; }
+    .picker-step { display: flex; gap: 9px; align-items: center; margin-bottom: 19px; color: var(--muted-2); font: 700 10px/1 var(--mono); }
+    .picker-step i { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: #1c2227; border: 1px solid var(--line); font-style: normal; font-size: 8px; }
+    .picker-step.active { color: var(--paper); }
+    .picker-step.active i { background: var(--paper); color: #0a0c0e; }
+    .picker-main h3 { margin: 0; font-size: 26px; letter-spacing: -.04em; }
+    .picker-main > p { margin: 7px 0 22px; color: var(--muted); font-size: 12px; }
+    .mode-tabs {
+      display: flex;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #101418;
+      margin-bottom: 18px;
+    }
+    .mode-tabs button { flex: 1; height: 31px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font: 700 10px/1 var(--mono); }
+    .mode-tabs button.active { color: var(--paper); background: #272e34; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; margin-bottom: 7px; color: #9fa9b0; font: 700 9px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .select-box {
+      height: 42px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #353d44;
+      border-radius: 10px;
+      background: #14191d;
+      color: #dce1e4;
+      font-size: 11px;
+    }
+    .persona-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .persona-option {
+      padding: 9px 5px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 9px;
+      background: #111519;
+    }
+    .persona-option.active {
+      color: var(--paper);
+      border-color: var(--donnie);
+      box-shadow: inset 0 0 0 1px rgba(168,115,255,.2);
+      background: rgba(168,115,255,.08);
+    }
+    .persona-option .avatar { width: 38px; height: 38px; margin: 0 auto 6px; }
+    .flag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .flag {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #12171b;
+      color: #aeb7be;
+      font-size: 9px;
+    }
+    .check { width: 13px; height: 13px; display: grid; place-items: center; border-radius: 4px; background: var(--cyan); color: #071013; font-size: 8px; }
+    .picker-footer {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 18px;
+      border-top: 1px solid var(--line);
+      background: #0d1013;
+    }
+    .picker-footer .text-btn:first-child { margin-left: auto; }
+    .confirm-btn {
+      height: 34px;
+      border: 0;
+      border-radius: 9px;
+      padding: 0 14px;
+      background: var(--paper);
+      color: #0a0c0e;
+      font: 800 10px/1 var(--mono);
+    }
+    .confirm-callout {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 11px;
+      background: #20182d;
+      border: 1px solid #4d3a6b;
+      color: #d9c9f7;
+      font: 650 10px/1.45 var(--mono);
+    }
+    .mobile-picker .phone-screen { background: #0d1013; }
+    .mobile-sheet {
+      margin-top: auto;
+      min-height: 92%;
+      padding: 6px 17px 20px;
+      border-radius: 25px 25px 0 0;
+      border-top: 1px solid #414a51;
+      background: #15191d;
+      text-align: left;
+    }
+    .mobile-sheet h3 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+    .mobile-sheet > p { margin: 5px 0 16px; color: var(--muted); font-size: 10px; }
+    .mobile-sheet .persona-options { gap: 6px; }
+    .mobile-sheet .persona-option { padding: 7px 3px; }
+    .mobile-sheet .field { margin-bottom: 12px; }
+    .mobile-sheet .select-box { height: 38px; }
+    .mobile-confirm {
+      margin-top: 13px;
+      padding: 11px;
+      border-radius: 12px;
+      background: #20182d;
+      border: 1px solid #543f76;
+    }
+    .mobile-confirm span { display: block; color: var(--muted); font: 700 8px/1 var(--mono); text-transform: uppercase; }
+    .mobile-confirm b { display: block; margin-top: 6px; color: #e6daf8; font-size: 11px; }
+    .start-mobile { width: 100%; height: 44px; margin-top: 10px; border: 0; border-radius: 11px; background: var(--paper); color: #090b0c; font: 800 11px/1 var(--mono); }
+
+    /* rationale */
+    .rationale-grid {
+      display: grid;
+      grid-template-columns: .75fr 1.25fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .principles { display: grid; gap: 14px; }
+    .principle {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      background: var(--panel);
+    }
+    .principle b { display: block; margin-bottom: 8px; font-size: 16px; letter-spacing: -.025em; }
+    .principle p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .mapping {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      background: #111519;
+    }
+    .mapping-row {
+      display: grid;
+      grid-template-columns: .72fr 1.28fr;
+      border-bottom: 1px solid var(--line);
+    }
+    .mapping-row:last-child { border-bottom: 0; }
+    .mapping-row > div { padding: 15px 17px; color: #aeb7be; font-size: 12px; line-height: 1.45; }
+    .mapping-row > div:first-child { color: var(--paper); font: 700 10px/1.45 var(--mono); border-right: 1px solid var(--line); }
+    .mapping-row.head { background: #1a2025; }
+    .mapping-row.head > div { color: var(--muted); font: 750 9px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+    .tradeoffs {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .tradeoff {
+      padding: 20px;
+      border-radius: var(--r-md);
+      background: #111519;
+      border: 1px solid var(--line);
+    }
+    .tradeoff h4 { margin: 0 0 11px; color: var(--green); font: 750 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .tradeoff.cut h4 { color: var(--red); }
+    .tradeoff p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .end-mark {
+      padding: 80px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      color: var(--muted-2);
+      font: 700 10px/1.4 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .end-mark strong { color: var(--paper); font-size: clamp(30px, 5vw, 68px); letter-spacing: -.055em; text-transform: none; }
+
+    @media (max-width: 1050px) {
+      .hero { grid-template-columns: 1fr; gap: 40px; }
+      .manifesto { max-width: 620px; transform: none; }
+      .desktop-window { aspect-ratio: auto; min-height: 720px; }
+      .desktop-content { grid-template-columns: 1fr; }
+      .summary-pane { border-left: 0; border-top: 1px solid var(--line-soft); }
+      .summary-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+      .phones { grid-template-columns: repeat(2, minmax(0, 390px)); }
+      .picker-grid, .rationale-grid { grid-template-columns: 1fr; }
+      .mobile-picker { width: min(100%, 390px); justify-self: center; }
+    }
+    @media (max-width: 760px) {
+      .board { width: min(100% - 24px, 520px); padding-top: 30px; }
+      .hero { min-height: auto; padding: 40px 0 56px; }
+      .hero h1 { font-size: clamp(58px, 24vw, 100px); }
+      section { padding: 64px 0; }
+      .section-head { grid-template-columns: 1fr; gap: 12px; }
+      .token-layout, .dock-showcase, .interpreter-layout { grid-template-columns: 1fr; }
+      .swatches { grid-template-columns: 1fr 1fr; }
+      .space-note { grid-template-columns: 1fr 1fr; }
+      .desktop-window { min-height: 1180px; border-radius: 18px; }
+      .app-topbar { padding: 0 10px; gap: 8px; }
+      .app-status .status-pill:nth-child(2) { display: none; }
+      .desktop-content { height: auto; }
+      .room-grid { grid-template-columns: 1fr; }
+      .summary-copy { grid-template-columns: 1fr; }
+      .state-legend { grid-template-columns: 1fr 1fr; }
+      .phones { grid-template-columns: minmax(0, 390px); }
+      .phone { min-height: 650px; }
+      .dock.speaking { grid-template-columns: 80px 1fr; }
+      .interpreter-layout { gap: 14px; }
+      .voice-orb { min-height: 360px; padding: 24px; }
+      .plan { padding: 20px; }
+      .picker-body { grid-template-columns: 1fr; }
+      .picker-steps { border-right: 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; overflow: hidden; }
+      .picker-step { min-width: max-content; }
+      .picker-window { min-height: 760px; }
+      .tradeoffs { grid-template-columns: 1fr; }
+      .mapping-row { grid-template-columns: 1fr; }
+      .mapping-row > div:first-child { border-right: 0; border-bottom: 1px solid var(--line-soft); }
+      .end-mark { align-items: start; flex-direction: column; gap: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Concept 02 · Signal Desk</div>
+        <h1>THE ROOM<br><span>IS ON AIR.</span></h1>
+        <p class="hero-copy">A dev den reimagined as a late-night broadcast desk: every agent has a voice, every state has a signal, and the one thing worth hearing always cuts cleanly through the noise.</p>
+      </div>
+      <aside class="manifesto">
+        <strong>Thesis</strong>
+        <p>Persona color says <em>who</em>. Signal color says <em>what now</em>. The interface keeps those jobs separate, so a wall of character still reads like a serious daily instrument.</p>
+        <div class="signal-key">
+          <span><i></i> Speaking</span>
+          <span><i></i> Needs you</span>
+          <span><i></i> Live control</span>
+        </div>
+      </aside>
+    </header>
+
+    <section id="tokens">
+      <div class="section-head">
+        <div class="section-no">01 / TOKENS</div>
+        <div>
+          <h2 class="section-title">Low light. High signal.</h2>
+          <p class="section-deck">Ink-black surfaces disappear at the edge of a developer’s screen. Warm type keeps the room human; electrical semantic colors are reserved for motion and urgency.</p>
+        </div>
+      </div>
+      <div class="token-layout">
+        <div class="token-card">
+          <h3>Core + semantic palette</h3>
+          <div class="swatches">
+            <div class="swatch dark"><b>ROOM INK</b><span>#080A0C</span></div>
+            <div class="swatch paper"><b>WARM TYPE</b><span>#F3EFE5</span></div>
+            <div class="swatch work"><b>WORKING</b><span>#63C7E8</span></div>
+            <div class="swatch wait"><b>NEEDS YOU</b><span>#F5C451</span></div>
+            <div class="swatch speak"><b>SPEAKING</b><span>#6FE0A7</span></div>
+          </div>
+          <div class="persona-swatches">
+            <div class="persona-swatch" style="background:var(--leo)">LEO · #4A8FFF</div>
+            <div class="persona-swatch" style="background:var(--donnie)">DONNIE · #A873FF</div>
+            <div class="persona-swatch" style="background:var(--mikey)">MIKEY · #FF9F43</div>
+            <div class="persona-swatch" style="background:var(--raph)">RAPH · #F15B5D</div>
+          </div>
+        </div>
+        <div class="token-card">
+          <h3>Type scale</h3>
+          <div class="type-samples">
+            <div class="type-row"><span>DISPLAY / 64</span><b>On air</b></div>
+            <div class="type-row"><span>UI / 18</span><b>Donnie has a fix</b></div>
+            <div class="type-row"><span>META / 11</span><b>WORKING · 03:18</b></div>
+          </div>
+        </div>
+        <div class="space-note">
+          <div class="space-item"><strong>4 / 8 / 12 / 20</strong>Compact rhythm for a tool that stays open all day.</div>
+          <div class="space-item"><strong>8–14 px controls</strong>Tight mechanical radii; never bubbly enterprise pills.</div>
+          <div class="space-item"><strong>18–26 px frames</strong>Softer device shells distinguish product from chrome.</div>
+          <div class="space-item"><strong>One luminous edge</strong>State lives on the left rail, not across the whole card.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="desktop-room">
+      <div class="section-head">
+        <div class="section-no">02 / DESKTOP</div>
+        <div>
+          <h2 class="section-title">The room is a mixing board.</h2>
+          <p class="section-deck">Dense enough for six sessions, calm enough to leave open. Speaking gets luminosity; requests get amber; disconnected sessions recede without vanishing.</p>
+        </div>
+      </div>
+      <div class="desktop-stage">
+        <div class="frame desktop-window">
+          <div class="app-topbar">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <span class="app-name">Room of Devs</span>
+            <div class="app-status">
+              <span class="status-pill"><i></i> Bridge online</span>
+              <span class="status-pill">4 in the room</span>
+              <button class="hold-button">Ⅱ HOLD ROOM</button>
+              <button class="icon-btn" aria-label="Room settings">•••</button>
+            </div>
+          </div>
+          <div class="desktop-content">
+            <div class="room-zone">
+              <div class="room-titlebar">
+                <div><h3>Night shift</h3><p>2 active · 1 waiting · live narration on</p></div>
+                <button class="text-btn">＋ NEW SESSION</button>
+              </div>
+              <div class="room-grid">
+                <article class="agent-card speaking" style="--persona:var(--donnie);--state:var(--green)">
+                  <div class="state-rail"></div>
+                  <div class="card-inner">
+                    <div class="card-main">
+                      <div class="avatar-wrap">
+                        <img class="avatar" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                        <span class="state-dot"></span>
+                      </div>
+                      <div class="agent-meta">
+                        <div class="agent-title"><b>Donnie</b><div class="meter"><i></i><i></i><i></i><i></i></div></div>
+                        <div class="agent-state">Speaking · 0:42</div>
+                        <div class="agent-task">jellyfin-streamline · sonnet</div>
+                        <div class="chip-row"><span class="chip live">● LIVE</span><span class="chip phone">⌁ ON PHONE</span></div>
+                      </div>
+                    </div>
+                    <div class="card-actions">
+                      <button class="icon-btn" aria-label="Pause">Ⅱ</button><button class="icon-btn" aria-label="Stop">■</button><button class="icon-btn" aria-label="Replay">↺</button><button class="icon-btn" aria-label="Replay slower">½</button>
+                      <span class="spacer"></span><button class="ptt-grant">HOLD TO TALK</button><button class="icon-btn" aria-label="More actions">•••</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="agent-card asking" style="--persona:var(--leo);--state:var(--amber)">
+                  <div class="state-rail"></div>
+                  <div class="card-inner">
+                    <div class="card-main">
+                      <div class="avatar-wrap">
+                        <img class="avatar" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">
+                        <span class="state-dot"></span>
+                      </div>
+                      <div class="agent-meta">
+                        <div class="agent-title"><b>Leo · API lead</b><span class="badge">?</span></div>
+                        <div class="agent-state">Asking · decision needed</div>
+                        <div class="agent-task">room-bridge · opus</div>
+                        <div class="chip-row"><span class="chip hot">☝ 2</span><span class="chip">↯ 1 superseded</span></div>
+                      </div>
+                    </div>
+                    <div class="queue-preview">“Do you want the reconnect to replay unheard audio or start clean?”</div>
+                    <div class="card-actions">
+                      <button class="text-btn">ANSWER</button><button class="icon-btn" aria-label="Status info">i</button><span class="spacer"></span><button class="ptt-grant is-live">● MIC LIVE</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="agent-card" style="--persona:var(--mikey);--state:var(--cyan)">
+                  <div class="state-rail"></div>
+                  <div class="card-inner">
+                    <div class="card-main">
+                      <div class="avatar-wrap">
+                        <img class="avatar" alt="Michelangelo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23351f0c'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23ff9f43'%3EM%3C/text%3E%3C/svg%3E">
+                        <span class="state-dot"></span>
+                      </div>
+                      <div class="agent-meta">
+                        <div class="agent-title"><b>Mikey</b><span class="badge">⌘</span></div>
+                        <div class="agent-state">Working · 3m 18s</div>
+                        <div class="agent-task">mobile-player · sonnet</div>
+                        <div class="chip-row"><span class="chip">MUTED</span><span class="chip">local</span></div>
+                      </div>
+                    </div>
+                    <div class="card-actions">
+                      <button class="text-btn">FOCUS TERMINAL</button><button class="icon-btn" aria-label="Status info">i</button><span class="spacer"></span><button class="ptt-grant">HOLD TO TALK</button><button class="icon-btn" aria-label="More actions">•••</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="agent-card stale" style="--persona:var(--raph);--state:var(--muted-2)">
+                  <div class="state-rail"></div>
+                  <div class="card-inner">
+                    <div class="card-main">
+                      <div class="avatar-wrap">
+                        <img class="avatar" alt="Raphael avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%2333191a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23f15b5d'%3ER%3C/text%3E%3C/svg%3E">
+                        <span class="state-dot"></span>
+                      </div>
+                      <div class="agent-meta">
+                        <div class="agent-title"><b>Raph</b><span class="badge">×</span></div>
+                        <div class="agent-state">Stale · last seen 12m</div>
+                        <div class="agent-task">menu-bar · haiku</div>
+                        <div class="chip-row"><span class="chip">DISCONNECTED</span></div>
+                      </div>
+                    </div>
+                    <div class="card-actions">
+                      <button class="text-btn">RECONNECT</button><span class="spacer"></span><button class="icon-btn" aria-label="Swap persona">⇄</button><button class="icon-btn" aria-label="Kill session">†</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <aside class="summary-pane">
+              <div class="pane-label">Most recent transmission</div>
+              <div class="now-speaking">
+                <img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                <div><b>Donnie</b><span>● SPEAKING NOW</span></div>
+              </div>
+              <div class="summary-copy">
+                <div>
+                  <h4>Playback race, contained.</h4>
+                  <p>The phone was creating a second audio owner during reconnect. I moved ownership into the bridge and made device handoff explicit.</p>
+                </div>
+                <ul>
+                  <li>Added <code>playbackLease</code></li>
+                  <li>Covered stale-device handoff</li>
+                  <li>3 integration tests passing</li>
+                </ul>
+              </div>
+              <div class="summary-meta"><span>0:42 / 1:08</span><span>jellyfin-streamline</span></div>
+            </aside>
+          </div>
+        </div>
+        <p class="caption">900 × 640 target · content reflows before controls collapse</p>
+        <div class="state-legend" aria-label="Agent state card system">
+          <div class="legend-item" style="--state:#69747d"><i></i><img class="avatar" style="--persona:var(--guest)" alt="Splinter avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23152c28'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%2371d4bd'%3ES%3C/text%3E%3C/svg%3E"><div><b>Splinter</b><span>Idle</span></div></div>
+          <div class="legend-item" style="--state:var(--cyan)"><i></i><img class="avatar" style="--persona:var(--mikey)" alt="Michelangelo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23351f0c'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23ff9f43'%3EM%3C/text%3E%3C/svg%3E"><div><b>Mikey</b><span>Working</span></div></div>
+          <div class="legend-item" style="--state:var(--green)"><i></i><img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E"><div><b>Donnie</b><span>Speaking</span></div></div>
+          <div class="legend-item" style="--state:var(--amber)"><i></i><img class="avatar" style="--persona:var(--guest)" alt="Casey avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23152c28'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%2371d4bd'%3EC%3C/text%3E%3C/svg%3E"><div><b>Casey · 2 queued</b><span>Hand raised</span></div></div>
+          <div class="legend-item" style="--state:#ff9e66"><i></i><img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E"><div><b>Leo</b><span>Asking</span></div></div>
+          <div class="legend-item" style="--state:var(--red)"><i></i><img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E"><div><b>Leo · mic live</b><span>Active PTT</span></div></div>
+          <div class="legend-item" style="--state:#566069"><i></i><img class="avatar" style="--persona:var(--raph)" alt="Raphael avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%2333191a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23f15b5d'%3ER%3C/text%3E%3C/svg%3E"><div><b>Raph · 12m</b><span>Disconnected</span></div></div>
+          <div class="legend-item" style="--state:#566069"><i></i><img class="avatar" style="--persona:var(--guest)" alt="April avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23152c28'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%2371d4bd'%3EA%3C/text%3E%3C/svg%3E"><div><b>April</b><span>Muted</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dock">
+      <div class="section-head">
+        <div class="section-no">03 / DOCK</div>
+        <div>
+          <h2 class="section-title">A caption, not another window.</h2>
+          <p class="section-deck">The non-activating dock stays deliberately input-free. It grows only when someone speaks, with transport and hold-to-talk sized for muscle memory.</p>
+        </div>
+      </div>
+      <div class="dock-showcase">
+        <div>
+          <div class="dock collapsed">
+            <img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">
+            <div class="dock-label"><b>Room quiet</b><span>4 devs · bridge online</span></div>
+            <span class="state-dot" style="--state:var(--green);margin-left:auto"></span>
+          </div>
+          <p class="caption">Collapsed · 244 × 58</p>
+        </div>
+        <div>
+          <div class="dock speaking">
+            <div class="dock-persona">
+              <span class="live-pin">● ON AIR</span>
+              <img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+            </div>
+            <div class="dock-copy">
+              <div class="caption-bubble"><b>Donnie:</b> The reconnect bug was a split-brain audio owner. I’ve moved the lease into the bridge and the phone handoff is clean now.</div>
+              <div class="dock-controls">
+                <button class="icon-btn" aria-label="Pause">Ⅱ</button><button class="icon-btn" aria-label="Stop">■</button><button class="icon-btn" aria-label="Replay">↺</button><button class="dock-ptt">HOLD PTT</button>
+                <span class="non-focus">never steals focus</span>
+              </div>
+            </div>
+          </div>
+          <p class="caption">Speaking · 380 × 150 target · live text truncates after 3 lines</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="phone-room">
+      <div class="section-head">
+        <div class="section-no">04 / PHONE ROOM + PLAYER</div>
+        <div>
+          <h2 class="section-title">The room fits one hand.</h2>
+          <p class="section-deck">Cards compress to status, current work, and four verbs. Global audio routing sits high and safe; catch-up, transport, and agent actions live in thumb reach.</p>
+        </div>
+      </div>
+      <div class="phones">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+              <div class="phone-head">
+                <div><h3>Night shift</h3><p>4 devs · 2 unheard</p></div>
+                <div class="device-toggle"><button>MAC</button><button class="active">PHONE</button></div>
+              </div>
+              <div class="catchup"><div>◉</div><div><strong>Two transmissions waiting</strong><span>Leo asked; Mikey wrapped a test pass.</span></div><button>CATCH UP</button></div>
+              <div class="mobile-cards">
+                <article class="mobile-card" style="--state:var(--green)">
+                  <div class="rail"></div>
+                  <img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                  <div class="mobile-card-content"><div class="mobile-card-title"><b>Donnie</b><span>Speaking</span></div><p>Playback lease lives in the bridge now.</p><div class="mobile-actions"><button class="grant">GRANT</button><button>CHAT</button><button>HIDE</button><button>↺</button></div></div>
+                </article>
+                <article class="mobile-card" style="--state:var(--amber)">
+                  <div class="rail"></div>
+                  <img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">
+                  <div class="mobile-card-content"><div class="mobile-card-title"><b>Leo · API lead</b><span>Asking</span></div><p>Replay unheard audio after reconnect?</p><div class="mobile-actions"><button class="grant">GRANT</button><button>CHAT</button><button>HIDE</button><button>↺</button></div></div>
+                </article>
+                <article class="mobile-card" style="--state:var(--cyan)">
+                  <div class="rail"></div>
+                  <img class="avatar" style="--persona:var(--mikey)" alt="Michelangelo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23351f0c'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23ff9f43'%3EM%3C/text%3E%3C/svg%3E">
+                  <div class="mobile-card-content"><div class="mobile-card-title"><b>Mikey</b><span>Working</span></div><p>Stress-testing audio handoff on LTE.</p><div class="mobile-actions"><button class="grant">GRANT</button><button>CHAT</button><button>HIDE</button><button>↺</button></div></div>
+                </article>
+              </div>
+              <div class="toast"><b>Room held.</b> Nobody will start a new transmission.</div>
+              <div class="mini-player">
+                <img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                <div class="mini-copy"><b>Donnie · speaking</b><span>“The reconnect bug was…”</span><div class="mini-progress"><i></i></div></div>
+                <button class="icon-btn" aria-label="Pause">Ⅱ</button>
+              </div>
+              <div class="tab-bar"><div class="tab-item active"><i>▦</i>ROOM</div><div class="tab-item"><i>◉</i>HOLD</div><div class="tab-item"><i>＋</i>NEW</div></div>
+            </div>
+          </div>
+          <p class="caption">Room · audio route, catch-up, toast + mini-player</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen player-screen">
+              <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+              <div class="sheet-handle"></div>
+              <div class="player-sheet">
+                <div class="player-persona">
+                  <img class="avatar lg" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                  <h3>Playback race, contained.</h3><p>Donnie · jellyfin-streamline</p>
+                </div>
+                <div class="waveform">
+                  <i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i class="played"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="time-row"><span>0:42</span><span>1:08</span></div>
+                <div class="karaoke">
+                  <p class="past">The phone was creating a second audio owner during reconnect.</p>
+                  <p class="current">I moved ownership <mark>into the bridge</mark> and made device handoff explicit.</p>
+                  <p>Three integration tests are green. We’re clean.</p>
+                </div>
+                <div class="transport"><button aria-label="Replay 15 seconds">−15</button><button class="primary" aria-label="Pause">Ⅱ</button><button aria-label="Stop">■</button></div>
+                <div class="speed-control"><span>1.0× SPEED</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="caption">Expanded player sheet · karaoke transcript</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+              <div class="chat-head"><span class="back">‹</span><img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E"><div><b>Leo · API lead</b><span>ASKING</span></div><button class="icon-btn" aria-label="Start live call">☎</button></div>
+              <div class="messages">
+                <div class="message agent"><div class="bubble">Reconnect policy is the last fork. Replay unheard audio, or start clean when the bridge comes back?</div><div class="message-meta">9:34 · <span class="message-replay">↺ REPLAY</span></div></div>
+                <div class="message user"><div class="bubble">Replay anything under five minutes old. Older than that, just summarize.</div><div class="message-meta">9:36</div></div>
+                <div class="message agent"><div class="bubble">Good boundary. I’ll keep the queue honest and avoid a surprise podcast after a long outage.</div><div class="message-meta">9:36 · <span class="message-replay">↺ REPLAY</span></div></div>
+              </div>
+              <div class="composer"><div class="composer-box">Reply to Leo…</div><div class="composer-actions"><button>＋</button><button class="mic">● HOLD TO TALK</button><button class="send">SEND ↑</button></div></div>
+            </div>
+          </div>
+          <p class="caption">Per-agent thread · replay, composer, call entry</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="call">
+      <div class="section-head">
+        <div class="section-no">05 / LIVE CALL + INTERPRETER</div>
+        <div>
+          <h2 class="section-title">Talk to the room like a room.</h2>
+          <p class="section-deck">Call mode prioritizes presence and narration. The interpreter turns conversational direction into a visible, auditable command plan—results, not hidden reasoning.</p>
+        </div>
+      </div>
+      <div class="phones" style="grid-template-columns:minmax(0,390px) minmax(0,390px);margin-bottom:36px">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen call-screen">
+              <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+              <div class="call-top">LIVE NARRATION <b>● CONNECTED · 02:18</b></div>
+              <div class="call-avatar">
+                <img class="avatar xl" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">
+              </div>
+              <h3>Leo · API lead</h3><div class="sub">room-bridge · opus</div>
+              <div class="live-caption"><span>Leo:</span> I’m tracing the reconnect from the socket edge inward. The stale lease survives exactly one branch—found it.</div>
+              <div class="call-actions">
+                <div class="call-action"><button>♩</button>MUTE</div>
+                <div class="call-action"><button>Ⅱ</button>HOLD</div>
+                <div class="call-action end"><button>×</button>END</div>
+              </div>
+            </div>
+          </div>
+          <p class="caption">Call mode · narration remains readable one-handed</p>
+        </div>
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen" style="background:#0d1317">
+              <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+              <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:18px">‹</span><b style="font-size:12px">Voice interpreter</b><span style="width:18px"></span></div>
+              <div style="padding:22px 22px 0;text-align:center">
+                <div class="orb" style="width:110px;height:110px;margin:auto;font-size:24px">●)))</div>
+                <h3 style="margin:28px 0 7px;font-size:20px">Got it.</h3>
+                <p style="margin:0;color:var(--muted);font-size:11px;line-height:1.5">“Pause the room, then replay Donnie’s last message.”</p>
+              </div>
+              <div style="margin:24px 14px 0;padding:16px;border:1px solid var(--line);border-radius:16px;background:#151a1e;text-align:left">
+                <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">2-step plan</b><span class="chip" style="color:var(--green)">DONE</span></div>
+                <div class="steps" style="margin-top:18px">
+                  <div class="step" style="padding-bottom:18px"><span class="step-dot">✓</span><div class="step-copy"><h4>Hold the room</h4><p>New transmissions paused. 4 devs held.</p></div><span class="step-time">0.2s</span></div>
+                  <div class="step"><span class="step-dot">✓</span><div class="step-copy"><h4>Replay Donnie</h4><p>Playing “Playback race, contained.” on phone.</p></div><span class="step-time">0.5s</span></div>
+                </div>
+              </div>
+              <div class="mini-player" style="bottom:14px">
+                <img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">
+                <div class="mini-copy"><b>Donnie · replaying</b><span>0:06 / 1:08</span><div class="mini-progress"><i style="width:9%"></i></div></div><button class="icon-btn">Ⅱ</button>
+              </div>
+            </div>
+          </div>
+          <p class="caption">Interpreter result · execution plan stays inspectable</p>
+        </div>
+      </div>
+      <div class="interpreter-layout">
+        <div class="voice-orb">
+          <div>
+            <div class="orb">●)))</div>
+            <h3>Say it naturally.</h3>
+            <p>“Pause the room, then replay Donnie’s last message.”</p>
+            <small>HOLDING · RELEASE TO RUN</small>
+          </div>
+        </div>
+        <div class="plan">
+          <div class="plan-head"><div><h3>Command plan</h3><p>Built from your instruction · executed in order</p></div><span class="status-pill plan-status"><i></i> Complete</span></div>
+          <div class="steps">
+            <div class="step"><span class="step-dot">✓</span><div class="step-copy"><h4>Hold the room</h4><p>Paused new narration for Donnie, Leo, Mikey, and Raph. Active audio was allowed to finish.</p></div><span class="step-time">0.2s</span></div>
+            <div class="step"><span class="step-dot">✓</span><div class="step-copy"><h4>Find Donnie’s latest transmission</h4><p>Matched “Playback race, contained.” from 42 seconds ago.</p></div><span class="step-time">0.1s</span></div>
+            <div class="step"><span class="step-dot">✓</span><div class="step-copy"><h4>Replay on this device</h4><p>Phone took the playback lease. Audio started at 1.0×.</p></div><span class="step-time">0.2s</span></div>
+          </div>
+          <div class="plan-foot"><b>Room remains held.</b> “Resume the room” or tap Hold when you’re ready.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="picker">
+      <div class="section-head">
+        <div class="section-no">06 / PICKER</div>
+        <div>
+          <h2 class="section-title">Cast the session, then commit.</h2>
+          <p class="section-deck">Persona comes first because voice is the relationship. Technical settings follow, then a sentence-level confirmation makes the spawn target unmistakable.</p>
+        </div>
+      </div>
+      <div class="picker-grid">
+        <div>
+          <div class="frame picker-window">
+            <div class="app-topbar"><div class="traffic"><i></i><i></i><i></i></div><span class="app-name">Add to the room</span></div>
+            <div class="picker-body">
+              <aside class="picker-steps">
+                <div class="picker-step"><i>✓</i>Persona</div>
+                <div class="picker-step"><i>✓</i>Project</div>
+                <div class="picker-step"><i>✓</i>Model</div>
+                <div class="picker-step active"><i>4</i>Confirm</div>
+              </aside>
+              <div class="picker-main">
+                <h3>Start a new shift</h3><p>Choose who’s joining and what they’re walking into.</p>
+                <div class="mode-tabs"><button class="active">NEW SESSION</button><button>RESUME</button></div>
+                <div class="field"><label>Persona</label><div class="persona-options">
+                  <div class="persona-option"><img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">Leo</div>
+                  <div class="persona-option active"><img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">Donnie</div>
+                  <div class="persona-option"><img class="avatar" style="--persona:var(--mikey)" alt="Michelangelo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23351f0c'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23ff9f43'%3EM%3C/text%3E%3C/svg%3E">Mikey</div>
+                  <div class="persona-option"><img class="avatar" style="--persona:var(--raph)" alt="Raphael avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%2333191a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23f15b5d'%3ER%3C/text%3E%3C/svg%3E">Raph</div>
+                </div></div>
+                <div class="field"><label>Project folder</label><div class="select-box"><span>~/projects/jellyfin-streamline</span><span>⌄</span></div></div>
+                <div class="field"><label>Model</label><div class="select-box"><span>Claude Sonnet</span><span>⌄</span></div></div>
+                <div class="field"><label>Flags</label><div class="flag-row"><div class="flag"><span class="check">✓</span>skip-permissions</div><div class="flag"><span class="check" style="background:#272e34;color:#77828a"> </span>remote</div></div></div>
+                <div class="confirm-callout">Ready: <b>Start Donnie · sonnet · jellyfin-streamline</b></div>
+              </div>
+            </div>
+            <div class="picker-footer"><button class="text-btn">CANCEL</button><button class="confirm-btn">START DONNIE →</button></div>
+          </div>
+          <p class="caption">Desktop picker · explicit fourth-step confirmation</p>
+        </div>
+        <div class="phone mobile-picker">
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>5G ◒ 91%</span></div>
+            <div class="mobile-sheet">
+              <div class="sheet-handle"></div>
+              <h3>Add to the room</h3><p>New session · step 4 of 4</p>
+              <div class="field"><label>Persona</label><div class="persona-options">
+                <div class="persona-option"><img class="avatar" style="--persona:var(--leo)" alt="Leonardo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23142640'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%234a8fff'%3EL%3C/text%3E%3C/svg%3E">Leo</div>
+                <div class="persona-option active"><img class="avatar" style="--persona:var(--donnie)" alt="Donatello avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23261b3a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23a873ff'%3ED%3C/text%3E%3C/svg%3E">Donnie</div>
+                <div class="persona-option"><img class="avatar" style="--persona:var(--mikey)" alt="Michelangelo avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23351f0c'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23ff9f43'%3EM%3C/text%3E%3C/svg%3E">Mikey</div>
+                <div class="persona-option"><img class="avatar" style="--persona:var(--raph)" alt="Raphael avatar placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%2333191a'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-weight='800' font-size='42' fill='%23f15b5d'%3ER%3C/text%3E%3C/svg%3E">Raph</div>
+              </div></div>
+              <div class="field"><label>Project</label><div class="select-box"><span>jellyfin-streamline</span><span>⌄</span></div></div>
+              <div class="field"><label>Model</label><div class="select-box"><span>Claude Sonnet</span><span>⌄</span></div></div>
+              <div class="field"><label>Flags</label><div class="flag-row"><div class="flag"><span class="check">✓</span>skip-permissions</div><div class="flag"><span class="check" style="background:#272e34"></span>remote</div></div></div>
+              <div class="mobile-confirm"><span>Confirm launch</span><b>Start Donnie · sonnet · jellyfin-streamline</b></div>
+              <button class="start-mobile">START DONNIE →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rationale">
+      <div class="section-head">
+        <div class="section-no">07 / RATIONALE</div>
+        <div>
+          <h2 class="section-title">Character, under control.</h2>
+          <p class="section-deck">The system celebrates the cast through voice, avatar, and accent—not themed chrome. That restraint makes moments of speech and live control feel special.</p>
+        </div>
+      </div>
+      <div class="rationale-grid">
+        <div class="principles">
+          <div class="principle"><b>Identity ≠ urgency</b><p>A persona’s accent stays on the avatar and selected controls. A dedicated semantic rail handles working, speaking, asking, stale, and hand-raised states.</p></div>
+          <div class="principle"><b>Speech earns the light</b><p>Only the active speaker gets a luminous surface, animated level meter, and the summary pane. The room has one visual lead at a time.</p></div>
+          <div class="principle"><b>PTT is a physical gesture</b><p>Press-and-hold changes label, color, and glow immediately. Release ends the grant. On phone it stays beside the composer; in the dock it never opens input.</p></div>
+          <div class="principle"><b>Plain image, rich frame</b><p>Every avatar is a plain <code>&lt;img&gt;</code>, ready for out-of-React 70 ms mouth-frame swaps. State decoration lives in sibling layers and never disrupts lip-sync.</p></div>
+        </div>
+        <div>
+          <div class="mapping">
+            <div class="mapping-row head"><div>Surface / need</div><div>shadcn + AI Elements composition</div></div>
+            <div class="mapping-row"><div>Room + agent cards</div><div><b>Card, Avatar, Badge, Button, Tooltip, DropdownMenu</b>; ScrollArea for the room and summary. Domain custom: signal rail, lip-sync frame, hold PTT.</div></div>
+            <div class="mapping-row"><div>Transport + routing</div><div><b>ToggleGroup, Slider, Button, Popover</b> for playback speed and device routing; Toast / <b>sonner</b> for held-room and handoff confirmation.</div></div>
+            <div class="mapping-row"><div>Phone player</div><div><b>Sheet, Slider, Button</b>. Domain custom: waveform and karaoke line progress, fed by the audio clock outside React.</div></div>
+            <div class="mapping-row"><div>Agent thread</div><div>AI Elements <b>Conversation, Message, PromptInput</b>; shadcn Button and Avatar. Replay is message-local, not buried in a menu.</div></div>
+            <div class="mapping-row"><div>Interpreter plan</div><div>AI Elements <b>Task, ChainOfThought, Reasoning</b>, adapted to show only user-visible commands and outcomes—never private model reasoning.</div></div>
+            <div class="mapping-row"><div>Picker + safety</div><div><b>Dialog</b> on desktop, <b>Sheet</b> on phone; Tabs, Select, Checkbox, Avatar, Button, AlertDialog for explicit launch and kill confirmation.</div></div>
+          </div>
+          <div class="tradeoffs">
+            <div class="tradeoff cut"><h4>Cut from primary view</h4><p>Kill, swap persona, superseded history, and slower replay live in menus or long-press detail. They remain available without taxing every glance.</p></div>
+            <div class="tradeoff"><h4>Add to the system</h4><p>A single playback-lease indicator clarifies which device owns audio. “Room remains held” persists after interpreter commands so automation never hides durable state.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="end-mark"><strong>Keep the room talking.</strong><span>Room of Devs · Signal Desk concept<br>Dark-first · macOS + phone</span></div>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll('.ptt-grant').forEach(function (button) {
+      var activate = function () {
+        button.classList.add('is-live');
+        button.textContent = '● MIC LIVE';
+      };
+      var release = function () {
+        button.classList.remove('is-live');
+        button.textContent = 'HOLD TO TALK';
+      };
+      button.addEventListener('pointerdown', activate);
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('pointerleave', function (event) {
+        if (event.buttons) release();
+      });
+    });
+  </script>
+</body>
+</html>

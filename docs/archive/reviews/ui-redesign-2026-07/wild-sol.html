@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Room of Devs — The Room Is a Radio Play</title>
+  <style>
+    :root {
+      --ink: #171915;
+      --ink-2: #22251f;
+      --paper: #f2eddc;
+      --paper-2: #ddd5bd;
+      --acid: #d7ff4f;
+      --coral: #ff6b61;
+      --blue: #6bb8ff;
+      --violet: #b795ff;
+      --amber: #ffc857;
+      --muted: #9e9c8e;
+      --line: rgba(23, 25, 21, .18);
+      --shadow: 0 28px 80px rgba(11, 13, 10, .28);
+      --radius: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      --serif: Iowan Old Style, Baskerville, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(215,255,79,.24), transparent 25rem),
+        radial-gradient(circle at 100% 28%, rgba(255,107,97,.13), transparent 34rem),
+        var(--paper);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+    button { font: inherit; }
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .11;
+      z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply;
+    }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font: 700 11px/1 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 2px;
+      background: currentColor;
+    }
+
+    /* cover */
+    .cover {
+      min-height: 88vh;
+      display: grid;
+      align-items: center;
+      position: relative;
+      padding: 64px 0 80px;
+      border-bottom: 1px solid var(--line);
+    }
+    .cover-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(300px, .82fr);
+      gap: clamp(40px, 8vw, 120px);
+      align-items: end;
+    }
+    h1 {
+      margin: 24px 0 24px;
+      max-width: 820px;
+      font: 500 clamp(58px, 9.2vw, 126px)/.82 var(--serif);
+      letter-spacing: -.065em;
+    }
+    h1 em {
+      display: block;
+      font-weight: 400;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--ink);
+    }
+    .lede {
+      max-width: 600px;
+      margin: 0;
+      font: 500 clamp(18px, 2.2vw, 27px)/1.32 var(--sans);
+      letter-spacing: -.025em;
+    }
+    .cover-aside {
+      position: relative;
+      padding: 28px 28px 26px;
+      border: 1px solid var(--ink);
+      background: var(--acid);
+      box-shadow: 12px 12px 0 var(--ink);
+      transform: rotate(1.5deg);
+    }
+    .cover-aside::after {
+      content: "LISTEN FIRST";
+      position: absolute;
+      right: -19px;
+      top: -23px;
+      padding: 8px 12px;
+      background: var(--coral);
+      border: 1px solid var(--ink);
+      font: 800 10px/1 var(--mono);
+      letter-spacing: .12em;
+      transform: rotate(4deg);
+    }
+    .cover-aside p {
+      margin: 0 0 28px;
+      font: 600 18px/1.35 var(--sans);
+    }
+    .manifesto { display: grid; gap: 12px; }
+    .manifesto div {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(23,25,21,.35);
+      font: 700 12px/1.3 var(--mono);
+      text-transform: uppercase;
+    }
+    .cover-index {
+      position: absolute;
+      right: 26px;
+      bottom: 20px;
+      font: 700 10px/1 var(--mono);
+      letter-spacing: .12em;
+      writing-mode: vertical-rl;
+    }
+
+    section { padding: clamp(74px, 10vw, 140px) 0; border-bottom: 1px solid var(--line); }
+    .section-head {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 32px;
+      margin-bottom: clamp(44px, 7vw, 78px);
+      align-items: start;
+    }
+    .section-no {
+      font: 800 12px/1 var(--mono);
+      letter-spacing: .14em;
+    }
+    h2 {
+      margin: 0;
+      max-width: 880px;
+      font: 500 clamp(40px, 6.4vw, 79px)/.98 var(--serif);
+      letter-spacing: -.045em;
+    }
+    h2 span { color: var(--coral); font-style: italic; }
+    .section-deck {
+      grid-column: 2;
+      max-width: 660px;
+      margin: 18px 0 0;
+      color: #55584f;
+      font: 500 17px/1.55 var(--sans);
+    }
+
+    /* tokens */
+    .tokens {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 28px;
+    }
+    .token-card {
+      border: 1px solid var(--ink);
+      background: rgba(242,237,220,.72);
+      padding: 22px;
+      min-width: 0;
+    }
+    .token-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      font: 800 11px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      min-height: 205px;
+      border: 1px solid var(--ink);
+    }
+    .swatch {
+      display: flex;
+      min-width: 0;
+      align-items: end;
+      padding: 12px 9px;
+      border-right: 1px solid var(--ink);
+      color: var(--ink);
+      font: 800 9px/1.25 var(--mono);
+      writing-mode: vertical-rl;
+      text-transform: uppercase;
+    }
+    .swatch:last-child { border: 0; }
+    .swatch.ink { background: var(--ink); color: var(--paper); }
+    .swatch.paper { background: var(--paper); }
+    .swatch.acid { background: var(--acid); }
+    .swatch.coral { background: var(--coral); }
+    .swatch.blue { background: var(--blue); }
+    .type-specimen {
+      min-height: 205px;
+      display: grid;
+      align-content: space-between;
+      gap: 28px;
+    }
+    .type-display {
+      font: 500 clamp(37px, 5vw, 65px)/.9 var(--serif);
+      letter-spacing: -.05em;
+    }
+    .type-ui {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--ink);
+    }
+    .type-ui div:first-child { font: 700 14px/1.4 var(--sans); }
+    .type-ui div:last-child { font: 700 10px/1.5 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+
+    /* shared mockup */
+    .mock-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      font: 800 10px/1 var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    .mock-label span:last-child { color: #6d6e66; font-weight: 600; }
+    .avatar {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 42px;
+      height: 42px;
+      color: var(--ink);
+      background: var(--avatar, var(--acid));
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      font: 900 13px/1 var(--mono);
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .avatar.small { width: 30px; height: 30px; border-width: 1.5px; box-shadow: none; font-size: 10px; }
+    .avatar.large { width: 66px; height: 66px; font-size: 19px; box-shadow: 5px 5px 0 var(--ink); }
+    .leo { --avatar: var(--blue); }
+    .donnie { --avatar: var(--violet); }
+    .raph { --avatar: var(--coral); }
+    .mikey { --avatar: var(--amber); }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 0 4px rgba(215,255,79,.13);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 50% { transform: scale(.65); opacity: .6; } }
+
+    /* Mac stage */
+    .stage-shell {
+      border: 1px solid #090a08;
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--ink);
+      box-shadow: var(--shadow), 0 0 0 9px rgba(23,25,21,.06);
+    }
+    .mac-chrome {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      color: var(--paper-2);
+      border-bottom: 1px solid rgba(242,237,220,.13);
+      background: #10120f;
+      font: 700 10px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .traffic { display: flex; gap: 7px; }
+    .traffic i { width: 9px; height: 9px; border-radius: 50%; background: #4c4f47; }
+    .traffic i:first-child { background: var(--coral); }
+    .traffic i:nth-child(2) { background: var(--amber); }
+    .traffic i:nth-child(3) { background: var(--acid); }
+    .stage {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr) minmax(235px, 29%);
+      min-height: 620px;
+      color: var(--paper);
+    }
+    .rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 21px;
+      padding: 20px 10px;
+      border-right: 1px solid rgba(242,237,220,.12);
+    }
+    .rail-mark {
+      margin-bottom: 6px;
+      font: 900 16px/1 var(--serif);
+      color: var(--acid);
+    }
+    .rail .avatar { opacity: .48; transition: opacity .2s, transform .2s; }
+    .rail .avatar.active { opacity: 1; transform: translateX(5px); box-shadow: -4px 0 0 var(--acid); }
+    .rail-spacer { flex: 1; }
+    .rail-button {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(242,237,220,.24);
+      border-radius: 50%;
+      color: var(--paper);
+      background: transparent;
+      cursor: pointer;
+    }
+    .room {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(24px, 4vw, 52px);
+      background:
+        linear-gradient(rgba(215,255,79,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(215,255,79,.025) 1px, transparent 1px),
+        #171915;
+      background-size: 28px 28px;
+    }
+    .room::before {
+      content: "";
+      position: absolute;
+      width: 380px;
+      height: 380px;
+      left: -160px;
+      top: -210px;
+      border: 1px solid rgba(215,255,79,.16);
+      border-radius: 50%;
+      box-shadow: 0 0 0 44px rgba(215,255,79,.018), 0 0 0 88px rgba(215,255,79,.012);
+    }
+    .room-top {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: start;
+    }
+    .room-kicker {
+      color: var(--acid);
+      font: 800 10px/1 var(--mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .room h3 {
+      margin: 12px 0 0;
+      font: 500 clamp(32px, 5vw, 58px)/.95 var(--serif);
+      letter-spacing: -.04em;
+    }
+    .live-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid rgba(242,237,220,.2);
+      border-radius: 999px;
+      color: var(--paper-2);
+      font: 800 9px/1 var(--mono);
+      letter-spacing: .1em;
+      white-space: nowrap;
+    }
+    .now-speaking {
+      position: relative;
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 48px;
+      padding: 27px 27px 24px;
+      border: 1px solid rgba(215,255,79,.55);
+      background: #20241c;
+      box-shadow: 8px 8px 0 rgba(215,255,79,.13);
+    }
+    .speaker-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 11px;
+      color: var(--violet);
+      font: 900 10px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .spoken {
+      margin: 0;
+      max-width: 620px;
+      font: 600 clamp(19px, 2.2vw, 27px)/1.28 var(--sans);
+      letter-spacing: -.025em;
+    }
+    .spoken-note {
+      display: flex;
+      gap: 8px 14px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      color: #a9aa9f;
+      font: 700 10px/1.4 var(--mono);
+    }
+    .wave {
+      display: flex;
+      height: 28px;
+      gap: 4px;
+      align-items: center;
+      margin-top: 22px;
+    }
+    .wave i {
+      display: block;
+      width: 3px;
+      height: var(--h, 30%);
+      border-radius: 3px;
+      background: var(--violet);
+      animation: speak .9s ease-in-out infinite alternate;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes speak { to { height: calc(var(--h, 30%) * .35); opacity: .45; } }
+    .floor {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      margin-top: 28px;
+    }
+    .floor-card {
+      min-height: 140px;
+      padding: 17px;
+      border: 1px solid rgba(242,237,220,.15);
+      background: rgba(242,237,220,.025);
+    }
+    .floor-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 17px;
+      color: #aaa99e;
+      font: 800 9px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .queue-person {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .queue-person + .queue-person { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(242,237,220,.09); }
+    .queue-person b { display: block; font-size: 12px; }
+    .queue-person small { color: #92948a; font: 600 9px/1.3 var(--mono); }
+    .queue-time { color: var(--paper-2); font: 700 9px/1 var(--mono); }
+    .decision {
+      border-color: rgba(255,107,97,.42);
+      background: rgba(255,107,97,.06);
+    }
+    .decision p { margin: 0 0 17px; font: 700 13px/1.35 var(--sans); }
+    .decision-actions { display: flex; gap: 8px; }
+    .tiny-action {
+      padding: 8px 10px;
+      border: 1px solid rgba(242,237,220,.28);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--paper);
+      font: 800 9px/1 var(--mono);
+      cursor: pointer;
+    }
+    .tiny-action.primary { background: var(--coral); border-color: var(--coral); color: var(--ink); }
+
+    .score {
+      position: relative;
+      padding: 24px 18px;
+      color: var(--ink);
+      background: var(--paper-2);
+      border-left: 1px solid rgba(242,237,220,.12);
+    }
+    .score::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background: repeating-linear-gradient(transparent 0 27px, rgba(23,25,21,.3) 28px);
+    }
+    .score > * { position: relative; }
+    .score-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--ink);
+      font: 900 10px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .score-time { font-weight: 600; color: #62645c; }
+    .cue {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      padding: 17px 0;
+      border-bottom: 1px solid rgba(23,25,21,.28);
+    }
+    .cue.current::after {
+      content: "";
+      position: absolute;
+      left: -18px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--violet);
+    }
+    .cue-name { margin-bottom: 4px; font: 900 9px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .cue-copy { margin: 0; font: 600 11px/1.4 var(--sans); }
+    .cue-status { display: block; margin-top: 7px; color: #66675f; font: 700 8px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .cue.plan {
+      display: block;
+      padding: 16px;
+      margin: 14px -3px 0;
+      border: 1px solid var(--ink);
+      background: var(--acid);
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .plan-command { margin: 7px 0 13px; font: 800 13px/1.25 var(--sans); }
+    .plan-steps { display: grid; gap: 8px; }
+    .plan-step { display: grid; grid-template-columns: 17px 1fr; gap: 7px; font: 700 9px/1.3 var(--mono); }
+    .plan-step i {
+      display: grid;
+      place-items: center;
+      width: 15px;
+      height: 15px;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      font-style: normal;
+      font-size: 8px;
+    }
+    .plan-step.done i { background: var(--ink); color: var(--acid); }
+
+    /* Periscope */
+    .periscope-zone {
+      padding: clamp(40px, 6vw, 70px);
+      background:
+        linear-gradient(115deg, rgba(107,184,255,.12), transparent 40%),
+        #c8c8c3;
+      border: 1px solid var(--ink);
+      box-shadow: inset 0 0 0 10px rgba(242,237,220,.2);
+    }
+    .desktop-ghost {
+      min-height: 400px;
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #e4e4e1;
+      box-shadow: 0 24px 60px rgba(23,25,21,.2);
+    }
+    .ghost-bar {
+      height: 31px;
+      border-bottom: 1px solid #bebfba;
+      background: #f3f3f1;
+    }
+    .ghost-ui {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      min-height: 369px;
+    }
+    .ghost-side { border-right: 1px solid #cdcec9; background: #d9dad5; }
+    .ghost-code { padding: 38px 32px; }
+    .code-line { height: 7px; margin-bottom: 13px; border-radius: 4px; background: #c9cac6; }
+    .code-line:nth-child(3n+1) { width: 82%; }
+    .code-line:nth-child(3n+2) { width: 54%; margin-left: 8%; }
+    .code-line:nth-child(3n) { width: 68%; margin-left: 14%; }
+    .periscope {
+      position: absolute;
+      left: 50%;
+      top: 22px;
+      width: min(620px, calc(100% - 28px));
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 13px;
+      align-items: center;
+      padding: 8px 10px 8px 8px;
+      color: var(--paper);
+      background: rgba(18,20,17,.97);
+      border: 1px solid #050604;
+      border-radius: 17px;
+      box-shadow: 0 13px 35px rgba(10,12,9,.32);
+      z-index: 2;
+    }
+    .periscope-copy { min-width: 0; }
+    .periscope-copy b {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--violet);
+      font: 800 9px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .periscope-copy p {
+      overflow: hidden;
+      margin: 0;
+      font: 650 12px/1.2 var(--sans);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .periscope-controls { display: flex; align-items: center; gap: 7px; }
+    .scope-button {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(242,237,220,.23);
+      border-radius: 10px;
+      color: var(--paper);
+      background: transparent;
+      cursor: pointer;
+    }
+    .scope-button.paused { color: var(--ink); background: var(--acid); border-color: var(--acid); }
+    .focusless {
+      position: absolute;
+      left: 50%;
+      top: 96px;
+      transform: translateX(-50%);
+      padding: 7px 10px;
+      color: #62635e;
+      background: rgba(255,255,255,.8);
+      border-radius: 5px;
+      font: 700 9px/1 var(--mono);
+      letter-spacing: .05em;
+    }
+    .scope-notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .scope-note {
+      padding: 16px;
+      border: 1px solid var(--ink);
+      background: var(--paper);
+      font: 700 11px/1.45 var(--sans);
+    }
+    .scope-note b {
+      display: block;
+      margin-bottom: 7px;
+      font: 900 9px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    /* phone */
+    .phone-stage {
+      display: grid;
+      grid-template-columns: minmax(280px, .75fr) minmax(0, 1.25fr);
+      gap: clamp(34px, 7vw, 100px);
+      align-items: center;
+    }
+    .phone-wrap {
+      position: relative;
+      width: min(348px, 90vw);
+      margin-inline: auto;
+    }
+    .phone-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 9% -22% 6%;
+      border-radius: 50%;
+      background: var(--acid);
+      filter: blur(1px);
+      transform: rotate(-9deg);
+      z-index: -1;
+    }
+    .phone {
+      position: relative;
+      aspect-ratio: 9/18.4;
+      overflow: hidden;
+      color: var(--paper);
+      background: var(--ink);
+      border: 8px solid #090a08;
+      border-radius: 48px;
+      box-shadow: 0 32px 70px rgba(23,25,21,.38), inset 0 0 0 1px rgba(255,255,255,.1);
+    }
+    .phone-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      width: 92px;
+      height: 25px;
+      border-radius: 18px;
+      background: #050604;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+    .phone-screen {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 52px 18px 17px;
+      background:
+        radial-gradient(circle at 70% 30%, rgba(183,149,255,.12), transparent 35%),
+        linear-gradient(rgba(215,255,79,.025) 1px, transparent 1px),
+        var(--ink);
+      background-size: auto, 100% 24px, auto;
+    }
+    .phone-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .phone-label { font: 900 9px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .phone-live { display: flex; align-items: center; gap: 6px; color: var(--acid); font: 800 8px/1 var(--mono); }
+    .phone-live .pulse-dot { width: 6px; height: 6px; box-shadow: none; }
+    .phone-avatars { display: flex; align-items: center; justify-content: center; margin: 31px 0 21px; }
+    .phone-avatars .avatar { margin-left: -6px; opacity: .42; }
+    .phone-avatars .avatar.active { z-index: 1; opacity: 1; transform: scale(1.22); margin-inline: 6px 2px; }
+    .phone-speaker { text-align: center; }
+    .phone-speaker b { color: var(--violet); font: 900 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .phone-speaker p { margin: 12px auto 0; font: 650 17px/1.28 var(--sans); letter-spacing: -.02em; }
+    .phone-wave { justify-content: center; margin: 16px 0 0; }
+    .phone-wave i { background: var(--violet); }
+    .scrub {
+      margin-top: 20px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(242,237,220,.12);
+      border-bottom: 1px solid rgba(242,237,220,.12);
+    }
+    .scrub-line { position: relative; height: 3px; background: #494c44; }
+    .scrub-line::before { content: ""; position: absolute; inset: 0 28% 0 0; background: var(--acid); }
+    .scrub-line::after {
+      content: "";
+      position: absolute;
+      left: 72%;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--acid);
+      transform: translate(-50%, -50%);
+    }
+    .scrub-meta { display: flex; justify-content: space-between; margin-top: 8px; color: #96988e; font: 700 8px/1 var(--mono); }
+    .phone-spacer { flex: 1; min-height: 20px; }
+    .thumb-zone {
+      position: relative;
+      min-height: 145px;
+      padding-top: 11px;
+    }
+    .thumb-zone::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -75px;
+      width: 270px;
+      height: 210px;
+      border: 1px dashed rgba(215,255,79,.27);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .phone-actions { display: grid; grid-template-columns: 45px 1fr 45px; gap: 10px; align-items: end; }
+    .round-action {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      color: var(--paper);
+      background: #2b2e28;
+      border: 1px solid #474b42;
+      border-radius: 50%;
+    }
+    .talk {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 112px;
+      height: 112px;
+      margin: auto;
+      color: var(--ink);
+      background: var(--acid);
+      border: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 0 8px rgba(215,255,79,.12);
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform .15s, background .15s;
+    }
+    .talk::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(23,25,21,.35);
+      border-radius: 50%;
+    }
+    .talk strong { position: relative; font: 900 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .talk small { position: relative; margin-top: -22px; font: 700 8px/1 var(--mono); }
+    .talk.talking { transform: scale(.93); background: var(--coral); }
+    .home-pill { width: 100px; height: 4px; margin: 14px auto 0; border-radius: 5px; background: var(--paper); opacity: .8; }
+    .phone-copy h3 {
+      margin: 0 0 20px;
+      font: 500 clamp(42px, 6vw, 72px)/.95 var(--serif);
+      letter-spacing: -.05em;
+    }
+    .phone-copy > p { max-width: 560px; color: #55584f; font: 500 18px/1.55 var(--sans); }
+    .phone-points { display: grid; gap: 0; margin-top: 34px; border-top: 1px solid var(--ink); }
+    .phone-point {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 16px;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--ink);
+      font: 700 14px/1.4 var(--sans);
+    }
+    .phone-point span { font: 900 10px/1.4 var(--mono); }
+
+    /* choreography */
+    .choreo {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--ink);
+    }
+    .beat {
+      position: relative;
+      min-height: 265px;
+      padding: 22px;
+      border-right: 1px solid var(--ink);
+      background: rgba(242,237,220,.58);
+    }
+    .beat:last-child { border-right: 0; }
+    .beat:nth-child(2) { background: var(--acid); }
+    .beat:nth-child(3) { background: var(--ink); color: var(--paper); }
+    .beat:nth-child(4) { background: var(--coral); }
+    .beat-no { font: 900 10px/1 var(--mono); letter-spacing: .1em; }
+    .beat h3 { margin: 55px 0 12px; font: 500 31px/1 var(--serif); letter-spacing: -.035em; }
+    .beat p { margin: 0; font: 650 13px/1.45 var(--sans); }
+    .beat-tag {
+      position: absolute;
+      left: 22px;
+      bottom: 20px;
+      font: 800 8px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      opacity: .65;
+    }
+
+    /* rationale */
+    .rationale {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: clamp(40px, 9vw, 120px);
+      align-items: start;
+    }
+    .big-quote {
+      margin: 0;
+      font: 500 clamp(38px, 5vw, 68px)/1 var(--serif);
+      letter-spacing: -.045em;
+    }
+    .big-quote mark { color: var(--ink); background: var(--acid); }
+    .reasons { border-top: 1px solid var(--ink); }
+    .reason { display: grid; grid-template-columns: 38px 1fr; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--ink); }
+    .reason span { font: 900 10px/1.4 var(--mono); }
+    .reason h3 { margin: 0 0 7px; font: 750 16px/1.25 var(--sans); }
+    .reason p { margin: 0; color: #55584f; font: 500 14px/1.5 var(--sans); }
+    footer {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 48px 0;
+      font: 800 10px/1.4 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .footer-name { font: 500 31px/1 var(--serif); letter-spacing: -.04em; text-transform: none; }
+
+    /* interaction toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      z-index: 20;
+      max-width: calc(100% - 30px);
+      padding: 12px 16px;
+      color: var(--ink);
+      background: var(--acid);
+      border: 1px solid var(--ink);
+      box-shadow: 5px 5px 0 var(--ink);
+      font: 800 11px/1.3 var(--mono);
+      transform: translate(-50%, 130px);
+      transition: transform .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .toast.show { transform: translate(-50%, 0); }
+
+    @media (max-width: 900px) {
+      .cover-grid, .tokens, .phone-stage, .rationale { grid-template-columns: 1fr; }
+      .cover { min-height: auto; }
+      .cover-aside { max-width: 580px; }
+      .stage { grid-template-columns: 58px minmax(0, 1fr); }
+      .score { grid-column: 1 / -1; border-left: 0; border-top: 1px solid rgba(242,237,220,.15); }
+      .stage .score { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 16px; }
+      .score-head { grid-column: 1 / -1; }
+      .cue.plan { margin-bottom: 12px; }
+      .choreo { grid-template-columns: 1fr 1fr; }
+      .beat:nth-child(2) { border-right: 0; }
+      .beat:nth-child(-n+2) { border-bottom: 1px solid var(--ink); }
+      .phone-copy { order: -1; }
+    }
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 24px, 1180px); }
+      .cover { padding-top: 42px; }
+      .cover-grid { gap: 44px; }
+      .cover-aside { margin-right: 10px; }
+      .cover-index { display: none; }
+      .section-head { grid-template-columns: 1fr; gap: 15px; }
+      .section-deck { grid-column: 1; }
+      .tokens { gap: 14px; }
+      .swatches { min-height: 160px; }
+      .stage-shell { border-radius: 12px; }
+      .stage { grid-template-columns: 1fr; }
+      .rail {
+        flex-direction: row;
+        justify-content: center;
+        padding: 11px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(242,237,220,.12);
+      }
+      .rail-mark, .rail-spacer, .rail-button { display: none; }
+      .rail .avatar.active { transform: translateY(3px); box-shadow: 0 -3px 0 var(--acid); }
+      .room { padding: 24px 16px; }
+      .now-speaking { grid-template-columns: 1fr; padding: 20px; }
+      .now-speaking .avatar { width: 52px; height: 52px; }
+      .floor { grid-template-columns: 1fr; }
+      .stage .score { display: block; }
+      .periscope-zone { padding: 24px 12px; }
+      .desktop-ghost { min-height: 330px; }
+      .ghost-ui { grid-template-columns: 80px 1fr; min-height: 299px; }
+      .ghost-code { padding: 80px 16px 20px; }
+      .periscope { top: 18px; }
+      .focusless { top: 88px; white-space: nowrap; }
+      .scope-notes { grid-template-columns: 1fr; }
+      .choreo { grid-template-columns: 1fr; }
+      .beat, .beat:nth-child(2), .beat:nth-child(3) { border-right: 0; border-bottom: 1px solid var(--ink); }
+      footer { align-items: start; flex-direction: column; }
+      h1 { font-size: clamp(56px, 18vw, 84px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="cover">
+    <div class="wrap cover-grid">
+      <div>
+        <div class="eyebrow">Room of Devs / concept 01</div>
+        <h1>The room is a <em>radio play.</em></h1>
+        <p class="lede">Not four chat windows. One living soundtrack—cast, paced, and glanceable enough to disappear behind the work.</p>
+      </div>
+      <aside class="cover-aside">
+        <p>Agents speak in character. The interface behaves like stage direction: who has the floor, what comes next, and where your attention is needed.</p>
+        <div class="manifesto">
+          <div><span>01</span><span>Hear progress; read consequence.</span></div>
+          <div><span>02</span><span>Silence is a designed state.</span></div>
+          <div><span>03</span><span>Commands become visible little plans.</span></div>
+        </div>
+      </aside>
+    </div>
+    <div class="cover-index">One room · three distances</div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-no">00 / THESIS</div>
+          <div>
+            <h2>Design a <span>soundstage,</span> not a status board.</h2>
+            <p class="section-deck">The room has a floor, a queue, and a score. One agent speaks at a time. Finished work enters the show; blockers wait off-mic with a visible hand raised. The developer conducts rather than monitors.</p>
+          </div>
+        </div>
+
+        <div class="tokens">
+          <article class="token-card">
+            <div class="token-title"><span>Palette / underground broadcast</span><span>5 tokens</span></div>
+            <div class="swatches" aria-label="Color palette">
+              <div class="swatch ink">Sewer ink · #171915</div>
+              <div class="swatch paper">Script · #F2EDDC</div>
+              <div class="swatch acid">On air · #D7FF4F</div>
+              <div class="swatch coral">Needs you · #FF6B61</div>
+              <div class="swatch blue">Cool signal · #6BB8FF</div>
+            </div>
+          </article>
+          <article class="token-card">
+            <div class="token-title"><span>Type / voice hierarchy</span><span>system only</span></div>
+            <div class="type-specimen">
+              <div class="type-display">Voices have<br><em>texture.</em></div>
+              <div class="type-ui">
+                <div>UI copy stays compact, warm, and spoken.</div>
+                <div>SF Mono / cues<br>System sans / action<br>Serif / atmosphere</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-no">01 / MAC STAGE</div>
+          <div>
+            <h2>The room has a <span>floor.</span></h2>
+            <p class="section-deck">The main Mac window is a calm, spatial mix of now, next, and needed. Transcript is supporting evidence—not the dominant artifact. A command’s execution appears in the score like handwritten stage business.</p>
+          </div>
+        </div>
+
+        <div class="mock-label"><span>Main Mac window · “The Stage”</span><span>Open when you want context</span></div>
+        <div class="stage-shell">
+          <div class="mac-chrome">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div>Room of Devs · Studio A</div>
+            <div>2:18 PM</div>
+          </div>
+          <div class="stage">
+            <nav class="rail" aria-label="Cast">
+              <div class="rail-mark">R/D</div>
+              <div class="avatar small leo" title="Leo">LE</div>
+              <div class="avatar small donnie active" title="Donnie">DO</div>
+              <div class="avatar small raph" title="Raph">RA</div>
+              <div class="avatar small mikey" title="Mikey">MI</div>
+              <div class="rail-spacer"></div>
+              <button class="rail-button" data-toast="The room is paused. No voices will interrupt.">Ⅱ</button>
+            </nav>
+
+            <div class="room">
+              <div class="room-top">
+                <div>
+                  <div class="room-kicker">On the floor</div>
+                  <h3>Donnie found<br>the loose wire.</h3>
+                </div>
+                <div class="live-chip"><span class="pulse-dot"></span> ROOM LIVE</div>
+              </div>
+
+              <article class="now-speaking">
+                <div class="avatar large donnie" aria-label="Donnie avatar">DO</div>
+                <div>
+                  <div class="speaker-meta">Donnie · agent 02 · speaking</div>
+                  <p class="spoken">“The flaky test wasn’t timing. The mock server kept one stale listener between runs. I removed it and ran the suite five times clean.”</p>
+                  <div class="spoken-note"><span>checkout.test.ts</span><span>01:08 spoken</span><span>2 files changed</span></div>
+                  <div class="wave" aria-label="Audio waveform">
+                    <i style="--h:30%;--d:-.1s"></i><i style="--h:75%;--d:-.6s"></i><i style="--h:45%;--d:-.3s"></i><i style="--h:95%;--d:-.8s"></i><i style="--h:55%;--d:-.2s"></i><i style="--h:80%;--d:-.5s"></i><i style="--h:35%;--d:-.7s"></i><i style="--h:65%;--d:-.1s"></i><i style="--h:100%;--d:-.4s"></i><i style="--h:48%;--d:-.7s"></i><i style="--h:78%;--d:-.2s"></i><i style="--h:38%;--d:-.8s"></i><i style="--h:70%;--d:-.4s"></i><i style="--h:55%;--d:-.1s"></i><i style="--h:88%;--d:-.6s"></i><i style="--h:36%;--d:-.3s"></i>
+                  </div>
+                </div>
+              </article>
+
+              <div class="floor">
+                <article class="floor-card">
+                  <div class="floor-title"><span>Waiting in the wings</span><span>2</span></div>
+                  <div class="queue-person">
+                    <div class="avatar small mikey">MI</div>
+                    <div><b>Mikey has a tiny win</b><small>Docs cleanup · can wait</small></div>
+                    <div class="queue-time">0:14</div>
+                  </div>
+                  <div class="queue-person">
+                    <div class="avatar small leo">LE</div>
+                    <div><b>Leo is still working</b><small>Auth migration · 11 min</small></div>
+                    <div class="queue-time">…</div>
+                  </div>
+                </article>
+                <article class="floor-card decision">
+                  <div class="floor-title"><span>Hand raised</span><span>Raph</span></div>
+                  <p>“Keep the old endpoint for one release?”</p>
+                  <div class="decision-actions">
+                    <button class="tiny-action primary" data-toast="Told Raph: keep it for one release.">KEEP IT</button>
+                    <button class="tiny-action" data-toast="Opened Raph’s decision card.">TALK</button>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <aside class="score">
+              <div class="score-head"><span>Today’s score</span><span class="score-time">13:42—NOW</span></div>
+              <div class="cue">
+                <div class="avatar small leo">LE</div>
+                <div><div class="cue-name">Leo · 1:42 PM</div><p class="cue-copy">Started moving sessions to signed cookies.</p><span class="cue-status">Working · quiet</span></div>
+              </div>
+              <div class="cue current">
+                <div class="avatar small donnie">DO</div>
+                <div><div class="cue-name">Donnie · now</div><p class="cue-copy">Fixed the listener leak. Suite is clean.</p><span class="cue-status">On the floor · 0:41 left</span></div>
+              </div>
+              <div class="cue">
+                <div class="avatar small raph">RA</div>
+                <div><div class="cue-name">Raph · waiting</div><p class="cue-copy">Needs one release-policy decision.</p><span class="cue-status">Off-mic · hand raised</span></div>
+              </div>
+              <div class="cue plan">
+                <div class="cue-name">Your voice command</div>
+                <p class="plan-command">“Pause the room, then replay Donnie’s last message.”</p>
+                <div class="plan-steps">
+                  <div class="plan-step done"><i>✓</i><span>Pause new announcements</span></div>
+                  <div class="plan-step done"><i>✓</i><span>Find Donnie’s latest finished turn</span></div>
+                  <div class="plan-step"><i>3</i><span>Replay at 1× · queued next</span></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-no">02 / MAC PERISCOPE</div>
+          <div>
+            <h2>A presence, not <span>a notification.</span></h2>
+            <p class="section-deck">The always-visible surface is a focusless audio periscope. It lives above other apps, never accepts keyboard focus, and changes shape only when the room’s social state changes.</p>
+          </div>
+        </div>
+
+        <div class="mock-label"><span>Floating Mac surface · “The Periscope”</span><span>Always visible · never focusable</span></div>
+        <div class="periscope-zone">
+          <div class="desktop-ghost" aria-label="Periscope floating above a code editor">
+            <div class="ghost-bar"></div>
+            <div class="ghost-ui">
+              <div class="ghost-side"></div>
+              <div class="ghost-code">
+                <div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div>
+              </div>
+            </div>
+            <div class="periscope">
+              <div class="avatar small donnie">DO</div>
+              <div class="periscope-copy"><b>Donnie · speaking</b><p>The mock server kept one stale listener between runs…</p></div>
+              <div class="periscope-controls">
+                <button class="scope-button" title="Replay" data-toast="Replaying Donnie from the beginning.">↶</button>
+                <button class="scope-button" title="Pause room" id="scope-pause" aria-pressed="false">Ⅱ</button>
+              </div>
+            </div>
+            <div class="focusless">⌁ Clicks act. Keys stay in your editor.</div>
+          </div>
+          <div class="scope-notes">
+            <div class="scope-note"><b>Calm by default</b>One voice, one line, one waveform. No task list squeezed into a pill.</div>
+            <div class="scope-note"><b>Social geometry</b>A raised hand adds a coral notch. Several finishes stack as quiet initials.</div>
+            <div class="scope-note"><b>Focus contract</b>Mouse actions work; keyboard focus remains in the developer’s current app.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-no">03 / PHONE REMOTE</div>
+          <div>
+            <h2>The phone is a <span>walkie,</span> not a tiny Mac.</h2>
+            <p class="section-deck">From the couch, the highest-value actions are listen, rewind, and talk. The phone opens directly onto the live voice. Everything important sits inside one thumb’s arc.</p>
+          </div>
+        </div>
+
+        <div class="phone-stage">
+          <div class="phone-wrap">
+            <div class="phone" aria-label="Phone walkie interface">
+              <div class="phone-island"></div>
+              <div class="phone-screen">
+                <div class="phone-top">
+                  <div class="phone-label">Studio A</div>
+                  <div class="phone-live"><span class="pulse-dot"></span> LIVE</div>
+                </div>
+                <div class="phone-avatars">
+                  <div class="avatar small leo">LE</div>
+                  <div class="avatar small donnie active">DO</div>
+                  <div class="avatar small raph">RA</div>
+                  <div class="avatar small mikey">MI</div>
+                </div>
+                <div class="phone-speaker">
+                  <b>Donnie has the floor</b>
+                  <p>“The flaky test wasn’t timing. The mock server…”</p>
+                </div>
+                <div class="wave phone-wave">
+                  <i style="--h:25%"></i><i style="--h:72%;--d:-.5s"></i><i style="--h:40%;--d:-.2s"></i><i style="--h:90%;--d:-.7s"></i><i style="--h:55%;--d:-.4s"></i><i style="--h:78%;--d:-.1s"></i><i style="--h:35%;--d:-.6s"></i><i style="--h:68%;--d:-.3s"></i><i style="--h:42%;--d:-.8s"></i>
+                </div>
+                <div class="scrub">
+                  <div class="scrub-line"></div>
+                  <div class="scrub-meta"><span>−0:17</span><span>LIVE</span></div>
+                </div>
+                <div class="phone-spacer"></div>
+                <div class="thumb-zone">
+                  <div class="phone-actions">
+                    <button class="round-action" aria-label="Rewind 15 seconds" data-toast="Jumped back 15 seconds.">−15</button>
+                    <button class="talk" id="talk-button" aria-label="Hold to talk to Donnie">
+                      <strong>Hold to talk</strong>
+                      <small>to Donnie</small>
+                    </button>
+                    <button class="round-action" aria-label="Pause room" data-toast="The room is paused from your phone.">Ⅱ</button>
+                  </div>
+                  <div class="home-pill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-copy">
+            <h3>Eyes optional.<br>Thumb sufficient.</h3>
+            <p>There is no condensed backlog here. The phone is the room’s remote ear and push-to-talk key. A deliberate upward swipe reveals agents and starts a new one; the resting screen remains devoted to the live mix.</p>
+            <div class="phone-points">
+              <div class="phone-point"><span>01</span><div>Press and hold the large character key to speak privately to whoever has the floor.</div></div>
+              <div class="phone-point"><span>02</span><div>Drag across the waveform to hear what you missed without changing the room for anyone else.</div></div>
+              <div class="phone-point"><span>03</span><div>Say “room” before a command to address the conductor instead of the current agent.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-no">04 / AUDIO GRAMMAR</div>
+          <div>
+            <h2>Attention is <span>choreographed.</span></h2>
+            <p class="section-deck">Not every completion deserves an interruption. The room’s audio grammar uses character, urgency, and time to decide what becomes speech.</p>
+          </div>
+        </div>
+        <div class="choreo">
+          <article class="beat"><div class="beat-no">01</div><h3>Earcon</h3><p>A character-specific two-note cue identifies who is entering before the first word.</p><div class="beat-tag">Identity without looking</div></article>
+          <article class="beat"><div class="beat-no">02</div><h3>Headline</h3><p>The agent leads with outcome and risk. Details stay in the visible score unless asked for.</p><div class="beat-tag">Seven seconds first</div></article>
+          <article class="beat"><div class="beat-no">03</div><h3>The floor</h3><p>Only one agent speaks. Simultaneous finishes wait in the wings instead of piling up.</p><div class="beat-tag">Serial, never cacophony</div></article>
+          <article class="beat"><div class="beat-no">04</div><h3>Raised hand</h3><p>Questions wait politely, then escalate from a visual notch to a spoken interruption.</p><div class="beat-tag">Urgency earns volume</div></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap rationale">
+        <blockquote class="big-quote">The memorable object is not an avatar. It is the feeling that your agents know <mark>when to speak.</mark></blockquote>
+        <div>
+          <div class="eyebrow" style="margin-bottom:24px">Why this direction</div>
+          <div class="reasons">
+            <article class="reason"><span>01</span><div><h3>Audio becomes architecture.</h3><p>Floor, wings, score, and raised hands make the invisible sound system legible without turning it into chat.</p></div></article>
+            <article class="reason"><span>02</span><div><h3>Characters carry recognition, not decoration.</h3><p>Color, initials, entry cues, and voice are enough. Lip-sync frames can add life without asking the interface to become a cartoon.</p></div></article>
+            <article class="reason"><span>03</span><div><h3>Each surface serves a different distance.</h3><p>The Stage explains, the Periscope reassures, and the Walkie lets you act. None is a shrunken copy of another.</p></div></article>
+            <article class="reason"><span>04</span><div><h3>Voice commands stay trustworthy.</h3><p>Turning multi-step commands into a visible score gives the developer a fast way to audit what the room heard and what it will do next.</p></div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <div class="footer-name">Room of Devs</div>
+    <div>Concept thesis · The room is a radio play<br>One room · three listening distances</div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" id="toast">The room heard you.</div>
+
+  <script>
+    (() => {
+      const toast = document.getElementById('toast');
+      let toastTimer;
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2300);
+      }
+
+      document.querySelectorAll('[data-toast]').forEach(button => {
+        button.addEventListener('click', () => showToast(button.dataset.toast));
+      });
+
+      const pause = document.getElementById('scope-pause');
+      pause.addEventListener('click', () => {
+        const paused = pause.classList.toggle('paused');
+        pause.setAttribute('aria-pressed', String(paused));
+        pause.textContent = paused ? '▶' : 'Ⅱ';
+        showToast(paused ? 'Room paused. Your editor kept focus.' : 'Room live. Announcements will resume.');
+      });
+
+      const talk = document.getElementById('talk-button');
+      const startTalk = event => {
+        event.preventDefault();
+        talk.classList.add('talking');
+        talk.querySelector('strong').textContent = 'Talking…';
+        talk.querySelector('small').textContent = 'release to send';
+      };
+      const stopTalk = event => {
+        if (!talk.classList.contains('talking')) return;
+        event.preventDefault();
+        talk.classList.remove('talking');
+        talk.querySelector('strong').textContent = 'Hold to talk';
+        talk.querySelector('small').textContent = 'to Donnie';
+        showToast('Voice note sent privately to Donnie.');
+      };
+      talk.addEventListener('pointerdown', startTalk);
+      window.addEventListener('pointerup', stopTalk);
+      talk.addEventListener('keydown', event => {
+        if (event.code === 'Space' || event.code === 'Enter') startTalk(event);
+      });
+      talk.addEventListener('keyup', stopTalk);
+    })();
+  </script>
+</body>
+</html>

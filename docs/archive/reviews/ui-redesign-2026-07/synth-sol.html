@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room of Devs — The Cue Room · synthesis concept</title>
+<style>
+:root{
+  color-scheme:dark;
+  --night:#090a0d;--floor:#0e1014;--panel:#14171c;--raised:#1a1e25;--lift:#21262f;
+  --line:#2b313b;--soft:#20252d;--ink:#f2f4f7;--copy:#b7c0ca;--dim:#74808d;
+  --air:#f7f9fc;--work:#38c8df;--hand:#f6b84a;--ask:#ff73ab;--idle:#667281;--stale:#46505c;
+  --leo:#4d8cff;--don:#a879ff;--mikey:#ff9a42;--raph:#f35f62;--guest:#72cdb6;
+  --danger:#ff6a66;--ok:#72d89d;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,monospace;
+  --r1:6px;--r2:10px;--r3:15px;--r4:24px;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:
+ radial-gradient(900px 480px at 8% -4%,rgba(56,200,223,.08),transparent 62%),
+ radial-gradient(800px 500px at 96% 7%,rgba(168,121,255,.07),transparent 58%),
+ var(--night);color:var(--ink);font:15px/1.55 var(--sans);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.024;background-image:
+url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+button{font:inherit}.board{width:min(1240px,calc(100% - 36px));margin:auto;padding:70px 0 110px}
+.eyebrow,.section-no,.micro{font:700 10px/1.3 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.eyebrow{display:flex;align-items:center;gap:9px;color:var(--work)}.eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--work);box-shadow:0 0 12px rgba(56,200,223,.7)}
+.hero{min-height:500px;display:grid;grid-template-columns:1.25fr .75fr;gap:70px;align-items:end;padding:40px 0 68px;border-bottom:1px solid var(--soft)}
+h1{font-size:clamp(58px,9.5vw,122px);line-height:.84;letter-spacing:-.075em;margin:24px 0 30px;max-width:850px}
+h1 span{display:block;color:transparent;-webkit-text-stroke:1px #7b8591}
+.lead{max-width:680px;font-size:clamp(18px,2vw,23px);line-height:1.48;color:#d2d8df;letter-spacing:-.015em;margin:0}
+.thesis-card{background:rgba(20,23,28,.82);border:1px solid var(--line);border-radius:var(--r3);padding:25px;box-shadow:0 28px 70px rgba(0,0,0,.3);transform:rotate(1deg)}
+.thesis-card p{font-size:18px;line-height:1.5;margin:14px 0 0}.thesis-card strong{color:var(--air)}
+.signal-key{display:flex;flex-wrap:wrap;gap:13px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font:650 10px var(--mono);color:var(--copy)}
+.signal-key i,.lamp{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--state,var(--idle));box-shadow:0 0 8px color-mix(in srgb,var(--state,var(--idle)) 60%,transparent)}
+section{padding:84px 0 0}.section-head{display:grid;grid-template-columns:155px 1fr;gap:30px;margin-bottom:32px}
+h2{font-size:clamp(32px,5vw,58px);line-height:1;letter-spacing:-.045em;margin:0}.deck{max-width:710px;color:var(--copy);margin:15px 0 0;font-size:16px}
+.token-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:14px}.token-card,.r-card{background:var(--panel);border:1px solid var(--soft);border-radius:var(--r3);padding:18px}
+.token-card h3,.r-card h3{margin:0 0 14px;font:750 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.swatch{min-width:0}.swatch i{display:block;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,.08);margin-bottom:6px}
+.swatch b,.swatch code{display:block;overflow:hidden;text-overflow:ellipsis}.swatch b{font-size:10px}.swatch code{font:9px var(--mono);color:var(--dim)}
+.state-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}.state-sample{display:flex;align-items:center;gap:8px;padding:7px 8px;background:var(--floor);border:1px solid var(--soft);border-radius:8px;color:var(--state);font:700 9px var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.state-sample.air{background:var(--air);color:#101216}.state-sample.air .lamp{background:#101216;box-shadow:none}
+.persona-row{display:flex;gap:8px;flex-wrap:wrap}.persona-dot{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#0b0c0f;font-weight:850;font-size:12px;background:var(--persona)}
+.type-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--soft)}.type-row:last-child{border:0}.type-row code{font:9px var(--mono);color:var(--dim)}
+.philosophy{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.principle{background:var(--floor);border:1px solid var(--soft);border-radius:var(--r2);padding:14px;color:var(--copy);font-size:12px}.principle b{display:block;color:var(--ink);font:750 10px var(--mono);margin-bottom:6px;text-transform:uppercase}
+.surface{margin-top:28px}.surface-title{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}.surface-title h3{font-size:22px;letter-spacing:-.025em;margin:0}.surface-title span{font:650 9px var(--mono);color:var(--dim);text-align:right}
+.frame{background:var(--floor);border:1px solid #343b46;border-radius:var(--r4);overflow:hidden;box-shadow:0 30px 80px -35px #000}.macbar{height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--raised);border-bottom:1px solid var(--soft)}
+.macbar i{width:10px;height:10px;border-radius:50%;background:#4a5059}.macbar i:nth-child(1){background:#ff5f57}.macbar i:nth-child(2){background:#febc2e}.macbar i:nth-child(3){background:#28c840}.macbar b{margin:auto;font:600 10px var(--mono);color:var(--dim);transform:translateX(-18px)}
+.caption{margin:11px 2px 0;color:var(--dim);font:600 10px/1.55 var(--mono);letter-spacing:.035em}.caption b{color:var(--copy)}
+.btn{height:28px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 9px;background:var(--raised);border:1px solid var(--line);border-radius:7px;color:var(--copy);font-size:10px;font-weight:650;white-space:nowrap}.btn.icon{width:28px;padding:0}.btn.primary{background:var(--air);border-color:var(--air);color:#101216;font-weight:800}.btn.warn{color:var(--hand);border-color:rgba(246,184,74,.35)}.btn.danger{color:#ff8d89;border-color:rgba(255,106,102,.35)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--copy);font:700 8px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.badge.state{color:var(--state);border-color:color-mix(in srgb,var(--state) 33%,var(--line));background:color-mix(in srgb,var(--state) 7%,var(--raised))}
+.badge.air{background:var(--air);color:#101216;border-color:var(--air)}.badge.air .lamp{background:#101216;box-shadow:none}.badge.stale{border-style:dashed}
+.avatar-shell{position:relative;flex:none;color:var(--persona)}.avatar-shell:after{content:"";position:absolute;inset:-3px;border:1.5px solid currentColor;border-radius:50%;opacity:.75}.avatar{display:block;width:var(--av,44px);height:var(--av,44px);border-radius:50%;object-fit:cover;background:var(--raised)}
+.avatar-shell.onair:before{content:"";position:absolute;inset:-7px;border:2px solid var(--air);border-radius:50%;box-shadow:0 0 16px rgba(247,249,252,.3)}.avatar-shell.onair:after{display:none}
+.meter{display:flex;align-items:flex-end;gap:2px;height:16px;color:var(--air)}.meter i{display:block;width:2.5px;border-radius:2px;background:currentColor;animation:meter 1s ease-in-out infinite alternate}.meter i:nth-child(1){height:5px}.meter i:nth-child(2){height:13px;animation-delay:-.2s}.meter i:nth-child(3){height:8px;animation-delay:-.5s}.meter i:nth-child(4){height:16px;animation-delay:-.35s}.meter i:nth-child(5){height:7px;animation-delay:-.7s}@keyframes meter{to{transform:scaleY(.35);opacity:.55}}
+
+/* desktop: stage + benches */
+.room{height:606px;display:grid;grid-template-rows:auto 1fr}.room-head{height:48px;padding:0 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--soft);background:linear-gradient(#171a20,#12151a)}
+.room-name{font-weight:800;font-size:13px}.room-head .grow{flex:1}.connection{display:flex;align-items:center;gap:6px;font:650 9px var(--mono);color:var(--dim)}.connection .lamp{--state:var(--ok)}
+.room-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 272px}.room-main{padding:10px;min-width:0;overflow:hidden}.stage-label{display:flex;justify-content:space-between;color:var(--dim);font:700 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;margin:0 2px 7px}
+.priority{display:grid;gap:7px}.strip{--state:var(--idle);position:relative;display:grid;grid-template-columns:4px 44px minmax(0,1fr) auto;gap:10px;align-items:start;min-height:79px;background:var(--panel);border:1px solid var(--soft);border-radius:var(--r2);overflow:hidden;padding:10px 10px 9px 0}
+.strip:before{content:"";align-self:stretch;background:var(--state);box-shadow:0 0 12px color-mix(in srgb,var(--state) 35%,transparent)}.strip.speaking{--state:var(--air);min-height:110px;border-color:#4a515c;background:linear-gradient(110deg,rgba(247,249,252,.07),var(--panel) 45%);box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.strip.hand{--state:var(--hand)}.strip.asking{--state:var(--ask)}.strip-copy{min-width:0}.strip-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.name{font-weight:780;font-size:13px}.alias{font:9px var(--mono);color:var(--dim)}.meta{margin-top:4px;font:9px var(--mono);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spoken{margin-top:7px;font-size:11px;line-height:1.4;color:#d5dbe2}.spoken .past{color:#77828e}.spoken mark{background:rgba(247,249,252,.12);color:#fff;border-radius:3px;padding:1px 2px}
+.preview{margin-top:7px;padding:6px 8px;background:color-mix(in srgb,var(--state) 7%,var(--floor));border-left:2px solid var(--state);border-radius:0 6px 6px 0;color:#d5d7da;font-size:10px;line-height:1.4}.strip-actions{display:flex;gap:4px;align-items:center}
+.benches{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.bench{--state:var(--idle);min-width:0;position:relative;padding:9px;background:var(--panel);border:1px solid var(--soft);border-radius:var(--r2);min-height:86px}.bench:before{content:"";position:absolute;top:0;left:9px;right:9px;height:2px;background:var(--state)}.bench.stale{--state:var(--stale);opacity:.56;border-style:dashed}.bench .top{display:flex;gap:8px;align-items:center}.bench .avatar{--av:30px}.bench .name{font-size:11px}.bench .meta{font-size:8px}.bench .badge{margin-top:7px}
+.program{border-left:1px solid var(--soft);background:#101216;display:flex;flex-direction:column;min-width:0}.program-head{height:42px;padding:0 12px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--soft)}.program-head .lamp{--state:var(--air)}.program-head b{font:750 8px var(--mono);color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+.program-copy{padding:13px;overflow:hidden;color:var(--copy);font-size:11.5px;line-height:1.55}.program-copy h4{font-size:15px;color:var(--ink);margin:0 0 7px}.program-copy p{margin:0 0 9px}.program-copy ul{padding-left:17px;margin:0}.program-copy li{margin:4px 0}.program-copy code{font:10px var(--mono);color:#b9ebf4;background:#182229;padding:1px 4px;border-radius:4px}.program-foot{margin-top:auto;border-top:1px solid var(--soft);padding:9px;display:flex;gap:5px}
+.room-held{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.detail{background:var(--panel);border:1px solid var(--soft);border-radius:var(--r3);padding:12px}.heldbar{background:repeating-linear-gradient(135deg,rgba(246,184,74,.08) 0 8px,transparent 8px 16px),var(--raised);border:1px solid rgba(246,184,74,.28);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:8px;color:var(--hand);font:750 9px var(--mono)}
+.ptt-card{margin-top:9px;min-height:90px;border:2px solid var(--air);box-shadow:0 0 0 3px rgba(247,249,252,.12);border-radius:10px;padding:11px;display:flex;align-items:center;gap:11px;background:linear-gradient(90deg,rgba(247,249,252,.08),var(--raised))}.ptt-copy b{display:block;font:800 10px var(--mono);letter-spacing:.1em}.ptt-copy span{display:block;color:var(--dim);font-size:10px;margin-top:4px}.mic-live{margin-left:auto;padding:9px 12px;background:var(--air);color:#101216;border-radius:7px;font:850 9px var(--mono)}
+.menu-row{display:flex;align-items:center;gap:8px}.menu-row+.menu-row{margin-top:8px;padding-top:8px;border-top:1px solid var(--soft)}.menu-row span{font-size:10px;color:var(--copy)}.menu-row .btn{margin-left:auto}
+
+/* docks */
+.dock-stage{display:grid;grid-template-columns:1fr 1fr;gap:18px}.dock{width:380px;max-width:100%;background:rgba(20,23,28,.96);border:1px solid #3a414d;border-radius:16px;box-shadow:0 22px 55px rgba(0,0,0,.55);overflow:hidden}.dock.speaking{box-shadow:0 0 0 1px rgba(247,249,252,.12),0 22px 55px rgba(0,0,0,.55)}
+.dock-main{display:grid;grid-template-columns:50px 1fr;gap:10px;padding:11px 12px 8px}.dock .avatar{--av:48px}.dock-who{display:flex;align-items:center;gap:6px}.dock-caption{font-size:11.5px;line-height:1.4;margin-top:5px;color:#dbe0e6}.dock-caption .past{color:#77818c}.dock-caption mark{background:rgba(247,249,252,.13);color:#fff;border-radius:3px;padding:1px 2px}.dock-controls{display:flex;align-items:center;gap:5px;padding:0 12px 11px}.dock-ptt{margin-left:auto;height:28px;padding:0 10px;border:1px solid #46505d;border-radius:7px;display:flex;align-items:center;color:var(--copy);font:750 8px var(--mono)}.dock-quiet{height:49px;padding:8px 11px;display:flex;align-items:center;gap:8px}.dock-quiet .avatar{--av:28px}.dock-quiet .grow{flex:1}.dock-quiet b{font-size:11px}.dock-quiet small{display:block;color:var(--dim);font-size:9px}
+
+/* phones */
+.phone-row{display:grid;grid-template-columns:repeat(3,minmax(0,390px));justify-content:center;gap:24px}.phone{width:100%;aspect-ratio:390/720;min-height:660px;background:#08090b;border:1px solid #3a4149;border-radius:34px;padding:7px;box-shadow:0 30px 75px -28px #000}.phone-screen{height:100%;position:relative;overflow:hidden;border-radius:27px;background:var(--floor);display:flex;flex-direction:column}.statusbar{height:25px;padding:7px 17px 0;display:flex;justify-content:space-between;font-size:9px;font-weight:750}.phone-head{height:50px;padding:7px 13px 9px;display:flex;align-items:center;gap:8px}.phone-head h4{font-size:18px;letter-spacing:-.035em;margin:0}.phone-head .grow{flex:1}.toggle{display:flex;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.toggle span{padding:5px 7px;border-radius:5px;color:var(--dim);font:700 8px var(--mono)}.toggle .on{background:var(--lift);color:var(--ink)}
+.catchup{margin:0 11px 8px;padding:8px 10px;border:1px solid rgba(246,184,74,.3);border-radius:9px;background:rgba(246,184,74,.06);display:flex;align-items:center;gap:8px}.catchup b{font-size:10px}.catchup span{display:block;color:var(--dim);font-size:8px}.catchup .btn{margin-left:auto}
+.phone-cards{flex:1;padding:0 10px 112px;display:flex;flex-direction:column;gap:7px;overflow:hidden}.p-card{--state:var(--idle);position:relative;padding:9px 9px 9px 12px;background:var(--panel);border:1px solid var(--soft);border-radius:11px}.p-card:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--state);border-radius:0 3px 3px 0}.p-top{display:flex;align-items:center;gap:8px}.p-top .avatar{--av:34px}.p-main{min-width:0;flex:1}.p-main .name{font-size:11.5px}.p-main .meta{font-size:8px}.p-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:7px}.p-actions .btn{padding:0 4px}.p-preview{margin-top:6px;font-size:9.5px;color:var(--copy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast{position:absolute;left:13px;right:13px;bottom:100px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--lift);box-shadow:0 12px 28px #000;display:flex;align-items:center;gap:7px;font-size:9.5px;z-index:4}.toast .lamp{--state:var(--hand)}.toast .btn{margin-left:auto;height:23px}
+.mini-player{position:absolute;left:8px;right:8px;bottom:43px;height:52px;padding:7px 9px;display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;border:1px solid #444c58;border-radius:12px;background:rgba(27,31,38,.97);z-index:3}.mini-player .avatar{--av:32px}.mini-player b{display:block;font-size:9.5px}.mini-player small{display:block;color:var(--dim);font-size:8px}.progress{height:2px;background:var(--line);margin-top:4px}.progress i{display:block;height:100%;width:44%;background:var(--air)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:49px;border-top:1px solid var(--soft);background:#0b0d10;display:flex;align-items:center;justify-content:space-around;font:700 8px var(--mono);color:var(--dim)}.tabbar .on{color:var(--ink)}
+.sheet{position:absolute;inset:52px 0 0;border-radius:20px 20px 0 0;border-top:1px solid #414954;background:var(--panel);box-shadow:0 -20px 55px #000;display:flex;flex-direction:column;padding:8px 16px 18px}.grab{width:36px;height:4px;background:#3c444e;border-radius:3px;margin:0 auto 12px}.player-person{display:flex;align-items:center;gap:10px}.player-person .avatar{--av:50px}.player-person h4{font-size:15px;margin:0}.player-person p{font-size:9px;color:var(--dim);margin:3px 0 0}.karaoke{flex:1;padding:18px 0 8px;font-size:14px;line-height:1.55}.karaoke p{margin:0 0 8px;color:#59636e}.karaoke .done{color:#929ca6}.karaoke .now{color:var(--ink);border-left:2px solid var(--air);padding-left:9px}.karaoke mark{background:var(--air);color:#111318;border-radius:3px;padding:1px 3px}.player-bottom{margin-top:auto}.times{display:flex;justify-content:space-between;margin-top:5px;color:var(--dim);font:650 8px var(--mono)}.big-transport{display:flex;justify-content:center;align-items:center;gap:15px;margin-top:13px}.round{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--lift);border:1px solid var(--line);font-size:12px}.round.main{width:56px;height:56px;background:var(--air);color:#101216;border:0;font-size:18px}.speed-row{display:flex;justify-content:center;gap:4px;margin-top:13px}.speed-row span{padding:5px 8px;border:1px solid var(--line);border-radius:6px;color:var(--dim);font:700 8px var(--mono)}.speed-row .on{background:var(--lift);color:var(--ink)}
+.chat-head{height:50px;padding:7px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--soft)}.chat-head .avatar{--av:31px}.chat-head .grow{flex:1}.chat-head b{display:block;font-size:11px}.chat-head small{display:block;color:var(--work);font:650 8px var(--mono)}
+.messages{flex:1;padding:11px 11px 90px;display:flex;flex-direction:column;gap:8px;overflow:hidden}.bubble{max-width:84%;padding:8px 10px;border-radius:12px;font-size:10px;line-height:1.45}.bubble.agent{background:var(--raised);border:1px solid var(--soft);border-bottom-left-radius:3px}.bubble.me{align-self:flex-end;background:#23354d;border:1px solid #304c6e;border-bottom-right-radius:3px}.bubble .meta{margin-top:5px;font-size:7.5px}.replay{color:var(--air)}
+.plan{background:#13171c;border:1px solid #39414b;border-radius:12px;padding:10px}.plan-top{display:flex;align-items:center;gap:6px}.plan-top b{font-size:10px}.plan-top .btn{margin-left:auto;height:22px}.heard{margin-top:8px;padding:7px 8px;border-left:2px solid var(--work);background:rgba(56,200,223,.05);font-size:9px;color:var(--copy)}.steps{margin-top:7px}.step{display:grid;grid-template-columns:19px 1fr;gap:8px;padding:6px 0}.step+.step{border-top:1px dashed var(--soft)}.step-dot{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(114,216,157,.1);border:1px solid rgba(114,216,157,.35);color:var(--ok);font:800 8px var(--mono)}.step.run .step-dot{background:var(--air);border-color:var(--air);color:#101216}.step b{display:block;font-size:9.5px}.step small{display:block;color:var(--dim);font:8px/1.4 var(--mono);margin-top:2px}.step.run small{color:var(--air)}.room-remains{margin-top:7px;padding-top:7px;border-top:1px solid var(--soft);color:var(--hand);font:750 8px var(--mono)}
+.composer{position:absolute;left:9px;right:9px;bottom:9px;height:46px;padding:6px 7px 6px 12px;border:1px solid var(--line);border-radius:13px;background:var(--raised);display:flex;align-items:center;gap:7px;color:var(--dim);font-size:9.5px}.composer .grow{flex:1}
+.call-screen{background:radial-gradient(300px 250px at 50% 18%,rgba(168,121,255,.16),transparent 70%),var(--floor);text-align:center}.call-label{margin:10px auto 0;color:var(--air);font:750 9px var(--mono);letter-spacing:.12em}.call-avatar{margin:28px auto 0;width:max-content}.call-avatar .avatar{--av:112px}.call-name{font-size:19px;font-weight:800;margin-top:16px}.call-sub{color:var(--dim);font-size:9px}.live-caption{margin:18px 18px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(20,23,28,.82);text-align:left;color:var(--copy);font-size:11px;line-height:1.5}.live-caption mark{background:rgba(247,249,252,.12);color:#fff}.call-controls{margin-top:auto;padding:0 24px 20px;display:flex;justify-content:space-around}.call-control{font:700 8px var(--mono);color:var(--dim)}.call-control span{width:48px;height:48px;margin:0 auto 6px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--lift);color:var(--ink);font-size:14px}.call-control.end span{background:#b74c49;border-color:#b74c49}
+
+/* picker */
+.picker-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:start}.picker-window{min-height:530px}.picker-body{display:grid;grid-template-columns:150px 1fr;min-height:450px}.picker-nav{border-right:1px solid var(--soft);padding:13px;background:#101216}.picker-nav div{padding:9px;border-radius:7px;color:var(--dim);font:700 9px var(--mono)}.picker-nav .on{background:var(--raised);color:var(--ink)}.picker-form{padding:18px;display:flex;flex-direction:column;gap:13px}.picker-form h4{font-size:22px;letter-spacing:-.035em;margin:0}.picker-form>p{color:var(--dim);font-size:10px;margin:-8px 0 0}.field label{display:block;margin-bottom:6px;color:var(--dim);font:700 8px var(--mono);letter-spacing:.1em;text-transform:uppercase}.persona-picks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.persona-pick{padding:7px 4px;text-align:center;background:var(--panel);border:1px solid var(--soft);border-radius:9px;color:var(--copy);font-size:9px}.persona-pick .avatar{--av:31px;margin:0 auto 4px}.persona-pick.on{border-color:var(--don);background:rgba(168,121,255,.07);color:var(--ink)}
+.select{height:36px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:10px}.flags{display:flex;gap:8px;flex-wrap:wrap}.flag{padding:7px 9px;border:1px solid var(--line);border-radius:7px;color:var(--copy);font-size:9px}.flag.on{border-color:rgba(56,200,223,.35);color:var(--work);background:rgba(56,200,223,.05)}.flag.risk{border-color:rgba(246,184,74,.4);color:var(--hand)}
+.confirm{margin-top:auto;padding:11px;display:flex;align-items:center;gap:10px;background:linear-gradient(110deg,rgba(168,121,255,.08),var(--panel));border:1px solid rgba(168,121,255,.35);border-radius:11px}.confirm .avatar{--av:36px}.confirm-copy{flex:1;min-width:0}.confirm-copy b{display:block;font-size:11px}.confirm-copy small{display:block;color:var(--dim);font:8px var(--mono);margin-top:3px}.phone-picker .sheet{inset:80px 0 0}.phone-picker .picker-form{padding:0 14px 16px}.phone-picker .confirm{margin-top:auto;display:block;text-align:center}.phone-picker .confirm .btn{width:100%;height:40px;margin-top:9px}
+
+/* rationale */
+.decision-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.r-card h3{color:var(--ink);font-family:var(--sans);font-size:14px;letter-spacing:-.01em;text-transform:none}.r-card p,.r-card li{font-size:12px;color:var(--copy);margin:0;line-height:1.55}.r-card ul{padding-left:17px;margin:0}.r-card li+li{margin-top:7px}
+.table-wrap{margin-top:16px;border:1px solid var(--soft);border-radius:var(--r3);overflow:auto;background:var(--panel)}table{width:100%;border-collapse:collapse;min-width:670px;font-size:11px}th{text-align:left;color:var(--dim);font:750 8px var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--raised)}th,td{padding:9px 11px;border-bottom:1px solid var(--soft);vertical-align:top}tr:last-child td{border-bottom:0}td{color:var(--copy)}td:first-child{color:var(--ink);font-weight:700}td code{font:9px var(--mono);color:#b9ebf4}
+.provenance td:first-child{width:26%}.cut-add{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.tagword{font:800 9px var(--mono);letter-spacing:.1em;margin-right:6px}.tagword.cut{color:var(--ask)}.tagword.add{color:var(--ok)}
+.footnote{margin-top:55px;padding-top:20px;border-top:1px solid var(--soft);display:flex;justify-content:space-between;color:var(--dim);font:700 9px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+@keyframes reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.hero>*{animation:reveal .65s ease both}.hero>*:nth-child(2){animation-delay:.12s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+@media(max-width:900px){
+ .hero{grid-template-columns:1fr;gap:34px}.thesis-card{max-width:650px;transform:none}.token-grid{grid-template-columns:1fr 1fr}.token-card:first-child{grid-column:1/-1}.philosophy{grid-template-columns:1fr 1fr}
+ .room{height:auto}.room-body{grid-template-columns:1fr}.program{border-left:0;border-top:1px solid var(--soft);min-height:230px}.program-copy{display:grid;grid-template-columns:1fr 1fr;gap:14px}.benches{grid-template-columns:1fr 1fr}
+ .phone-row{grid-template-columns:repeat(2,minmax(0,390px))}.picker-grid{grid-template-columns:1fr}.phone-picker{width:min(100%,390px);justify-self:center}.decision-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+ .board{width:min(100% - 22px,430px);padding-top:36px}.hero{min-height:0;padding-bottom:50px}h1{font-size:clamp(54px,21vw,88px)}
+ section{padding-top:62px}.section-head{grid-template-columns:1fr;gap:10px}.token-grid{grid-template-columns:1fr}.token-card:first-child{grid-column:auto}.philosophy{grid-template-columns:1fr}
+ .surface-title{align-items:flex-start;flex-direction:column}.room-head{height:auto;min-height:48px;flex-wrap:wrap;padding:8px}.room-head .connection{display:none}.room-main{padding:7px}.strip{grid-template-columns:3px 36px minmax(0,1fr)}.strip .avatar{--av:36px}.strip-actions{grid-column:3;justify-content:flex-start}.strip.speaking{min-height:150px}.benches{grid-template-columns:1fr 1fr}.room-held{grid-template-columns:1fr}
+ .dock-stage,.phone-row,.decision-grid,.cut-add{grid-template-columns:1fr}.phone{min-height:650px}.picker-body{grid-template-columns:1fr}.picker-nav{display:flex;border-right:0;border-bottom:1px solid var(--soft)}.picker-nav div{flex:1;text-align:center}
+ .program-copy{grid-template-columns:1fr}.persona-picks{grid-template-columns:repeat(4,1fr)}.footnote{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+<main class="board">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Synthesis target · round 2</div>
+      <h1>THE CUE<br><span>ROOM.</span></h1>
+      <p class="lead">A room of character voices, run with the calm precision of a studio console. Urgent work steps onto the stage; quiet work keeps its seat; the words—not the chrome—stay in command.</p>
+    </div>
+    <aside class="thesis-card">
+      <div class="micro">Thesis</div>
+      <p><strong>Persona says who. Tally says what now.</strong> The interface gives speech one unmistakable achromatic signal, preserves stable locations for everyone else, and uses the broadcast metaphor only where it improves orientation.</p>
+      <div class="signal-key">
+        <span><i style="--state:var(--air)"></i> on air</span>
+        <span><i style="--state:var(--hand)"></i> your cue</span>
+        <span><i style="--state:var(--work)"></i> in progress</span>
+      </div>
+    </aside>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">01 / TOKENS</div>
+      <div><h2>Signal before spectacle.</h2><p class="deck">Dark, neutral equipment surfaces keep the cast vivid without turning the room into a rainbow. State always has a color, a shape, and a word; persona color stays on the avatar shell.</p></div>
+    </div>
+    <div class="token-grid">
+      <div class="token-card">
+        <h3>Room surfaces</h3>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#090a0d"></i><b>Night</b><code>#090A0D</code></div>
+          <div class="swatch"><i style="background:#0e1014"></i><b>Floor</b><code>#0E1014</code></div>
+          <div class="swatch"><i style="background:#14171c"></i><b>Panel</b><code>#14171C</code></div>
+          <div class="swatch"><i style="background:#21262f"></i><b>Lift</b><code>#21262F</code></div>
+          <div class="swatch"><i style="background:#2b313b"></i><b>Line</b><code>#2B313B</code></div>
+          <div class="swatch"><i style="background:#f2f4f7"></i><b>Ink</b><code>#F2F4F7</code></div>
+          <div class="swatch"><i style="background:#b7c0ca"></i><b>Copy</b><code>#B7C0CA</code></div>
+          <div class="swatch"><i style="background:#74808d"></i><b>Dim</b><code>#74808D</code></div>
+        </div>
+      </div>
+      <div class="token-card">
+        <h3>State tallies</h3>
+        <div class="state-list">
+          <div class="state-sample air"><span class="lamp"></span>On air</div>
+          <div class="state-sample" style="--state:var(--work)"><span class="lamp"></span>Working</div>
+          <div class="state-sample" style="--state:var(--hand)"><span class="lamp"></span>Hand up</div>
+          <div class="state-sample" style="--state:var(--ask)"><span class="lamp"></span>Asking</div>
+          <div class="state-sample" style="--state:var(--idle)"><span class="lamp"></span>Idle</div>
+          <div class="state-sample" style="--state:var(--stale)"><span class="lamp" style="background:transparent;border:1px dashed currentColor;box-shadow:none"></span>Stale</div>
+        </div>
+        <p class="caption"><b>On air is luminance, not hue.</b> It cannot collide with Leo, Donnie, Mikey, Raph—or a future guest.</p>
+      </div>
+      <div class="token-card">
+        <h3>Persona / identity only</h3>
+        <div class="persona-row">
+          <div class="persona-dot" style="--persona:var(--leo)">LE</div>
+          <div class="persona-dot" style="--persona:var(--don)">DO</div>
+          <div class="persona-dot" style="--persona:var(--mikey)">MI</div>
+          <div class="persona-dot" style="--persona:var(--raph)">RA</div>
+          <div class="persona-dot" style="--persona:var(--guest)">SP</div>
+        </div>
+        <h3 style="margin-top:17px">Type scale</h3>
+        <div class="type-row"><b style="font-size:22px;letter-spacing:-.04em">The Cue Room</b><code>22 / 780</code></div>
+        <div class="type-row"><b style="font-size:13px">Donnie · SSE reconnect</b><code>13 / 780</code></div>
+        <div class="type-row"><span style="font-size:12px;color:var(--copy)">Agent summary and captions</span><code>12 / 1.55</code></div>
+        <div class="type-row"><span class="micro" style="color:var(--work)">WORKING · 03:18</span><code>10 mono</code></div>
+      </div>
+      <div class="philosophy">
+        <div class="principle"><b>4px rhythm</b>8–12px within controls; 14–18px inside reading surfaces.</div>
+        <div class="principle"><b>6 / 10 / 15 / 24</b>Mechanical controls; calm panels; soft device shells.</div>
+        <div class="principle"><b>One glow</b>Only the active speaker gets a halo. Motion means audio or active work.</div>
+        <div class="principle"><b>Plain image</b>The avatar remains an ordinary &lt;img&gt;; rings and tallies are siblings.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">02 / DESKTOP ROOM</div>
+      <div><h2>A stage, then benches.</h2><p class="deck">On air, asking, and hand-raised get enough width for words and decisions. Working, idle, muted, and stale stay in stable compact seats—priority without a wall that jumps under the pointer.</p></div>
+    </div>
+    <div class="surface">
+      <div class="surface-title"><h3>Main window</h3><span>900 × 640 · priority stage + fixed benches + markdown program pane</span></div>
+      <div class="frame">
+        <div class="macbar"><i></i><i></i><i></i><b>room of devs — night shift</b></div>
+        <div class="room">
+          <div class="room-head">
+            <span class="room-name">Night shift</span>
+            <span class="connection"><span class="lamp"></span>bridge linked · 7 sessions</span>
+            <div class="grow"></div>
+            <span class="badge state" style="--state:var(--work)"><span class="lamp"></span>live mode</span>
+            <span class="btn warn">Ⅱ Hold room</span>
+            <span class="badge state" style="--state:var(--hand)">Cue 3</span>
+            <span class="btn primary">＋ Session</span>
+          </div>
+          <div class="room-body">
+            <div class="room-main">
+              <div class="stage-label"><span>Priority stage</span><span>positions locked while pointer is inside</span></div>
+              <div class="priority">
+                <article class="strip speaking">
+                  <div class="avatar-shell onair" style="--persona:var(--don)">
+                    <img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E">
+                  </div>
+                  <div class="strip-copy">
+                    <div class="strip-top"><span class="name">Donnie</span><span class="alias">donatello · room-of-devs</span><span class="badge air"><span class="lamp"></span>On air</span><span class="badge state" style="--state:var(--work)">Live</span><span class="badge">On phone</span></div>
+                    <div class="meta">sonnet · 0:14 / 0:38 · playback lease: phone</div>
+                    <div class="spoken"><span class="past">Backoff’s in—three retries with jitter. Then it </span><mark>stops pretending</mark> the socket is coming back and marks the session stale.</div>
+                  </div>
+                  <div class="strip-actions"><span class="meter"><i></i><i></i><i></i><i></i><i></i></span><span class="btn icon">Ⅱ</span><span class="btn icon">■</span><span class="btn icon">↺</span><span class="btn icon">½</span></div>
+                </article>
+                <article class="strip asking">
+                  <div class="avatar-shell" style="--persona:var(--raph)">
+                    <img class="avatar" alt="Raphael placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2336191c'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%23f35f62'%3ERA%3C/text%3E%3C/svg%3E">
+                  </div>
+                  <div class="strip-copy">
+                    <div class="strip-top"><span class="name">Raph</span><span class="alias">media-server</span><span class="badge state" style="--state:var(--ask)"><span class="lamp"></span>Asking</span></div>
+                    <div class="preview" style="--state:var(--ask)">Migration drops <code>episodes</code> before the copy. Fix the order, or preserve the old cleanup path?</div>
+                  </div>
+                  <div class="strip-actions"><span class="btn primary">Fix order</span><span class="btn">Reply…</span><span class="btn icon">•••</span></div>
+                </article>
+                <article class="strip hand">
+                  <div class="avatar-shell" style="--persona:var(--mikey)">
+                    <img class="avatar" alt="Michelangelo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23381f0b'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23ff9a42'%3EMI%3C/text%3E%3C/svg%3E">
+                  </div>
+                  <div class="strip-copy">
+                    <div class="strip-top"><span class="name">Mikey</span><span class="alias">agent-usage-bar</span><span class="badge state" style="--state:var(--hand)"><span class="lamp"></span>Hand up</span><span class="badge">2 waiting</span><span class="badge">1 superseded</span></div>
+                    <div class="preview" style="--state:var(--hand)">Dist is rebuilt, dude—41 files, zero drama. Menu bar is reading Cursor quota again.</div>
+                  </div>
+                  <div class="strip-actions"><span class="btn primary">▶ Hear it</span><span class="btn icon">•••</span></div>
+                </article>
+              </div>
+              <div class="stage-label" style="margin-top:9px"><span>Benches · stable order</span><span>quiet states</span></div>
+              <div class="benches">
+                <article class="bench" style="--state:var(--work)">
+                  <div class="top"><div class="avatar-shell" style="--persona:var(--leo)"><img class="avatar" alt="Leonardo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23142640'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%234d8cff'%3ELE%3C/text%3E%3C/svg%3E"></div><div><div class="name">Leo</div><div class="meta">jellyfin · 6m08</div></div></div>
+                  <span class="badge state" style="--state:var(--work)"><span class="lamp"></span>Working</span>
+                </article>
+                <article class="bench" style="--state:var(--idle)">
+                  <div class="top"><div class="avatar-shell" style="--persona:var(--guest)"><img class="avatar" alt="Splinter placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23182c28'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='39' fill='%2372cdb6'%3ESP%3C/text%3E%3C/svg%3E"></div><div><div class="name">Splinter</div><div class="meta">contextdb · 12m</div></div></div>
+                  <span class="badge state" style="--state:var(--idle)"><span class="lamp"></span>Idle</span>
+                </article>
+                <article class="bench" style="--state:var(--idle)">
+                  <div class="top"><div class="avatar-shell" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3ED2%3C/text%3E%3C/svg%3E"></div><div><div class="name">Donnie-2</div><div class="meta">docs · voice off</div></div></div>
+                  <span class="badge"><span class="lamp" style="--state:var(--idle)"></span>Muted</span>
+                </article>
+                <article class="bench stale">
+                  <div class="top"><div class="avatar-shell" style="--persona:var(--raph)"><img class="avatar" alt="Raphael placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2336191c'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%23f35f62'%3ERA%3C/text%3E%3C/svg%3E"></div><div><div class="name">Raph-2</div><div class="meta">last seen 41m</div></div></div>
+                  <span class="badge state stale" style="--state:var(--stale)">Stale</span>
+                </article>
+              </div>
+            </div>
+            <aside class="program">
+              <div class="program-head"><span class="lamp"></span><b>Latest transmission</b></div>
+              <div class="program-copy">
+                <div><h4>SSE reconnect, but polite.</h4><p>Swapped the hot loop for exponential backoff with jitter—three retries, then a stale state instead of a zombie socket.</p></div>
+                <ul><li>Snapshot epoch check runs before the revision gate</li><li><code>pnpm typecheck</code> clean in all four packages</li><li>Grant-guard timing left for your review</li></ul>
+              </div>
+              <div class="program-foot"><span class="btn">↺ Replay</span><span class="btn">½ Slower</span><span class="btn icon">⧉</span></div>
+            </aside>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>All major states appear in one coherent wall.</b> The stage is ranked on state transitions, but freezes while the pointer is inside; bench identity order never changes.</p>
+      <div class="room-held">
+        <div class="detail">
+          <div class="heldbar"><span class="lamp" style="--state:var(--hand)"></span>ROOM HELD · 3 CLIPS QUEUED <span class="btn primary" style="margin-left:auto;height:24px">Resume</span></div>
+          <div class="ptt-card">
+            <div class="avatar-shell" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div>
+            <div class="ptt-copy"><b>MIC OPEN → DONNIE</b><span>0:03 · room auto-held · release to send</span></div>
+            <div class="mic-live">RELEASE</div>
+          </div>
+          <p class="caption"><b>Active PTT:</b> full white enclosure + named destination. White means live audio; copy supplies direction.</p>
+        </div>
+        <div class="detail">
+          <div class="micro" style="margin-bottom:10px">Agent overflow · DropdownMenu</div>
+          <div class="menu-row"><span>ⓘ Status · uptime, model, cwd</span><span class="btn">Open</span></div>
+          <div class="menu-row"><span>⌘ Focus terminal</span><span class="btn">Focus</span></div>
+          <div class="menu-row"><span>⇄ Swap persona</span><span class="btn">Swap…</span></div>
+          <div class="menu-row"><span>✕ Kill session</span><span class="btn danger">Confirm…</span></div>
+          <p class="caption">Rare controls remain available without taxing every card. Kill opens an AlertDialog; swap opens a Popover.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">03 / DOCK</div>
+      <div><h2>The glance window.</h2><p class="deck">The non-activating dock is read-mostly: a live caption, transport, and one wide PTT target. When quiet, it becomes a useful “needs you” ticker instead of empty furniture.</p></div>
+    </div>
+    <div class="dock-stage">
+      <div>
+        <div class="dock speaking">
+          <div class="dock-main">
+            <div class="avatar-shell onair" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div>
+            <div><div class="dock-who"><b>Donnie</b><span class="badge air">On air</span><span class="meter" style="margin-left:auto"><i></i><i></i><i></i><i></i><i></i></span></div><div class="dock-caption"><span class="past">Three retries with jitter, then it </span><mark>stops pretending</mark> the socket is coming back.</div></div>
+          </div>
+          <div class="dock-controls"><span class="btn icon">Ⅱ</span><span class="btn icon">■</span><span class="btn icon">↺</span><span class="btn icon">½</span><div class="dock-ptt">◉ HOLD ⌥SPACE TO TALK</div></div>
+        </div>
+        <p class="caption"><b>Speaking · 380 × 146.</b> No inputs, no scrolling, no tooltips that assume focus.</p>
+      </div>
+      <div>
+        <div class="dock"><div class="dock-quiet"><div class="avatar-shell" style="--persona:var(--leo)"><img class="avatar" alt="Leonardo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23142640'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%234d8cff'%3ELE%3C/text%3E%3C/svg%3E"></div><div class="grow"><b>Room quiet · Leo is working</b><small>Mikey has 2 queued · Raph needs a decision</small></div><span class="badge state" style="--state:var(--hand)">Cue 3</span><span class="btn icon">⌃</span></div></div>
+        <p class="caption"><b>Collapsed · 49px.</b> Quiet state tells you who needs you; the next speech auto-expands.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">04 / PHONE ROOM + PLAYER</div>
+      <div><h2>Same room. One thumb.</h2><p class="deck">The phone keeps the same tallies and stable identity order, while routing, hold, catch-up, PTT, and playback live in the lower half of the screen.</p></div>
+    </div>
+    <div class="phone-row" style="grid-template-columns:repeat(2,minmax(0,390px))">
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="statusbar"><span>9:41</span><span>5G · 91%</span></div>
+            <div class="phone-head"><h4>The Room</h4><span class="badge air">On air</span><div class="grow"></div><div class="toggle"><span>Mac</span><span class="on">Phone</span></div></div>
+            <div class="catchup"><span class="lamp" style="--state:var(--hand)"></span><div><b>3 unheard while you were out</b><span>Oldest first · 1.25×</span></div><span class="btn primary">Catch up</span></div>
+            <div class="phone-cards">
+              <article class="p-card" style="--state:var(--air)"><div class="p-top"><div class="avatar-shell onair" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div><div class="p-main"><div class="name">Donnie <span class="badge air">On air</span></div><div class="meta">room-of-devs · 0:14 / 0:38</div></div><span class="meter"><i></i><i></i><i></i><i></i><i></i></span></div><div class="p-actions"><span class="btn primary">Grant</span><span class="btn">Chat</span><span class="btn">Replay</span><span class="btn">•••</span></div></article>
+              <article class="p-card" style="--state:var(--hand)"><div class="p-top"><div class="avatar-shell" style="--persona:var(--mikey)"><img class="avatar" alt="Michelangelo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23381f0b'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23ff9a42'%3EMI%3C/text%3E%3C/svg%3E"></div><div class="p-main"><div class="name">Mikey <span class="badge state" style="--state:var(--hand)">Hand up · 2</span></div><div class="p-preview">Dist is rebuilt, dude—zero drama.</div></div></div><div class="p-actions"><span class="btn">Grant</span><span class="btn primary">Play</span><span class="btn">Chat</span><span class="btn">•••</span></div></article>
+              <article class="p-card" style="--state:var(--ask)"><div class="p-top"><div class="avatar-shell" style="--persona:var(--raph)"><img class="avatar" alt="Raphael placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2336191c'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%23f35f62'%3ERA%3C/text%3E%3C/svg%3E"></div><div class="p-main"><div class="name">Raph <span class="badge state" style="--state:var(--ask)">Asking</span></div><div class="p-preview">Fix the migration order?</div></div><span class="btn primary">Answer</span></div></article>
+              <article class="p-card" style="--state:var(--work)"><div class="p-top"><div class="avatar-shell" style="--persona:var(--leo)"><img class="avatar" alt="Leonardo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23142640'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%234d8cff'%3ELE%3C/text%3E%3C/svg%3E"></div><div class="p-main"><div class="name">Leo <span class="badge state" style="--state:var(--work)">Working</span></div><div class="meta">jellyfin · 6m08</div></div></div></article>
+            </div>
+            <div class="toast"><span class="lamp"></span><span><b>Mikey</b> raised a hand · toast stack shipped</span><span class="btn">Play</span></div>
+            <div class="mini-player"><div class="avatar-shell" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div><div><b>SSE reconnect, but polite</b><small>Donnie · phone lease · 0:17</small><div class="progress"><i></i></div></div><span class="btn icon">Ⅱ</span></div>
+            <div class="tabbar"><span class="on">ROOM</span><span>THREADS</span><span>Ⅱ HOLD</span><span>＋ NEW</span></div>
+          </div>
+        </div>
+        <p class="caption"><b>Phone room.</b> Hide moves into overflow; Grant, Play, and Chat own the reachable action row.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="statusbar"><span>9:41</span><span>playing · phone</span></div>
+            <div style="flex:1;opacity:.25"></div>
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="player-person"><div class="avatar-shell onair" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div><div><h4>SSE reconnect, but polite</h4><p>Donnie · room-of-devs · 38 seconds</p></div><span class="badge air" style="margin-left:auto">On air</span></div>
+              <div class="karaoke"><p class="done">Swapped the reconnect loop to exponential backoff with jitter.</p><p class="now">Three retries, then it <mark>stops pretending</mark> the socket is coming back.</p><p>It surfaces a stale badge instead. Typecheck is clean in all four packages.</p></div>
+              <div class="player-bottom"><div class="progress" style="height:3px"><i></i></div><div class="times"><span>0:17</span><span>−0:21</span></div><div class="big-transport"><span class="round">↺</span><span class="round main">Ⅱ</span><span class="round">■</span></div><div class="speed-row"><span>0.75×</span><span class="on">1×</span><span>1.25×</span><span>1.5×</span></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Expanded player Sheet.</b> Line-level focus plus word-level current sweep: readable at arm’s length, precise at the playhead.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">05 / CHAT · CALL · INTERPRETER</div>
+      <div><h2>Say it. See the receipt.</h2><p class="deck">A voice command becomes a durable thread object: what was heard, the public operation plan, concrete outcomes, and the state left behind. It is an audit trail—not hidden reasoning.</p></div>
+    </div>
+    <div class="phone-row">
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="statusbar"><span>9:41</span><span>den · linked</span></div>
+            <div class="chat-head"><span>‹</span><div class="avatar-shell" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div><div class="grow"><b>Donnie</b><small>WORKING · room-of-devs</small></div><span class="btn">Call</span></div>
+            <div class="messages">
+              <div class="bubble agent">Reconnect storm is fixed. Backoff with jitter, three tries, then stale instead of zombie.<div class="meta">9:38 · spoken · <span class="replay">↺ replay</span></div></div>
+              <div class="bubble me">nice. did typecheck pass in all four packages?<div class="meta">9:39 · from phone</div></div>
+              <div class="bubble agent">All four, clean. I left grant-guard timing alone—that felt like your call.<div class="meta">9:40 · spoken · <span class="replay">↺ replay</span></div></div>
+            </div>
+            <div class="composer"><span class="grow">Reply to Donnie…</span><span class="btn icon">◉</span><span class="btn primary icon">↑</span></div>
+          </div>
+        </div>
+        <p class="caption"><b>Thread.</b> Replay lives in the spoken message metadata; live narration uses non-replayable ghost messages.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="statusbar"><span>9:41</span><span>interpreter</span></div>
+            <div class="phone-head"><span>‹</span><h4 style="font-size:16px">Command receipt</h4><div class="grow"></div><span class="badge state" style="--state:var(--ok)">Executed · 1.2s</span></div>
+            <div style="padding:5px 12px;flex:1">
+              <div class="plan" style="padding:12px">
+                <div class="plan-top"><span class="lamp" style="--state:var(--work)"></span><b>3 operations</b><span class="btn">Undo all</span></div>
+                <div class="heard">Heard: “Pause the room, then replay Donnie’s last message—slower.”</div>
+                <div class="steps">
+                  <div class="step"><span class="step-dot">✓</span><div><b>Hold the room</b><small>Done · 7 agents held · 3 clips queued</small></div></div>
+                  <div class="step"><span class="step-dot">✓</span><div><b>Resolve “Donnie”</b><small>Donatello · room-of-devs · last spoke 2m ago</small></div></div>
+                  <div class="step run"><span class="step-dot">▶</span><div><b>Replay latest at 0.75×</b><small>“SSE reconnect, but polite” · 0:03 / 0:51 · cached, no new voice spend</small></div></div>
+                </div>
+                <div class="room-remains">ROOM REMAINS HELD · resume when ready</div>
+              </div>
+              <div class="plan" style="margin-top:10px;opacity:.78">
+                <div class="plan-top"><span class="lamp" style="--state:var(--hand)"></span><b>Confirmation required</b></div>
+                <div class="heard">Heard: “Kill media-server and put Mikey there.”</div>
+                <div class="steps">
+                  <div class="step"><span class="step-dot">✓</span><div><b>Match media-server</b><small>Raph · tmux den:3</small></div></div>
+                  <div class="step"><span class="step-dot" style="color:var(--hand);border-color:var(--hand);background:transparent">?</span><div><b>Kill Raph</b><small>Destructive · waiting for confirmation</small><div style="margin-top:5px"><span class="btn danger">Kill Raph</span> <span class="btn">Skip</span></div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="composer" style="justify-content:center;background:var(--air);color:#101216;font-weight:850">◉ HOLD TO GIVE THE ROOM A COMMAND</div>
+          </div>
+        </div>
+        <p class="caption"><b>Interpreter plan.</b> Executed operations show outcomes; destructive steps stop inline; durable room state persists below the plan.</p>
+      </div>
+      <div>
+        <div class="phone">
+          <div class="phone-screen call-screen">
+            <div class="statusbar"><span>9:41</span><span>04:12</span></div>
+            <div class="call-label">● LIVE NARRATION</div>
+            <div class="call-avatar"><div class="avatar-shell onair" style="--persona:var(--don)"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"></div></div>
+            <div class="call-name">Donnie</div><div class="call-sub">room-of-devs · sonnet · phone lease</div>
+            <div class="live-caption">Okay, I’m in the transport. The reconnect is <mark>hard-coded to 200 milliseconds</mark>, which explains the storm…</div>
+            <div style="margin:17px auto 0"><span class="meter" style="color:var(--don);height:24px"><i></i><i></i><i></i><i></i><i></i></span></div>
+            <div class="composer" style="position:static;margin:20px 18px 0;background:transparent;border-style:dashed;justify-content:center;color:var(--air)">◉ HOLD TO TALK</div>
+            <div class="call-controls"><div class="call-control"><span>♩</span>MUTE</div><div class="call-control"><span>Ⅱ</span>HOLD</div><div class="call-control"><span>1.25</span>SPEED</div><div class="call-control end"><span>×</span>END</div></div>
+          </div>
+        </div>
+        <p class="caption"><b>Call mode.</b> Presence first: plain image avatar, current narration, PTT, then four thumb controls.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">06 / PICKER</div>
+      <div><h2>Casting, with a receipt.</h2><p class="deck">Persona first, then project, model, and risk flags. Desktop and phone both end on one explicit sentence that can be read back before anything starts.</p></div>
+    </div>
+    <div class="picker-grid">
+      <div>
+        <div class="frame picker-window">
+          <div class="macbar"><i></i><i></i><i></i><b>add to the room</b></div>
+          <div class="picker-body">
+            <aside class="picker-nav"><div class="on">New session</div><div>Resume · 3</div></aside>
+            <div class="picker-form">
+              <h4>Who’s taking the shift?</h4><p>Cast the voice first; technical choices follow.</p>
+              <div class="field"><label>Persona</label><div class="persona-picks">
+                <div class="persona-pick"><img class="avatar" alt="Leonardo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23142640'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%234d8cff'%3ELE%3C/text%3E%3C/svg%3E">Leo</div>
+                <div class="persona-pick on"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E">Donnie</div>
+                <div class="persona-pick"><img class="avatar" alt="Michelangelo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23381f0b'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23ff9a42'%3EMI%3C/text%3E%3C/svg%3E">Mikey</div>
+                <div class="persona-pick"><img class="avatar" alt="Raphael placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2336191c'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%23f35f62'%3ERA%3C/text%3E%3C/svg%3E">Raph</div>
+              </div></div>
+              <div class="field"><label>Project folder</label><div class="select"><span>~/projects/jellyfin-streamline</span><span>⌄ recent</span></div></div>
+              <div class="field"><label>Model</label><div class="select"><span>Claude Sonnet</span><span>⌄</span></div></div>
+              <div class="field"><label>Flags</label><div class="flags"><span class="flag risk">⚠ skip-permissions</span><span class="flag">remote</span><span class="flag on">✓ tmux reply-capable</span><span class="flag on">✓ speaks on finish</span></div></div>
+              <div class="confirm"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E"><div class="confirm-copy"><b>Start Donnie · sonnet · jellyfin-streamline</b><small>skip-permissions · local tmux · speaks</small></div><span class="btn">Cancel</span><span class="btn primary">Start Donnie →</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><b>Desktop Dialog.</b> Risky flags remain amber; the primary confirmation stays neutral.</p>
+      </div>
+      <div class="phone phone-picker">
+        <div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span>the room</span></div><div style="flex:1;opacity:.18"></div>
+          <div class="sheet"><div class="grab"></div><div class="picker-form">
+            <h4 style="font-size:19px">Add to the room</h4><p>New session · confirm</p>
+            <div class="field"><label>Persona</label><div class="persona-picks"><div class="persona-pick"><img class="avatar" alt="Leonardo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23142640'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%234d8cff'%3ELE%3C/text%3E%3C/svg%3E">Leo</div><div class="persona-pick on"><img class="avatar" alt="Donatello placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23251b37'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23a879ff'%3EDO%3C/text%3E%3C/svg%3E">Donnie</div><div class="persona-pick"><img class="avatar" alt="Michelangelo placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23381f0b'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='38' fill='%23ff9a42'%3EMI%3C/text%3E%3C/svg%3E">Mikey</div><div class="persona-pick"><img class="avatar" alt="Raphael placeholder avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2336191c'/%3E%3Ctext x='50' y='64' text-anchor='middle' font-family='system-ui' font-weight='850' font-size='40' fill='%23f35f62'%3ERA%3C/text%3E%3C/svg%3E">Raph</div></div></div>
+            <div class="field"><label>Project</label><div class="select">jellyfin-streamline <span>⌄</span></div></div>
+            <div class="field"><label>Model / flags</label><div class="flags"><span class="flag on">sonnet</span><span class="flag risk">skip-perms</span><span class="flag">remote</span></div></div>
+            <div class="confirm"><div class="confirm-copy"><b>Start Donnie · sonnet · jellyfin-streamline</b><small>skip-permissions · local tmux</small></div><span class="btn primary">Start Donnie</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-no">07 / RATIONALE</div>
+      <div><h2>The calls, made deliberately.</h2><p class="deck">The synthesis keeps the strongest common language across all four boards, resolves their contested choices, and narrows custom UI to the domain-specific interactions.</p></div>
+    </div>
+    <div class="decision-grid">
+      <div class="r-card"><h3>Achromatic “on air”</h3><p>White is a luminance event, so it cannot be mistaken for a persona. It appears as one ring, one rail, and one filled label. Working cyan, hand amber, and asking pink are supporting tallies; every state also has text and form.</p></div>
+      <div class="r-card"><h3>Stage + stable benches</h3><p>An equal grid understates urgency; a fully sorted list moves too much. Priority states expand on the stage. Quiet identities retain seats. The stage freezes during pointer interaction, preventing mid-click reordering.</p></div>
+      <div class="r-card"><h3>Broadcast, with restraint</h3><p>“On air,” “cue,” “hold room,” and “casting” explain real behavior. Everything else speaks like developers do. The metaphor sets orientation; character voice supplies the fun.</p></div>
+      <div class="r-card"><h3>Plans are receipts</h3><p>The interpreter renders the heard phrase, public operations, outcomes, cost/cache breadcrumbs, and durable room state. It never presents hidden chain-of-thought. Destructive operations stop and confirm inline.</p></div>
+      <div class="r-card"><h3>One talkback contract</h3><p>Hold, immediate white enclosure, named destination, release to send, drag away to cancel. The dock gets a wide bar; phone gets thumb-zone placement. The room auto-holds while the mic is open.</p></div>
+      <div class="r-card"><h3>Words get the space</h3><p>Dock: one timed caption. Room: structured markdown. Phone: line focus plus a word sweep. All use the same audio cursor, while the lip-sync image swaps independently at ~70ms.</p></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product element</th><th>shadcn / AI Elements composition</th><th>Custom boundary</th></tr></thead>
+        <tbody>
+          <tr><td>Room cards, stage, benches</td><td><code>Card</code>, <code>Badge</code>, <code>Button</code>, <code>Tooltip</code>, <code>DropdownMenu</code>, <code>ScrollArea</code></td><td>State rail and stage-freeze ordering logic</td></tr>
+          <tr><td>Avatar / lip-sync</td><td><code>Avatar</code> as shell and fallback</td><td>Plain <code>&lt;img&gt;</code> child; <code>src</code> frame swap outside React. Ring, lamp, and meter are siblings.</td></tr>
+          <tr><td>PTT / grant</td><td>Button tokens for appearance</td><td>Pointer capture, hold threshold, drag-off cancel, grant guard, non-activating dock events</td></tr>
+          <tr><td>Room mode / routing</td><td><code>Toggle</code>, <code>ToggleGroup</code>, <code>Badge</code></td><td>Playback-lease indicator reflects bridge ownership</td></tr>
+          <tr><td>Summary pane</td><td><code>ScrollArea</code> + sanitized Markdown / AI Elements <code>Response</code></td><td>Timed current-sentence marker</td></tr>
+          <tr><td>Rare / destructive actions</td><td><code>DropdownMenu</code>, <code>Popover</code>, <code>AlertDialog</code></td><td>None</td></tr>
+          <tr><td>Phone room / notifications</td><td><code>Card</code>, <code>ToggleGroup</code>, <code>sonner</code> action toast</td><td>Thumb-zone card action layout</td></tr>
+          <tr><td>Player</td><td><code>Sheet</code>, <code>Slider</code>, <code>ToggleGroup</code>, <code>Button</code></td><td>Karaoke line/word splitter driven by the audio clock</td></tr>
+          <tr><td>Thread / composer</td><td>AI Elements <code>Conversation</code>, <code>Message</code>, <code>PromptInput</code></td><td>Replay metadata and non-billable live-narration variant</td></tr>
+          <tr><td>Interpreter receipt</td><td>AI Elements <code>Task</code>, <code>ChainOfThought</code>, <code>Reasoning</code>—limited to visible operations and outcomes</td><td>Undo transaction and destructive-step gate</td></tr>
+          <tr><td>Picker</td><td><code>Dialog</code> desktop / <code>Sheet</code> phone, <code>Tabs</code>, <code>Command</code>, <code>Select</code>, <code>Switch</code>, <code>Button</code></td><td>Confirmation sentence composer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap provenance">
+      <table>
+        <thead><tr><th>Major decision</th><th>Provenance</th><th>Synthesis move</th></tr></thead>
+        <tbody>
+          <tr><td>Achromatic white on air</td><td>A · modified</td><td>Kept A’s collision-proof luminance; reduced it to one glow and paired it with D’s label discipline.</td></tr>
+          <tr><td>Stage + stable benches</td><td>A + B/C/D · modified / new</td><td>A’s information-rich strips become the priority stage; the other boards’ compact grids become fixed quiet seats.</td></tr>
+          <tr><td>Signal rail + label</td><td>C + D · modified</td><td>C’s edge rail and D’s lamp/word redundancy, with persona removed from card borders.</td></tr>
+          <tr><td>Useful quiet dock</td><td>B + D · modified</td><td>“Needs you” ticker from B, collapsed status economy from D, caption timing precision from A.</td></tr>
+          <tr><td>Phone thumb rail / catch-up</td><td>A + D · modified</td><td>A’s thumb-reach control priority with D’s first-class unheard queue; Hide demoted to overflow.</td></tr>
+          <tr><td>Karaoke rendering</td><td>A + C + D · modified</td><td>Line-level focus for reading, word-level sweep only inside the current line.</td></tr>
+          <tr><td>Interpreter receipt</td><td>A + B + C + D · modified</td><td>A’s outcome-rich plan wins; C’s durable-state footer and B/D’s inline thread object are folded in.</td></tr>
+          <tr><td>Picker / confirm sentence</td><td>A + C + D · modified</td><td>Persona-first casting flow with a pinned, explicit summary on both platforms.</td></tr>
+          <tr><td>Copy voice</td><td>A + D · modified</td><td>A’s dry developer detail plus D’s selective studio language; novelty phrasing removed from routine controls.</td></tr>
+          <tr><td>Playback lease + spend breadcrumbs</td><td>C + A · modified</td><td>Device ownership stays visible; cached replay says “no new voice spend” quietly in outcome metadata.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cut-add">
+      <div class="r-card"><h3>What gets cut or demoted</h3><ul><li><span class="tagword cut">CUT</span>Permanent status, focus, kill, swap, and hide buttons on every card; keep them in overflow.</li><li><span class="tagword cut">CUT</span>User-adjustable card density and equal-grid modes; the information hierarchy is intentional.</li><li><span class="tagword cut">CUT</span>Full transport on idle/working cards; transport follows audio, not identity.</li><li><span class="tagword cut">CUT</span>Decorative persona washes across panels; identity lives at the avatar and selection edge.</li></ul></div>
+      <div class="r-card"><h3>What gets added</h3><ul><li><span class="tagword add">ADD</span>A cue ledger: unheard count, superseded count, oldest-first catch-up, and playback lease.</li><li><span class="tagword add">ADD</span>Stage-freeze behavior while a pointer is inside, so priority never becomes pointer roulette.</li><li><span class="tagword add">ADD</span>Interpreter history, grouped undo, destructive gates, and a persistent “room remains held” receipt.</li><li><span class="tagword add">ADD</span>Quiet spend breadcrumbs on cached replays and non-billable live narration.</li></ul></div>
+    </div>
+    <footer class="footnote"><span>The Cue Room · final synthesis candidate</span><span>Dark-first · system fonts · no external assets</span></footer>
+  </section>
+</main>
+</body>
+</html>

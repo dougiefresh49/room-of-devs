@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Room of Devs — Concept Board</title>
+<style>
+  :root {
+    --ink: #0c1210;
+    --ink-2: #151c19;
+    --panel: #1a2420;
+    --panel-2: #22302a;
+    --line: rgba(232, 240, 234, 0.12);
+    --line-strong: rgba(232, 240, 234, 0.22);
+    --fog: #c5d4cb;
+    --paper: #e8f0ea;
+    --mute: #7f9488;
+    --lime: #b6f26d;
+    --amber: #f0b429;
+    --coral: #ff6b4a;
+    --cyan: #5eead4;
+    --leo: #4f8cff;
+    --raph: #ff5a4a;
+    --don: #2dd4bf;
+    --mike: #f5a524;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    --radius: 18px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background:
+      radial-gradient(1200px 700px at 10% -10%, rgba(182, 242, 109, 0.12), transparent 55%),
+      radial-gradient(900px 600px at 100% 0%, rgba(94, 234, 212, 0.08), transparent 50%),
+      linear-gradient(180deg, #0a0f0d 0%, var(--ink) 40%, #101816 100%);
+    color: var(--paper);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .board {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 48px 20px 96px;
+  }
+
+  /* —— Header / Thesis —— */
+  .mast {
+    display: grid;
+    gap: 28px;
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lime);
+    font-weight: 600;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 16px var(--lime);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(40px, 7vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    font-weight: 750;
+    max-width: 14ch;
+  }
+  .thesis {
+    max-width: 62ch;
+    font-size: clamp(18px, 2.4vw, 22px);
+    color: var(--fog);
+    margin: 0;
+    font-weight: 450;
+  }
+  .thesis strong { color: var(--paper); font-weight: 650; }
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .pillar {
+    background: rgba(26, 36, 32, 0.7);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .pillar b {
+    display: block;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    color: var(--lime);
+  }
+  .pillar span { font-size: 13px; color: var(--mute); }
+
+  /* —— Sections —— */
+  section { margin-bottom: 64px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .sec-head h2 {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mute);
+    font-weight: 650;
+  }
+  .sec-head p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--fog);
+    max-width: 52ch;
+  }
+
+  /* —— Tokens —— */
+  .token-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+  }
+  .token-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .token-card h3 {
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 650;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .swatch {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .swatch .chip {
+    height: 52px;
+  }
+  .swatch .meta {
+    padding: 8px 10px;
+    background: var(--ink-2);
+    font-size: 11px;
+    color: var(--mute);
+  }
+  .swatch .meta b {
+    display: block;
+    color: var(--paper);
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  .type-row {
+    display: grid;
+    gap: 14px;
+  }
+  .type-sample {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .type-sample:first-child { border-top: 0; padding-top: 0; }
+  .type-sample .label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 4px;
+  }
+  .type-display {
+    font-size: 36px;
+    letter-spacing: -0.03em;
+    font-weight: 750;
+    line-height: 1;
+  }
+  .type-body { font-size: 16px; color: var(--fog); }
+  .type-mono {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+  }
+  .cast-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .cast {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px 6px 6px;
+    font-size: 13px;
+  }
+  .av {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 750;
+    color: #06100c;
+    flex-shrink: 0;
+  }
+  .av.lg { width: 44px; height: 44px; font-size: 15px; }
+  .av.xl { width: 64px; height: 64px; font-size: 20px; }
+  .av.sm { width: 22px; height: 22px; font-size: 9px; }
+  .av.leo { background: var(--leo); }
+  .av.raph { background: var(--raph); color: #fff; }
+  .av.don { background: var(--don); }
+  .av.mike { background: var(--mike); }
+  .av.you { background: var(--paper); }
+
+  /* —— Mockup frames —— */
+  .mock-grid {
+    display: grid;
+    gap: 28px;
+  }
+  .mock-block {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+    align-items: start;
+  }
+  .mock-block.flip { grid-template-columns: 280px minmax(0, 1fr); }
+  .mock-note {
+    background: rgba(26, 36, 32, 0.55);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .mock-note h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+  .mock-note .tag {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 10px;
+    font-weight: 650;
+  }
+  .mock-note p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--fog);
+  }
+  .mock-note ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--mute);
+    font-size: 13px;
+  }
+  .mock-note li { margin-bottom: 6px; }
+
+  .device {
+    background: var(--ink-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  .device.mac {
+    min-height: 420px;
+  }
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.25);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a4540; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+  .titlebar .win-name {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--mute);
+  }
+  .stage {
+    padding: 18px;
+    min-height: 360px;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(182, 242, 109, 0.07), transparent 70%),
+      linear-gradient(180deg, #121a17 0%, #0e1412 100%);
+    position: relative;
+  }
+
+  /* Stage layout */
+  .stage-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+  .room-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--mute);
+  }
+  .live-pip {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--lime);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+  }
+  .cmd-chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    background: rgba(94, 234, 212, 0.08);
+    border: 1px solid rgba(94, 234, 212, 0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+
+  .apron {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .char-slot {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 12px 12px;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .char-slot.speaking {
+    border-color: rgba(182, 242, 109, 0.55);
+    box-shadow: 0 0 0 1px rgba(182, 242, 109, 0.15), 0 12px 40px rgba(182, 242, 109, 0.08);
+  }
+  .char-slot.waiting {
+    border-color: rgba(240, 180, 41, 0.4);
+  }
+  .char-slot.blocked {
+    border-color: rgba(255, 107, 74, 0.5);
+  }
+  .char-slot.held {
+    border-color: rgba(79, 140, 255, 0.55);
+    outline: 2px solid rgba(79, 140, 255, 0.25);
+  }
+  .char-slot .name {
+    font-size: 13px;
+    font-weight: 650;
+    margin: 8px 0 2px;
+  }
+  .char-slot .role {
+    font-size: 11px;
+    color: var(--mute);
+  }
+  .state-pill {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 999px;
+  }
+  .state-pill.talk {
+    background: rgba(182, 242, 109, 0.15);
+    color: var(--lime);
+  }
+  .state-pill.wait {
+    background: rgba(240, 180, 41, 0.15);
+    color: var(--amber);
+  }
+  .state-pill.block {
+    background: rgba(255, 107, 74, 0.15);
+    color: var(--coral);
+  }
+  .state-pill.hold {
+    background: rgba(79, 140, 255, 0.15);
+    color: var(--leo);
+  }
+  .wave {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    height: 18px;
+    margin-top: 10px;
+  }
+  .wave i {
+    display: block;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--lime);
+    animation: bar 0.9s ease-in-out infinite;
+  }
+  .wave i:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .wave i:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .wave i:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .wave i:nth-child(4) { height: 16px; animation-delay: 0.15s; }
+  .wave i:nth-child(5) { height: 8px; animation-delay: 0.05s; }
+  @keyframes bar {
+    0%, 100% { transform: scaleY(0.45); opacity: 0.55; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  .spoken {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .spoken .who {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--mute);
+    margin-bottom: 6px;
+  }
+  .spoken .line {
+    font-size: 15px;
+    color: var(--paper);
+    font-weight: 500;
+  }
+  .spoken .line em {
+    font-style: normal;
+    color: var(--lime);
+  }
+
+  .bench {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(240, 180, 41, 0.06);
+    border: 1px dashed rgba(240, 180, 41, 0.3);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--amber);
+  }
+  .bench .av { width: 24px; height: 24px; font-size: 10px; }
+
+  .composer {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    align-items: center;
+  }
+  .composer .field {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--mute);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .composer .attach {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    display: grid;
+    place-items: center;
+    color: var(--mute);
+    font-size: 16px;
+  }
+  .composer .send {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    background: var(--lime);
+    color: #0a120c;
+    font-size: 12px;
+    font-weight: 700;
+    border: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Whisper bar */
+  .desktop-scene {
+    background:
+      linear-gradient(135deg, #1e2a40 0%, #243528 50%, #1a2230 100%);
+    border-radius: 16px;
+    padding: 28px 20px 20px;
+    border: 1px solid var(--line);
+    position: relative;
+    min-height: 220px;
+  }
+  .fake-app {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    height: 140px;
+    padding: 16px;
+    color: rgba(255,255,255,0.35);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .whisper {
+    position: absolute;
+    left: 20px; right: 20px; bottom: 16px;
+    height: 44px;
+    background: rgba(12, 18, 16, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(232, 240, 234, 0.18);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .whisper .who-stack {
+    display: flex;
+  }
+  .whisper .who-stack .av {
+    margin-left: -6px;
+    border: 2px solid var(--ink);
+  }
+  .whisper .who-stack .av:first-child { margin-left: 0; }
+  .whisper .now {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .whisper .now b { color: var(--lime); font-weight: 650; }
+  .whisper .now span { color: var(--fog); }
+  .whisper .mini-wave {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 16px;
+  }
+  .whisper .mini-wave i {
+    width: 2px;
+    background: var(--lime);
+    border-radius: 1px;
+    animation: bar 0.8s ease-in-out infinite;
+  }
+  .whisper .mini-wave i:nth-child(1) { height: 5px; }
+  .whisper .mini-wave i:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+  .whisper .mini-wave i:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+  .whisper .grip {
+    font-size: 10px;
+    color: var(--mute);
+    letter-spacing: 0.04em;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Phone */
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  .phone {
+    width: 280px;
+    background: var(--ink);
+    border: 3px solid #2a3530;
+    border-radius: 36px;
+    padding: 12px 10px 18px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .phone .notch {
+    width: 88px;
+    height: 22px;
+    background: #0a0e0c;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto 10px;
+  }
+  .phone-screen {
+    background: linear-gradient(180deg, #121a17, #0c1210);
+    border-radius: 24px;
+    min-height: 480px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .phone-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .phone-head h4 {
+    margin: 0;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+  .phone-head .quiet {
+    font-size: 11px;
+    color: var(--mute);
+  }
+  .listen-hero {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px;
+    text-align: center;
+  }
+  .listen-hero .big-av {
+    margin: 0 auto 10px;
+  }
+  .listen-hero .say {
+    font-size: 14px;
+    font-weight: 550;
+    margin-bottom: 8px;
+  }
+  .listen-hero .meta {
+    font-size: 11px;
+    color: var(--mute);
+  }
+  .thumb-zone {
+    margin-top: auto;
+    display: grid;
+    gap: 8px;
+  }
+  .hold-btn {
+    background: var(--lime);
+    color: #0a120c;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    font-weight: 750;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+  .hold-btn small {
+    display: block;
+    font-weight: 550;
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+  .row-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .row-btns .btn {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--fog);
+  }
+  .agent-list {
+    display: grid;
+    gap: 6px;
+  }
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .agent-row .st {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--mute);
+  }
+  .agent-row .st.hot { color: var(--amber); }
+
+  /* Huddle / group call */
+  .huddle-stage {
+    padding: 20px;
+    min-height: 380px;
+    background:
+      radial-gradient(circle at 50% 55%, rgba(94, 234, 212, 0.1), transparent 55%),
+      #0e1412;
+  }
+  .circle {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 1;
+    margin: 0 auto 16px;
+  }
+  .circle .center {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--line-strong);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 11px;
+    color: var(--mute);
+    z-index: 2;
+  }
+  .circle .center b {
+    display: block;
+    color: var(--paper);
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .orbit {
+    position: absolute;
+    width: 72px;
+    text-align: center;
+  }
+  .orbit .bubble {
+    margin-top: 6px;
+    font-size: 10px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 6px;
+    color: var(--fog);
+    line-height: 1.25;
+  }
+  .orbit.o1 { left: 50%; top: 0; transform: translateX(-50%); }
+  .orbit.o2 { right: 0; top: 38%; }
+  .orbit.o3 { left: 50%; bottom: 0; transform: translateX(-50%); }
+  .orbit.o4 { left: 0; top: 38%; }
+  .huddle-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .huddle-bar .act {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--fog);
+  }
+  .huddle-bar .act.primary {
+    background: var(--coral);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 650;
+  }
+
+  /* Glance + Sketch */
+  .dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .glance-card, .sketch-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .glance-card .hdr, .sketch-card .hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+  .glance-card .hdr b, .sketch-card .hdr b { font-weight: 650; }
+  .screen-fake {
+    height: 160px;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 22px,
+        rgba(255,255,255,0.03) 22px,
+        rgba(255,255,255,0.03) 23px
+      ),
+      linear-gradient(160deg, #1c2834, #152018);
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #f87171;
+    position: relative;
+  }
+  .screen-fake .ok { color: var(--mute); }
+  .consent {
+    position: absolute;
+    bottom: 10px; left: 10px; right: 10px;
+    background: rgba(12, 18, 16, 0.92);
+    border: 1px solid rgba(182, 242, 109, 0.35);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fog);
+  }
+  .consent .yes {
+    margin-left: auto;
+    background: var(--lime);
+    color: #0a120c;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .sketch-body {
+    height: 160px;
+    background: #f4f1e8;
+    position: relative;
+    color: #1a1a1a;
+  }
+  .sketch-body svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .sketch-tools {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--line);
+    background: var(--ink-2);
+  }
+  .sketch-tools span {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--mute);
+    border: 1px solid var(--line);
+  }
+  .sketch-tools span.on {
+    background: rgba(182, 242, 109, 0.15);
+    color: var(--lime);
+    border-color: rgba(182, 242, 109, 0.3);
+  }
+
+  /* Card hold interaction */
+  .hold-scene {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .key-card {
+    background: linear-gradient(145deg, #22302a, #1a2420);
+    border: 1px solid var(--line-strong);
+    border-radius: 20px;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .key-card.held-glow {
+    border-color: rgba(79, 140, 255, 0.6);
+    box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.12), var(--shadow);
+  }
+  .key-card .hint {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--mute);
+  }
+  .key-card .hotkey {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--leo);
+    background: rgba(79, 140, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .reply-modes {
+    display: grid;
+    gap: 8px;
+  }
+  .mode {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .mode .ico {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--ink-2);
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .mode b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .mode span { font-size: 12px; color: var(--mute); }
+
+  /* Rationale */
+  .rationale {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .rationale h2 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+  .rat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .rat-grid h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: var(--lime);
+  }
+  .rat-grid p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--fog);
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--mute);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .pillars { grid-template-columns: 1fr 1fr; }
+    .token-grid,
+    .mock-block,
+    .mock-block.flip,
+    .dual,
+    .hold-scene,
+    .rat-grid {
+      grid-template-columns: 1fr;
+    }
+    .apron { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) {
+    .pillars { grid-template-columns: 1fr; }
+    .swatches { grid-template-columns: 1fr 1fr; }
+    .board { padding: 32px 14px 72px; }
+    .apron { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="board">
+
+    <!-- MAST / THESIS -->
+    <header class="mast">
+      <div>
+        <div class="eyebrow">Concept board · Room of Devs</div>
+        <h1>The room is a radio play you can see.</h1>
+      </div>
+      <p class="thesis">
+        <strong>Thesis:</strong> Stop building a chat app that happens to speak.
+        Build a <strong>directed ensemble</strong> — four characters on a stage,
+        audio as the live feed, UI as the glance layer. You conduct with cards
+        and voice plans; they perform with lip-synced presence, polite waits,
+        and huddles when the work needs more than one mind.
+      </p>
+      <div class="pillars">
+        <div class="pillar"><b>Hear</b><span>Room audio is the product. UI answers who / needs me / plan.</span></div>
+        <div class="pillar"><b>Hold</b><span>Address one agent by holding their card — not by opening a thread.</span></div>
+        <div class="pillar"><b>Huddle</b><span>Group call is a circle, not four parallel monologues.</span></div>
+        <div class="pillar"><b>Show &amp; sketch</b><span>Screen glances and shared drawings are first-class turns.</span></div>
+      </div>
+    </header>
+
+    <!-- TOKENS -->
+    <section>
+      <div class="sec-head">
+        <h2>Tokens</h2>
+        <p>Sewer-dark stage. Lime = speaking. Amber = waiting. Coral = needs a decision. Characters carry their own color, not a purple theme.</p>
+      </div>
+      <div class="token-grid">
+        <div class="token-card">
+          <h3>Palette</h3>
+          <div class="swatches">
+            <div class="swatch"><div class="chip" style="background:#0c1210"></div><div class="meta"><b>Ink</b>#0C1210</div></div>
+            <div class="swatch"><div class="chip" style="background:#1a2420"></div><div class="meta"><b>Panel</b>#1A2420</div></div>
+            <div class="swatch"><div class="chip" style="background:#b6f26d"></div><div class="meta"><b>Live</b>#B6F26D</div></div>
+            <div class="swatch"><div class="chip" style="background:#f0b429"></div><div class="meta"><b>Wait</b>#F0B429</div></div>
+            <div class="swatch"><div class="chip" style="background:#ff6b4a"></div><div class="meta"><b>Block</b>#FF6B4A</div></div>
+            <div class="swatch"><div class="chip" style="background:#5eead4"></div><div class="meta"><b>Plan</b>#5EEAD4</div></div>
+            <div class="swatch"><div class="chip" style="background:#e8f0ea"></div><div class="meta"><b>Paper</b>#E8F0EA</div></div>
+            <div class="swatch"><div class="chip" style="background:#7f9488"></div><div class="meta"><b>Mute</b>#7F9488</div></div>
+          </div>
+          <div class="cast-row">
+            <div class="cast"><span class="av leo">L</span> Leo · lead</div>
+            <div class="cast"><span class="av raph">R</span> Raph · ship</div>
+            <div class="cast"><span class="av don">D</span> Donnie · deep</div>
+            <div class="cast"><span class="av mike">M</span> Mikey · explore</div>
+          </div>
+        </div>
+        <div class="token-card">
+          <h3>Type</h3>
+          <div class="type-row">
+            <div class="type-sample">
+              <div class="label">Display · system bold</div>
+              <div class="type-display">Room live</div>
+            </div>
+            <div class="type-sample">
+              <div class="label">Body · system</div>
+              <div class="type-body">Donnie finished the auth middleware. Waiting on your call for the redirect edge case.</div>
+            </div>
+            <div class="type-sample">
+              <div class="label">Plan / voice command · mono</div>
+              <div class="type-mono">pause → replay Donnie → huddle Leo+Raph</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SURFACE 1: MAC STAGE -->
+    <section>
+      <div class="sec-head">
+        <h2>Surfaces</h2>
+        <p>Five surfaces. The Stage is home. The Whisper Bar never steals focus. Phone is a one-handed director’s remote. Glance and Sketch are turns, not modes buried in menus.</p>
+      </div>
+
+      <div class="mock-grid">
+
+        <!-- Mac Stage -->
+        <div class="mock-block">
+          <div class="device mac">
+            <div class="titlebar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="win-name">Room of Devs — Stage</span>
+            </div>
+            <div class="stage">
+              <div class="stage-top">
+                <div class="room-status"><span class="live-pip"></span> Room live · 3 agents · silent optional</div>
+                <div class="cmd-chip">“pause the room, then replay Donnie”</div>
+              </div>
+
+              <div class="apron">
+                <div class="char-slot speaking">
+                  <span class="state-pill talk">Speaking</span>
+                  <span class="av lg don">D</span>
+                  <div class="name">Donnie</div>
+                  <div class="role">auth-middleware</div>
+                  <div class="wave"><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="char-slot held">
+                  <span class="state-pill hold">Held</span>
+                  <span class="av lg leo">L</span>
+                  <div class="name">Leo</div>
+                  <div class="role">orchestrator</div>
+                  <div class="wave" style="opacity:0.25"><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="char-slot blocked">
+                  <span class="state-pill block">Decide</span>
+                  <span class="av lg raph">R</span>
+                  <div class="name">Raph</div>
+                  <div class="role">payments-cut</div>
+                  <div style="margin-top:10px;font-size:10px;color:var(--coral)">Needs: Stripe vs. mock?</div>
+                </div>
+                <div class="char-slot waiting">
+                  <span class="state-pill wait">Bench</span>
+                  <span class="av lg mike">M</span>
+                  <div class="name">Mikey</div>
+                  <div class="role">onboarding-copy</div>
+                  <div style="margin-top:10px;font-size:10px;color:var(--amber)">Done · polite wait</div>
+                </div>
+              </div>
+
+              <div class="spoken">
+                <div class="who"><span class="av sm don">D</span> Donnie · just now · lip-sync frame 3/6</div>
+                <div class="line">“Middleware’s green. One edge case on the redirect — <em>want me to sketch the flow?</em>”</div>
+              </div>
+
+              <div class="bench">
+                <span class="av mike">M</span>
+                Mikey finished onboarding copy · sitting on the bench · tap or say “bring Mikey up”
+              </div>
+
+              <div class="composer">
+                <div class="attach">📎</div>
+                <div class="field">Type to Leo · or paste an image / file…</div>
+                <div class="send">Send</div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-note">
+            <span class="tag">01 · Mac Stage</span>
+            <h3>The apron, not the inbox</h3>
+            <p>Characters sit on the apron with state you can read in under a second: speaking, held, decide, bench. Spoken lines fade like radio — not a forever chat scroll.</p>
+            <ul>
+              <li>Lip-sync swaps avatar frames while audio plays</li>
+              <li>Voice plans land as cyan chips, then execute as little steps</li>
+              <li>Typed reply + attachment always available (headphones / silent room)</li>
+              <li>Decision-needed steps forward; done agents wait on the bench — no toast spam</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Whisper Bar -->
+        <div class="mock-block flip">
+          <div class="mock-note">
+            <span class="tag">02 · Whisper Bar</span>
+            <h3>Always visible. Never steals focus.</h3>
+            <p>A translucent strip over whatever you’re in. Click-through except a small grip. Shows who’s talking, a scrap of the line, and a one-tap expand to Stage.</p>
+            <ul>
+              <li>Amber pip when someone joins the bench</li>
+              <li>Coral pip when a decision is blocking</li>
+              <li>Scroll the grip to scrub / replay last message</li>
+              <li>Hold ⌘+1…4 here too — same card model</li>
+            </ul>
+          </div>
+          <div class="desktop-scene">
+            <div class="fake-app">
+              // editor · checkout.tsx<br/>
+              const intent = await stripe…<br/>
+              <span style="color:#f0b429">⚠ redirect edge case — line 84</span><br/>
+              return &lt;CheckoutForm /&gt;
+            </div>
+            <div class="whisper">
+              <div class="who-stack">
+                <span class="av sm don">D</span>
+                <span class="av sm raph">R</span>
+              </div>
+              <div class="now"><b>Donnie</b> <span>· “want me to sketch the flow?”</span></div>
+              <div class="mini-wave"><i></i><i></i><i></i></div>
+              <div class="grip">⋮⋮ grip</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="mock-block">
+          <div class="phone-wrap">
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="phone-screen">
+                <div class="phone-head">
+                  <h4>The Room</h4>
+                  <span class="quiet">couch mode</span>
+                </div>
+                <div class="listen-hero">
+                  <span class="av xl don big-av">D</span>
+                  <div class="say">“Middleware’s green. Sketch the redirect?”</div>
+                  <div class="meta">Donnie · playing · tap waveform to scrub</div>
+                  <div class="wave" style="margin-top:12px"><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="agent-list">
+                  <div class="agent-row"><span class="av sm raph">R</span> Raph <span class="st hot">needs you</span></div>
+                  <div class="agent-row"><span class="av sm mike">M</span> Mikey <span class="st">on bench</span></div>
+                  <div class="agent-row"><span class="av sm leo">L</span> Leo <span class="st">idle</span></div>
+                </div>
+                <div class="thumb-zone">
+                  <div class="hold-btn">Hold to talk to Donnie<small>thumb zone · release to send</small></div>
+                  <div class="row-btns">
+                    <div class="btn">Huddle</div>
+                    <div class="btn">Type + 📎</div>
+                    <div class="btn">New agent</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-note">
+            <span class="tag">03 · Phone · Director’s remote</span>
+            <h3>One hand. Bottom third is sacred.</h3>
+            <p>Phone is not a tiny Stage. It’s listen → decide → talk. Big now-playing character, thumb-reach hold-to-talk, and three actions that matter from the couch.</p>
+            <ul>
+              <li>Start new agents without opening a laptop</li>
+              <li>Same attachments + typed replies as Mac</li>
+              <li>Huddle kicks a multi-voice call with characters already in the room</li>
+              <li>Swipe between characters instead of hunting threads</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Huddle -->
+        <div class="mock-block flip">
+          <div class="mock-note">
+            <span class="tag">04 · The Huddle</span>
+            <h3>One conversation. Many voices.</h3>
+            <p>When you say “huddle” or tap it, characters rearrange into a circle with you at the center. They build on each other — overlapping speech is visible as layered waveforms, not four separate transcripts.</p>
+            <ul>
+              <li>Leo can interrupt to reframe; Raph challenges; Donnie diagrams</li>
+              <li>You mute the room or pull one character aside mid-huddle</li>
+              <li>Ending a huddle leaves a single shared summary spoken by Leo</li>
+            </ul>
+          </div>
+          <div class="device">
+            <div class="titlebar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="win-name">Huddle · redirect edge case</span>
+            </div>
+            <div class="huddle-stage">
+              <div class="circle">
+                <div class="center"><b>You</b>listening</div>
+                <div class="orbit o1">
+                  <span class="av lg leo">L</span>
+                  <div class="bubble">“Let’s decide the happy path first.”</div>
+                </div>
+                <div class="orbit o2">
+                  <span class="av lg don">D</span>
+                  <div class="bubble">“I’ll draw it — hang on.”</div>
+                </div>
+                <div class="orbit o3">
+                  <span class="av lg raph">R</span>
+                  <div class="bubble">“Ship with mock if Stripe’s flaky.”</div>
+                </div>
+                <div class="orbit o4">
+                  <span class="av lg mike">M</span>
+                  <div class="bubble">“Copy can wait.”</div>
+                </div>
+              </div>
+              <div class="huddle-bar">
+                <div class="act">Mute room</div>
+                <div class="act">Show screen</div>
+                <div class="act">Sketch table</div>
+                <div class="act primary">End huddle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Glance + Sketch -->
+        <div class="mock-block">
+          <div>
+            <div class="dual">
+              <div class="glance-card">
+                <div class="hdr"><b>Screen glance</b><span style="color:var(--lime)">consent · 8s</span></div>
+                <div class="screen-fake">
+                  <div class="ok">checkout.tsx:84</div>
+                  TypeError: Cannot read properties of undefined (reading 'url')<br/><br/>
+                  at resolveRedirect (…)
+                  <div class="consent">
+                    <span class="av sm you">Y</span>
+                    Show Donnie this window?
+                    <span class="yes">Show</span>
+                  </div>
+                </div>
+              </div>
+              <div class="sketch-card">
+                <div class="hdr"><b>Sketch table</b><span style="color:var(--don)">Donnie drawing</span></div>
+                <div class="sketch-body">
+                  <svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="20" y="40" width="70" height="40" rx="6" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+                    <text x="55" y="64" text-anchor="middle" font-size="11" font-family="system-ui">Checkout</text>
+                    <path d="M90 60 H130" stroke="#1a1a1a" stroke-width="2" marker-end="url(#arrow)"/>
+                    <rect x="130" y="40" width="70" height="40" rx="6" fill="none" stroke="#c45c26" stroke-width="2"/>
+                    <text x="165" y="64" text-anchor="middle" font-size="11" font-family="system-ui" fill="#c45c26">Redirect?</text>
+                    <path d="M200 60 H240" stroke="#1a1a1a" stroke-width="2"/>
+                    <rect x="240" y="30" width="60" height="30" rx="6" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+                    <text x="270" y="50" text-anchor="middle" font-size="10" font-family="system-ui">Success</text>
+                    <rect x="240" y="70" width="60" height="30" rx="6" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+                    <text x="270" y="90" text-anchor="middle" font-size="10" font-family="system-ui">Retry</text>
+                    <path d="M165 80 Q165 120 100 120" stroke="#2a6f5e" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+                    <text x="100" y="138" font-size="10" font-family="system-ui" fill="#2a6f5e">your scribble →</text>
+                    <defs>
+                      <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                        <path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/>
+                      </marker>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="sketch-tools">
+                  <span class="on">Pen</span>
+                  <span>Arrow</span>
+                  <span>Box</span>
+                  <span>Erase</span>
+                  <span>From glance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-note">
+            <span class="tag">05 · Glance &amp; Sketch</span>
+            <h3>As natural as turning the laptop</h3>
+            <p>Screen awareness is a timed, consentful glance — not ambient surveillance. Drawing is a shared table that drops into the Stage or Huddle: agents sketch, you scribble back, optionally over the glance.</p>
+            <ul>
+              <li>“Look at this error” → consent chip → 8-second capture to that agent</li>
+              <li>Sketch table can start from a blank or from the glance frame</li>
+              <li>Both directions: Donnie draws the flow; you mark the branch you want</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Hold a card -->
+        <div class="mock-block flip">
+          <div class="mock-note">
+            <span class="tag">06 · Holding a card</span>
+            <h3>Addressing is physical, not navigational</h3>
+            <p>You don’t open Donnie’s thread. You hold Donnie. Keyboard card, phone press, or voice (“hey Donnie”). Release sends. That’s the atomic unit of talking back.</p>
+          </div>
+          <div class="hold-scene">
+            <div class="key-card held-glow">
+              <span class="av xl don">D</span>
+              <div style="margin-top:12px;font-weight:700;font-size:18px">Donnie</div>
+              <div class="hint">Holding · mic open · room ducks 60%</div>
+              <div class="hotkey">hold ⌘⇧D · or say “hey Donnie”</div>
+            </div>
+            <div class="reply-modes">
+              <div class="mode">
+                <div class="ico">🎙</div>
+                <div><b>Speak</b><span>Primary. Room ducks; character lip-syncs the reply.</span></div>
+              </div>
+              <div class="mode">
+                <div class="ico">⌨</div>
+                <div><b>Type</b><span>Headphones on, hear the answer — or silent room, pure text.</span></div>
+              </div>
+              <div class="mode">
+                <div class="ico">📎</div>
+                <div><b>Attach</b><span>Paste image or file anywhere you can reply — Mac or phone.</span></div>
+              </div>
+              <div class="mode">
+                <div class="ico">👁</div>
+                <div><b>Show</b><span>While holding a card, “look at this” attaches a glance to that turn.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RATIONALE -->
+    <section>
+      <div class="sec-head">
+        <h2>Rationale</h2>
+        <p>Opinionated choices — what we refused, and why the four futures sit in the structure.</p>
+      </div>
+      <div class="rationale">
+        <h2>Why this shape</h2>
+        <div class="rat-grid">
+          <div>
+            <h3>Audio owns attention</h3>
+            <p>If the UI competes with the editor, the product fails. The Stage is for glances and decisions; the Whisper Bar is the always-on ear; everything else is summoned.</p>
+          </div>
+          <div>
+            <h3>Cards beat threads</h3>
+            <p>Multi-agent chat UIs collapse into tab hell. Holding a character is faster than finding a pane, and it maps cleanly to voice commands and phone thumb holds.</p>
+          </div>
+          <div>
+            <h3>Bench &gt; notifications</h3>
+            <p>Agents that finish wait politely. Agents that block step to the apron in coral. The developer chooses when to look — the room doesn’t nag.</p>
+          </div>
+          <div>
+            <h3>Huddle is structural</h3>
+            <p>Group call isn’t a meeting link bolted on. It’s the same cast rearranging — which makes screen glances and sketch tables make sense as shared objects in the circle.</p>
+          </div>
+          <div>
+            <h3>Phone = remote, not clone</h3>
+            <p>Couch use is listen, unblock, start, huddle. Mirroring the Mac Stage would fight one-handed use. The thumb zone is the product on mobile.</p>
+          </div>
+          <div>
+            <h3>Characters earn their keep</h3>
+            <p>Initials + color + voice + lip-sync frames are enough identity to care. Playful cast, serious states. The TMNT framing makes “who’s talking” memorable at a glance.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">Room of Devs · open concept pass · one board · no external assets</p>
+  </div>
+</body>
+</html>

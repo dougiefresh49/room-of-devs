@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAIR FM — a concept for Room of Devs</title>
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    /* Neutrals — "after midnight in the workshop" */
+    --board:#0c0f0e;          /* page behind everything */
+    --room:#141917;           /* app surfaces */
+    --raised:#1c2320;         /* cards, tape blocks */
+    --line:#2a332f;           /* hairlines */
+    --ink:#ece7da;            /* warm paper text */
+    --ink-dim:#98a29b;        /* secondary */
+    --ink-faint:#5d6862;      /* timestamps, ghosts */
+
+    /* The room's own color — ooze green, used ONLY for "the room itself" */
+    --ooze:#7ce08a;
+    --ooze-deep:#173425;
+
+    /* Character accents — each voice owns a hue everywhere it appears */
+    --leo:#4f9df7;
+    --raph:#f25f5c;
+    --don:#a98bf5;
+    --mike:#ffa23e;
+
+    /* Attention states */
+    --hand:#e8c15a;           /* raised hand — patient amber */
+    --blocked:#f25f5c;        /* needs a decision — same red family, pulsing */
+
+    --r-sm:8px; --r-md:14px; --r-lg:22px;
+    --sans:-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--board);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body{line-height:1.55;
+    background-image:
+      radial-gradient(1200px 500px at 70% -100px, rgba(124,224,138,.05), transparent 60%),
+      radial-gradient(900px 600px at -10% 40%, rgba(79,157,247,.04), transparent 55%);
+  }
+  a{color:inherit}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+  /* ============ BOARD CHROME ============ */
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ooze)}
+  h1{font-size:clamp(40px,7vw,76px);font-weight:800;letter-spacing:-.03em;line-height:1.02}
+  h1 .thin{font-weight:300;color:var(--ink-dim)}
+  h2{font-size:clamp(22px,3vw,30px);font-weight:750;letter-spacing:-.02em}
+  .secnum{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.18em}
+  section{padding:72px 0;border-top:1px solid var(--line)}
+  .lede{font-size:clamp(17px,2vw,20px);color:var(--ink-dim);max-width:64ch}
+  .lede strong{color:var(--ink);font-weight:650}
+  .note{font-size:13.5px;color:var(--ink-dim);max-width:52ch}
+  .note b{color:var(--ink);font-weight:650}
+
+  /* thesis pull-quote */
+  .thesis{margin:34px 0 0;padding:26px 30px;border-left:3px solid var(--ooze);
+    background:linear-gradient(90deg,rgba(124,224,138,.07),transparent 70%);
+    border-radius:0 var(--r-md) var(--r-md) 0;max-width:760px}
+  .thesis p{font-size:clamp(18px,2.4vw,23px);font-weight:600;letter-spacing:-.01em;line-height:1.4}
+  .thesis p em{color:var(--ooze);font-style:normal}
+
+  /* ============ AVATARS ============ */
+  .av{display:inline-grid;place-items:center;border-radius:50%;font-weight:800;
+    color:#0b0d0c;flex:none;position:relative}
+  .av.s28{width:28px;height:28px;font-size:12px}
+  .av.s40{width:40px;height:40px;font-size:16px}
+  .av.s56{width:56px;height:56px;font-size:22px}
+  .av.s76{width:76px;height:76px;font-size:30px}
+  .leo-bg{background:var(--leo)} .raph-bg{background:var(--raph)}
+  .don-bg{background:var(--don)} .mike-bg{background:var(--mike)}
+  .leo-c{color:var(--leo)} .raph-c{color:var(--raph)}
+  .don-c{color:var(--don)} .mike-c{color:var(--mike)}
+  .av.dimmed{opacity:.38;filter:saturate(.4)}
+  /* speaking ring */
+  .av.talking::after{content:"";position:absolute;inset:-6px;border-radius:50%;
+    border:2px solid currentColor;opacity:.85;animation:ring 1.4s ease-out infinite}
+  @keyframes ring{0%{transform:scale(.92);opacity:.85}100%{transform:scale(1.18);opacity:0}}
+  /* raised-hand pip */
+  .pip{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;
+    background:var(--hand);border:2px solid var(--room);display:grid;place-items:center;
+    font-size:9px;color:#151109}
+  .pip.blk{background:var(--blocked);animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.25)}}
+
+  /* waveform bars */
+  .wave{display:inline-flex;align-items:center;gap:2.5px;height:16px}
+  .wave i{width:3px;border-radius:2px;background:currentColor;animation:wv 1s ease-in-out infinite}
+  .wave i:nth-child(1){height:35%;animation-delay:0s}
+  .wave i:nth-child(2){height:90%;animation-delay:.15s}
+  .wave i:nth-child(3){height:55%;animation-delay:.3s}
+  .wave i:nth-child(4){height:100%;animation-delay:.45s}
+  .wave i:nth-child(5){height:45%;animation-delay:.6s}
+  @keyframes wv{50%{transform:scaleY(.35)}}
+
+  /* ============ TOKEN SWATCHES ============ */
+  .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:30px}
+  .sw{border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--room)}
+  .sw .chip{height:58px}
+  .sw .m{padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .sw .m b{display:block;color:var(--ink);font-size:12px;margin-bottom:2px;font-family:var(--sans);font-weight:650}
+  .typespec{margin-top:26px;border:1px solid var(--line);border-radius:var(--r-md);
+    background:var(--room);padding:22px 26px;display:grid;gap:14px}
+  .typespec .row{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap}
+  .typespec .tag{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);
+    letter-spacing:.14em;text-transform:uppercase;min-width:120px}
+
+  /* ============ MOCK FRAMES ============ */
+  .stagebg{margin-top:34px;padding:clamp(18px,4vw,46px);border-radius:var(--r-lg);
+    background:
+      radial-gradient(700px 320px at 50% 0%, rgba(124,224,138,.06), transparent 70%),
+      repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.012) 3px 4px),
+      #101413;
+    border:1px solid var(--line);overflow:hidden}
+  .framelabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+  .framelabel b{color:var(--ooze);font-weight:600}
+
+  /* ---- The Door (dock sliver) ---- */
+  .door{width:min(400px,100%);background:rgba(18,23,21,.92);border:1px solid var(--line);
+    border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;
+    box-shadow:0 18px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04)}
+  .door .who{min-width:0;flex:1}
+  .door .who .nm{font-size:12.5px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .door .who .last{font-size:12px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .door .hands{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;
+    color:var(--hand);background:rgba(232,193,90,.1);border:1px solid rgba(232,193,90,.3);
+    padding:4px 9px;border-radius:999px;flex:none}
+  .door .keyhint{font-family:var(--mono);font-size:10px;color:var(--ink-faint);
+    border:1px solid var(--line);border-radius:6px;padding:2px 6px;flex:none}
+  .door.quiet .who .nm{color:var(--ink-dim)}
+  .doorstack{display:grid;gap:22px;justify-items:start}
+
+  /* ---- Main window ---- */
+  .macwin{border-radius:14px;overflow:hidden;border:1px solid #333d38;
+    box-shadow:0 34px 80px rgba(0,0,0,.6);background:var(--room)}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#181e1b;
+    border-bottom:1px solid var(--line)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .titlebar .t{margin-left:8px;font-size:12px;color:var(--ink-faint);font-family:var(--mono);
+    letter-spacing:.1em}
+  .onair{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    color:var(--ooze);border:1px solid rgba(124,224,138,.35);border-radius:999px;
+    padding:3px 10px;background:rgba(124,224,138,.08)}
+  .onair::before{content:"●";margin-right:6px;animation:blink 1.6s infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  .roomgrid{display:grid;grid-template-columns:1fr 268px;min-height:430px}
+  @media(max-width:820px){.roomgrid{grid-template-columns:1fr}}
+
+  /* stage */
+  .stage{padding:24px 26px 18px;display:flex;flex-direction:column;gap:18px;min-width:0}
+  .cast{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap}
+  .seat{display:grid;justify-items:center;gap:7px;text-align:center}
+  .seat .nm{font-size:12px;font-weight:700}
+  .seat .st{font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+  .seat .st.hot{color:var(--hand)}
+  .nowline{display:flex;align-items:center;gap:12px;background:var(--raised);
+    border:1px solid var(--line);border-radius:var(--r-md);padding:12px 16px}
+  .nowline .txt{font-size:13.5px;min-width:0}
+  .nowline .txt b{font-weight:700}
+  .nowline .txt span{color:var(--ink-dim)}
+
+  /* the tape */
+  .tape{margin-top:auto}
+  .tapehead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .tapehead .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--ink-faint);
+    text-transform:uppercase}
+  .catchup{font-size:11.5px;font-weight:650;color:#10140f;background:var(--ooze);
+    border-radius:999px;padding:4px 12px;border:none;cursor:pointer}
+  .track{position:relative;height:54px;background:#10140f;border:1px solid var(--line);
+    border-radius:10px;display:flex;align-items:stretch;overflow:hidden;padding:6px;gap:4px}
+  .blk{border-radius:6px;opacity:.9;position:relative;flex:none}
+  .blk.leo{background:linear-gradient(180deg,var(--leo),#2b6dc0)}
+  .blk.raph{background:linear-gradient(180deg,var(--raph),#b23c3a)}
+  .blk.don{background:linear-gradient(180deg,var(--don),#7a5cc4)}
+  .blk.mike{background:linear-gradient(180deg,var(--mike),#c97722)}
+  .blk.gap{background:transparent;border:1px dashed #2c3531;opacity:.7}
+  .playhead{position:absolute;top:-4px;bottom:-4px;left:63%;width:2px;background:var(--ink);
+    box-shadow:0 0 10px rgba(236,231,218,.6)}
+  .playhead::before{content:"";position:absolute;top:-3px;left:-4px;border:5px solid transparent;
+    border-top-color:var(--ink)}
+  .tapefoot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;
+    color:var(--ink-faint);margin-top:6px}
+  .unheard{position:absolute;inset:0;left:63%;background:repeating-linear-gradient(-45deg,
+    rgba(124,224,138,.10) 0 6px, transparent 6px 12px);pointer-events:none}
+
+  /* dock column: hands + slips */
+  .dockcol{border-left:1px solid var(--line);padding:20px 18px;display:flex;
+    flex-direction:column;gap:14px;background:#12171526}
+  @media(max-width:820px){.dockcol{border-left:none;border-top:1px solid var(--line)}}
+  .dockcol h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .handcard{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:12px 13px;display:grid;gap:8px;border-left:3px solid var(--hand)}
+  .handcard.blk{border-left-color:var(--blocked)}
+  .handcard .top{display:flex;gap:9px;align-items:center}
+  .handcard .top .nm{font-size:12.5px;font-weight:700}
+  .handcard .top .ago{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+  .handcard p{font-size:12.5px;color:var(--ink-dim)}
+  .handcard .acts{display:flex;gap:7px;flex-wrap:wrap}
+  .btn{font-size:11.5px;font-weight:650;border-radius:8px;padding:5px 11px;cursor:pointer;
+    border:1px solid var(--line);background:transparent;color:var(--ink)}
+  .btn.pri{background:var(--ink);color:#10130f;border-color:var(--ink)}
+  .btn.ghost{color:var(--ink-dim)}
+
+  /* errand slip */
+  .slip{background:#181d16;border:1px solid rgba(232,193,90,.35);border-radius:var(--r-md);
+    padding:12px 14px;display:grid;gap:8px;
+    box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .slip .hd{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--hand)}
+  .slip q{font-size:12.5px;color:var(--ink);font-style:italic}
+  .slip ol{list-style:none;display:grid;gap:5px;font-size:12px;color:var(--ink-dim)}
+  .slip ol .done::before{content:"✓";color:var(--ooze);margin-right:8px;font-weight:700}
+  .slip ol .doing::before{content:"▸";color:var(--hand);margin-right:8px}
+  .slip ol .todo::before{content:"·";color:var(--ink-faint);margin-right:8px}
+
+  /* ---- phone ---- */
+  .phones{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:300px;flex:none;background:#0d100f;border:1px solid #333d38;border-radius:38px;
+    padding:12px;box-shadow:0 30px 70px rgba(0,0,0,.6)}
+  .screen{background:var(--room);border-radius:28px;overflow:hidden;display:flex;
+    flex-direction:column;height:600px}
+  .ph-top{padding:16px 18px 12px;display:flex;align-items:center;gap:10px;
+    border-bottom:1px solid var(--line)}
+  .ph-top .t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink-faint);
+    text-transform:uppercase}
+  .ph-top .mode{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--ooze);
+    border:1px solid rgba(124,224,138,.3);padding:2px 8px;border-radius:999px}
+  .ph-body{flex:1;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .ph-now{display:grid;justify-items:center;gap:9px;padding:12px 0 6px;text-align:center}
+  .ph-now .say{font-size:13px;color:var(--ink-dim);max-width:30ch}
+  .ph-now .say b{color:var(--ink)}
+  .ph-scrub{height:34px;background:#10140f;border:1px solid var(--line);border-radius:8px;
+    position:relative;display:flex;padding:4px;gap:3px;align-items:stretch}
+  .ph-thumb{position:relative;margin-top:auto;display:grid;gap:10px}
+  .ptt{height:76px;border-radius:20px;border:1px solid rgba(124,224,138,.4);
+    background:linear-gradient(180deg,#1d2b21,#14201a);display:grid;place-items:center;
+    color:var(--ooze);font-weight:750;font-size:14px;letter-spacing:.02em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  .ptt small{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);
+    font-weight:400;text-align:center;letter-spacing:.08em;margin-top:3px}
+  .ptt.held{background:var(--ooze);color:#0c1410;border-color:var(--ooze);
+    box-shadow:0 0 34px rgba(124,224,138,.35)}
+  .ptt.held small{color:#0c1410aa}
+  .rowchips{display:flex;gap:8px;justify-content:center}
+  .chip2{font-size:11px;font-weight:650;color:var(--ink-dim);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px}
+  .chip2.on{color:var(--ink);border-color:var(--ink-dim)}
+  .ph-hand{display:flex;gap:9px;align-items:center;background:var(--raised);
+    border:1px solid var(--line);border-left:3px solid var(--hand);border-radius:12px;
+    padding:10px 12px;font-size:12px;color:var(--ink-dim)}
+  .ph-hand b{color:var(--ink)}
+  .ph-hand .go{margin-left:auto;color:var(--ink-faint);font-size:16px}
+  .swipehint{font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);text-align:center;
+    letter-spacing:.12em}
+
+  /* rationale cards */
+  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:30px}
+  .why .card{background:var(--room);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:18px 20px}
+  .why .card h5{font-size:13.5px;font-weight:750;margin-bottom:6px}
+  .why .card h5 .n{font-family:var(--mono);color:var(--ooze);margin-right:8px;font-weight:500}
+  .why .card p{font-size:13px;color:var(--ink-dim)}
+
+  /* etiquette / sound tables */
+  .ettable{width:100%;border-collapse:collapse;margin-top:26px;font-size:13px;overflow-x:auto;display:block}
+  .ettable table{width:100%;border-collapse:collapse;min-width:560px}
+  .ettable th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .ettable td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink-dim);vertical-align:top}
+  .ettable td:first-child{color:var(--ink);font-weight:650;white-space:nowrap}
+  .ettable td code{font-family:var(--mono);font-size:11.5px;color:var(--ooze)}
+
+  footer{padding:60px 0 80px;border-top:1px solid var(--line);color:var(--ink-faint);
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em}
+  .split{display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start}
+  @media(max-width:860px){.split{grid-template-columns:1fr}}
+  .sidebar-note{border:1px dashed var(--line);border-radius:var(--r-md);padding:16px 18px;
+    font-size:12.5px;color:var(--ink-dim)}
+  .sidebar-note b{color:var(--hand)}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO / THESIS ================= -->
+<header class="wrap" style="padding:88px 24px 64px">
+  <div class="kicker">Concept board · Room of Devs · one developer, four voices</div>
+  <h1 style="margin-top:14px">LAIR&nbsp;FM<br><span class="thin">the room is a radio station.</span></h1>
+  <div class="thesis">
+    <p>Every design instinct says “dashboard.” Resist it. The developer <em>hears</em> this
+    product; the screen only answers three questions: <em>who is talking, what did I miss,
+    and who is waiting on me.</em> So the core artifact isn’t a status grid — it’s
+    <em>the Tape</em>: a scrubbable broadcast of everything the room has said. Every surface
+    is just a different distance from the same speaker: the Door is standing in the hallway,
+    the Studio is walking in, the phone is a walkie-talkie clipped to your belt.</p>
+  </div>
+  <p class="lede" style="margin-top:26px">Three consequences fall out of the radio framing,
+  and they drive everything below: <strong>(1)</strong> missed audio must be recoverable, so
+  the timeline is the hero, not agent cards; <strong>(2)</strong> interruptions are governed
+  by <strong>room etiquette</strong> — agents raise hands instead of shouting; <strong>(3)</strong>
+  talking back is push-to-talk with a visible “errand slip” when you give the room an order,
+  so voice commands stop feeling like a slot machine.</p>
+</header>
+
+<!-- ================= TOKENS ================= -->
+<section class="wrap">
+  <div class="secnum">01 / TOKENS</div>
+  <h2 style="margin-top:8px">One green for the room. One hue per voice. Amber means “waiting.”</h2>
+  <p class="note" style="margin-top:10px">Color is the audio legend. A character’s hue follows
+  their voice across every surface — their avatar, their tape blocks, their speaking ring —
+  so a half-second glance decodes “blue block = Leo said something.” Ooze green is reserved
+  for <b>the room itself</b> (live state, catch-up, PTT). Amber is reserved for
+  <b>things waiting on you</b>. Nothing else may use either.</p>
+
+  <div class="tokens">
+    <div class="sw"><div class="chip" style="background:var(--board)"></div><div class="m"><b>Board</b>#0C0F0E · page</div></div>
+    <div class="sw"><div class="chip" style="background:var(--room)"></div><div class="m"><b>Room</b>#141917 · surfaces</div></div>
+    <div class="sw"><div class="chip" style="background:var(--raised)"></div><div class="m"><b>Raised</b>#1C2320 · cards</div></div>
+    <div class="sw"><div class="chip" style="background:var(--ink)"></div><div class="m"><b>Ink</b>#ECE7DA · warm text</div></div>
+    <div class="sw"><div class="chip" style="background:var(--ooze)"></div><div class="m"><b>Ooze</b>#7CE08A · the room</div></div>
+    <div class="sw"><div class="chip" style="background:var(--hand)"></div><div class="m"><b>Hand</b>#E8C15A · waiting</div></div>
+    <div class="sw"><div class="chip" style="background:var(--leo)"></div><div class="m"><b>Leo</b>#4F9DF7 · leads</div></div>
+    <div class="sw"><div class="chip" style="background:var(--raph)"></div><div class="m"><b>Raph</b>#F25F5C · + blocked</div></div>
+    <div class="sw"><div class="chip" style="background:var(--don)"></div><div class="m"><b>Don</b>#A98BF5 · tech</div></div>
+    <div class="sw"><div class="chip" style="background:var(--mike)"></div><div class="m"><b>Mikey</b>#FFA23E · party</div></div>
+  </div>
+
+  <div class="typespec">
+    <div class="row"><span class="tag">Display · SF 800</span>
+      <span style="font-size:26px;font-weight:800;letter-spacing:-.02em">Donnie finished the migration.</span></div>
+    <div class="row"><span class="tag">Body · SF 400/650</span>
+      <span style="font-size:14px;color:var(--ink-dim)">Fourteen tables moved, zero rows lost. Rollback script is in <b style="color:var(--ink)">scripts/rollback_0712.sql</b>.</span></div>
+    <div class="row"><span class="tag">Machine · SF Mono</span>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--ink-faint)">14:32:07 · turn 23 · 0:41 · UNHEARD</span></div>
+  </div>
+  <p class="note" style="margin-top:16px">Two voices of type, matching the product’s two
+  registers: the <b>human register</b> (what characters say — warm ink, generous weight) and
+  the <b>machine register</b> (timestamps, durations, states — always mono, always faint).
+  If it could be spoken aloud it’s set in sans; if it never would be, mono.</p>
+</section>
+
+<!-- ================= SURFACE 1: THE DOOR ================= -->
+<section class="wrap">
+  <div class="secnum">02 / SURFACE — THE DOOR</div>
+  <h2 style="margin-top:8px">A door left ajar, not a mini dashboard.</h2>
+  <div class="split" style="margin-top:10px">
+    <div>
+      <p class="note">The always-on-top sliver shows exactly one thing at a time: whoever
+      holds the floor, mouth moving, with their last clause ticking past. When the room is
+      quiet it collapses to the only fact that matters — <b>who’s waiting for you</b>. It never
+      takes focus; the global hold-key (<span style="font-family:var(--mono)">⌥Space</span>)
+      talks to whoever’s pinned, and a scroll gesture over the Door scrubs the Tape back a
+      few seconds — “wait, what did he just say?” without leaving your editor.</p>
+
+      <div class="stagebg">
+        <div class="framelabel"><b>state a</b> — Donnie has the floor</div>
+        <div class="doorstack">
+          <div class="door">
+            <span class="av s40 don-bg talking don-c" style="color:var(--don)"><span style="color:#0b0d0c">D</span></span>
+            <div class="who">
+              <div class="nm">Donatello <span class="wave don-c"><i></i><i></i><i></i><i></i><i></i></span></div>
+              <div class="last">“…rollback script’s in scripts slash rollback, if it goes sideways—”</div>
+            </div>
+            <span class="hands">✋ 2</span>
+            <span class="keyhint">⌥Space talk</span>
+          </div>
+        </div>
+        <div class="framelabel" style="margin-top:26px"><b>state b</b> — room quiet, two hands up</div>
+        <div class="doorstack">
+          <div class="door quiet">
+            <span class="av s40 leo-bg"><span>L</span><span class="pip">✋</span></span>
+            <div class="who">
+              <div class="nm">Room is quiet</div>
+              <div class="last">Leo &amp; Raph are waiting on you · 4 min</div>
+            </div>
+            <span class="hands">✋ 2</span>
+            <span class="keyhint">click ⇒ Studio</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-note" style="margin-top:56px">
+      <b>Why one speaker, not four dots?</b> Peripheral vision is great at motion and terrible
+      at reading. A single moving mouth + a colored ring is legible from the corner of your
+      eye; four tiny status LEDs are not. The Door trades completeness for glanceability —
+      the Studio exists precisely so the Door doesn’t have to be complete.
+    </div>
+  </div>
+</section>
+
+<!-- ================= SURFACE 2: THE STUDIO ================= -->
+<section class="wrap">
+  <div class="secnum">03 / SURFACE — THE STUDIO (main window)</div>
+  <h2 style="margin-top:8px">Stage on top, Tape below, Hands on the side.</h2>
+  <p class="note" style="margin-top:10px">The main window is the room you walk into when the
+  Door isn’t enough. Top: the cast at their desks — posture, not text, carries state
+  (talking ring, hand raised, dimmed = heads-down working). Bottom: <b>the Tape</b> — every
+  utterance as a colored block you can scrub, with the striped region marking what you
+  haven’t heard. Right: the <b>hand queue</b>, oldest first, each card carrying the actual
+  decision so you can answer without a round trip.</p>
+
+  <div class="stagebg">
+    <div class="framelabel"><b>lair.app</b> — main window, ~980 × 560</div>
+    <div class="macwin">
+      <div class="titlebar">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+        <span class="t">LAIR FM</span>
+        <span class="onair">ON AIR · OPEN FLOOR</span>
+      </div>
+      <div class="roomgrid">
+        <div class="stage">
+          <div class="cast">
+            <div class="seat">
+              <span class="av s56 leo-bg"><span>L</span><span class="pip">✋</span></span>
+              <span class="nm">Leonardo</span><span class="st hot">✋ waiting 4m</span>
+            </div>
+            <div class="seat">
+              <span class="av s56 raph-bg"><span>R</span><span class="pip blk">!</span></span>
+              <span class="nm">Raphael</span><span class="st" style="color:var(--blocked)">blocked 9m</span>
+            </div>
+            <div class="seat">
+              <span class="av s76 don-bg talking" style="color:var(--don)"><span>D</span></span>
+              <span class="nm">Donatello</span><span class="st" style="color:var(--don)">has the floor</span>
+            </div>
+            <div class="seat">
+              <span class="av s56 mike-bg dimmed"><span>M</span></span>
+              <span class="nm">Michelangelo</span><span class="st">heads-down · 12m</span>
+            </div>
+          </div>
+
+          <div class="nowline">
+            <span class="wave" style="color:var(--don)"><i></i><i></i><i></i><i></i><i></i></span>
+            <div class="txt"><b>Donnie:</b> <span>“Migration’s done — fourteen tables, zero
+            rows lost. Rollback script’s in scripts/rollback_0712.sql if it goes sideways.”</span></div>
+          </div>
+
+          <div class="tape">
+            <div class="tapehead">
+              <span class="lbl">The Tape · today</span>
+              <button class="catchup">▸ Catch up — 3 unheard · 1:56 at 2×</button>
+            </div>
+            <div class="track">
+              <span class="blk leo" style="width:9%"></span>
+              <span class="blk mike" style="width:5%"></span>
+              <span class="blk gap" style="width:7%"></span>
+              <span class="blk don" style="width:13%"></span>
+              <span class="blk raph" style="width:6%"></span>
+              <span class="blk leo" style="width:4%"></span>
+              <span class="blk gap" style="width:10%"></span>
+              <span class="blk don" style="width:8%"></span>
+              <span class="blk raph" style="width:5%"></span>
+              <span class="blk mike" style="width:7%"></span>
+              <span class="blk don" style="width:11%"></span>
+              <span class="unheard"></span>
+              <span class="playhead"></span>
+            </div>
+            <div class="tapefoot"><span>13:05</span><span>▲ you stepped away 14:18–14:31</span><span>now 14:36</span></div>
+          </div>
+        </div>
+
+        <div class="dockcol">
+          <h4>Hands up · 2</h4>
+          <div class="handcard blk">
+            <div class="top"><span class="av s28 raph-bg">R</span><span class="nm">Raphael</span><span class="ago">9m</span></div>
+            <p>“Migrations from Donnie’s branch conflict with mine. I can rebase and eat the
+            diff, or wait for him. Your call — I’m not touching it till you say.”</p>
+            <div class="acts"><button class="btn pri">Rebase</button><button class="btn">Wait for Don</button><button class="btn ghost">🎙 Hold to answer</button></div>
+          </div>
+          <div class="handcard">
+            <div class="top"><span class="av s28 leo-bg">L</span><span class="nm">Leonardo</span><span class="ago">4m</span></div>
+            <p>“Auth refactor’s ready for eyes. Two commits, session store untouched like you
+            asked. Want the walkthrough now or on the Tape for later?”</p>
+            <div class="acts"><button class="btn pri">Read it to me</button><button class="btn">Queue for later</button></div>
+          </div>
+
+          <h4 style="margin-top:6px">Errand slip</h4>
+          <div class="slip">
+            <div class="hd">🎙 Heard 14:35:52</div>
+            <q>“Pause the room, then replay Donnie’s last message.”</q>
+            <ol>
+              <li class="done">Floor closed — room holds new audio</li>
+              <li class="doing">Replaying Don · turn 23 · 0:41</li>
+              <li class="todo">Reopen floor when done</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why">
+    <div class="card"><h5><span class="n">a</span>The Tape is the hero</h5>
+      <p>Audio evaporates; the Tape makes it durable. Blocks are utterances, hue is speaker,
+      the striped zone is your “away” debt, and <i>Catch up at 2×</i> pays it down in one tap.
+      Scrubbing IS the replay feature — no separate history view to maintain or learn.</p></div>
+    <div class="card"><h5><span class="n">b</span>Hands, not notifications</h5>
+      <p>“Finished and waiting politely” and “blocked on a decision” are social states, so they
+      look social: a raised hand on the avatar, a queue ordered by patience, and the decision
+      inlined on the card. Amber waits; red pulses. Nothing badges, bounces, or toasts.</p></div>
+    <div class="card"><h5><span class="n">c</span>Errand slips make voice trustworthy</h5>
+      <p>A spoken command becomes a visible plan: what the room heard, verbatim, and each step
+      checking off. Misheard you? The slip shows it before anything runs long. This one element
+      is what upgrades voice control from party trick to daily tool.</p></div>
+  </div>
+</section>
+
+<!-- ================= SURFACE 3: THE PHONE ================= -->
+<section class="wrap">
+  <div class="secnum">04 / SURFACE — THE WALKIE-TALKIE (phone)</div>
+  <h2 style="margin-top:8px">The phone is not a small Studio. It’s the belt clip.</h2>
+  <p class="note" style="margin-top:10px">Couch context: one thumb, half attention, audio
+  through the phone speaker. So the phone gets exactly three zones, stacked by reach —
+  <b>now playing</b> up top (glance), <b>hands</b> in the middle (one tap each), and the
+  bottom third belongs entirely to the thumb: mini-Tape scrubber and a giant hold-to-talk
+  bar. Swipe left/right anywhere on the talk bar to retune which character you’re keyed to;
+  hold with no one tuned and you’re addressing the whole room.</p>
+
+  <div class="stagebg">
+    <div class="phones">
+      <div class="phone"><div class="screen">
+        <div class="ph-top"><span class="av s28 don-bg">D</span><span class="t">Lair FM · live</span><span class="mode">ON AIR</span></div>
+        <div class="ph-body">
+          <div class="ph-now">
+            <span class="av s76 don-bg talking" style="color:var(--don)"><span>D</span></span>
+            <div class="say"><b>Donnie</b> — “Migration’s done, fourteen tables, zero rows lost…”</div>
+          </div>
+          <div class="ph-scrub">
+            <span class="blk don" style="width:22%"></span>
+            <span class="blk raph" style="width:12%"></span>
+            <span class="blk mike" style="width:14%"></span>
+            <span class="blk don" style="width:26%"></span>
+            <span class="unheard" style="left:74%"></span>
+            <span class="playhead" style="left:74%"></span>
+          </div>
+          <div class="ph-hand"><span class="av s28 raph-bg">R</span><span><b>Raph is blocked</b> — rebase or wait?</span><span class="go">›</span></div>
+          <div class="ph-hand" style="border-left-color:var(--hand)"><span class="av s28 leo-bg">L</span><span><b>Leo</b> — auth ready for review</span><span class="go">›</span></div>
+          <div class="ph-thumb">
+            <div class="rowchips"><span class="chip2 on">Room</span><span class="chip2">Leo</span><span class="chip2">Raph</span><span class="chip2" style="color:var(--don);border-color:var(--don)">Don ◂</span><span class="chip2">Mikey</span></div>
+            <div class="ptt">🎙 HOLD TO TALK TO DON<small>swipe to retune · hold with none = whole room</small></div>
+            <div class="swipehint">PULL DOWN TO PAUSE THE ROOM</div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="phone"><div class="screen">
+        <div class="ph-top"><span class="t">Lair FM · keyed up</span><span class="mode" style="color:var(--hand);border-color:rgba(232,193,90,.4)">FLOOR HELD</span></div>
+        <div class="ph-body">
+          <div class="ph-now">
+            <span class="av s76 raph-bg" style="color:var(--raph)"><span>R</span></span>
+            <div class="say"><b>Talking to Raph</b> — the room waits while you hold. Release
+            to send; slide up to cancel.</div>
+          </div>
+          <div style="display:grid;place-items:center;gap:6px;padding:8px 0">
+            <span class="wave" style="color:var(--ooze);height:26px"><i></i><i></i><i></i><i></i><i></i></span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--ink-faint)">0:07 · “take the rebase, but diff me the—”</span>
+          </div>
+          <div class="ph-hand" style="border-left-color:var(--ooze)"><span>↑</span><span>Slide up to <b>cancel</b></span></div>
+          <div class="ph-thumb">
+            <div class="ptt held">● RELEASE TO SEND<small style="color:#0c1410aa">holding the floor · room is paused</small></div>
+            <div class="swipehint">SPAWN A NEW AGENT: LONG-PRESS AN EMPTY SEAT ON THE ROOM TAB</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="why">
+    <div class="card"><h5><span class="n">a</span>Reach dictates layout</h5>
+      <p>Everything you must touch lives in the bottom 40%; everything you merely read floats
+      above it. The talk bar is fixed and huge because it’s the whole reason the phone
+      surface exists — replying from the couch without sitting up.</p></div>
+    <div class="card"><h5><span class="n">b</span>Tuning, not navigation</h5>
+      <p>Choosing who to address is a swipe across station chips, like tuning a dial — no
+      per-agent screens to drill into. The keyed-up state takes the whole screen so a pocket
+      press can’t silently broadcast to the room.</p></div>
+    <div class="card"><h5><span class="n">c</span>Same Tape everywhere</h5>
+      <p>The phone scrubber and the Studio Tape are the same object at different widths. Pause
+      on the Mac, scrub on the phone, resume from the Door — one playhead, three distances.</p></div>
+  </div>
+</section>
+
+<!-- ================= ETIQUETTE & SOUND ================= -->
+<section class="wrap">
+  <div class="secnum">05 / ROOM ETIQUETTE &amp; SOUND</div>
+  <h2 style="margin-top:8px">Floor rules instead of mute buttons.</h2>
+  <p class="note" style="margin-top:10px">Because audio is primary, “notification settings”
+  become <b>house rules</b> — one dial with three positions, visible in the Door and the
+  title bar, switchable by voice (“close the floor”). Sound is designed like radio: each
+  character keeps a two-note entrance sting in their own instrument, so you learn who’s
+  about to speak before a word lands.</p>
+
+  <div class="ettable"><table>
+    <tr><th>Floor rule</th><th>Who may speak aloud</th><th>Everything else</th></tr>
+    <tr><td style="color:var(--ooze)">Open floor</td><td>Everyone, in turn order — hands still queue politely</td><td>—</td></tr>
+    <tr><td style="color:var(--hand)">Hands only</td><td>Only decisions and hands (“need you” moments)</td><td>Lands on the Tape silently, stripes as unheard</td></tr>
+    <tr><td>Lights on, sound off</td><td>No one — deep-work mode</td><td>Door keeps moving lips silently; Tape accrues; one soft chime when a hand has waited 10 min</td></tr>
+  </table></div>
+
+  <div class="ettable"><table>
+    <tr><th>Moment</th><th>Sound</th><th>Sight</th></tr>
+    <tr><td>Character takes the floor</td><td>Their 2-note sting (Leo <code>flute</code>, Raph <code>bass</code>, Don <code>synth</code>, Mikey <code>slap bass</code>)</td><td>Ring + lips on Door and Stage</td></tr>
+    <tr><td>Hand goes up</td><td>Single soft woodblock — deliberately humble</td><td>Amber pip; card joins queue</td></tr>
+    <tr><td>Blocked on you</td><td>Two woodblocks, once — never repeats</td><td>Red pulsing pip; card turns red-edged</td></tr>
+    <tr><td>You key up (PTT)</td><td>Squelch click in, click out</td><td>Ooze takeover of the talk surface</td></tr>
+    <tr><td>Errand slip completes</td><td>Tape-deck <code>ka-chunk</code></td><td>Slip checks out, fades to Tape</td></tr>
+  </table></div>
+</section>
+
+<!-- ================= RATIONALE ================= -->
+<section class="wrap">
+  <div class="secnum">06 / WHY THIS DIRECTION</div>
+  <h2 style="margin-top:8px">What the radio framing buys that a dashboard can’t.</h2>
+  <div class="why">
+    <div class="card"><h5><span class="n">1</span>It designs for the miss</h5>
+      <p>The honest failure mode of an audio tool is “I wasn’t listening.” Dashboards ignore
+      that; the Tape is built around it. Away-time is drawn as debt, catch-up is one tap, and
+      replay-by-scrubbing needs zero new concepts.</p></div>
+    <div class="card"><h5><span class="n">2</span>Characters get manners, not just voices</h5>
+      <p>The playfulness lives in <i>behavior</i> — stings, raised hands, holding the floor —
+      which stays charming at hour six, where costume-heavy UI wears out. The avatars are
+      small; the personality is temporal.</p></div>
+    <div class="card"><h5><span class="n">3</span>One mental model, three distances</h5>
+      <p>Door, Studio, walkie-talkie are the same station heard from the hallway, the chair,
+      and the couch. Learn the Tape and the hand queue once; every surface is a crop of them.
+      That’s also the implementation story: shared components, different viewports.</p></div>
+    <div class="card"><h5><span class="n">4</span>Voice control you can watch</h5>
+      <p>Errand slips give spoken plans a body: verbatim transcript, steps, checkmarks. Trust
+      in voice UIs dies from silent misfires; the slip makes every misfire visible in under a
+      second, and every success quietly satisfying.</p></div>
+  </div>
+</section>
+
+<footer class="wrap">LAIR FM · concept board · four voices, one tape, no dashboards</footer>
+</body>
+</html>

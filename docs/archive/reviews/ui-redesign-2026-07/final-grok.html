@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Room of Devs — Final: Floor &amp; Table</title>
+<style>
+  :root {
+    /* Studio surfaces — cool charcoal, dark-first */
+    --void: #090B0E;
+    --bg: #0D1014;
+    --panel: #14181E;
+    --raise: #1B2129;
+    --lift: #242B35;
+    --line: #2E3642;
+    --line-soft: #222830;
+
+    /* Ink */
+    --ink: #EDF0F4;
+    --ink-2: #9AA3B0;
+    --ink-3: #6A7380;
+    --paper: #F3EFE4; /* napkin only — object surface, not page */
+
+    /* Tally — semantic state. Never a persona. */
+    --st-onair: #F4F7FF;   /* luminance, not hue */
+    --st-talk:  #F4F7FF;   /* talkback shares white; inversion carries meaning */
+    --st-work:  #3ABFD6;   /* cyan */
+    --st-hand:  #C5E85A;   /* lime — waiting politely */
+    --st-ask:   #FF5C8A;   /* pink — needs a decision */
+    --st-idle:  #6B7684;
+    --st-stale: #414A56;
+    --st-mute:  #59616E;
+    --st-held:  #F5A524;   /* amber — ROOM scale only */
+    --st-glance:#B794F6;   /* violet — consentful screen share */
+
+    /* Persona — identity only (jersey) */
+    --p-leo:  #3B82F6;
+    --p-don:  #A855F7;
+    --p-mikey:#FB923C;
+    --p-raph: #EF4444;
+    --p-spl:  #8C9B7A;
+    --p-apr:  #D9A441;
+
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --r: 10px;
+    --max: 1100px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--ink);
+    font: 15px/1.5 var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--st-work); }
+  em { font-style: italic; color: var(--ink); }
+  strong { font-weight: 650; }
+
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 22px; }
+  .board-head {
+    padding: 48px 0 36px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .kicker {
+    display: flex; align-items: center; gap: 8px;
+    font: 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 18px;
+  }
+  .kicker .dot {
+    width: 7px; height: 7px; border-radius: 99px;
+    background: var(--st-onair); box-shadow: 0 0 10px rgba(244,247,255,.7);
+  }
+  h1 {
+    font-size: clamp(28px, 4.2vw, 42px);
+    font-weight: 720; letter-spacing: -.02em; line-height: 1.12;
+    margin: 0 0 16px;
+  }
+  h1 .sub {
+    display: block; margin-top: 10px;
+    font-size: clamp(16px, 2vw, 19px); font-weight: 450;
+    color: var(--ink-2); letter-spacing: 0; max-width: 46em;
+  }
+  .thesis {
+    max-width: 52em; color: var(--ink-2); font-size: 15.5px; line-height: 1.6;
+    margin: 0 0 22px;
+  }
+  .thesis strong { color: var(--ink); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font: 11px/1 var(--mono); color: var(--ink-2);
+    border: 1px solid var(--line); background: var(--panel);
+    padding: 7px 10px; border-radius: 999px;
+  }
+
+  section { padding: 42px 0 8px; }
+  .sec-head {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 8px;
+  }
+  .sec-num {
+    font: 11px/1 var(--mono); color: var(--ink-3); letter-spacing: .08em;
+  }
+  h2 {
+    margin: 0; font-size: 22px; font-weight: 680; letter-spacing: -.015em;
+  }
+  .sec-lead {
+    color: var(--ink-2); max-width: 48em; margin: 0 0 22px; font-size: 14.5px;
+  }
+  .prov {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-left: 2px solid var(--line);
+    font: 12px/1.45 var(--mono); color: var(--ink-3);
+  }
+  .prov b { color: var(--ink-2); font-weight: 600; }
+
+  /* Tokens */
+  .tokgrid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  @media (max-width: 820px) { .tokgrid { grid-template-columns: 1fr; } }
+  .tok {
+    background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 12px; padding: 16px;
+  }
+  .tok h3 {
+    margin: 0 0 12px; font: 11px/1 var(--mono); letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px; font-size: 13px;
+  }
+  .lamp {
+    width: 12px; height: 12px; border-radius: 99px; flex: 0 0 auto;
+  }
+  .swatch {
+    width: 18px; height: 18px; border-radius: 99px; flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .sq {
+    width: 18px; height: 18px; border-radius: 4px; flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .name { flex: 1; color: var(--ink); }
+  .hex { font: 11px/1 var(--mono); color: var(--ink-3); }
+  .tok .note {
+    margin: 12px 0 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.45;
+  }
+  .type-sample {
+    margin-top: 4px; padding: 10px 0 0; border-top: 1px solid var(--line-soft);
+  }
+  .type-sample .d { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+  .type-sample .b { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+  .type-sample .m { font: 11px/1.4 var(--mono); color: var(--ink-3); margin-top: 6px; }
+
+  /* Frame chrome for mockups */
+  .frames {
+    display: grid; gap: 22px;
+  }
+  .frame {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .frame-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 10px 14px;
+    background: var(--panel); border-bottom: 1px solid var(--line-soft);
+    font: 11px/1 var(--mono); color: var(--ink-3);
+  }
+  .frame-bar .ttl { color: var(--ink-2); }
+  .frame-bar .size { opacity: .85; }
+  .frame-body { padding: 16px; background:
+    linear-gradient(180deg, #0a0c10 0%, #12161c 100%);
+  }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
+  .trio { display: grid; grid-template-columns: 1.2fr .9fr .9fr; gap: 16px; }
+  @media (max-width: 980px) { .trio { grid-template-columns: 1fr; } }
+
+  /* Shared mock bits */
+  .av {
+    width: 36px; height: 36px; border-radius: 99px;
+    display: grid; place-items: center;
+    font: 700 12px/1 var(--font); color: #0a0c10;
+    flex: 0 0 auto; position: relative;
+  }
+  .av.sm { width: 28px; height: 28px; font-size: 10px; }
+  .av.lg { width: 56px; height: 56px; font-size: 18px; }
+  .av.xl { width: 88px; height: 88px; font-size: 28px; }
+  .av .ring {
+    position: absolute; inset: -3px; border-radius: 99px;
+    border: 2px solid transparent; pointer-events: none;
+  }
+  .av.onair .ring {
+    border-color: var(--st-onair);
+    box-shadow: 0 0 0 1px rgba(244,247,255,.25), 0 0 14px rgba(244,247,255,.35);
+  }
+  .av.work .ring { border-color: var(--st-work); }
+  .av.hand .ring { border-color: var(--st-hand); }
+  .av.ask .ring { border-color: var(--st-ask); }
+  .av.glance .ring { border-color: var(--st-glance); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font: 10px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase;
+    padding: 4px 7px; border-radius: 999px;
+    background: var(--lift); color: var(--ink-2);
+  }
+  .pill.onair { background: rgba(244,247,255,.12); color: var(--st-onair); }
+  .pill.work { background: rgba(58,191,214,.12); color: var(--st-work); }
+  .pill.hand { background: rgba(197,232,90,.12); color: var(--st-hand); }
+  .pill.ask { background: rgba(255,92,138,.14); color: var(--st-ask); }
+  .pill.held { background: rgba(245,165,36,.14); color: var(--st-held); }
+  .pill.glance { background: rgba(183,148,246,.14); color: var(--st-glance); }
+
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: var(--raise);
+    color: var(--ink); font: 12px/1 var(--font); padding: 7px 10px;
+    border-radius: 8px; cursor: default;
+  }
+  .btn.pri {
+    background: var(--st-onair); color: #0a0c10; border-color: transparent; font-weight: 650;
+  }
+  .btn.ghost { background: transparent; }
+  .btn.wide { width: 100%; }
+  .btn.danger { color: #ff8fa3; border-color: rgba(255,92,138,.35); }
+
+  /* === DESKTOP DEN === */
+  .den {
+    width: min(100%, 920px); margin: 0 auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+  .den-top {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 12px; border-bottom: 1px solid var(--line-soft);
+    background: var(--raise);
+  }
+  .den-brand {
+    font: 700 12px/1 var(--font); letter-spacing: -.01em; margin-right: 4px;
+  }
+  .den-top .spacer { flex: 1; }
+  .hazard {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 8px; border-radius: 6px;
+    background: repeating-linear-gradient(
+      -45deg, rgba(245,165,36,.18), rgba(245,165,36,.18) 4px,
+      rgba(245,165,36,.05) 4px, rgba(245,165,36,.05) 8px);
+    border: 1px solid rgba(245,165,36,.4);
+    font: 10px/1 var(--mono); color: var(--st-held); text-transform: uppercase;
+  }
+  .den-body {
+    display: grid; grid-template-columns: 250px 1fr;
+    min-height: 420px;
+  }
+  @media (max-width: 700px) {
+    .den-body { grid-template-columns: 1fr; }
+  }
+  .seats {
+    border-right: 1px solid var(--line-soft);
+    background: var(--bg);
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 10px; max-height: 480px; overflow: auto;
+  }
+  .seat {
+    display: grid; grid-template-columns: 3px 1fr; gap: 0;
+    background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 9px; overflow: hidden;
+  }
+  .seat .spine { background: var(--st-idle); }
+  .seat.onair {
+    background: linear-gradient(180deg, #1c222c, #151920);
+    border-color: rgba(244,247,255,.28);
+    box-shadow: inset 0 0 0 1px rgba(244,247,255,.06);
+  }
+  .seat.onair .spine { background: var(--st-onair); box-shadow: 0 0 10px rgba(244,247,255,.5); }
+  .seat.talkback {
+    background: var(--st-onair); color: #0a0c10;
+    border-color: transparent;
+  }
+  .seat.talkback .spine { background: #0a0c10; }
+  .seat.talkback .meta, .seat.talkback .preview { color: #3a4250 !important; }
+  .seat.ask { border-color: rgba(255,92,138,.35); }
+  .seat-inner { padding: 8px 9px; display: flex; flex-direction: column; gap: 5px; }
+  .seat-row { display: flex; align-items: center; gap: 8px; }
+  .seat-name { font-size: 12.5px; font-weight: 650; flex: 1; min-width: 0; }
+  .seat .meta {
+    font: 10px/1 var(--mono); color: var(--ink-3);
+  }
+  .seat .preview {
+    font-size: 11.5px; color: var(--ink-2); line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .seat .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+  .seat .actions .btn { padding: 4px 7px; font-size: 10.5px; border-radius: 6px; }
+  .bench-label {
+    font: 10px/1 var(--mono); color: var(--ink-3); letter-spacing: .06em;
+    text-transform: uppercase; padding: 6px 2px 2px;
+  }
+  .seat.bench .seat-inner { padding: 6px 8px; }
+  .seat.bench .preview { display: none; }
+
+  .stage {
+    display: flex; flex-direction: column; min-width: 0;
+    background: var(--panel);
+  }
+  .table-wrap {
+    flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .table {
+    flex: 1; min-height: 200px;
+    background: var(--paper); color: #1a1c18;
+    border-radius: 10px; position: relative; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.25);
+  }
+  .table-top {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: rgba(0,0,0,.04);
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    font: 10px/1 var(--mono); color: #5a5f55;
+  }
+  .table-canvas {
+    padding: 14px 16px; min-height: 160px; position: relative;
+  }
+  .table-canvas .codebit {
+    font: 11px/1.45 var(--mono); background: #1e2228; color: #e8edf4;
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  .table-canvas .codebit .err { color: #ff7a90; }
+  .sketch-layer {
+    position: absolute; inset: 40px 20px 20px 40px; pointer-events: none;
+  }
+  .sketch-layer svg { width: 100%; height: 100%; }
+  .ink-note {
+    position: absolute; right: 16px; bottom: 14px;
+    background: #fff8d6; border: 1px solid #e6d58a; border-radius: 6px;
+    padding: 6px 8px; font: 11px/1.3 var(--font); color: #3a3418;
+    max-width: 160px; transform: rotate(-2deg);
+    box-shadow: 1px 2px 0 rgba(0,0,0,.08);
+  }
+  .table-tools {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 0 2px;
+  }
+  .table-tools .tool {
+    font: 10px/1 var(--mono); padding: 5px 8px; border-radius: 6px;
+    background: var(--raise); border: 1px solid var(--line); color: var(--ink-2);
+  }
+  .table-tools .tool.on { background: var(--lift); color: var(--ink); border-color: var(--ink-3); }
+  .shelf {
+    display: flex; gap: 6px; overflow: auto; padding-bottom: 2px;
+  }
+  .shelf .thumb {
+    width: 54px; height: 36px; border-radius: 5px; flex: 0 0 auto;
+    background: var(--lift); border: 1px solid var(--line);
+    font: 9px/36px var(--mono); color: var(--ink-3); text-align: center;
+  }
+  .shelf .thumb.live { outline: 2px solid var(--st-glance); outline-offset: 1px; }
+
+  .caption-bar {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px; border-top: 1px solid var(--line-soft);
+    background: var(--bg);
+  }
+  .caption-bar .who { font-size: 12px; font-weight: 650; }
+  .caption-bar .said {
+    font-size: 12.5px; color: var(--ink-2); line-height: 1.4;
+  }
+  .caption-bar .said .hi { color: var(--ink); background: rgba(244,247,255,.08); }
+
+  .reply-bar {
+    display: flex; gap: 8px; align-items: center;
+    padding: 10px 12px; border-top: 1px solid var(--line-soft);
+    background: var(--raise);
+  }
+  .reply-bar .composer {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 9px;
+    padding: 8px 10px; min-width: 0;
+  }
+  .reply-bar .composer .ph {
+    flex: 1; font-size: 12.5px; color: var(--ink-3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .reply-bar .attach {
+    font: 10px/1 var(--mono); color: var(--ink-2);
+    background: var(--lift); padding: 4px 6px; border-radius: 5px;
+  }
+  .ptt {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    min-width: 110px; padding: 10px 12px; border-radius: 9px;
+    background: var(--lift); border: 1px solid var(--line);
+    font: 650 12px/1 var(--font); color: var(--ink);
+  }
+  .ptt.live {
+    background: var(--st-onair); color: #0a0c10; border-color: transparent;
+  }
+  .tape {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-top: 1px solid var(--line-soft);
+    background: #0a0c10; font: 10px/1 var(--mono); color: var(--ink-3);
+  }
+  .tape .blocks { display: flex; gap: 3px; flex: 1; align-items: center; min-width: 0; }
+  .tape .blk {
+    height: 10px; border-radius: 2px; opacity: .85;
+  }
+  .tape .now {
+    width: 2px; height: 16px; background: var(--st-onair);
+    box-shadow: 0 0 6px rgba(244,247,255,.6);
+  }
+
+  /* === STRIP / DOCK === */
+  .strip-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .strip {
+    width: 380px; max-width: 100%;
+    background: rgba(14,17,22,.92);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    backdrop-filter: blur(8px);
+  }
+  .strip.speaking {
+    border-color: rgba(244,247,255,.3);
+    box-shadow: 0 0 0 1px rgba(244,247,255,.08), 0 12px 40px rgba(0,0,0,.5);
+  }
+  .strip-faces { display: flex; gap: 4px; margin-bottom: 8px; }
+  .strip-faces .av { width: 26px; height: 26px; font-size: 9px; }
+  .strip-main { display: flex; gap: 10px; align-items: flex-start; }
+  .strip-copy { flex: 1; min-width: 0; }
+  .strip-copy .who { font-size: 11px; font-weight: 650; display: flex; gap: 6px; align-items: center; }
+  .strip-copy .cap {
+    font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.35;
+  }
+  .strip-transport { display: flex; gap: 4px; margin-top: 8px; }
+  .strip-transport .btn { padding: 5px 8px; font-size: 11px; }
+  .strip.quiet .cap { color: var(--ink-3); }
+  .strip-needs {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+  }
+  .need {
+    font: 10px/1 var(--mono); padding: 4px 6px; border-radius: 5px;
+    background: var(--raise); color: var(--ink-2); border: 1px solid var(--line-soft);
+  }
+
+  /* === PHONE === */
+  .phone {
+    width: 280px; max-width: 100%;
+    background: #0a0c10; border: 1px solid var(--line);
+    border-radius: 28px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+    margin: 0 auto;
+  }
+  .phone-notch {
+    height: 22px; display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 4px; font: 10px/1 var(--mono); color: var(--ink-3);
+  }
+  .phone-screen { padding: 8px 12px 14px; min-height: 480px; display: flex; flex-direction: column; }
+  .phone-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .phone-head h4 { margin: 0; font-size: 15px; font-weight: 700; }
+  .phone-live {
+    text-align: center; padding: 18px 8px 10px;
+  }
+  .phone-live .said {
+    margin-top: 10px; font-size: 13px; color: var(--ink-2); line-height: 1.4;
+  }
+  .phone-waiting { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+  .wrow {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 10px; padding: 8px;
+  }
+  .wrow .t { flex: 1; font-size: 12px; min-width: 0; }
+  .wrow .t small { display: block; color: var(--ink-3); font-size: 10.5px; margin-top: 2px; }
+  .thumb-zone {
+    margin-top: auto; padding-top: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .talk-orb {
+    height: 56px; border-radius: 999px;
+    display: grid; place-items: center;
+    background: var(--lift); border: 1px solid var(--line);
+    font-weight: 700; font-size: 14px;
+  }
+  .talk-orb.live { background: var(--st-onair); color: #0a0c10; border: none; }
+  .phone-composer {
+    display: flex; gap: 6px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 8px 10px;
+  }
+  .phone-composer .ph { flex: 1; font-size: 12px; color: var(--ink-3); }
+
+  .mini-player {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--raise); border: 1px solid var(--line);
+    border-radius: 12px; padding: 8px 10px;
+  }
+  .mini-player .meta { flex: 1; min-width: 0; }
+  .mini-player .meta .t { font-size: 12px; font-weight: 650; }
+  .mini-player .meta .s { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .sheet {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px 16px 0 0; padding: 12px; margin-top: 8px;
+  }
+  .sheet .grab {
+    width: 36px; height: 4px; border-radius: 99px; background: var(--line);
+    margin: 0 auto 12px;
+  }
+  .karaoke {
+    font-size: 14px; line-height: 1.55; color: var(--ink-3);
+  }
+  .karaoke .cur { color: var(--ink); }
+  .karaoke .done { color: var(--ink-2); }
+
+  /* === HUDDLE === */
+  .huddle {
+    width: min(100%, 520px); margin: 0 auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden;
+  }
+  .huddle-top {
+    padding: 12px 14px; border-bottom: 1px solid var(--line-soft);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .circle {
+    display: flex; justify-content: center; gap: 18px; padding: 22px 16px 8px;
+    flex-wrap: wrap;
+  }
+  .circle .who { text-align: center; }
+  .circle .who .nm { font-size: 11px; margin-top: 6px; color: var(--ink-2); }
+  .circle .who .st { font: 9px/1 var(--mono); color: var(--ink-3); margin-top: 3px; }
+  .floor-baton {
+    margin: 8px 16px 12px;
+    background: var(--bg); border: 1px solid var(--line-soft);
+    border-radius: 10px; padding: 10px 12px;
+    font-size: 12px; color: var(--ink-2);
+  }
+  .floor-baton .q {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .floor-baton .q span {
+    font: 10px/1 var(--mono); padding: 4px 7px; border-radius: 999px;
+    background: var(--raise); border: 1px solid var(--line);
+  }
+  .huddle-table {
+    margin: 0 16px 12px; background: var(--paper); color: #1a1c18;
+    border-radius: 8px; padding: 10px; font-size: 12px; min-height: 70px;
+  }
+  .huddle-actions {
+    display: flex; gap: 6px; padding: 0 16px 14px; flex-wrap: wrap;
+  }
+
+  /* === INTERPRETER === */
+  .plan {
+    width: min(100%, 420px); margin: 0 auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px;
+  }
+  .plan .heard {
+    font-size: 13px; color: var(--ink); background: var(--bg);
+    border-radius: 8px; padding: 10px; border: 1px solid var(--line-soft);
+    margin-bottom: 12px;
+  }
+  .plan .heard .lab {
+    font: 10px/1 var(--mono); color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 6px;
+  }
+  .step {
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 8px;
+    align-items: start; padding: 8px 0;
+    border-bottom: 1px solid var(--line-soft); font-size: 12.5px;
+  }
+  .step:last-child { border-bottom: 0; }
+  .step .n {
+    font: 10px/18px var(--mono); color: var(--ink-3); text-align: center;
+    width: 18px; height: 18px; border-radius: 99px; background: var(--raise);
+  }
+  .step.ok .n { background: rgba(197,232,90,.15); color: var(--st-hand); }
+  .step .out { font: 10px/1 var(--mono); color: var(--st-hand); margin-top: 4px; }
+  .step .out.fail { color: var(--st-ask); }
+  .plan-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft);
+    font: 11px/1 var(--mono); color: var(--ink-3);
+  }
+
+  /* === GLANCE === */
+  .glance-card {
+    width: min(100%, 380px); margin: 0 auto;
+    background: var(--panel); border: 1px solid rgba(183,148,246,.4);
+    border-radius: 12px; padding: 14px;
+    box-shadow: 0 0 0 1px rgba(183,148,246,.1), 0 16px 40px rgba(0,0,0,.4);
+  }
+  .glance-prev {
+    height: 120px; border-radius: 8px; background:
+      linear-gradient(135deg, #1a2030, #2a3348);
+    border: 1px solid var(--line); position: relative; overflow: hidden;
+    margin: 10px 0;
+  }
+  .glance-prev .fake-ui {
+    position: absolute; inset: 12px; font: 10px/1.4 var(--mono); color: #9ab;
+  }
+  .glance-prev .fake-ui .red { color: #ff7a90; }
+  .timer {
+    font: 11px/1 var(--mono); color: var(--st-glance);
+  }
+
+  /* === PICKER === */
+  .picker {
+    width: min(100%, 440px); margin: 0 auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+  }
+  .picker-h {
+    padding: 12px 14px; border-bottom: 1px solid var(--line-soft);
+    font-weight: 650;
+  }
+  .picker-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .field label {
+    display: block; font: 10px/1 var(--mono); color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px;
+  }
+  .field .ctrl {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 10px; font-size: 13px; color: var(--ink);
+  }
+  .persona-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .persona-pick .opt {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px; border-radius: 10px; border: 1px solid var(--line-soft);
+    background: var(--bg); min-width: 64px; font-size: 10px; color: var(--ink-2);
+  }
+  .persona-pick .opt.on {
+    border-color: rgba(168,85,247,.5); background: rgba(168,85,247,.08);
+  }
+  .flags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .flags .flag {
+    font: 11px/1 var(--mono); padding: 6px 8px; border-radius: 6px;
+    background: var(--raise); border: 1px solid var(--line); color: var(--ink-2);
+  }
+  .flags .flag.on { border-color: var(--st-work); color: var(--st-work); }
+  .confirm-sent {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; text-align: center;
+  }
+  .confirm-sent .sent {
+    font-size: 15px; font-weight: 650; margin: 6px 0 10px;
+  }
+  .confirm-sent .sent em { color: var(--p-don); font-style: normal; }
+
+  /* Rationale tables */
+  .map {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .map th, .map td {
+    text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  .map th {
+    font: 10px/1 var(--mono); color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .map td:first-child { color: var(--ink); font-weight: 550; white-space: nowrap; }
+  .map td { color: var(--ink-2); }
+  .map code {
+    font: 11px/1.3 var(--mono); color: var(--st-work);
+    background: rgba(58,191,214,.08); padding: 1px 5px; border-radius: 4px;
+  }
+
+  .calls {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  @media (max-width: 700px) { .calls { grid-template-columns: 1fr; } }
+  .call {
+    background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .call .q { font-weight: 650; font-size: 13.5px; margin-bottom: 6px; }
+  .call .a { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+  .call .tag {
+    display: inline-block; margin-bottom: 6px;
+    font: 10px/1 var(--mono); color: var(--ink-3); text-transform: uppercase;
+  }
+
+  .foot {
+    padding: 36px 0 56px; border-top: 1px solid var(--line-soft); margin-top: 28px;
+    color: var(--ink-3); font-size: 12.5px;
+  }
+
+  /* Model diagram */
+  .model {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 700px) { .model { grid-template-columns: 1fr; } }
+  .model .card {
+    background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 12px; padding: 16px;
+  }
+  .model .card .k {
+    font: 10px/1 var(--mono); letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 8px;
+  }
+  .model .card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 680; }
+  .model .card p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+
+  .dist {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px;
+  }
+  @media (max-width: 700px) { .dist { grid-template-columns: 1fr; } }
+  .dist .d {
+    border: 1px dashed var(--line); border-radius: 10px; padding: 12px;
+  }
+  .dist .d .n { font: 10px/1 var(--mono); color: var(--st-work); margin-bottom: 6px; }
+  .dist .d .t { font-weight: 650; font-size: 14px; margin-bottom: 4px; }
+  .dist .d .s { font-size: 12.5px; color: var(--ink-2); }
+
+  .state-row {
+    display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px;
+  }
+</style>
+</head>
+<body>
+
+<header class="board-head">
+  <div class="wrap">
+    <div class="kicker"><span class="dot"></span> Room of Devs · final synthesis · locked candidate</div>
+    <h1>
+      Floor &amp; Table
+      <span class="sub">One floor for voices. One table for objects. One tape for memory. The same room at three distances.</span>
+    </h1>
+    <p class="thesis">
+      <strong>Thesis.</strong> Stop building a chat app that happens to speak. Build a room: whoever holds the <em>floor</em> is heard; whatever is being talked about sits on the <em>table</em>; everything that happened lands on one scrubbable <em>tape</em>. Screen glances, sketches, files, and huddles stop being four features — they are things you put on the table while someone holds the floor. Light answers direction of sound: white light lands <em>on</em> a dark seat when an agent is on air; the seat itself becomes light when your mic opens (talkback). Persona color is a jersey, never a state.
+    </p>
+    <div class="chips">
+      <span class="chip">Audio primary · UI companion</span>
+      <span class="chip">Achromatic ON AIR · inverted TALKBACK</span>
+      <span class="chip">Near-future = structural</span>
+      <span class="chip">Type + attach everywhere (not the Strip)</span>
+    </div>
+  </div>
+</header>
+
+<!-- MODEL -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">00</span><h2>The model</h2></div>
+    <p class="sec-lead">Three objects. Every surface is just a different distance from them.</p>
+    <div class="model">
+      <div class="card">
+        <div class="k">Object one</div>
+        <h3>The Floor</h3>
+        <p>Ears are single-lane. Exactly one voice speaks. Queued agents wait with a one-line preview. Group calls are the same floor passed between more people — not parallel monologues.</p>
+      </div>
+      <div class="card">
+        <div class="k">Object two</div>
+        <h3>The Table</h3>
+        <p>One shared surface holds the thing being discussed: a consentful screen glance, a napkin sketch, a pasted stack trace, a file. Agents draw; you draw back. Attachments need no second home.</p>
+      </div>
+      <div class="card">
+        <div class="k">Object three</div>
+        <h3>The Tape</h3>
+        <p>Every spoken line, sketch, glance, decision, and typed reply is a moment on one timeline. Replay, catch-up, and “replay Donnie’s last” are all seeks. Per-agent history is a filter, never a separate app.</p>
+      </div>
+    </div>
+    <div class="dist">
+      <div class="d">
+        <div class="n">Distance 1 · overheard</div>
+        <div class="t">The Strip</div>
+        <div class="s">~380×150 float over other apps. Never steals focus. No text inputs. Who’s talking / who’s waiting / talk bar.</div>
+      </div>
+      <div class="d">
+        <div class="n">Distance 2 · seated</div>
+        <div class="t">The Den</div>
+        <div class="s">Main Mac window. Seats by urgency, table in the middle, tape along the bottom, typed reply + attach always ready.</div>
+      </div>
+      <div class="d">
+        <div class="n">Distance 3 · pocketed</div>
+        <div class="t">The Earpiece</div>
+        <div class="s">Phone is a walkie, not a tiny Mac. Opens call-shaped. Thumb zone owns talk, type, catch-up, decisions.</div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Floor + places-to-stand ← round1-C Soundstage. Table-as-object ← round2-B (kept whole — best answer for glance/draw/attach). One tape + three distances ← round2-C / round1-B LAIR FM. ON AIR / TALKBACK light axis ← synth-C. Density seats ← synth-A/B ladder. Phone-as-walkie ← unanimous round1.</p>
+  </div>
+</section>
+
+<!-- TOKENS -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Tokens</h2></div>
+    <p class="sec-lead">Two color systems that never trade jobs. Delete every persona hue and the room is still readable. Delete every state color and you still know who everyone is.</p>
+    <div class="tokgrid">
+      <div class="tok">
+        <h3>Tally · semantic state</h3>
+        <div class="row"><span class="lamp" style="background:#F4F7FF;box-shadow:0 0 10px rgba(244,247,255,.8)"></span><span class="name" style="color:#F4F7FF">on air</span><span class="hex">#F4F7FF</span></div>
+        <div class="row"><span class="lamp" style="background:#F4F7FF;outline:2px solid #0a0c10;outline-offset:-1px"></span><span class="name">talkback</span><span class="hex">invert</span></div>
+        <div class="row"><span class="lamp" style="background:#3ABFD6;box-shadow:0 0 8px #3ABFD6"></span><span class="name" style="color:#3ABFD6">working</span><span class="hex">#3ABFD6</span></div>
+        <div class="row"><span class="lamp" style="background:#C5E85A;box-shadow:0 0 8px rgba(197,232,90,.6)"></span><span class="name" style="color:#C5E85A">hand up</span><span class="hex">#C5E85A</span></div>
+        <div class="row"><span class="lamp" style="background:#FF5C8A;box-shadow:0 0 8px #FF5C8A"></span><span class="name" style="color:#FF5C8A">asking</span><span class="hex">#FF5C8A</span></div>
+        <div class="row"><span class="lamp" style="background:#B794F6;box-shadow:0 0 8px #B794F6"></span><span class="name" style="color:#B794F6">glance</span><span class="hex">#B794F6</span></div>
+        <div class="row"><span class="lamp" style="background:#6B7684"></span><span class="name">idle</span><span class="hex">#6B7684</span></div>
+        <div class="row"><span class="lamp" style="background:#F5A524"></span><span class="name" style="color:#F5A524">room held</span><span class="hex">#F5A524</span></div>
+        <p class="note">ON AIR is luminance, not hue — it cannot collide with Raph or Donnie. Amber is room-scale only (header hazard), never a seat. Glance violet is reserved for screen-consent chrome.</p>
+      </div>
+      <div class="tok">
+        <h3>Persona · jersey only</h3>
+        <div class="row"><span class="swatch" style="background:#3B82F6"></span><span class="name">Leonardo</span><span class="hex">#3B82F6</span></div>
+        <div class="row"><span class="swatch" style="background:#A855F7"></span><span class="name">Donatello</span><span class="hex">#A855F7</span></div>
+        <div class="row"><span class="swatch" style="background:#FB923C"></span><span class="name">Michelangelo</span><span class="hex">#FB923C</span></div>
+        <div class="row"><span class="swatch" style="background:#EF4444"></span><span class="name">Raphael</span><span class="hex">#EF4444</span></div>
+        <div class="row"><span class="swatch" style="background:#8C9B7A"></span><span class="name">Splinter · guest</span><span class="hex">#8C9B7A</span></div>
+        <div class="row"><span class="swatch" style="background:#D9A441"></span><span class="name">April · guest</span><span class="hex">#D9A441</span></div>
+        <p class="note">Accent lives in exactly three places: avatar fill, 3px seat spine, grant ring while you hold PTT to them. Never on state lamps or card washes.</p>
+      </div>
+      <div class="tok">
+        <h3>Surfaces · type · radius</h3>
+        <div class="row"><span class="sq" style="background:#090B0E"></span><span class="name">void</span><span class="hex">#090B0E</span></div>
+        <div class="row"><span class="sq" style="background:#14181E"></span><span class="name">panel</span><span class="hex">#14181E</span></div>
+        <div class="row"><span class="sq" style="background:#1B2129"></span><span class="name">raise</span><span class="hex">#1B2129</span></div>
+        <div class="row"><span class="sq" style="background:#F3EFE4;border-color:#ccc"></span><span class="name">napkin paper</span><span class="hex">#F3EFE4</span></div>
+        <div class="type-sample">
+          <div class="d">Donnie finished the migration.</div>
+          <div class="b">Fourteen tables, zero rows lost. Rollback’s in scripts/rollback_0712.sql.</div>
+          <div class="m">ON AIR · 0:14 · sonnet · jellyfin-streamline · $0.42</div>
+        </div>
+        <p class="note">Sans = speech. Mono = telemetry. Radius: 6 controls · 10 seats · 14 panes · 999 only for lamps and the talk orb. Motion: lamps breathe, caption karaoke, lip-sync img at ~70ms — nothing else races it.</p>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="pill onair">● on air</span>
+      <span class="pill work">● working</span>
+      <span class="pill hand">✋ hand up</span>
+      <span class="pill ask">! asking</span>
+      <span class="pill glance">◉ glancing</span>
+      <span class="pill held">⏸ room held</span>
+      <span class="pill">idle / muted / stale</span>
+    </div>
+  </div>
+</section>
+
+<!-- SURFACE 1 — DEN -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>The Den · desktop panel</h2></div>
+    <p class="sec-lead">~900×640. Seats sorted by urgency on the left (program → attention → bench). Table holds the object of conversation. Tape and typed reply live at the bottom — speak or type; paste a file either way.</p>
+
+    <div class="frames">
+      <div class="frame">
+        <div class="frame-bar">
+          <span class="ttl">Mac · The Den · seats + table + tape</span>
+          <span class="size">~920 × 640</span>
+        </div>
+        <div class="frame-body">
+          <div class="den">
+            <div class="den-top">
+              <span class="den-brand">room of devs</span>
+              <span class="pill">linked · 6</span>
+              <span class="pill">mac audio</span>
+              <span class="pill">live</span>
+              <span class="hazard">⏸ room held · talkback</span>
+              <span class="spacer"></span>
+              <button class="btn ghost">+ new</button>
+              <button class="btn ghost">catch up · 2</button>
+            </div>
+            <div class="den-body">
+              <div class="seats">
+                <!-- ON AIR Donnie -->
+                <div class="seat onair">
+                  <div class="spine" style="background:var(--p-don)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av onair" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+                      <div>
+                        <div class="seat-name">Donnie</div>
+                        <div class="meta">jellyfin-streamline · sonnet</div>
+                      </div>
+                      <span class="pill onair">on air · 0:14</span>
+                    </div>
+                    <div class="preview">“Backoff’s in — three retries with jitter, then it stops pretending the socket is coming back…”</div>
+                    <div class="actions">
+                      <button class="btn">❚❚</button>
+                      <button class="btn">■</button>
+                      <button class="btn">↺</button>
+                      <button class="btn">½×</button>
+                      <button class="btn">term</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ASKING Raph -->
+                <div class="seat ask">
+                  <div class="spine" style="background:var(--p-raph)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av ask" style="background:var(--p-raph)"><span class="ring"></span>RA</div>
+                      <div>
+                        <div class="seat-name">Raph</div>
+                        <div class="meta">auth-refactor · 9m</div>
+                      </div>
+                      <span class="pill ask">! asking</span>
+                    </div>
+                    <div class="preview">“Migrations from Donnie’s branch conflict with mine. Rebase and eat the diff, or wait?”</div>
+                    <div class="actions">
+                      <button class="btn pri">Rebase</button>
+                      <button class="btn">Wait for Don</button>
+                      <button class="btn">hold ⌥ talk</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- HAND UP Leo -->
+                <div class="seat">
+                  <div class="spine" style="background:var(--p-leo)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av hand" style="background:var(--p-leo)"><span class="ring"></span>LE</div>
+                      <div>
+                        <div class="seat-name">Leo</div>
+                        <div class="meta">hand · 4m · queued</div>
+                      </div>
+                      <span class="pill hand">✋ hand up</span>
+                    </div>
+                    <div class="preview">“Auth refactor’s ready for eyes. Two commits, session store untouched like you asked.”</div>
+                    <div class="actions">
+                      <button class="btn">play next</button>
+                      <button class="btn">hold talk</button>
+                      <button class="btn">hide</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bench-label">Bench · working</div>
+
+                <div class="seat bench">
+                  <div class="spine" style="background:var(--p-mikey)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av work sm" style="background:var(--p-mikey)"><span class="ring"></span>MI</div>
+                      <div class="seat-name">Mikey</div>
+                      <span class="pill work">working · 12m</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="seat bench">
+                  <div class="spine" style="background:var(--p-spl)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av sm" style="background:var(--p-spl)">SP</div>
+                      <div class="seat-name">Splinter</div>
+                      <span class="pill">idle</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="seat bench">
+                  <div class="spine" style="background:var(--st-stale)"></div>
+                  <div class="seat-inner">
+                    <div class="seat-row">
+                      <div class="av sm" style="background:var(--st-stale);color:#bbb">AP</div>
+                      <div class="seat-name">April</div>
+                      <span class="pill">stale · 41m</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stage">
+                <div class="table-wrap">
+                  <div class="table-tools">
+                    <span class="tool on">table</span>
+                    <span class="tool">pen</span>
+                    <span class="tool">box</span>
+                    <span class="tool">arrow</span>
+                    <span class="tool">erase</span>
+                    <span class="tool">show screen…</span>
+                    <span style="flex:1"></span>
+                    <span class="pill glance">◉ glance · 6s left</span>
+                  </div>
+                  <div class="table">
+                    <div class="table-top">
+                      <span>on the table · from your screen → Donnie marked up</span>
+                      <span style="flex:1"></span>
+                      <span>checkout.tsx:84</span>
+                    </div>
+                    <div class="table-canvas">
+                      <div class="codebit">
+                        <div class="err">TypeError: Cannot read properties of undefined (reading 'url')</div>
+                        <div>at resolveRedirect (checkout.tsx:84:19)</div>
+                        <div>at handleSuccess (checkout.tsx:112:5)</div>
+                      </div>
+                      <div class="sketch-layer">
+                        <svg viewBox="0 0 320 120" preserveAspectRatio="none">
+                          <rect x="8" y="8" width="140" height="50" fill="none" stroke="#A855F7" stroke-width="2" stroke-dasharray="4 3" rx="4"/>
+                          <path d="M150 30 L210 30 L210 70" fill="none" stroke="#A855F7" stroke-width="2"/>
+                          <circle cx="210" cy="78" r="8" fill="none" stroke="#EF4444" stroke-width="2"/>
+                          <path d="M204 72 L216 84 M216 72 L204 84" stroke="#EF4444" stroke-width="2"/>
+                          <text x="230" y="82" fill="#3B82F6" font-size="11" font-family="ui-monospace,monospace">null?</text>
+                        </svg>
+                      </div>
+                      <div class="ink-note">you: “this path when Stripe flakes”</div>
+                    </div>
+                  </div>
+                  <div class="shelf">
+                    <div class="thumb live">glance</div>
+                    <div class="thumb">napkin</div>
+                    <div class="thumb">diff</div>
+                    <div class="thumb">+ paste</div>
+                  </div>
+                </div>
+                <div class="caption-bar">
+                  <div class="av onair" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+                  <div>
+                    <div class="who">Donnie · on air</div>
+                    <div class="said"><span class="hi">That lookup can come back null</span>, so the admin check blows up before the retry loop ever runs…</div>
+                  </div>
+                </div>
+                <div class="reply-bar">
+                  <div class="composer">
+                    <span class="ph">Type to Donnie — or paste an image / file…</span>
+                    <span class="attach">📎 stack.png</span>
+                  </div>
+                  <div class="ptt">◉ hold ⌥Space</div>
+                </div>
+                <div class="tape">
+                  <span>tape · today</span>
+                  <div class="blocks">
+                    <div class="blk" style="width:28px;background:var(--p-leo)"></div>
+                    <div class="blk" style="width:40px;background:var(--p-don)"></div>
+                    <div class="blk" style="width:18px;background:var(--p-raph)"></div>
+                    <div class="blk" style="width:34px;background:var(--p-mikey)"></div>
+                    <div class="blk" style="width:22px;background:var(--st-glance)"></div>
+                    <div class="now"></div>
+                    <div class="blk" style="width:48px;background:var(--p-don);opacity:1;box-shadow:0 0 6px rgba(168,85,247,.5)"></div>
+                    <div class="blk" style="width:60px;background:var(--lift)"></div>
+                  </div>
+                  <span>catch up · 1:56 at 2×</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Rejected equal-tile walls (several synth/round boards) — they lie about attention. Rejected strip-only Air Desk (synth-A) as the whole Den — instrument-precise but nowhere for glances and napkins to live. Hybrid: synth density seats + round2 table/tape. Typed composer always present ← brief near-future; Strip remains input-free.</p>
+  </div>
+</section>
+
+<!-- SURFACE 2 — STRIP -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>The Strip · dock / spotlight</h2></div>
+    <p class="sec-lead">Always-on-top, non-activating. Four fat targets max. No text fields — interacting must not steal keyboard focus from the editor. Drop a file onto a face to hand it over without opening the Den.</p>
+    <div class="strip-row">
+      <div>
+        <div class="frame" style="border:0;background:transparent">
+          <div class="frame-bar" style="background:transparent;border:0;padding:0 0 8px">
+            <span class="ttl">Speaking</span>
+            <span class="size">~380 × 150</span>
+          </div>
+          <div class="strip speaking">
+            <div class="strip-faces">
+              <div class="av onair sm" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+              <div class="av hand sm" style="background:var(--p-leo)"><span class="ring"></span>LE</div>
+              <div class="av ask sm" style="background:var(--p-raph)"><span class="ring"></span>RA</div>
+              <div class="av work sm" style="background:var(--p-mikey)"><span class="ring"></span>MI</div>
+            </div>
+            <div class="strip-main">
+              <div class="av onair" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+              <div class="strip-copy">
+                <div class="who">Donnie <span class="pill onair">on air · 0:14</span></div>
+                <div class="cap">Backoff’s in — three retries with jitter, then it stops pretending the socket is coming back…</div>
+                <div class="strip-transport">
+                  <button class="btn">❚❚</button>
+                  <button class="btn">■</button>
+                  <button class="btn">↺</button>
+                  <button class="btn pri" style="flex:1">◉ hold to talk</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="frame" style="border:0;background:transparent">
+          <div class="frame-bar" style="background:transparent;border:0;padding:0 0 8px">
+            <span class="ttl">Collapsed · room quiet</span>
+            <span class="size">~380 × 72</span>
+          </div>
+          <div class="strip quiet">
+            <div class="strip-main">
+              <div class="strip-copy">
+                <div class="who">Room quiet · 4 working</div>
+                <div class="cap">last: Donnie · SSE reconnect · 2m ago</div>
+                <div class="strip-needs">
+                  <span class="need" style="color:var(--st-ask)">RA needs a call</span>
+                  <span class="need" style="color:var(--st-hand)">LE hand ×1</span>
+                  <span class="need">cue 3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Cast-list pill of faces ← round2-C Strip (kept). Useful quiet “needs you” ticker ← synth-B/D. Talk as wide bar, not a field ← all synths. File-drop onto face ← round2-C; makes attachments work at distance 1 without focus theft.</p>
+  </div>
+</section>
+
+<!-- SURFACES 3–4 PHONE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>The Earpiece · phone room + player</h2></div>
+    <p class="sec-lead">Not a miniature Den. On the couch you’re on a call with the room. Table canvas appears full-bleed only when something’s on it. Primary actions sit in the bottom thumb third.</p>
+    <div class="trio">
+      <!-- Phone room -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Phone room</span><span class="size">390×720</span></div>
+        <div class="frame-body">
+          <div class="phone">
+            <div class="phone-notch">9:41</div>
+            <div class="phone-screen">
+              <div class="phone-head">
+                <h4>The room</h4>
+                <span class="pill">▶ phone</span>
+              </div>
+              <div class="phone-live">
+                <div class="av xl onair" style="background:var(--p-don);margin:0 auto"><span class="ring"></span>DO</div>
+                <div style="margin-top:8px;font-weight:650">Donnie</div>
+                <div class="meta" style="font:10px/1 var(--mono);color:var(--ink-3);margin-top:4px">ON AIR · 0:14</div>
+                <div class="said">“…that lookup can come back null, so the admin check blows up first.”</div>
+              </div>
+              <div class="phone-waiting">
+                <div class="wrow">
+                  <div class="av ask sm" style="background:var(--p-raph)"><span class="ring"></span>RA</div>
+                  <div class="t">Raph · needs you<small>rebase or wait?</small></div>
+                  <button class="btn" style="padding:5px 8px">open</button>
+                </div>
+                <div class="wrow">
+                  <div class="av hand sm" style="background:var(--p-leo)"><span class="ring"></span>LE</div>
+                  <div class="t">Leo · hand up<small>auth ready for eyes</small></div>
+                  <button class="btn" style="padding:5px 8px">play</button>
+                </div>
+              </div>
+              <div class="thumb-zone">
+                <div class="phone-composer">
+                  <span class="ph">Type or paste…</span>
+                  <span class="attach" style="font:10px/1 var(--mono);color:var(--ink-2)">📎</span>
+                </div>
+                <div class="talk-orb live">◉ hold to talk · room</div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn" style="flex:1">hold room</button>
+                  <button class="btn" style="flex:1">catch up · 2</button>
+                  <button class="btn" style="flex:1">+ new</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini player -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Mini-player strip</span><span class="size">persistent</span></div>
+        <div class="frame-body">
+          <div class="mini-player">
+            <div class="av onair sm" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+            <div class="meta">
+              <div class="t">Donnie · on air</div>
+              <div class="s">Backoff’s in — three retries with jitter…</div>
+            </div>
+            <button class="btn">❚❚</button>
+            <button class="btn">■</button>
+          </div>
+          <p style="font-size:12px;color:var(--ink-3);margin:14px 0 8px">Expanded player sheet · karaoke</p>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div class="av lg onair" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+              <div>
+                <div style="font-weight:650">Donnie</div>
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);margin-top:4px">0:14 / 0:41 · 1×</div>
+              </div>
+            </div>
+            <div class="karaoke">
+              <span class="done">Backoff’s in — three retries with jitter,</span>
+              <span class="cur"> then it stops pretending the socket is coming back.</span>
+              Rollback script is sitting in scripts/rollback_0712.sql if it goes sideways.
+            </div>
+            <div style="display:flex;gap:6px;margin-top:14px">
+              <button class="btn">½×</button>
+              <button class="btn">1×</button>
+              <button class="btn">1.5×</button>
+              <button class="btn">2×</button>
+              <span style="flex:1"></span>
+              <button class="btn">↺</button>
+              <button class="btn pri">❚❚</button>
+              <button class="btn">■</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Talkback seat detail -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Talkback · luminance invert</span><span class="size">grant → speak</span></div>
+        <div class="frame-body">
+          <div class="seat talkback" style="max-width:260px;margin:0 auto">
+            <div class="spine"></div>
+            <div class="seat-inner">
+              <div class="seat-row">
+                <div class="av" style="background:#0a0c10;color:#F4F7FF;border:2px solid #0a0c10">DO</div>
+                <div>
+                  <div class="seat-name">Donnie · hearing you</div>
+                  <div class="meta">release to send · drag away to cancel</div>
+                </div>
+              </div>
+              <div class="preview" style="color:#3a4250">Mic open. Room auto-held. Grant ring was purple (who hears you); the seat went white (you’re emitting).</div>
+            </div>
+          </div>
+          <p style="font-size:12.5px;color:var(--ink-2);margin:16px 12px 0;line-height:1.45">
+            Sound has a direction, so light does too. White <em>on</em> dark = they’re speaking. Dark <em>on</em> white = you’re speaking. Nothing else in the product inverts — so the two consequential states in a voice tool can’t be confused with each other or with a jersey.
+          </p>
+        </div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Phone-as-walkie ← round1-A/B/C (kept). Karaoke line highlight ← detailed brief + synth-A. Talkback inversion ← synth-C (decisive over “both white”). Device toggle Mac/phone in header chip.</p>
+  </div>
+</section>
+
+<!-- HUDDLE + GLANCE + INTERPRETER -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Huddle · Glance · Interpreter</h2></div>
+    <p class="sec-lead">Near-future as structure: a huddle is several seats sharing one floor and one table. A glance is a timed, consentful put-on-the-table. A voice command prints a receipt, not a shrug.</p>
+    <div class="trio">
+      <!-- Huddle -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Huddle · group call</span><span class="size">one conversation</span></div>
+        <div class="frame-body">
+          <div class="huddle">
+            <div class="huddle-top">
+              <span class="pill onair">huddle · live</span>
+              <span style="font-size:13px;font-weight:650">Null on checkout</span>
+              <span style="flex:1"></span>
+              <span class="pill">0:48</span>
+            </div>
+            <div class="circle">
+              <div class="who">
+                <div class="av lg onair" style="background:var(--p-leo)"><span class="ring"></span>LE</div>
+                <div class="nm">Leo</div>
+                <div class="st">FLOOR · 0:11</div>
+              </div>
+              <div class="who">
+                <div class="av lg hand" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+                <div class="nm">Donnie</div>
+                <div class="st">queued next</div>
+              </div>
+              <div class="who">
+                <div class="av lg" style="background:var(--p-raph)">RA</div>
+                <div class="nm">Raph</div>
+                <div class="st">listening</div>
+              </div>
+              <div class="who">
+                <div class="av lg" style="background:var(--ink-3);color:#0a0c10">YOU</div>
+                <div class="nm">You</div>
+                <div class="st">hold ⌥ to cut in</div>
+              </div>
+            </div>
+            <div class="floor-baton">
+              <strong style="color:var(--ink)">Floor:</strong> Leo → Donnie wants in → you can seize anytime
+              <div class="q">
+                <span style="border-color:rgba(244,247,255,.4);color:var(--st-onair)">LE speaking</span>
+                <span style="color:var(--st-hand)">DO next</span>
+                <span>RA listening</span>
+                <span>YOU · ⌥Space</span>
+              </div>
+            </div>
+            <div class="huddle-table">
+              Shared table · Donnie’s null diagram + your scribble. Same object the Den shows — huddle doesn’t invent a second canvas.
+            </div>
+            <div class="huddle-actions">
+              <button class="btn">mute room</button>
+              <button class="btn">show screen</button>
+              <button class="btn">sketch</button>
+              <button class="btn danger">end huddle</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Glance -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Screen glance · consent</span><span class="size">timed</span></div>
+        <div class="frame-body">
+          <div class="glance-card">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="av glance" style="background:var(--p-don)"><span class="ring"></span>DO</div>
+              <div>
+                <div style="font-weight:650;font-size:13px">Show Donnie this window?</div>
+                <div class="timer">consent · 8s capture · not ambient</div>
+              </div>
+            </div>
+            <div class="glance-prev">
+              <div class="fake-ui">
+                <div>checkout.tsx — Cursor</div>
+                <div class="red">TypeError: Cannot read properties of undefined (reading 'url')</div>
+                <div>84 │ return session.url</div>
+                <div>85 │</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn pri" style="flex:1">Show · 8s</button>
+              <button class="btn" style="flex:1">Show + sketch</button>
+              <button class="btn">Cancel</button>
+            </div>
+            <p style="font-size:12px;color:var(--ink-3);margin:10px 0 0;line-height:1.4">As natural as turning the laptop toward a coworker. Lands on the table and on the tape as one moment. Shutter tick on start &amp; end — never silent surveillance.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interpreter -->
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Voice interpreter · receipt</span><span class="size">plan object</span></div>
+        <div class="frame-body">
+          <div class="plan">
+            <div class="heard">
+              <div class="lab">You said</div>
+              “Pause the room, then replay Donnie’s last message.”
+            </div>
+            <div class="step ok">
+              <div class="n">1</div>
+              <div>
+                Hold room
+                <div class="out">done · live mode paused</div>
+              </div>
+              <span style="font:10px/1 var(--mono);color:var(--st-hand)">ok</span>
+            </div>
+            <div class="step ok">
+              <div class="n">2</div>
+              <div>
+                Find Donnie’s last spoken turn
+                <div class="out">turn 23 · SSE reconnect · 0:41</div>
+              </div>
+              <span style="font:10px/1 var(--mono);color:var(--st-hand)">ok</span>
+            </div>
+            <div class="step">
+              <div class="n">3</div>
+              <div>
+                Replay on Mac
+                <div class="out" style="color:var(--st-work)">playing…</div>
+              </div>
+              <span style="font:10px/1 var(--mono);color:var(--st-work)">…</span>
+            </div>
+            <div class="plan-foot">
+              <span>Room remains held</span>
+              <button class="btn">Undo plan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Huddle-as-shared-floor ← round2-A/B (kept; rejected “meeting link” bolt-on). Glance consent chip + timed capture ← round2-A/C. Napkin timed to speech ← round2-B. Interpreter as auditable receipt ← synth consensus (A/B/C/D); Reasoning stays private, commands public.</p>
+  </div>
+</section>
+
+<!-- CHAT THREAD + PICKER -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Thread filter · Picker</h2></div>
+    <p class="sec-lead">Per-agent “chat” is a filter on the tape, not a separate product. The picker confirms with a spoken sentence.</p>
+    <div class="duo">
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Tape filtered · Donnie</span><span class="size">Mac or phone sheet</span></div>
+        <div class="frame-body">
+          <div style="max-width:420px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+            <div style="padding:10px 12px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px">
+              <div class="av" style="background:var(--p-don)">DO</div>
+              <div style="flex:1">
+                <div style="font-weight:650;font-size:13px">Donnie</div>
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);margin-top:3px">filter · tape · jellyfin-streamline</div>
+              </div>
+              <button class="btn">huddle+</button>
+            </div>
+            <div style="padding:12px;display:flex;flex-direction:column;gap:10px;max-height:280px;overflow:auto">
+              <div style="align-self:flex-start;max-width:90%;background:var(--bg);border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px">
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);margin-bottom:4px">14:18 · spoken</div>
+                <div style="font-size:13px;color:var(--ink-2)">Migration’s done — fourteen tables, zero rows lost.</div>
+                <button class="btn" style="margin-top:6px;padding:4px 7px">↺ replay</button>
+              </div>
+              <div style="align-self:flex-end;max-width:90%;background:rgba(244,247,255,.08);border:1px solid rgba(244,247,255,.15);border-radius:10px;padding:8px 10px">
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);margin-bottom:4px">14:22 · you typed</div>
+                <div style="font-size:13px">Nice. Now look at this checkout error?</div>
+                <div style="margin-top:6px;font:10px/1 var(--mono);color:var(--st-glance)">📎 glance · checkout.tsx</div>
+              </div>
+              <div style="align-self:flex-start;max-width:90%;background:var(--bg);border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px">
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);margin-bottom:4px">14:23 · spoken + napkin</div>
+                <div style="font-size:13px;color:var(--ink-2)">Yeah — that lookup can come back null. Sketching the branch…</div>
+                <div style="margin-top:6px;height:48px;background:var(--paper);border-radius:6px;color:#333;font:10px/48px var(--mono);text-align:center">napkin · null guard</div>
+              </div>
+            </div>
+            <div class="reply-bar" style="border-radius:0">
+              <div class="composer">
+                <span class="ph">Reply to Donnie…</span>
+                <span class="attach">📎</span>
+              </div>
+              <div class="ptt live" style="min-width:90px">◉ talk</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-bar"><span class="ttl">Picker · confirm is a sentence</span><span class="size">Mac window / phone sheet</span></div>
+        <div class="frame-body">
+          <div class="picker">
+            <div class="picker-h">New session</div>
+            <div class="picker-body">
+              <div class="field">
+                <label>Persona</label>
+                <div class="persona-pick">
+                  <div class="opt"><div class="av sm" style="background:var(--p-leo)">LE</div>Leo</div>
+                  <div class="opt on"><div class="av sm" style="background:var(--p-don)">DO</div>Donnie</div>
+                  <div class="opt"><div class="av sm" style="background:var(--p-mikey)">MI</div>Mikey</div>
+                  <div class="opt"><div class="av sm" style="background:var(--p-raph)">RA</div>Raph</div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Project</label>
+                <div class="ctrl">~/code/jellyfin-streamline</div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <div class="ctrl">sonnet · claude-4</div>
+              </div>
+              <div class="flags">
+                <span class="flag on">skip-permissions</span>
+                <span class="flag">remote</span>
+                <span class="flag on">local tmux</span>
+              </div>
+              <div class="confirm-sent">
+                <div style="font:10px/1 var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">Confirm</div>
+                <div class="sent">Start <em>Donnie</em> · sonnet · jellyfin-streamline</div>
+                <button class="btn pri wide">Start Donnie</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="prov"><b>Provenance.</b> Thread-as-tape-filter ← round2-C bet #1 (kept over N chat apps). Confirm sentence ← synth unanimous winner. Resume path uses the same sentence with “Resume”.</p>
+  </div>
+</section>
+
+<!-- RATIONALE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Rationale</h2></div>
+    <p class="sec-lead">Opinionated calls. A genuine better idea beat a faithful merge — but every major adoption or rejection is named.</p>
+
+    <div class="calls">
+      <div class="call">
+        <div class="tag">kept · structural</div>
+        <div class="q">Table over timeline</div>
+        <div class="a">round2-B’s table is the only prior idea that makes glance, draw, attach, and huddle the same verb. Channel-strip desks (synth-A) are better instruments for pure voice — and worse homes for objects. The Den is both: seats for attention, table for stuff.</div>
+      </div>
+      <div class="call">
+        <div class="tag">kept · collision-proof</div>
+        <div class="q">ON AIR is light; talkback inverts</div>
+        <div class="a">Rejected lime/green/amber “speaking” hues from round1/round2 — they eventually sit next to a jersey. synth-C’s axis (emit vs receive) is the cleanest fix for white-on-white PTT collision.</div>
+      </div>
+      <div class="call">
+        <div class="tag">kept · honest</div>
+        <div class="q">One floor, visible baton</div>
+        <div class="a">Equal grids pretend six agents speak at once. Floor + queue (round1-C, round2-B) makes the product honest. Huddle is floor-sharing, not four threads on a conference line.</div>
+      </div>
+      <div class="call">
+        <div class="tag">kept · memory</div>
+        <div class="q">One tape</div>
+        <div class="a">round1-B / round2-C. Catch-up, replay, sketches, and glances are seeks. Per-agent panes are filters. Interpreter plans address the tape by identity + “last.”</div>
+      </div>
+      <div class="call">
+        <div class="tag">rejected</div>
+        <div class="q">Phone as tiny Mac</div>
+        <div class="a">Every round1 board that treated the phone as a walkie felt truer. Couch use is listen / decide / talk / type — not rearrange a studio console.</div>
+      </div>
+      <div class="call">
+        <div class="tag">new · brief</div>
+        <div class="q">Type beside talk, always</div>
+        <div class="a">Headphones on, type the question, hear the reply — or silent room. Composer + attach on Den and Earpiece; Strip stays non-activating (drop-file only).</div>
+      </div>
+    </div>
+
+    <h2 style="font-size:16px;margin:28px 0 12px">shadcn / AI Elements mapping</h2>
+    <table class="map">
+      <thead>
+        <tr><th>Product</th><th>Compose from</th><th>Custom boundary</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Seats / density ladder</td><td><code>Card</code> <code>Badge</code> <code>Button</code> <code>DropdownMenu</code> <code>Tooltip</code> <code>ScrollArea</code></td><td>Spine, lamp, stage-freeze sort, PTT grant ring</td></tr>
+        <tr><td>Table / napkin</td><td><code>Tabs</code> canvas host</td><td>Draw layer, glance frame, shelf — domain</td></tr>
+        <tr><td>Tape</td><td><code>ScrollArea</code> + scrub</td><td>Persona-colored blocks, seek cursor</td></tr>
+        <tr><td>Strip dock</td><td><code>Button</code> only</td><td>Non-activating shell; no inputs</td></tr>
+        <tr><td>Thread filter</td><td><code>Conversation</code> <code>Message</code> <code>PromptInput</code></td><td>Tape filter semantics; attach paste</td></tr>
+        <tr><td>Interpreter plan</td><td><code>ChainOfThought</code> <code>Task</code></td><td>Heard utterance header; Undo; room-held footer</td></tr>
+        <tr><td>Huddle</td><td><code>Dialog</code> / full pane</td><td>Floor baton + shared table binding</td></tr>
+        <tr><td>Glance consent</td><td><code>AlertDialog</code></td><td>Timed capture; shutter earcon</td></tr>
+        <tr><td>Picker</td><td><code>Dialog</code> <code>Select</code> <code>Switch</code> <code>Button</code></td><td>Confirm sentence composer</td></tr>
+        <tr><td>Toasts / catch-up</td><td><code>sonner</code></td><td>—</td></tr>
+        <tr><td>Avatar lip-sync</td><td><code>Avatar</code> shell</td><td>Plain <code>&lt;img&gt;</code>; 70ms <code>src</code> swap outside React</td></tr>
+        <tr><td>Karaoke player</td><td><code>Sheet</code> <code>Slider</code></td><td>Word sweep tied to audio cursor</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="font-size:16px;margin:28px 0 12px">Cut vs add</h2>
+    <div class="calls">
+      <div class="call">
+        <div class="tag">cut</div>
+        <div class="q">Per-agent chat as home</div>
+        <div class="a">Threads exist as tape filters. The home is the room. This kills tab hell and matches how the developer actually listens.</div>
+      </div>
+      <div class="call">
+        <div class="tag">cut</div>
+        <div class="q">Ambient always-on screen share</div>
+        <div class="a">Glance is explicit, timed, and logged on the tape. Consent is the product, not a settings footnote.</div>
+      </div>
+      <div class="call">
+        <div class="tag">add</div>
+        <div class="q">Table shelf</div>
+        <div class="a">One object on the table at a time; prior glances/napkins/files sit on a shelf. Prevents collage chaos without losing history.</div>
+      </div>
+      <div class="call">
+        <div class="tag">add</div>
+        <div class="q">Huddle auto-adjourn</div>
+        <div class="a">From round2-B: huddles are expensive. Auto-adjourn after ~2m of your silence; floor beam can show a faint spend tick.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    Floor &amp; Table — final synthesis for Room of Devs. Self-contained concept board · system fonts · no external requests. Avatars are initials in persona circles (lip-sync = frame-swappable <code style="font-family:var(--mono);color:var(--ink-2)">img</code>). Build next: React 19 + Tailwind v4 + shadcn/ui with the custom boundaries named above.
+  </div>
+</footer>
+
+</body>
+</html>

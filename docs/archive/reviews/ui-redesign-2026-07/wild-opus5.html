@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Soundstage — Room of Devs concept board</title>
+<style>
+  /* ============================================================
+     TOKENS
+     ============================================================ */
+  :root{
+    /* --- stage surfaces: the room is a dark soundstage, lit from above --- */
+    --stage-0:#0b0c10;      /* the floor, behind everything */
+    --stage-1:#131520;      /* panels */
+    --stage-2:#1b1e2c;      /* raised cards */
+    --stage-3:#252939;      /* hover / inset wells */
+    --edge:#2f3446;         /* hairlines */
+    --edge-soft:#22263444;
+
+    /* --- ink --- */
+    --ink:#eef0f6;
+    --ink-2:#a8aec2;
+    --ink-3:#6f7690;
+    --ink-inv:#0b0c10;
+
+    /* --- the one accent: stage light --- */
+    --light:#ffb340;        /* amber. reserved for THE FLOOR. */
+    --light-dim:#7a5320;
+    --light-glow:#ffb34022;
+
+    /* --- state hues. each is also a sound (see sound tokens) --- */
+    --st-floor:#ffb340;     /* speaking now */
+    --st-queue:#7ea6ff;     /* waiting for the mic */
+    --st-green:#5fd39a;     /* done, waiting politely */
+    --st-door:#ff6b6b;      /* blocked, needs a decision */
+    --st-work:#8f7bff;      /* heads-down, nothing to say */
+    --st-sleep:#5a6076;     /* idle / ended */
+
+    /* --- character chips (placeholders: initials) --- */
+    --c-leo:#4f8cff; --c-don:#a56bff; --c-raph:#ff5c5c;
+    --c-mikey:#ff9d2e; --c-splinter:#8b93ab; --c-april:#ffd23f; --c-casey:#38c98a;
+
+    /* --- type ---
+       System stacks only. Two families, three jobs.
+       UI     = system sans, tight, for chrome
+       SCRIPT = system mono, for anything the room SAID (a script is a document)
+       DISPLAY= system sans, heavy + optical tightening, for the two numbers that matter
+    */
+    --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+
+    --t-display:600 clamp(28px,5.2vw,46px)/1.02 var(--ui);
+    --t-h2:600 clamp(19px,2.4vw,24px)/1.2 var(--ui);
+    --t-h3:600 15px/1.3 var(--ui);
+    --t-body:400 15px/1.6 var(--ui);
+    --t-small:400 13px/1.5 var(--ui);
+    --t-micro:600 10.5px/1 var(--ui);   /* +0.09em tracking, uppercase */
+    --t-script:400 13.5px/1.65 var(--mono);
+    --t-cue:600 12px/1.4 var(--mono);
+
+    --r-sm:6px; --r:10px; --r-lg:16px; --r-pill:999px;
+    --pad:clamp(16px,3vw,28px);
+    --shadow:0 18px 44px -18px #000c, 0 2px 0 #ffffff08 inset;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+  body{
+    background:
+      radial-gradient(120% 70% at 50% -10%, #1a1d2b 0%, var(--stage-0) 55%) fixed,
+      var(--stage-0);
+    color:var(--ink); font:var(--t-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--light)}
+  h1,h2,h3,h4,p,ul,ol{margin:0}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 var(--pad) 100px}
+  .micro{font:var(--t-micro);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+  .dim{color:var(--ink-2)}
+  .dimmer{color:var(--ink-3)}
+
+  /* ---- section scaffold ---- */
+  section{padding:clamp(44px,7vw,80px) 0;border-top:1px solid var(--edge)}
+  section:first-of-type{border-top:0}
+  .sec-head{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+  .sec-num{font:var(--t-cue);color:var(--light);letter-spacing:.06em}
+  .sec-head h2{font:var(--t-h2);letter-spacing:-.01em}
+  .lede{font:var(--t-body);color:var(--ink-2);max-width:62ch;margin-bottom:26px}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* ---- masthead ---- */
+  header.mast{padding:clamp(52px,9vw,104px) 0 8px}
+  .kicker{display:inline-flex;gap:10px;align-items:center;font:var(--t-micro);
+    letter-spacing:.14em;text-transform:uppercase;color:var(--light);
+    border:1px solid var(--light-dim);background:var(--light-glow);
+    padding:7px 12px;border-radius:var(--r-pill);margin-bottom:22px}
+  h1{font:var(--t-display);letter-spacing:-.025em;max-width:20ch}
+  h1 em{font-style:normal;color:var(--light)}
+  .thesis{margin-top:22px;max-width:66ch;font-size:17px;line-height:1.65;color:var(--ink-2)}
+  .thesis strong{color:var(--ink);font-weight:600}
+  .rule{height:1px;background:linear-gradient(90deg,var(--light),transparent 60%);margin:34px 0 0}
+
+  /* ---- generic panel ---- */
+  .panel{background:var(--stage-1);border:1px solid var(--edge);border-radius:var(--r-lg);
+    box-shadow:var(--shadow)}
+  .cap{font:var(--t-small);color:var(--ink-3);margin-top:10px}
+  .cap b{color:var(--ink-2);font-weight:600}
+
+  /* ---- avatars ---- */
+  .av{width:38px;height:38px;border-radius:var(--r-pill);display:grid;place-items:center;
+    font:600 14px/1 var(--ui);color:#0b0c10;flex:0 0 auto;position:relative}
+  .av.sm{width:26px;height:26px;font-size:10.5px}
+  .av.lg{width:60px;height:60px;font-size:21px}
+  .av.xl{width:84px;height:84px;font-size:29px}
+  .leo{background:var(--c-leo)} .don{background:var(--c-don)} .raph{background:var(--c-raph)}
+  .mikey{background:var(--c-mikey)} .splinter{background:var(--c-splinter)}
+  .april{background:var(--c-april)} .casey{background:var(--c-casey)}
+  .av.ring{box-shadow:0 0 0 2px var(--stage-1),0 0 0 4px var(--st-floor),0 0 26px var(--light-glow)}
+  .av.muted{filter:grayscale(.75) brightness(.6)}
+
+  /* ---- state dot ---- */
+  .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;display:inline-block}
+  .d-floor{background:var(--st-floor)} .d-queue{background:var(--st-queue)}
+  .d-green{background:var(--st-green)} .d-door{background:var(--st-door)}
+  .d-work{background:var(--st-work)} .d-sleep{background:var(--st-sleep)}
+
+  .tag{display:inline-flex;align-items:center;gap:7px;padding:4px 9px;border-radius:var(--r-pill);
+    font:var(--t-micro);letter-spacing:.08em;text-transform:uppercase;
+    background:var(--stage-3);color:var(--ink-2);border:1px solid var(--edge)}
+
+  /* ============================================================
+     TOKEN SPECIMENS
+     ============================================================ */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .sw{border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:var(--stage-1)}
+  .sw .chip{height:56px}
+  .sw .meta{padding:9px 11px}
+  .sw .nm{font:var(--t-h3);font-size:13px}
+  .sw .hx{font:var(--t-cue);color:var(--ink-3);font-size:11px;margin-top:3px}
+
+  table{width:100%;border-collapse:collapse;font:var(--t-small)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--edge);border-radius:var(--r);background:var(--stage-1)}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--edge);vertical-align:top}
+  th{font:var(--t-micro);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+     background:#ffffff05;position:sticky;top:0}
+  tr:last-child td{border-bottom:0}
+  td.mono{font:var(--t-cue);color:var(--ink-2);white-space:nowrap}
+  .earcon{display:inline-flex;align-items:center;gap:6px}
+  .bars{display:inline-flex;gap:2px;align-items:flex-end;height:14px}
+  .bars i{width:3px;border-radius:1px;background:currentColor;display:block}
+
+  /* ============================================================
+     MAC WINDOW MOCKUP — THE SOUNDSTAGE
+     ============================================================ */
+  .macwin{border-radius:14px;overflow:hidden;border:1px solid var(--edge);background:var(--stage-1);
+    box-shadow:var(--shadow)}
+  .titlebar{display:flex;align-items:center;gap:9px;padding:10px 14px;background:#0f111a;
+    border-bottom:1px solid var(--edge)}
+  .tl{width:11px;height:11px;border-radius:50%}
+  .tl1{background:#ff5f57}.tl2{background:#febc2e}.tl3{background:#28c840}
+  .titlebar .t{margin-left:8px;font:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .titlebar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+  .stage-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  @media (max-width:820px){.stage-grid{grid-template-columns:1fr}}
+
+  /* --- THE FLOOR --- */
+  .floor{padding:22px;border-bottom:1px solid var(--edge);
+    background:
+      radial-gradient(90% 130% at 50% -30%, #ffb34014, transparent 60%),
+      linear-gradient(180deg,#171a27,#131520)}
+  .floor-top{display:flex;align-items:center;gap:16px}
+  .floor-name{font:600 22px/1.1 var(--ui);letter-spacing:-.01em}
+  .floor-sub{font:var(--t-small);color:var(--ink-3);margin-top:4px}
+  .floor .line{margin-top:16px;font:var(--t-script);color:var(--ink);max-width:52ch}
+  .floor .line .said{color:var(--ink)}
+  .floor .line .saying{color:var(--ink);border-bottom:2px solid var(--light);padding-bottom:1px}
+  .floor .line .unsaid{color:var(--ink-3)}
+
+  .wave{display:flex;gap:2.5px;align-items:center;height:34px;margin-left:auto}
+  .wave i{width:3px;border-radius:2px;background:var(--light);display:block;opacity:.9}
+
+  .floor-ctl{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:var(--r-sm);
+    border:1px solid var(--edge);background:var(--stage-2);color:var(--ink-2);
+    font:600 12.5px/1 var(--ui);white-space:nowrap}
+  .btn.primary{background:var(--light);border-color:var(--light);color:var(--ink-inv)}
+  .btn.ghost{background:transparent}
+  .btn kbd{font:var(--t-cue);font-size:10.5px;background:#0006;border:1px solid var(--edge);
+    padding:2px 5px;border-radius:4px;color:var(--ink-3)}
+
+  /* --- lanes --- */
+  .lanes{padding:18px 18px 22px}
+  .lane{margin-top:20px}
+  .lane:first-child{margin-top:0}
+  .lane-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .lane-head h4{font:var(--t-micro);letter-spacing:.11em;text-transform:uppercase;color:var(--ink-2)}
+  .lane-head .n{margin-left:auto;font:var(--t-cue);color:var(--ink-3)}
+  .lane-note{font:var(--t-small);color:var(--ink-3);margin:-4px 0 10px;max-width:48ch}
+
+  .actor{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r);
+    border:1px solid var(--edge);background:var(--stage-2);margin-bottom:7px}
+  .actor .nm{font:var(--t-h3)}
+  .actor .sub{font:var(--t-small);color:var(--ink-3);margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .actor .body{min-width:0;flex:1}
+  .actor .aside{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .actor .pos{font:var(--t-cue);color:var(--ink-3);font-size:11px}
+  .actor.door{border-color:#ff6b6b55;background:linear-gradient(90deg,#ff6b6b12,var(--stage-2) 40%)}
+  .actor.green{border-color:#5fd39a33}
+  .actor.grabbable{cursor:grab}
+  .grip{color:var(--ink-3);font:var(--t-cue);letter-spacing:-1px}
+
+  .door-q{font:var(--t-script);color:var(--ink);margin:8px 0 10px;padding-left:11px;
+    border-left:2px solid var(--st-door)}
+  .door-opts{display:flex;gap:7px;flex-wrap:wrap}
+
+  /* --- script column --- */
+  .script{border-left:1px solid var(--edge);padding:18px;min-width:0;
+    background:linear-gradient(180deg,#12141e,#101219)}
+  @media (max-width:820px){.script{border-left:0;border-top:1px solid var(--edge)}}
+  .script-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .script-head h4{font:var(--t-micro);letter-spacing:.11em;text-transform:uppercase;color:var(--ink-2)}
+  .scrub{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .scrub .track{width:110px;height:4px;border-radius:2px;background:var(--stage-3);position:relative}
+  .scrub .track b{position:absolute;inset:0 26% 0 0;background:var(--light);border-radius:2px}
+  .scrub .track u{position:absolute;right:26%;top:-4px;width:2px;height:12px;background:var(--ink)}
+
+  .sl{font:var(--t-script);margin-bottom:14px}
+  .sl .who{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+  .sl .who b{font:var(--t-cue);letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+  .sl .who span{font:var(--t-cue);font-size:10.5px;color:var(--ink-3);margin-left:auto}
+  .sl .txt{color:var(--ink-2);padding-left:34px}
+  .sl.now .txt{color:var(--ink)}
+  .sl .dirn{padding-left:34px;color:var(--ink-3);font-style:italic}
+  .sl.you .txt{color:var(--light);}
+  .sl .txt em{color:var(--ink-3);font-style:italic}
+
+  /* ============================================================
+     CHIME STRIP (always-visible)
+     ============================================================ */
+  .strip-demo{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .strip{display:inline-flex;align-items:center;gap:10px;padding:7px 10px 7px 8px;border-radius:var(--r-pill);
+    background:#0d0f17ee;border:1px solid #ffffff14;box-shadow:0 10px 30px -12px #000d;
+    backdrop-filter:blur(20px);width:max-content;max-width:100%}
+  .strip .mini-wave{display:flex;gap:2px;align-items:center;height:16px}
+  .strip .mini-wave i{width:2.5px;border-radius:2px;background:var(--light);display:block}
+  .strip .count{display:inline-flex;align-items:center;gap:5px;font:var(--t-cue);font-size:11px;color:var(--ink-2)}
+  .strip .divider{width:1px;height:16px;background:var(--edge)}
+  .strip .say{font:var(--t-cue);font-size:11px;color:var(--ink-3);max-width:22ch;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .desk{background:linear-gradient(135deg,#1e2130,#151824);border:1px solid var(--edge);
+    border-radius:var(--r);padding:22px 18px;display:flex;justify-content:center}
+  .strip-state{font:var(--t-small);color:var(--ink-3);margin-top:9px}
+  .strip-state b{color:var(--ink-2);font-weight:600}
+
+  /* ============================================================
+     CUE SHEET
+     ============================================================ */
+  .cue{max-width:520px}
+  .cue-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--edge)}
+  .cue-head .heard{font:var(--t-script);color:var(--ink)}
+  .cue-head .heard u{text-decoration:none;color:var(--light)}
+  .cue-body{padding:8px 8px 12px}
+  .step{display:flex;gap:11px;align-items:flex-start;padding:10px 10px;border-radius:var(--r)}
+  .step .idx{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+    font:var(--t-cue);font-size:10px;border:1px solid var(--edge);color:var(--ink-3);margin-top:1px}
+  .step.done .idx{background:var(--st-green);border-color:var(--st-green);color:#06281c}
+  .step.now{background:var(--light-glow)}
+  .step.now .idx{background:var(--light);border-color:var(--light);color:var(--ink-inv)}
+  .step .lbl{font:var(--t-cue);font-size:12px;color:var(--ink)}
+  .step .sub{font:var(--t-small);font-size:12px;color:var(--ink-3);margin-top:2px}
+  .step.pending .lbl{color:var(--ink-3)}
+  .cue-foot{display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--edge)}
+
+  /* ============================================================
+     PHONE
+     ============================================================ */
+  .phones{display:grid;gap:26px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+  .phone{width:100%;max-width:320px;margin:0 auto;border-radius:34px;border:1px solid var(--edge);
+    background:var(--stage-1);box-shadow:var(--shadow);overflow:hidden;
+    display:flex;flex-direction:column;min-height:600px;position:relative}
+  .notch{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+    font:var(--t-cue);font-size:10px;color:var(--ink-3);background:#0f111a}
+  .p-body{flex:1;display:flex;flex-direction:column;min-height:0}
+  .p-head{padding:14px 16px 10px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--edge)}
+  .p-head h4{font:var(--t-h3)}
+  .p-scroll{flex:1;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+  .p-foot{padding:12px 14px 20px;border-top:1px solid var(--edge);background:#0f111a}
+
+  .ptt{height:96px;border-radius:22px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:5px;background:linear-gradient(180deg,#ffc55f,#ff9f24);
+    color:#3a2200;font:600 15px/1 var(--ui);box-shadow:0 10px 30px -12px #ffb34066}
+  .ptt small{font:var(--t-cue);font-size:10.5px;opacity:.72;letter-spacing:.06em;text-transform:uppercase}
+  .ptt.holding{background:linear-gradient(180deg,#2a2f42,#20243440);border:1px solid var(--light);
+    color:var(--light);box-shadow:0 0 0 3px var(--light-glow)}
+
+  .bubble{border-radius:14px;padding:10px 12px;font:var(--t-body);font-size:14px;max-width:86%}
+  .bubble.them{background:var(--stage-2);border:1px solid var(--edge);border-top-left-radius:5px}
+  .bubble.you{background:var(--light);color:var(--ink-inv);align-self:flex-end;border-bottom-right-radius:5px}
+  .bubble .attr{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .bubble .attr b{font:var(--t-cue);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase}
+  .bubble .attr span{font:var(--t-cue);font-size:10px;color:var(--ink-3);margin-left:auto}
+  .playbar{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--edge)}
+  .playbar .pb{flex:1;height:3px;background:var(--stage-3);border-radius:2px;position:relative}
+  .playbar .pb b{position:absolute;inset:0 55% 0 0;background:var(--light);border-radius:2px}
+  .playbar .tm{font:var(--t-cue);font-size:10px;color:var(--ink-3)}
+
+  .rowcard{display:flex;align-items:center;gap:11px;padding:11px;border-radius:var(--r);
+    border:1px solid var(--edge);background:var(--stage-2)}
+  .rowcard .body{flex:1;min-width:0}
+  .rowcard .nm{font:var(--t-h3);font-size:14px}
+  .rowcard .sub{font:var(--t-small);font-size:12px;color:var(--ink-3);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .earbud{display:grid;place-items:center;text-align:center;gap:16px;padding:30px 20px;flex:1}
+  .earbud .halo{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle,#ffb34022,transparent 68%);border:1px solid #ffb34033}
+  .earbud h3{font:600 19px/1.2 var(--ui)}
+  .earbud p{font:var(--t-small);color:var(--ink-3);max-width:26ch}
+  .gestures{width:100%;display:grid;gap:6px;margin-top:4px}
+  .gest{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r);
+    background:var(--stage-2);border:1px solid var(--edge);font:var(--t-small);font-size:12.5px;color:var(--ink-2)}
+  .gest b{font:var(--t-cue);font-size:10.5px;color:var(--light);flex:0 0 auto;width:66px;text-align:left}
+
+  /* ============================================================
+     FRAME SHEET
+     ============================================================ */
+  .frames{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}
+  .frame{border:1px solid var(--edge);border-radius:var(--r);background:var(--stage-1);
+    padding:16px 12px;text-align:center}
+  .frame .box{height:96px;display:grid;place-items:center;border-radius:var(--r-sm);
+    background:radial-gradient(circle at 50% 30%,#ffffff08,transparent 70%);margin-bottom:11px;position:relative}
+  .frame .nm{font:var(--t-h3);font-size:13px}
+  .frame .sub{font:var(--t-small);font-size:11.5px;color:var(--ink-3);margin-top:4px}
+  .frame .badge{position:absolute;bottom:6px;right:50%;transform:translateX(58px)}
+  .zzz{position:absolute;top:14px;right:50%;transform:translateX(46px);font:var(--t-cue);
+    font-size:11px;color:var(--st-sleep)}
+
+  /* ---- lists ---- */
+  ul.reasons{list-style:none;padding:0;display:grid;gap:14px}
+  ul.reasons li{padding-left:20px;position:relative;color:var(--ink-2);max-width:70ch}
+  ul.reasons li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;
+    border-radius:50%;background:var(--light)}
+  ul.reasons b{color:var(--ink);font-weight:600}
+
+  .cols2{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .note{border-left:2px solid var(--light);padding:2px 0 2px 15px;color:var(--ink-2);
+    font-size:14.5px;line-height:1.6;max-width:64ch}
+
+  .kill{border:1px dashed var(--edge);border-radius:var(--r);padding:14px 16px;background:#ffffff04}
+  .kill h4{font:var(--t-h3);font-size:13.5px;margin-bottom:5px}
+  .kill p{font:var(--t-small);color:var(--ink-3)}
+
+  footer{border-top:1px solid var(--edge);padding:30px 0 0;color:var(--ink-3);font:var(--t-small)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- =====================================================================
+     MASTHEAD + THESIS
+     ===================================================================== -->
+<header class="mast">
+  <div class="kicker"><span class="dot d-floor"></span> Room of Devs — concept board</div>
+  <h1>The room has <em>one microphone</em>. Design the microphone, not the dashboard.</h1>
+
+  <div class="thesis">
+    <p style="margin-bottom:14px">Every version of this tool that starts as a grid of agent
+    cards is designing for a channel it doesn't have. Seven agents can work in parallel;
+    <strong>they cannot speak in parallel</strong>. Ears are single-lane. So the scarce resource
+    in this product isn't screen space or status — it's <strong>the floor</strong>: who is
+    talking right now, who is next, and who gets bumped.</p>
+
+    <p style="margin-bottom:14px">So: the app is a <strong>soundstage</strong>, and the developer
+    is the <strong>director</strong>. There are exactly four places an agent can stand — on the
+    floor, in the queue, in the green room, or at the door — and moving between them is the whole
+    interaction model. The by-product of a day's work is a <strong>script</strong>: a
+    timestamped, scrubbable screenplay of everything the room said, which is also the
+    search index, the replay control, and the log.</p>
+
+    <p>Two things follow that a card grid never gets to. First, <strong>state is expressed in
+    sound before sight</strong> — this board ships sound tokens next to the color tokens, because
+    an agent finishing is an earcon, and only secondarily a badge. Second, <strong>the phone is a
+    walkie-talkie, not a smaller Mac app</strong> — its default state is screen-off, one thumb,
+    earbuds in.</p>
+  </div>
+  <div class="rule"></div>
+</header>
+
+<!-- =====================================================================
+     1. FOUR PLACES
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>Four places to stand</h2></div>
+  <p class="lede">The entire state model. Not badges on cards — <b>positions in a room</b>.
+  Everything else in this board is a consequence of this table. An agent is always in exactly
+  one place, and a place is a location on screen, a color, a posture frame, and a sound.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <tr>
+        <th style="width:118px">Place</th><th style="width:150px">Means</th>
+        <th>What the developer does about it</th><th style="width:132px">Sound</th>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-floor"></span>The Floor</span></td>
+        <td>Speaking now. Exactly one, ever.</td>
+        <td>Listen. Or duck it, skip it, or hold the card and talk back.</td>
+        <td class="mono">voice + light hum</td>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-queue"></span>The Queue</span></td>
+        <td>Has something to say, waiting for the mic.</td>
+        <td>Reorder by dragging. Drag to the top = "you, next."</td>
+        <td class="mono">silent (by design)</td>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-green"></span>Green&nbsp;Room</span></td>
+        <td>Finished. Waiting politely for attention.</td>
+        <td>Nothing, safely. It escalates its own volume over time.</td>
+        <td class="mono">throat-clear ladder</td>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-door"></span>The Door</span></td>
+        <td>Blocked. Cannot continue without a decision.</td>
+        <td>Answer it. This is the only thing that can jump the queue.</td>
+        <td class="mono">knock (2 taps)</td>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-work"></span>Heads-down</span></td>
+        <td>Working. Nothing to say.</td>
+        <td>Nothing. Deliberately low-contrast.</td>
+        <td class="mono">—</td>
+      </tr>
+      <tr>
+        <td><span class="tag"><span class="dot d-sleep"></span>Asleep</span></td>
+        <td>Idle or session ended.</td>
+        <td>Wake it with a line, or let it go.</td>
+        <td class="mono">—</td>
+      </tr>
+    </table>
+  </div>
+
+  <p class="note" style="margin-top:22px"><b>The politeness ladder is the feature.</b>
+  An agent that finishes while you're deep in something doesn't interrupt — it walks to the
+  green room. At 45s it clears its throat (a 200ms breath in its own voice, at 20% volume).
+  At 3 minutes, a soft knock. After 6 minutes it goes fully quiet and just glows, forever.
+  It never asks twice at the same volume. That's what "waits politely" actually means, and
+  it's an <em>audio</em> design, not a UI one.</p>
+</section>
+
+<!-- =====================================================================
+     2. TOKENS
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>Tokens</h2></div>
+  <p class="lede">A dark stage with one light. <b>Amber is reserved for the floor</b> — for
+  whoever is speaking, and for the developer's own voice. If amber is on screen, sound is
+  happening. Character colors are identity only and never mean state.</p>
+
+  <h3 class="micro" style="margin-bottom:11px">Stage &amp; state</h3>
+  <div class="swatches" style="margin-bottom:26px">
+    <div class="sw"><div class="chip" style="background:#0b0c10"></div><div class="meta"><div class="nm">stage-0</div><div class="hx">#0B0C10 · the floor</div></div></div>
+    <div class="sw"><div class="chip" style="background:#131520"></div><div class="meta"><div class="nm">stage-1</div><div class="hx">#131520 · panels</div></div></div>
+    <div class="sw"><div class="chip" style="background:#1b1e2c"></div><div class="meta"><div class="nm">stage-2</div><div class="hx">#1B1E2C · cards</div></div></div>
+    <div class="sw"><div class="chip" style="background:#ffb340"></div><div class="meta"><div class="nm">light</div><div class="hx">#FFB340 · THE FLOOR</div></div></div>
+    <div class="sw"><div class="chip" style="background:#7ea6ff"></div><div class="meta"><div class="nm">queue</div><div class="hx">#7EA6FF</div></div></div>
+    <div class="sw"><div class="chip" style="background:#5fd39a"></div><div class="meta"><div class="nm">green room</div><div class="hx">#5FD39A</div></div></div>
+    <div class="sw"><div class="chip" style="background:#ff6b6b"></div><div class="meta"><div class="nm">door</div><div class="hx">#FF6B6B</div></div></div>
+    <div class="sw"><div class="chip" style="background:#8f7bff"></div><div class="meta"><div class="nm">heads-down</div><div class="hx">#8F7BFF</div></div></div>
+  </div>
+
+  <h3 class="micro" style="margin-bottom:11px">Cast (identity only — never state)</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px">
+    <div style="text-align:center"><div class="av lg leo">L</div><div class="cap">Leo</div></div>
+    <div style="text-align:center"><div class="av lg don">D</div><div class="cap">Donnie</div></div>
+    <div style="text-align:center"><div class="av lg raph">R</div><div class="cap">Raph</div></div>
+    <div style="text-align:center"><div class="av lg mikey">M</div><div class="cap">Mikey</div></div>
+    <div style="text-align:center"><div class="av lg splinter">S</div><div class="cap">Splinter</div></div>
+    <div style="text-align:center"><div class="av lg april">A</div><div class="cap">April</div></div>
+    <div style="text-align:center"><div class="av lg casey">C</div><div class="cap">Casey</div></div>
+  </div>
+
+  <div class="cols2">
+    <div>
+      <h3 class="micro" style="margin-bottom:11px">Type — three jobs</h3>
+      <div class="panel" style="padding:20px">
+        <div class="micro" style="margin-bottom:6px">display / 600 · −2.5% tracking</div>
+        <div style="font:600 34px/1.05 var(--ui);letter-spacing:-.025em;margin-bottom:20px">Donnie has the floor</div>
+
+        <div class="micro" style="margin-bottom:6px">ui / system sans 15px</div>
+        <div style="margin-bottom:20px">Chrome, labels, buttons. Quiet, never competes with the script.</div>
+
+        <div class="micro" style="margin-bottom:6px">script / system mono 13.5px</div>
+        <div style="font:var(--t-script);color:var(--ink-2)">Anything the room <em>said</em> is set in
+        mono. A transcript is a document, not chat UI — mono makes it scannable at a glance
+        and signals "this is a record."</div>
+      </div>
+    </div>
+    <div>
+      <h3 class="micro" style="margin-bottom:11px">Sound tokens</h3>
+      <p class="cap" style="margin:0 0 11px">The unusual half of the system. Every one is under
+      400ms, in the room's own key, and duckable independently of voices.</p>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>Earcon</th><th>Fires when</th><th style="width:70px">Level</th></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--st-green)"><i style="height:5px"></i><i style="height:9px"></i><i style="height:4px"></i></span> throat-clear</span></td><td>green room, +45s</td><td class="mono">20%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--st-green)"><i style="height:11px"></i><i style="height:6px"></i><i style="height:12px"></i></span> knock</span></td><td>green room, +3m</td><td class="mono">40%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--st-door)"><i style="height:14px"></i><i style="height:8px"></i><i style="height:14px"></i></span> door</span></td><td>decision blocks an agent</td><td class="mono">70%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--st-floor)"><i style="height:4px"></i><i style="height:7px"></i><i style="height:11px"></i></span> takes-floor</span></td><td>new voice begins</td><td class="mono">15%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--st-queue)"><i style="height:11px"></i><i style="height:7px"></i><i style="height:4px"></i></span> yields</span></td><td>floor released, queue empty</td><td class="mono">15%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--light)"><i style="height:12px"></i><i style="height:12px"></i><i style="height:12px"></i></span> mic-open</span></td><td>you hold to talk</td><td class="mono">30%</td></tr>
+          <tr><td class="mono"><span class="earcon"><span class="bars" style="color:var(--ink-3)"><i style="height:6px"></i><i style="height:3px"></i><i style="height:2px"></i></span> room-off</span></td><td>room paused</td><td class="mono">25%</td></tr>
+        </table>
+      </div>
+      <p class="cap"><b>Rule:</b> no earcon ever plays while a voice is on the floor. They queue
+      behind speech and collapse — three throat-clears in a row become one.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     3. MAC WINDOW
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>Surface 1 — the Mac window (<span style="color:var(--ink-2)">the Soundstage</span>)</h2></div>
+  <p class="lede">Opened maybe six times a day, for thirty seconds. Left column is
+  <b>the room right now</b>, in strict priority order: floor, door, queue, green room,
+  heads-down. Right column is <b>the script</b> — the running record, scrubbable.
+  Nothing else. No metrics, no charts, no token counters.</p>
+
+  <div class="macwin">
+    <div class="titlebar">
+      <span class="tl tl1"></span><span class="tl tl2"></span><span class="tl tl3"></span>
+      <span class="t">The Room · 6 on stage</span>
+      <span class="right">
+        <span class="tag"><span class="dot d-floor"></span>Live</span>
+        <span class="btn ghost">Pause room <kbd>⌥␣</kbd></span>
+      </span>
+    </div>
+
+    <!-- THE FLOOR -->
+    <div class="floor">
+      <div class="floor-top">
+        <div class="av xl don ring">D</div>
+        <div style="min-width:0">
+          <div class="micro" style="color:var(--light);margin-bottom:5px">Has the floor</div>
+          <div class="floor-name">Donnie</div>
+          <div class="floor-sub">auth-refactor · 2 others waiting · 0:14</div>
+        </div>
+        <div class="wave" aria-hidden="true">
+          <i style="height:8px"></i><i style="height:19px"></i><i style="height:30px"></i><i style="height:13px"></i>
+          <i style="height:24px"></i><i style="height:32px"></i><i style="height:11px"></i><i style="height:20px"></i>
+          <i style="height:27px"></i><i style="height:9px"></i><i style="height:16px"></i><i style="height:23px"></i>
+          <i style="height:31px"></i><i style="height:12px"></i><i style="height:7px"></i>
+        </div>
+      </div>
+
+      <div class="line">
+        <span class="said">Token refresh is done — I moved the retry off the request path, so a
+        stale token no longer blocks the </span><span class="saying">first render</span><span class="unsaid">.
+        One thing you should look at: the old code swallowed a 401 in three places.</span>
+      </div>
+
+      <div class="floor-ctl">
+        <span class="btn primary">Hold to talk to Donnie <kbd>hold ⌘'</kbd></span>
+        <span class="btn">Skip ahead</span>
+        <span class="btn">Duck to 20%</span>
+        <span class="btn ghost">Read it instead</span>
+      </div>
+    </div>
+
+    <div class="stage-grid">
+      <!-- LANES -->
+      <div class="lanes">
+
+        <div class="lane">
+          <div class="lane-head"><span class="dot d-door"></span><h4>At the door</h4><span class="n">1 · blocked</span></div>
+          <p class="lane-note">Cannot continue. This is the only thing allowed to interrupt the floor.</p>
+          <div class="actor door">
+            <div class="av raph">R</div>
+            <div class="body">
+              <div class="nm">Raph</div>
+              <div class="sub">migration-runner · blocked 4m</div>
+            </div>
+            <div class="aside"><span class="pos">knocked twice</span></div>
+          </div>
+          <div class="door-q">“The staging dump has 40k orphan rows. Delete them, or migrate them
+            into the new table with null owners?”</div>
+          <div class="door-opts">
+            <span class="btn primary">Delete them</span>
+            <span class="btn">Migrate with nulls</span>
+            <span class="btn ghost">Answer by voice <kbd>hold ⌘'</kbd></span>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-head"><span class="dot d-queue"></span><h4>At the mic</h4><span class="n">2 waiting · drag to reorder</span></div>
+          <div class="actor grabbable">
+            <span class="grip">⣿</span>
+            <div class="av leo">L</div>
+            <div class="body">
+              <div class="nm">Leo</div>
+              <div class="sub">“Both test suites are green after the split…” · 22s</div>
+            </div>
+            <div class="aside"><span class="pos">next</span></div>
+          </div>
+          <div class="actor grabbable">
+            <span class="grip">⣿</span>
+            <div class="av mikey">M</div>
+            <div class="body">
+              <div class="nm">Mikey</div>
+              <div class="sub">“Okay so the CSS thing was WILD, listen…” · 51s</div>
+            </div>
+            <div class="aside"><span class="pos">then</span></div>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-head"><span class="dot d-green"></span><h4>Green room</h4><span class="n">1 · waiting quietly</span></div>
+          <p class="lane-note">Finished a while ago and stopped asking. Nothing is lost here.</p>
+          <div class="actor green">
+            <div class="av april">A</div>
+            <div class="body">
+              <div class="nm">April</div>
+              <div class="sub">docs-pass · finished 11m ago · went quiet</div>
+            </div>
+            <div class="aside"><span class="btn ghost">Give her the floor</span></div>
+          </div>
+        </div>
+
+        <div class="lane">
+          <div class="lane-head"><span class="dot d-work"></span><h4>Heads-down</h4><span class="n">2</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="actor" style="flex:1;min-width:180px">
+              <div class="av sm casey">C</div>
+              <div class="body"><div class="nm" style="font-size:13px">Casey</div>
+              <div class="sub">bisecting · 8m</div></div>
+            </div>
+            <div class="actor" style="flex:1;min-width:180px">
+              <div class="av sm splinter muted">S</div>
+              <div class="body"><div class="nm" style="font-size:13px">Splinter</div>
+              <div class="sub">asleep · ended 1h ago</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SCRIPT -->
+      <div class="script">
+        <div class="script-head">
+          <h4>Today's script</h4>
+          <div class="scrub">
+            <span class="micro">14:22</span>
+            <span class="track"><b></b><u></u></span>
+            <span class="btn ghost" style="padding:5px 9px">⟲ 30s</span>
+          </div>
+        </div>
+
+        <div class="sl now">
+          <div class="who"><span class="av sm don">D</span><b style="color:var(--c-don)">Donnie</b><span>14:22 · now</span></div>
+          <div class="txt">Token refresh is done — I moved the retry off the request path, so a
+          stale token no longer blocks the first render. One thing you should look at: the old
+          code swallowed a 401 in three places.</div>
+        </div>
+
+        <div class="sl">
+          <div class="who"><span class="av sm raph">R</span><b style="color:var(--c-raph)">Raph</b><span>14:18</span></div>
+          <div class="dirn">— goes to the door, blocked on a decision —</div>
+        </div>
+
+        <div class="sl you">
+          <div class="who"><span class="av sm" style="background:var(--light)">You</span><b style="color:var(--light)">You</b><span>14:11 · held ⌘'</span></div>
+          <div class="txt">Leo, don't touch the snapshot tests, just get the unit suite passing.</div>
+        </div>
+
+        <div class="sl">
+          <div class="who"><span class="av sm leo">L</span><b style="color:var(--c-leo)">Leo</b><span>14:10</span></div>
+          <div class="txt">The split left twelve tests importing a module that doesn't exist
+          anymore. Want me to fix the imports or roll the split back?</div>
+        </div>
+
+        <div class="sl">
+          <div class="who"><span class="av sm april">A</span><b style="color:var(--c-april)">April</b><span>14:03</span></div>
+          <div class="txt">Docs pass is finished. Twenty-two files, mostly stale flag names.
+          <em>(no reply needed)</em></div>
+        </div>
+
+        <div class="sl">
+          <div class="who"><span class="av sm mikey">M</span><b style="color:var(--c-mikey)">Mikey</b><span>13:58</span></div>
+          <div class="dirn">— you ducked him to 20% —</div>
+        </div>
+
+        <p class="cap" style="margin-top:18px">⌘F searches the script. Clicking any line replays
+        that audio. Selecting a range and hitting ⌘⇧C copies it as a plain-text transcript.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap"><b>Mockup:</b> the Mac window at ~1100px. Below 820px the script stacks under
+  the lanes, which is also the layout when the window is parked as a narrow side panel.</p>
+</section>
+
+<!-- =====================================================================
+     4. CHIME STRIP
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>Surface 2 — the Chime Strip</h2></div>
+  <p class="lede">The always-visible, never-focus-stealing Mac surface. It floats above other
+  apps at the bottom of the screen. <b>It is a visual echo of the audio, nothing more</b> —
+  and it is deliberately illegible at a distance except for three facts:
+  <b>who is talking</b>, <b>how many are waiting</b>, and <b>is anyone at the door</b>.
+  You should be able to read it with peripheral vision in under 200ms without moving your
+  hands off the keyboard.</p>
+
+  <div class="strip-demo">
+    <div>
+      <div class="desk">
+        <div class="strip">
+          <span class="av sm don ring">D</span>
+          <span class="mini-wave" aria-hidden="true">
+            <i style="height:5px"></i><i style="height:11px"></i><i style="height:15px"></i>
+            <i style="height:7px"></i><i style="height:13px"></i><i style="height:9px"></i>
+            <i style="height:16px"></i><i style="height:6px"></i>
+          </span>
+          <span class="divider"></span>
+          <span class="count"><span class="dot d-queue"></span>2</span>
+          <span class="count" style="color:var(--st-door)"><span class="dot d-door"></span>1</span>
+        </div>
+      </div>
+      <p class="strip-state"><b>Speaking.</b> The wave IS the lip-sync signal — same data driving
+      the avatar frames. Amber ring = the floor.</p>
+    </div>
+
+    <div>
+      <div class="desk">
+        <div class="strip">
+          <span class="av sm raph">R</span>
+          <span class="say" style="color:var(--st-door)">needs a decision</span>
+          <span class="divider"></span>
+          <span class="btn primary" style="padding:5px 10px;font-size:11px">Answer</span>
+        </div>
+      </div>
+      <p class="strip-state"><b>Door state.</b> The only time the strip grows and shows words.
+      It shrinks back the instant you answer. Nothing else can expand it.</p>
+    </div>
+
+    <div>
+      <div class="desk">
+        <div class="strip" style="opacity:.55">
+          <span class="av sm casey">C</span><span class="av sm leo" style="margin-left:-13px">L</span>
+          <span class="count" style="margin-left:4px"><span class="dot d-work"></span>working</span>
+        </div>
+      </div>
+      <p class="strip-state"><b>Quiet room.</b> Fades to 55% after 10s of silence and shrinks to a
+      stack of faces. This is what it looks like 80% of the day.</p>
+    </div>
+
+    <div>
+      <div class="desk">
+        <div class="strip" style="border-color:var(--light);box-shadow:0 0 0 3px var(--light-glow)">
+          <span class="av sm" style="background:var(--light)">You</span>
+          <span class="mini-wave" aria-hidden="true">
+            <i style="height:12px"></i><i style="height:16px"></i><i style="height:8px"></i>
+            <i style="height:14px"></i><i style="height:16px"></i><i style="height:6px"></i>
+          </span>
+          <span class="say" style="color:var(--light)">→ Donnie · release to send</span>
+        </div>
+      </div>
+      <p class="strip-state"><b>You holding ⌘'.</b> The strip is also the mic indicator — it's the
+      only visual confirmation that you're being recorded, and it never takes focus to show it.</p>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:24px"><b>Why a strip and not a menu-bar item or a HUD of
+  cards:</b> menu-bar items are a click away from anything and invisible while you're in a
+  full-screen editor. Cards invite reading, which is exactly the wrong instinct for a surface
+  that must not steal attention. A strip that mostly shows a waveform trains you to
+  <em>glance and dismiss</em> — the eye confirms what the ear already told you and goes back to
+  the code. The strip has no scroll, no list, and no way to open anything except the door.</p>
+</section>
+
+<!-- =====================================================================
+     5. CUE SHEET
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>Surface 3 — the Cue Sheet</h2></div>
+  <p class="lede">Voice commands to the room become a visible little plan. Not a chat reply,
+  not a toast: <b>a numbered cue sheet that runs in front of you and can be stopped mid-way</b>.
+  It appears above the Chime Strip, runs, and dissolves. The point is that a spoken command to a
+  machine deserves the same accountability as a script — you see what it heard, what it decided
+  that means, and where it is.</p>
+
+  <div class="cols2" style="align-items:start">
+    <div class="panel cue">
+      <div class="cue-head">
+        <span class="dot d-floor"></span>
+        <span class="heard">“Room — <u>pause everything</u>, then <u>replay Donnie's last message</u>
+        at half speed.”</span>
+      </div>
+      <div class="cue-body">
+        <div class="step done"><span class="idx">✓</span><div>
+          <div class="lbl">PAUSE ROOM</div>
+          <div class="sub">Floor cleared. Queue held — nothing is dropped.</div></div></div>
+        <div class="step now"><span class="idx">2</span><div>
+          <div class="lbl">REPLAY · Donnie · last · 0.5×</div>
+          <div class="sub">Playing 14:22 from the script · 0:06 / 0:31</div></div></div>
+        <div class="step pending"><span class="idx">3</span><div>
+          <div class="lbl">RESUME ROOM</div>
+          <div class="sub">Implied. Say “stay paused” to drop this step.</div></div></div>
+      </div>
+      <div class="cue-foot">
+        <span class="btn">Stop here</span>
+        <span class="btn ghost">Undo step 1</span>
+        <span class="btn ghost" style="margin-left:auto">Edit as text</span>
+      </div>
+    </div>
+
+    <div>
+      <ul class="reasons">
+        <li><b>It shows the interpretation, not just the transcript.</b> "Pause everything"
+        became PAUSE ROOM with an explicit promise — <em>queue held, nothing dropped</em>. That
+        sentence is the whole trust model.</li>
+        <li><b>Step 3 is inferred and labelled as inferred.</b> The system is allowed to be
+        helpful as long as it admits which part it made up, and gives you one word to cancel it.</li>
+        <li><b>Every step is undoable individually.</b> A plan that can only be abandoned wholesale
+        isn't a plan, it's a gamble.</li>
+        <li><b>It is spoken back only if you're not looking.</b> The cue sheet has a "read it to me"
+        fallback that fires automatically when the Mac has been idle 30s+ — i.e. you're across
+        the room. Otherwise it stays silent, because you can read faster than it can talk.</li>
+        <li><b>Same object on the phone.</b> The cue sheet is the one component that renders
+        identically on both surfaces, because it's the only place where the developer's intent
+        and the room's interpretation have to be compared.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     6. PHONE
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>Surface 4 — the phone (<span style="color:var(--ink-2)">a walkie-talkie</span>)</h2></div>
+  <p class="lede">The phone is <b>not a smaller Mac app</b>. On the couch you are not
+  supervising a room, you're keeping half an ear on it. So the phone's job is: hear it, say
+  something back, and occasionally start someone new. Everything sits in the bottom third —
+  the top two-thirds is <b>read-only by design</b>, so a thumb can never fire an action by
+  accident.</p>
+
+  <div class="phones">
+
+    <!-- PHONE 1 — WALKIE -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>Room · live</span></div>
+        <div class="p-body">
+          <div class="p-head">
+            <span class="av sm don ring">D</span>
+            <div style="flex:1;min-width:0">
+              <h4>Donnie has the floor</h4>
+              <div class="cap" style="margin:2px 0 0">2 waiting · 1 at the door</div>
+            </div>
+          </div>
+          <div class="p-scroll">
+            <div class="bubble them">
+              <div class="attr"><span class="av sm april">A</span><b style="color:var(--c-april)">April</b><span>14:03</span></div>
+              Docs pass is finished. Twenty-two files, mostly stale flag names.
+            </div>
+            <div class="bubble you">
+              <div class="attr"><b>You</b><span>14:11</span></div>
+              Leo, don't touch the snapshot tests.
+            </div>
+            <div class="bubble them" style="border-color:var(--st-floor)">
+              <div class="attr"><span class="av sm don">D</span><b style="color:var(--c-don)">Donnie</b><span>now</span></div>
+              Token refresh is done — I moved the retry off the request path…
+              <div class="playbar"><span class="btn ghost" style="padding:4px 8px">❚❚</span>
+                <span class="pb"><b></b></span><span class="tm">0:14</span></div>
+            </div>
+          </div>
+          <div class="p-foot">
+            <div style="display:flex;gap:7px;margin-bottom:10px;overflow:hidden">
+              <span class="btn" style="flex:0 0 auto"><span class="dot d-door"></span> Door (1)</span>
+              <span class="btn" style="flex:0 0 auto">Queue (2)</span>
+              <span class="btn ghost" style="flex:0 0 auto">Cast…</span>
+            </div>
+            <div class="ptt">
+              Hold to talk to Donnie
+              <small>slide up to pick someone else</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="cap"><b>Home.</b> One slab, thumb-sized, always the same place. Sliding up from it
+      fans out the cast so you can aim your voice without looking — the same gesture as a walkie
+      channel dial.</p>
+    </div>
+
+    <!-- PHONE 2 — HOLDING -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span style="color:var(--light)">mic open</span></div>
+        <div class="p-body">
+          <div class="p-head">
+            <span class="av sm raph">R</span>
+            <div style="flex:1"><h4>Answering Raph</h4>
+              <div class="cap" style="margin:2px 0 0">room ducked to 20%</div></div>
+          </div>
+          <div class="p-scroll">
+            <div class="bubble them" style="border-color:var(--st-door)">
+              <div class="attr"><span class="av sm raph">R</span><b style="color:var(--c-raph)">Raph</b><span>at the door · 4m</span></div>
+              The staging dump has 40k orphan rows. Delete them, or migrate them into the new
+              table with null owners?
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <span class="btn">Delete them</span><span class="btn">Migrate w/ nulls</span>
+            </div>
+            <div style="flex:1"></div>
+            <div class="bubble you" style="align-self:stretch;max-width:100%;background:transparent;
+                 border:1px dashed var(--light);color:var(--light)">
+              <div class="attr"><b>You · hearing</b></div>
+              “Migrate them, but tag every one of them so we can find them later…”
+            </div>
+          </div>
+          <div class="p-foot">
+            <div class="ptt holding">
+              <span style="display:flex;gap:2.5px;align-items:center;height:20px">
+                <i style="width:3px;height:9px;background:currentColor;border-radius:2px"></i>
+                <i style="width:3px;height:17px;background:currentColor;border-radius:2px"></i>
+                <i style="width:3px;height:12px;background:currentColor;border-radius:2px"></i>
+                <i style="width:3px;height:20px;background:currentColor;border-radius:2px"></i>
+                <i style="width:3px;height:7px;background:currentColor;border-radius:2px"></i>
+                <i style="width:3px;height:14px;background:currentColor;border-radius:2px"></i>
+              </span>
+              <small>release to send · slide away to cancel</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="cap"><b>Holding.</b> Live transcript above the thumb so you can see it heard you
+      right. Slide-off-to-cancel, like a voice memo — mis-sends to an agent cost real money and
+      real work.</p>
+    </div>
+
+    <!-- PHONE 3 — EARS ONLY -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>screen off in 3s</span></div>
+        <div class="p-body">
+          <div class="earbud">
+            <div class="halo"><div class="av xl don ring">D</div></div>
+            <div>
+              <h3>Ears only</h3>
+              <p>The room is playing to your earbuds. Put the phone in your pocket.</p>
+            </div>
+            <div class="gestures">
+              <div class="gest"><b>1 tap</b> pause / resume the room</div>
+              <div class="gest"><b>2 taps</b> skip whoever's talking</div>
+              <div class="gest"><b>3 taps</b> replay that last one</div>
+              <div class="gest"><b>hold</b> talk back to them</div>
+              <div class="gest"><b>hold + say</b> “who's at the door?”</div>
+            </div>
+          </div>
+          <div class="p-foot">
+            <div class="rowcard" style="background:transparent;border-style:dashed">
+              <span class="dot d-door"></span>
+              <div class="body"><div class="nm" style="font-size:13px">Raph is at the door</div>
+                <div class="sub">the room will ask you about it after Donnie</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="cap"><b>Ears only.</b> The real phone default. The screen is a fallback; the
+      product is the earbud gestures plus a spoken room. Everything on the Mac has an eyes-free
+      equivalent here.</p>
+    </div>
+
+    <!-- PHONE 4 — CASTING -->
+    <div>
+      <div class="phone">
+        <div class="notch"><span>9:41</span><span>Cast someone</span></div>
+        <div class="p-body">
+          <div class="p-head"><h4>Who's free?</h4></div>
+          <div class="p-scroll">
+            <div class="rowcard"><span class="av splinter">S</span>
+              <div class="body"><div class="nm">Splinter</div>
+                <div class="sub">asleep · careful, thorough, slow</div></div>
+              <span class="btn ghost">Cast</span></div>
+            <div class="rowcard" style="border-color:var(--light)"><span class="av mikey">M</span>
+              <div class="body"><div class="nm">Mikey</div>
+                <div class="sub">in the queue · fast, chatty, cheap model</div></div>
+              <span class="btn primary">Cast</span></div>
+            <div class="rowcard"><span class="av casey">C</span>
+              <div class="body"><div class="nm">Casey</div>
+                <div class="sub">heads-down · blunt, good at bisecting</div></div>
+              <span class="btn ghost">Cast</span></div>
+
+            <div style="margin-top:6px">
+              <div class="micro" style="margin-bottom:7px">Mikey's opening line</div>
+              <div class="panel" style="padding:11px;font:var(--t-script);color:var(--ink-2)">
+                Take a look at why the dock window flashes white for one frame when it wakes.
+                Don't fix it yet — just tell me what's happening.
+              </div>
+            </div>
+          </div>
+          <div class="p-foot">
+            <div class="ptt">Hold to dictate the line <small>or type it · tap to send Mikey in</small></div>
+          </div>
+        </div>
+      </div>
+      <p class="cap"><b>Casting.</b> Starting an agent from the couch is casting a character and
+      giving them a line — pick a face, speak one sentence, done. No model pickers, no working
+      directories; those are attributes of the character, set once on the Mac.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     7. FRAME SHEET
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><h2>How characters express state</h2></div>
+  <p class="lede">Avatars are frame-swapped images, so <b>posture carries state and badges are the
+  backup</b>. Six postures per character; the mouth frames layer on top only for the one who has
+  the floor. This is the single biggest reason the UI can stay this quiet — a character standing
+  differently is legible at 40px in peripheral vision, and a text badge is not.</p>
+
+  <div class="frames">
+    <div class="frame"><div class="box"><div class="av lg don ring">D</div></div>
+      <div class="nm">On the floor</div><div class="sub">lit, mouth frames cycling at 12fps</div></div>
+    <div class="frame"><div class="box"><div class="av lg leo" style="opacity:.9">L</div>
+      <span class="badge tag" style="padding:2px 7px"><span class="dot d-queue"></span>1</span></div>
+      <div class="nm">At the mic</div><div class="sub">turned toward the floor, holding position</div></div>
+    <div class="frame"><div class="box"><div class="av lg april" style="opacity:.75">A</div></div>
+      <div class="nm">Green room</div><div class="sub">seated, glancing over. Dims each escalation.</div></div>
+    <div class="frame"><div class="box"><div class="av lg raph" style="box-shadow:0 0 0 2px var(--stage-1),0 0 0 3px var(--st-door)">R</div></div>
+      <div class="nm">At the door</div><div class="sub">arms crossed, facing you. Only one that stares.</div></div>
+    <div class="frame"><div class="box"><div class="av lg casey" style="opacity:.55">C</div></div>
+      <div class="nm">Heads-down</div><div class="sub">back turned, working. Deliberately boring.</div></div>
+    <div class="frame"><div class="box"><div class="av lg splinter muted">S</div><span class="zzz">z z</span></div>
+      <div class="nm">Asleep</div><div class="sub">greyscale, eyes closed, no motion budget</div></div>
+  </div>
+
+  <p class="note" style="margin-top:22px"><b>Motion budget:</b> the room animates in exactly two
+  places — the mouth of whoever has the floor, and the waveform. Everything else is static.
+  A room where five things twitch is a room you learn to stop looking at, which would kill the
+  glance-and-dismiss contract the Chime Strip depends on.</p>
+</section>
+
+<!-- =====================================================================
+     8. RATIONALE
+     ===================================================================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><h2>Rationale — and what I deliberately didn't build</h2></div>
+
+  <div class="cols2">
+    <div>
+      <h3 class="micro" style="margin-bottom:14px">Why this shape</h3>
+      <ul class="reasons">
+        <li><b>The channel is one-lane, so the UI is a queue.</b> Any parallel card grid quietly
+        lies about what's happening: five "done" badges glowing at once when only one voice can
+        reach you. Making turn-taking the primary object makes the interface honest and gives
+        the developer the one control they actually want — <em>who talks next</em>.</li>
+        <li><b>Priority order is a physical order.</b> Door above queue above green room isn't a
+        sort setting; it's how the room is arranged, top to bottom, always. You learn the
+        geometry once and then read it without reading.</li>
+        <li><b>The script makes the audio addressable.</b> Speech is the worst medium for
+        re-finding things. A transcript that doubles as replay control and search turns a
+        lossy channel into a durable one — and it costs nothing, because the text already
+        exists upstream of the voice.</li>
+        <li><b>Sound tokens make silence designed rather than accidental.</b> The politeness
+        ladder, the "no earcon over speech" rule, and duck-vs-pause exist because the failure
+        mode of an audio-first tool isn't ugliness, it's <em>annoyance</em> — and annoyance gets
+        the whole product muted, permanently, in week two.</li>
+        <li><b>Playfulness lives in behavior, not decoration.</b> The characters are charming
+        because Raph blocks the door and Mikey gets ducked — not because of gradients or confetti.
+        A tool you stare at all day earns its personality through timing and voice, and pays for
+        it with a restrained surface.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="micro" style="margin-bottom:14px">Deliberately absent</h3>
+      <div style="display:grid;gap:12px">
+        <div class="kill"><h4>No agent card grid</h4>
+          <p>The default answer, and the one that fights the audio channel hardest. Lanes replace
+          it and carry strictly more meaning per pixel.</p></div>
+        <div class="kill"><h4>No notification-center toasts</h4>
+          <p>Sound is the notification. A toast for something you just heard is a second
+          interruption for one event, and it steals a glance the strip already gave you.</p></div>
+        <div class="kill"><h4>No metrics, tokens, or cost charts</h4>
+          <p>Nothing here counts anything. This surface is for hearing the room; a number that
+          only ever goes up will otherwise colonize the whole layout.</p></div>
+        <div class="kill"><h4>No unread badges</h4>
+          <p>The green room replaces them. "Unread" implies a debt you owe the tool; the green
+          room implies someone patient who'll still be there later.</p></div>
+        <div class="kill"><h4>No chat composer on the Mac</h4>
+          <p>Typing to an agent is what the agent's own terminal is for. The room is for talking,
+          and holding one key is faster than any text box.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:26px"><b>The one thing to build first, to know if this is
+  right:</b> the floor + the queue + the Chime Strip, with the politeness ladder wired up and
+  nothing else. If a week of that feels like a room you're directing rather than a feed you're
+  behind on, everything else on this board follows. If it doesn't, no amount of script,
+  casting, or cue sheet will save it.</p>
+</section>
+
+<footer>
+  Room of Devs — “The Soundstage.” Concept board, open pass. Placeholder avatars stand in for
+  character art; all copy is sample content from a plausible working afternoon.
+</footer>
+
+</div>
+</body>
+</html>
