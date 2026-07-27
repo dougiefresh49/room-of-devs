@@ -79,16 +79,41 @@ raise SystemExit(1)
 PY
 )" || exit 3
 
-if ! tmux has-session -t "$TMUX_TARGET" 2>/dev/null; then
+# "=name" everywhere: exact match only. Without it tmux falls back to prefix
+# and fnmatch resolution, so "cr-Don" (or a glob) could land keystrokes in a
+# session we never meant to type into.
+if ! tmux has-session -t "=$TMUX_TARGET" 2>/dev/null; then
     exit 3
 fi
 
 MESSAGE="$(printf '%s' "$MSG" | tr -s '[:space:]' ' ')"
 
+# Refuse to type into a pane that is no longer running an agent. If claude
+# exited, the pane falls back to the login shell — and every "reply" would be
+# executed as a shell command. Empirically (2026-07-27) a live claude pane
+# reports its version string as pane_current_command (e.g. "2.1.218"), not
+# "claude", so this is a shell denylist rather than an agent allowlist.
+pane_ready() {
+    local info dead cmd
+    info="$(tmux list-panes -t "=$TMUX_TARGET" -F '#{pane_dead} #{pane_current_command}' 2>/dev/null | head -1 || true)"
+    [ -n "$info" ] || return 1
+    dead="${info%% *}"
+    cmd="${info#* }"
+    [ "$dead" = "0" ] || return 1
+    case "$cmd" in
+        sh|bash|zsh|dash|ksh|csh|tcsh|fish|login|"") return 1 ;;
+    esac
+    return 0
+}
+
 send_now() {
-    tmux send-keys -t "$TMUX_TARGET" -l -- "$MESSAGE"
+    if ! pane_ready; then
+        echo "pane for $TMUX_TARGET is not running an agent — refusing to send" >&2
+        exit 4
+    fi
+    tmux send-keys -t "=$TMUX_TARGET" -l -- "$MESSAGE"
     sleep 0.3
-    tmux send-keys -t "$TMUX_TARGET" Enter
+    tmux send-keys -t "=$TMUX_TARGET" Enter
 }
 
 if [ "$NOW" -eq 1 ]; then

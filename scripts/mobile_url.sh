@@ -25,11 +25,12 @@ if [ -z "$token" ]; then
   exit 1
 fi
 
-ip=$(ipconfig getifaddr en0 2>/dev/null || true)
+# The daemon binds loopback + the Tailscale (CGNAT 100.64.0.0/10) address
+# only — never the LAN — so the reachable phone URL is the tailnet one.
+ip=$(ifconfig 2>/dev/null \
+  | awk '/inet /{split($2,o,"."); if (o[1]=="100" && o[2]>=64 && o[2]<=127) {print $2; exit}}')
 if [ -z "$ip" ]; then
-  ip=$(ipconfig getifaddr en1 2>/dev/null || true)
-fi
-if [ -z "$ip" ]; then
+  echo "No Tailscale IPv4 found — the room is bound to 127.0.0.1 only; bring Tailscale up for phone access" >&2
   ip="127.0.0.1"
 fi
 

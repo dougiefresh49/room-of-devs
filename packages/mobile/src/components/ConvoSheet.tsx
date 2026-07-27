@@ -193,7 +193,11 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
       }
       // Draft is preserved (Composer only clears on `true`) so the user can retry.
       audioController.announce(
-        r.code === "not_in_team" ? "Not in team — respawn from +" : "Couldn't send",
+        r.code === "not_in_team"
+          ? "Not in team — respawn from +"
+          : r.code === "pane_not_ready"
+            ? "Agent isn't running — respawn from +"
+            : "Couldn't send",
       );
       return false;
     } catch {

@@ -685,7 +685,9 @@ export function startPanelWs(): void {
   if (!writeToken()) return;
 
   httpServer = createServer();
-  wss = new WebSocketServer({ noServer: true });
+  // 1 MB ceiling: the largest legitimate frame is a reply (4k chars) by orders
+  // of magnitude — an unbounded frame is just a memory-exhaustion lever.
+  wss = new WebSocketServer({ noServer: true, maxPayload: 1 << 20 });
 
   httpServer.on("upgrade", (req, socket, head) => {
     safe(() => {
