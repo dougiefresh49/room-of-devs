@@ -15,6 +15,22 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
+- **Round A SHIPPED & deployed (2026-07-27)**: issues #58–#61 merged to
+  main and deployed (setup.sh + tts-server restart + panel rebuild). Live
+  post-deploy checks passed: LAN `curl` to 4785 refused / loopback +
+  Tailscale 200, token rotates on restart & is never logged, `/picker`
+  0.98s→0.024s, characters.json resolves with the repo copy gone,
+  failedCount badge data live (mobile header shows a red "1 FAILED" badge),
+  mobile `/action` allowlist rejects non-mobile types, lockfile tamper
+  fails the frozen install. **Verification caught one regression, now
+  fixed** (`0f94333`): the audit's "use `=TARGET` at all three tmux sites"
+  is correct for session targets but breaks pane targets — `send-keys
+  -t "=cr-Don"` errors "can't find pane", which had broken phone-reply
+  injection. Fixed by resolving the session's unique pane id (`%NN`) for
+  send-keys while keeping the `=`-exact session lookup. **One owner
+  check remains** (needs a second device): from another LAN device
+  `curl http://<lan-ip>:4785/snapshot` must fail to connect, and via the
+  Tailscale IP it must succeed. Rounds B/C below unchanged.
 - **Ptheory audit triaged → GitHub Issues (2026-07-27)**: a friend's
   framework ran a full-stack audit — 106 findings, saved verbatim at
   [archive/reviews/ptheory-audit-2026-07-26.md](archive/reviews/ptheory-audit-2026-07-26.md)
@@ -105,6 +121,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-07-27 | **Round A — audit criticals & quick wins** (#58–#61): perimeter closed (loopback+Tailscale bind, token rotation/no-log, skip-permissions opt-in, spawn-dir allowlist, minimal spawn env, tmux exact-match + pane guard), deploy safety (characters.json survives deploys, recorded repo-root, frozen-lockfile installs, scripts dir-sync), reliability (API timeouts+retry, failedCount badge, 64KB picker read → 0.98s→0.024s, atomic queue writes, periodic retention), hook-layer security (ingest session-id validation, .env allowlist, secrets/text out of argv, log hygiene, retention guard) |
 | 2026-07-23 | Refactor Phases 6-7: legacy deletion (mobile.html, SwiftBar), audio/hid splits |
 | 2026-07-22 | Mock live harness (free live-mode regression testing)                 |
 | 2026-07-21 | Live mode v2 — call + chat views, /thread history, activity feed      |
