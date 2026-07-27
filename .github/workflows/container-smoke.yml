@@ -1,0 +1,95 @@
+name: container-smoke
+
+on:
+  push:
+    paths:
+      - "tts-server/**"
+      - "scripts/**"
+      - "packages/protocol/**"
+      - "packages/mobile/dist/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/container-smoke.yml"
+  pull_request:
+    paths:
+      - "tts-server/**"
+      - "scripts/**"
+      - "packages/protocol/**"
+      - "packages/mobile/dist/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/container-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t room-of-devs:smoke .
+
+      - name: Daemon + fake-agent smoke
+        run: |
+          set -euo pipefail
+          # Mobile binds 127.0.0.1 only (#58) — exercise snapshot from inside the container.
+          docker run -d --name room-smoke \
+            -e TTS_DIR=/tmp/tts-test \
+            -e SDL_AUDIODRIVER=dummy \
+            -e ELEVENLABS_API_KEY= \
+            -e GEMINI_API_KEY= \
+            room-of-devs:smoke
+
+          cleanup() { docker rm -f room-smoke >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+
+          echo "Waiting for daemon + mobile token..."
+          for i in $(seq 1 90); do
+            if docker exec room-smoke sh -c 'test -f /tmp/tts-test/mobile_token'; then
+              token=$(docker exec room-smoke sh -c 'tr -d "[:space:]" < /tmp/tts-test/mobile_token')
+              if [ -n "$token" ] && docker exec room-smoke \
+                  curl -fsS "http://127.0.0.1:4785/snapshot?t=${token}" >/tmp/room-snap.json 2>/dev/null; then
+                echo "daemon up"
+                break
+              fi
+            fi
+            sleep 1
+            if [ "$i" = 90 ]; then
+              docker logs room-smoke | tail -120
+              echo "daemon failed to become ready" >&2
+              exit 1
+            fi
+          done
+
+          token=$(docker exec room-smoke sh -c 'tr -d "[:space:]" < /tmp/tts-test/mobile_token')
+          test -n "$token"
+
+          docker exec -e TTS_DIR=/tmp/tts-test -w /app/tts-server room-smoke \
+            pnpm exec tsx scripts/fake-agent.ts smoke
+
+          echo "Waiting for queue → played transit..."
+          for i in $(seq 1 45); do
+            q=$(docker exec room-smoke sh -c 'ls /tmp/tts-test/queue 2>/dev/null | wc -l | tr -d " "')
+            p=$(docker exec room-smoke sh -c 'ls /tmp/tts-test/played 2>/dev/null | wc -l | tr -d " "')
+            echo "t=$i queue=$q played=$p"
+            if [ "${p:-0}" -ge 1 ] && [ "${q:-0}" -eq 0 ]; then
+              break
+            fi
+            sleep 1
+            if [ "$i" = 45 ]; then
+              docker logs room-smoke | tail -120
+              echo "item did not transit queue/ → played/" >&2
+              exit 1
+            fi
+          done
+
+          snap=$(docker exec room-smoke curl -fsS "http://127.0.0.1:4785/snapshot?t=${token}")
+          echo "$snap" | head -c 500
+          echo
+          echo "$snap" | grep -q '"agents"' || {
+            echo "snapshot missing agents field" >&2
+            exit 1
+          }
+          echo "container-smoke OK"
