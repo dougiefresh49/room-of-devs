@@ -9,6 +9,7 @@
 // upload so the URL stays stable.
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +22,49 @@ const dryRun = process.argv.includes("--dry-run");
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+// ```mermaid fences → inline SVG, rendered at build time (Postplan rejects
+// ALL JavaScript, so client-side mermaid is not an option). Rendered SVGs are
+// cached by content hash — only new/changed diagrams shell out to mermaid-cli.
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const mermaidCacheDir = join(docsDir, ".build", "mermaid");
+function renderMermaid(src) {
+  mkdirSync(mermaidCacheDir, { recursive: true });
+  const hash = createHash("sha1").update(src).digest("hex").slice(0, 12);
+  const svgFile = join(mermaidCacheDir, `${hash}.svg`);
+  if (!existsSync(svgFile)) {
+    const mmdFile = join(mermaidCacheDir, `${hash}.mmd`);
+    const pptrFile = join(mermaidCacheDir, "pptr.json");
+    writeFileSync(mmdFile, src);
+    writeFileSync(
+      pptrFile,
+      JSON.stringify({ executablePath: CHROME, headless: true, args: ["--no-sandbox"] }),
+    );
+    execFileSync(
+      "pnpm",
+      ["dlx", "@mermaid-js/mermaid-cli@11", "-p", pptrFile, "-i", mmdFile, "-o", svgFile,
+       "-b", "transparent", "-t", "neutral", "-I", `m${hash}`],
+      { stdio: ["ignore", "ignore", "inherit"] },
+    );
+  }
+  return `<figure class="mermaid">${readFileSync(svgFile, "utf8")}</figure>\n`;
+}
+
+marked.use({
+  renderer: {
+    code({ text, lang }) {
+      if ((lang ?? "").trim() === "mermaid") {
+        try {
+          return renderMermaid(text);
+        } catch (err) {
+          console.warn(`mermaid render failed (${err.message}) — emitting source block`);
+          return `<pre><code>${esc(text)}</code></pre>\n`;
+        }
+      }
+      return false;
+    },
+  },
+});
+
 function section(title, mdPath) {
   const md = readFileSync(mdPath, "utf8");
   const slug = basename(mdPath, ".md");
@@ -30,16 +74,36 @@ function section(title, mdPath) {
 </details>`;
 }
 
-const activeDocs = existsSync(join(docsDir, "active"))
-  ? readdirSync(join(docsDir, "active"))
-      .filter((f) => f.endsWith(".md"))
-      .sort()
-  : [];
+// docs/active/*.md plus one level of subfolders (e.g. architecture-concepts/).
+function listActive() {
+  const activeDir = join(docsDir, "active");
+  if (!existsSync(activeDir)) return [];
+  const out = [];
+  for (const entry of readdirSync(activeDir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      out.push({ title: entry.name.replace(/\.md$/, ""), path: join(activeDir, entry.name) });
+    } else if (entry.isDirectory()) {
+      for (const f of readdirSync(join(activeDir, entry.name))
+        .filter((f) => f.endsWith(".md"))
+        .sort()) {
+        out.push({
+          title: `${entry.name}/${f.replace(/\.md$/, "")}`,
+          path: join(activeDir, entry.name, f),
+        });
+      }
+    }
+  }
+  return out;
+}
+
+const activeDocs = listActive();
 
 const updated = new Date().toISOString().slice(0, 16).replace("T", " ");
 const body = [
   section("STATUS", join(docsDir, "STATUS.md")),
-  ...activeDocs.map((f) => section(f.replace(/\.md$/, ""), join(docsDir, "active", f))),
+  ...activeDocs.map((d) => section(d.title, d.path)),
 ].join("\n");
 
 const html = `<!doctype html>
@@ -68,6 +132,9 @@ const html = `<!doctype html>
            padding: .3rem .55rem; text-align: left; }
   a { color: #4a8df0; }
   .meta { opacity: .6; font-size: .8rem; margin: .2rem 0 1rem; }
+  figure.mermaid { background: #fff; border-radius: 10px; padding: .6rem;
+                   margin: 1rem 0; overflow-x: auto; }
+  figure.mermaid svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 </style>
 </head>
 <body>
