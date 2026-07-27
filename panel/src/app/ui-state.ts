@@ -8,6 +8,8 @@
  * sibling of RoomClient), read via useSyncExternalStore.
  */
 
+import { announce } from "./view-state.js";
+
 // Confirm window for the end-session button. 2s proved too short in
 // practice: a second click after disarm silently re-arms, which reads as
 // "does nothing". (Moved verbatim from main.ts.)
@@ -47,16 +49,19 @@ export function armKill(sessionId: string): void {
   if (existing) clearTimeout(existing);
   killTimers.set(
     sessionId,
-    setTimeout(() => disarmKill(sessionId), KILL_ARM_MS),
+    // The window used to expire silently (audit U-6) — the button reverted
+    // with nothing said. expired=true announces the revert.
+    setTimeout(() => disarmKill(sessionId, true), KILL_ARM_MS),
   );
   if (!state.killArmed.has(sessionId)) {
     const next = new Set(state.killArmed);
     next.add(sessionId);
     setState({ ...state, killArmed: next });
+    announce("End session armed — activate again within 8 seconds to confirm");
   }
 }
 
-export function disarmKill(sessionId: string): void {
+export function disarmKill(sessionId: string, expired = false): void {
   const timer = killTimers.get(sessionId);
   if (timer) clearTimeout(timer);
   killTimers.delete(sessionId);
@@ -64,6 +69,7 @@ export function disarmKill(sessionId: string): void {
     const next = new Set(state.killArmed);
     next.delete(sessionId);
     setState({ ...state, killArmed: next });
+    if (expired) announce("End session confirmation expired");
   }
 }
 

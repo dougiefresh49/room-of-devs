@@ -33,6 +33,8 @@ export interface ViewState {
   dockSummaryDismissedKey: string | null;
   dockHoverSessionId: string | null;
   toast: ToastState | null;
+  /** Polite live-region text (see announce()). Empty when nothing to say. */
+  announcement: string;
 }
 
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
@@ -40,6 +42,7 @@ const SUMMARY_PANE_KEY = "roomSummaryPane";
 export const DOCK_HOVER_LEAVE_MS = 250;
 const LAUNCH_TOAST_MS = 2000;
 const ERROR_TOAST_MS = 2600;
+const ANNOUNCE_CLEAR_MS = 4000;
 
 let state: ViewState = {
   view: "room",
@@ -53,6 +56,7 @@ let state: ViewState = {
   dockSummaryDismissedKey: null,
   dockHoverSessionId: null,
   toast: null,
+  announcement: "",
 };
 
 const listeners = new Set<() => void>();
@@ -62,6 +66,9 @@ let onSettingsClosed: (() => void) | null = null;
 
 let pickerReturnTimer: ReturnType<typeof setTimeout> | null = null;
 let toastClearTimer: ReturnType<typeof setTimeout> | null = null;
+let announceClearTimer: ReturnType<typeof setTimeout> | null = null;
+let lastErrorToast = 0;
+let announceToggle = false;
 let dockHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 function setState(patch: Partial<ViewState>) {
@@ -81,8 +88,16 @@ export function initViewState(c: RoomClient, settingsClosedHook: () => void): vo
   onSettingsClosed = settingsClosedHook;
 }
 
+/**
+ * Query sends (known_dirs / get_settings / …). These are answered by domain
+ * reply frames the server-data store consumes, so they stay one-way — but a
+ * send that never left the panel must not leave a view spinning silently
+ * (audit U-1): say so.
+ */
 function send(cmd: Command) {
-  client?.send(cmd);
+  if (client?.send(cmd) === false) {
+    showErrorToast("Room is offline — can't load that yet");
+  }
 }
 
 function clearToastTimers() {
@@ -110,11 +125,40 @@ export function showLaunchToast(text: string): void {
 
 export function showErrorToast(text: string): void {
   clearToastTimers();
+  lastErrorToast = Date.now();
   setState({ toast: { kind: "error", text } });
   toastClearTimer = setTimeout(() => {
     toastClearTimer = null;
     setState({ toast: null });
   }, ERROR_TOAST_MS);
+}
+
+/**
+ * When the last error toast was shown — how commands.ts knows the daemon's
+ * own `error`/`notice` frame already explained a failure and a second,
+ * vaguer message would be noise.
+ */
+export const lastErrorToastAt = (): number => lastErrorToast;
+
+// ── Screen-reader announcements ───────────────────────────────────────
+
+/**
+ * Polite live-region text for state changes that are otherwise only visual
+ * (audit U-6: the end-session arm window arms and expires with nothing
+ * announced). Kept separate from toasts: toasts are transient UI with their
+ * own timers and one of them steals the picker's return timer.
+ */
+export function announce(text: string): void {
+  if (announceClearTimer) clearTimeout(announceClearTimer);
+  // A live region only speaks when its text CHANGES, and React batches the
+  // clear-then-set trick into one paint — so repeats (arm, expire, arm
+  // again) carry an alternating invisible suffix instead.
+  announceToggle = !announceToggle;
+  setState({ announcement: announceToggle ? text : `${text} ` });
+  announceClearTimer = setTimeout(() => {
+    announceClearTimer = null;
+    setState({ announcement: "" });
+  }, ANNOUNCE_CLEAR_MS);
 }
 
 // ── Views ─────────────────────────────────────────────────────────────

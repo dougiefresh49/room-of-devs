@@ -66,6 +66,7 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
           <span
             className={`conn-dot ${connected ? "up" : "down"}`}
             title={connected ? "Connected" : "Disconnected"}
+            aria-hidden="true"
           />
           <button
             type="button"
@@ -102,6 +103,14 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
           </button>
         </div>
       </header>
+      {/* Offline used to be an 8px dot with the explanation hidden in a
+          tooltip, while every card stayed clickable (audit U-1). The reason
+          is now stated in the room, and the actions themselves are disabled. */}
+      {connected ? null : (
+        <div className="room-offline-banner" role="status">
+          Room is offline — start the daemon to control agents
+        </div>
+      )}
       <div className="room-body">
         <main className={`cards${connected ? "" : " disconnected"}`} id="cards">
           {agents.length ? (

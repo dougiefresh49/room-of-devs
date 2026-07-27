@@ -15,6 +15,7 @@ import { dragRegionMouseDown } from "./drag.js";
 import { ActionCluster, type ClusterMode } from "./ActionCluster.js";
 import { AvatarImg } from "./AvatarImg.js";
 import { clusterMode, handleClusterAction } from "./cluster-actions.js";
+import { dispatchCommand } from "./commands.js";
 import { latestCrossRealmPending } from "./grant-guard.js";
 import { IconCc, IconExpand } from "./icons.js";
 import { PERSONAS, personaAvatarSrc } from "./personas.js";
@@ -148,6 +149,7 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
           nowPlaying={nowPlaying}
           view={view}
           ui={ui}
+          connected={connected}
           paused={snapshot?.paused === true}
         />
       ) : null}
@@ -219,7 +221,7 @@ function DockAgent({
   paused: boolean;
   ui: IslandUiState;
 }) {
-  const gesture = usePttGrant(agent.sessionId);
+  const ptt = usePttGrant(agent.sessionId, connected);
   const greyed = !connected || stale;
   const mode = clusterMode(agent.sessionId);
   const displayName = agent.label ?? agent.name;
@@ -234,9 +236,14 @@ function DockAgent({
       <button
         type="button"
         className="dock-avatar-btn"
-        title={`${displayName} - ${stateLabels[agent.state]}`}
-        aria-label={`${displayName}, ${stateLabels[agent.state]}`}
-        {...gesture}
+        title={
+          connected
+            ? `${displayName} - ${stateLabels[agent.state]}`
+            : `${displayName} - room is offline`
+        }
+        aria-label={`${displayName}, ${stateLabels[agent.state]}${connected ? "" : ", room offline"}`}
+        aria-disabled={!connected}
+        {...ptt.gesture}
       >
         <span className="dock-ring">
           <AvatarImg
@@ -261,6 +268,7 @@ function DockAgent({
         <ActionCluster
           mode={mode}
           isTeam={agent.isTeam}
+          connected={connected}
           paused={paused}
           killArmed={ui.killArmed.has(agent.sessionId)}
           swapOpen={ui.swapOpen === agent.sessionId}
@@ -268,7 +276,10 @@ function DockAgent({
           onAction={(action) => handleClusterAction(agent.sessionId, action)}
           onSwapOpenChange={(open) => setSwapOpen(open ? agent.sessionId : null)}
           onSwapCharacter={(character) => {
-            client.send({ type: "set_voice", sessionId: agent.sessionId, character });
+            dispatchCommand(
+              { type: "set_voice", sessionId: agent.sessionId, character },
+              "Couldn't swap character",
+            );
             setSwapOpen(null);
           }}
         />
@@ -282,12 +293,14 @@ function DockSpotlight({
   nowPlaying,
   view,
   ui,
+  connected,
   paused,
 }: {
   spot: Spotlight;
   nowPlaying: NowPlaying | null;
   view: ViewState;
   ui: IslandUiState;
+  connected: boolean;
   paused: boolean;
 }) {
   const { agent, onStage, bubble, loading } = spot;
@@ -314,6 +327,7 @@ function DockSpotlight({
             <ActionCluster
               mode={mode}
               isTeam={agent.isTeam}
+              connected={connected}
               paused={paused}
               killArmed={ui.killArmed.has(agent.sessionId)}
               swapOpen={ui.swapOpen === agent.sessionId}
@@ -321,7 +335,10 @@ function DockSpotlight({
               onAction={(action) => handleClusterAction(agent.sessionId, action)}
               onSwapOpenChange={(open) => setSwapOpen(open ? agent.sessionId : null)}
               onSwapCharacter={(character) => {
-                client.send({ type: "set_voice", sessionId: agent.sessionId, character });
+                dispatchCommand(
+                  { type: "set_voice", sessionId: agent.sessionId, character },
+                  "Couldn't swap character",
+                );
                 setSwapOpen(null);
               }}
             />

@@ -47,6 +47,8 @@ export interface PersonaOption {
 export interface ActionClusterProps {
   mode: ClusterMode;
   isTeam: boolean;
+  /** Transport link. Offline → every action is genuinely disabled (audit U-1). */
+  connected: boolean;
   paused: boolean;
   killArmed: boolean;
   swapOpen: boolean;
@@ -63,10 +65,13 @@ function hideBrokenAvatar(e: SyntheticEvent<HTMLImageElement>) {
   if (fallback) fallback.style.display = "flex";
 }
 
+const OFFLINE_REASON = "Room is offline";
+
 export function ActionCluster(props: ActionClusterProps) {
   const {
     mode,
     isTeam,
+    connected,
     paused,
     killArmed,
     swapOpen,
@@ -76,26 +81,36 @@ export function ActionCluster(props: ActionClusterProps) {
     onSwapCharacter,
   } = props;
 
+  // Offline actions used to stay clickable and simply vanish into a dead
+  // socket. Now they carry a real `disabled` (so pointer AND keyboard are
+  // blocked, and assistive tech says "dimmed") plus the reason in the title.
+  const off = !connected;
+  const label = (text: string) => (off ? `${text} — ${OFFLINE_REASON.toLowerCase()}` : text);
+  const offClass = off ? " disabled" : "";
+
   if (mode === "stage") {
     return (
       <>
         <ClusterBtn
-          className="icon-btn hover-btn dock-live-btn"
-          title={paused ? "Resume audio" : "Pause audio"}
+          className={`icon-btn hover-btn dock-live-btn${offClass}`}
+          title={label(paused ? "Resume audio" : "Pause audio")}
+          disabled={off}
           onClick={() => onAction("pause")}
         >
           {paused ? <IconPlay /> : <IconPause />}
         </ClusterBtn>
         <ClusterBtn
-          className="icon-btn hover-btn dock-live-btn"
-          title="Stop audio"
+          className={`icon-btn hover-btn dock-live-btn${offClass}`}
+          title={label("Stop audio")}
+          disabled={off}
           onClick={() => onAction("stop")}
         >
           <IconStop />
         </ClusterBtn>
         <ClusterBtn
-          className="icon-btn hover-btn dock-live-btn"
-          title="Restart audio"
+          className={`icon-btn hover-btn dock-live-btn${offClass}`}
+          title={label("Restart audio")}
+          disabled={off}
           onClick={() => onAction("restart")}
         >
           <IconReplay />
@@ -108,23 +123,26 @@ export function ActionCluster(props: ActionClusterProps) {
     return (
       <>
         <ClusterBtn
-          className="icon-btn hover-btn"
-          title="Replay"
+          className={`icon-btn hover-btn${offClass}`}
+          title={label("Replay")}
+          disabled={off}
           onClick={() => onAction("replay")}
         >
           <IconReplay />
         </ClusterBtn>
         <ClusterBtn
-          className="icon-btn hover-btn"
-          title="Replay slower"
+          className={`icon-btn hover-btn${offClass}`}
+          title={label("Replay slower")}
+          disabled={off}
           onClick={() => onAction("replay_slower")}
         >
           <IconReplaySlower />
         </ClusterBtn>
         {isTeam && (
           <ClusterBtn
-            className="icon-btn hover-btn"
-            title="Jump to terminal"
+            className={`icon-btn hover-btn${offClass}`}
+            title={label("Jump to terminal")}
+            disabled={off}
             onClick={() => onAction("focus")}
           >
             <IconTerminal />
@@ -138,40 +156,58 @@ export function ActionCluster(props: ActionClusterProps) {
   return (
     <>
       <ClusterBtn
-        className={`icon-btn hover-btn${teamOnly ? " disabled" : ""}`}
-        title={teamOnly ? "team sessions only" : "Jump to terminal"}
-        disabled={teamOnly}
+        className={`icon-btn hover-btn${teamOnly ? " disabled" : ""}${offClass}`}
+        title={teamOnly ? "team sessions only" : label("Jump to terminal")}
+        disabled={teamOnly || off}
         onClick={() => onAction("focus")}
       >
         <IconTerminal />
       </ClusterBtn>
+      {/* Two-click arm. The armed state used to live ONLY in the title
+          attribute (audit U-6): invisible without hover and silent to a
+          screen reader. It now changes the accessible NAME and reports
+          aria-pressed, and ui-state announces the arm/expiry transitions. */}
       <ClusterBtn
-        className={`icon-btn hover-btn kill-btn${teamOnly ? " disabled" : ""}${killArmed ? " armed" : ""}`}
+        className={`icon-btn hover-btn kill-btn${teamOnly ? " disabled" : ""}${offClass}${killArmed ? " armed" : ""}`}
         title={
-          teamOnly ? "team sessions only" : killArmed ? "click again to end session" : "End session"
+          teamOnly
+            ? "team sessions only"
+            : killArmed
+              ? "click again to end session"
+              : label("End session")
         }
-        disabled={teamOnly}
+        aria-label={
+          killArmed ? "Confirm end session — activate again within 8 seconds" : "End session"
+        }
+        aria-pressed={killArmed}
+        disabled={teamOnly || off}
         onClick={() => onAction("kill")}
       >
         <IconPower />
       </ClusterBtn>
       <ClusterBtn
-        className="icon-btn hover-btn"
-        title="Speak status"
+        className={`icon-btn hover-btn${offClass}`}
+        title={label("Speak status")}
+        disabled={off}
         onClick={() => onAction("status")}
       >
         <IconInfo />
       </ClusterBtn>
       <ClusterBtn
-        className="icon-btn hover-btn"
-        title="Replay their last message"
+        className={`icon-btn hover-btn${offClass}`}
+        title={label("Replay their last message")}
+        disabled={off}
         onClick={() => onAction("replay_session")}
       >
         <IconReplay />
       </ClusterBtn>
       <Popover open={swapOpen} onOpenChange={onSwapOpenChange}>
         <PopoverTrigger asChild>
-          <ClusterBtn className="icon-btn hover-btn" title="Swap character">
+          <ClusterBtn
+            className={`icon-btn hover-btn${offClass}`}
+            title={label("Swap character")}
+            disabled={off}
+          >
             <IconSwap />
           </ClusterBtn>
         </PopoverTrigger>

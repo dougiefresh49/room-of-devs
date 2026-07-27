@@ -333,6 +333,36 @@ button,
 .cards.disconnected .card {
   opacity: 0.48;
   filter: grayscale(0.65);
+  /* The greying used to be the ONLY signal while every action stayed live
+     (audit U-1). Actions now carry a real `disabled`; the card surface
+     itself stops advertising itself as clickable. */
+  cursor: default;
+}
+
+/* Offline reason, stated where the actions are — not hidden in a tooltip
+   on an 8px dot. */
+.room-offline-banner {
+  margin: 0 10px 6px;
+  padding: 5px 9px;
+  border: 1px solid rgba(240, 100, 100, 0.5);
+  border-radius: 6px;
+  background: rgba(240, 100, 100, 0.12);
+  color: #ffc9c9;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+/* The shared GrantButton (@room/ui) inside a room card: same affordance as
+   mobile, sized for the panel's denser grid. Colors/shape come from the
+   component's tokens — this only tightens the metrics. */
+.card-grant-btn {
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .card {

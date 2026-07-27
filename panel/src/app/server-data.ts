@@ -14,6 +14,7 @@
 import type { ButtonPatch, Command, ResumableSession, ServerEvent } from "@room/protocol";
 import type { RoomClient } from "@room/room-client";
 import type { PlatformAdapter } from "../platform/types.js";
+import { dispatchCommand } from "./commands.js";
 import { getViewState, showErrorToast } from "./view-state.js";
 
 export interface ButtonConfig {
@@ -111,7 +112,6 @@ let state: ServerData = {
 };
 
 const listeners = new Set<() => void>();
-let client: RoomClient | null = null;
 let learnTimer: ReturnType<typeof setTimeout> | null = null;
 
 function setState(patch: Partial<ServerData>) {
@@ -126,8 +126,14 @@ export function subscribeServerData(cb: () => void): () => void {
 
 export const getServerData = (): ServerData => state;
 
-function send(cmd: Command) {
-  client?.send(cmd);
+/**
+ * Every command this store issues is a WRITE (settings, buttons, hold-room,
+ * learn-capture), so all of them are correlated: a refusal or a dead socket
+ * is reported instead of leaving optimistic local state that the daemon
+ * never accepted (audit Q-10). Reads are requested from view-state.
+ */
+function write(cmd: Command, failText: string) {
+  dispatchCommand(cmd, failText);
 }
 
 // ── Settings actions ──────────────────────────────────────────────────
@@ -139,11 +145,11 @@ export function commitSetting(
   if (!state.settingsWritable) return;
   const localKey = key === "default_voice" ? "default_voice_id" : key;
   setState({ settings: { ...state.settings, [localKey]: value } });
-  send({ type: "set_setting", key, value });
+  write({ type: "set_setting", key, value }, "Couldn't save that setting");
 }
 
 export function sendHoldRoom(): void {
-  send({ type: "hold_room" });
+  write({ type: "hold_room" }, "Couldn't hold the room");
 }
 
 // ── Button actions ────────────────────────────────────────────────────
@@ -151,7 +157,7 @@ export function sendHoldRoom(): void {
 // Null clears a field on the wire — legal since the Phase 4 protocol/daemon
 // fix (the panel always sent null; the server used to reject it silently).
 function sendButtonPatch(idx: string, patch: ButtonPatch) {
-  send({ type: "set_button", idx: Number(idx), patch });
+  write({ type: "set_button", idx: Number(idx), patch }, "Couldn't save that button");
 }
 
 export function commitButtonPatch(idx: string, patch: Partial<ButtonConfig>): void {
@@ -168,7 +174,7 @@ export function removeButton(idx: string): void {
   const next = { ...state.buttonMappings };
   delete next[idx];
   setState({ buttonMappings: next });
-  send({ type: "remove_button", idx: Number(idx) });
+  write({ type: "remove_button", idx: Number(idx) }, "Couldn't remove that button");
 }
 
 export function cancelLearnCapture(): void {
@@ -188,7 +194,7 @@ export function armLearnCapture(mode: LearnMode, oldIdx?: string): void {
     setState({ learnCapture: null });
     showErrorToast("Button capture timed out");
   }, LEARN_CAPTURE_MS);
-  send({ type: "learn_capture" });
+  write({ type: "learn_capture" }, "Couldn't start button capture");
 }
 
 function handleCapturedButton(idx: string) {
@@ -223,7 +229,7 @@ function handleCapturedButton(idx: string) {
   sendButtonPatch(idx, existing as ButtonPatch);
   if (idx !== oldIdx) {
     delete next[oldIdx];
-    send({ type: "remove_button", idx: Number(oldIdx) });
+    write({ type: "remove_button", idx: Number(oldIdx) }, "Couldn't remove the old button");
   }
   setState({ buttonMappings: next });
 }
@@ -390,6 +396,5 @@ export function onSnapshotApplied(): void {
 
 /** Wire the store to the client + adapter. Call BEFORE client.start(). */
 export function initServerData(c: RoomClient, adapter: PlatformAdapter): void {
-  client = c;
   c.onEvent((ev) => handleServerEvent(ev, adapter));
 }

@@ -65,6 +65,7 @@ export function App({ role }: { role: WindowRole }) {
         <PickerView />
         <ProtocolMismatchBanner show={room.protocolMismatch} />
         <Toast toast={view.toast} />
+        <LiveRegion text={view.announcement} />
       </div>
     );
   }
@@ -75,6 +76,7 @@ export function App({ role }: { role: WindowRole }) {
         <SettingsView />
         <ProtocolMismatchBanner show={room.protocolMismatch} />
         <Toast toast={view.toast} />
+        <LiveRegion text={view.announcement} />
       </div>
     );
   }
@@ -91,7 +93,21 @@ export function App({ role }: { role: WindowRole }) {
       />
       <ProtocolMismatchBanner show={room.protocolMismatch} />
       <Toast toast={view.toast} />
+      <LiveRegion text={view.announcement} />
     </>
+  );
+}
+
+/**
+ * Off-screen polite live region (audit U-6). State that is only signalled
+ * visually — the end-session arm window opening and expiring, a kill the
+ * daemon refused — is spoken here without stealing focus.
+ */
+function LiveRegion({ text }: { text: string }) {
+  return (
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+      {text}
+    </div>
   );
 }
 

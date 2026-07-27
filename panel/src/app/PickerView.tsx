@@ -1,5 +1,7 @@
 import { useState, useSyncExternalStore } from "react";
+import type { Command } from "@room/protocol";
 import { client } from "../client.js";
+import { runCommand } from "./commands.js";
 import { IconBack, IconFolder } from "./icons.js";
 import { PERSONAS, personaAvatarSrc } from "./personas.js";
 import {
@@ -172,6 +174,7 @@ export function PickerView() {
   const clientState = useSyncExternalStore(client.subscribe, client.getState);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [model, setModel] = useState<ModelValue>(selectedModel());
+  const [launching, setLaunching] = useState(false);
 
   const isResume = view.pickerTab === "resume";
   const verb = isResume ? "Resume" : "Start";
@@ -192,30 +195,41 @@ export function PickerView() {
     setPickerTab(tab);
   };
 
-  const start = () => {
-    if (!selected) return;
+  /**
+   * Launch, then report (audit U-2/U-9). The old code fired and forgot: with
+   * the daemon down it showed "launching Donnie…", cleared the selection, and
+   * returned to a room where no agent would ever appear. Now the optimistic
+   * toast waits for the daemon's acceptance — a refusal (persona busy, bad
+   * dir) or a dead socket keeps the picker AND the staged choice so the user
+   * can fix it and retry. Same shape as mobile's requestSpawn.
+   */
+  const start = async () => {
+    if (!selected || launching) return;
+    const choice = selected;
     const flags = {
       skipPermissions: flagChecked(SKIP_PERMS),
       remoteControl: flagChecked(REMOTE),
       ...(model ? { model } : {}),
     };
-    if (selected.sessionId) {
-      client.send({
-        type: "resume_session",
-        sessionId: selected.sessionId,
-        dir: selected.dir,
-        persona: selected.persona,
-        ...flags,
-      });
-    } else {
-      client.send({
-        type: "spawn_session",
-        dir: selected.dir,
-        persona: selected.persona,
-        ...flags,
-      });
-    }
-    showLaunchToast(`launching ${selected.label} in ${selected.project}…`);
+    const cmd: Command = choice.sessionId
+      ? {
+          type: "resume_session",
+          sessionId: choice.sessionId,
+          dir: choice.dir,
+          persona: choice.persona,
+          ...flags,
+        }
+      : {
+          type: "spawn_session",
+          dir: choice.dir,
+          persona: choice.persona,
+          ...flags,
+        };
+    setLaunching(true);
+    const ok = await runCommand(cmd, `Couldn't start ${choice.label}`);
+    setLaunching(false);
+    if (!ok) return;
+    showLaunchToast(`launching ${choice.label} in ${choice.project}…`);
     setSelected(null);
   };
 
@@ -475,8 +489,13 @@ export function PickerView() {
             >
               Clear
             </button>
-            <button type="button" className="picker-confirm-start" onClick={start}>
-              {verb}
+            <button
+              type="button"
+              className="picker-confirm-start"
+              disabled={launching}
+              onClick={() => void start()}
+            >
+              {launching ? "Starting…" : verb}
             </button>
           </div>
         ) : null}

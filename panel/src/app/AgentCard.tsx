@@ -5,13 +5,14 @@
  */
 import { useEffect, useRef } from "react";
 import type { AgentView, NowPlaying } from "@room/protocol";
-import { AgentChips, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
+import { AgentChips, GrantButton, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
 import { isPhoneFrame } from "@room/room-client";
 import { client } from "../client.js";
 import { isSpotlightWorthy } from "../stage/engine.js";
 import { ActionCluster } from "./ActionCluster.js";
 import { AvatarImg } from "./AvatarImg.js";
 import { clusterMode, handleClusterAction } from "./cluster-actions.js";
+import { dispatchCommand } from "./commands.js";
 import { grantPendingFor } from "./grant-guard.js";
 import { PERSONAS, personaAvatarSrc } from "./personas.js";
 import { setSwapOpen, type IslandUiState } from "./ui-state.js";
@@ -48,8 +49,9 @@ export function AgentCard({
   clock,
   ui,
 }: AgentCardProps) {
-  const gesture = usePttGrant(agent.sessionId);
+  const ptt = usePttGrant(agent.sessionId, connected);
   const greyed = !connected || stale;
+  const raised = agent.state === "hand_raised";
   const pending = grantPendingFor(client, agent.sessionId);
   const grow = isSpotlightWorthy(agent.sessionId) || pending;
   const mode = clusterMode(agent.sessionId);
@@ -70,9 +72,9 @@ export function AgentCard({
       ref={cardRef}
       className={`card state-${agent.state}${greyed ? " disconnected" : ""}${stale ? " stale" : ""}${triageFocus ? " triage-focus" : ""}${grow ? " speaking-grow" : ""}`}
       data-session={agent.sessionId}
-      role="button"
-      tabIndex={0}
-      {...gesture}
+      role="group"
+      aria-label={agent.label ?? agent.name}
+      {...ptt.gesture}
     >
       <div className="card-main">
         <div className={`avatar-wrap${pending ? " grant-loading" : ""}`}>
@@ -90,11 +92,26 @@ export function AgentCard({
             />
             <LiveBadge live={agent.live} />
           </div>
-          {agent.state === "hand_raised" && agent.queuedPreview ? (
-            <QueuedPreview text={agent.queuedPreview} />
-          ) : null}
+          {raised && agent.queuedPreview ? <QueuedPreview text={agent.queuedPreview} /> : null}
         </div>
       </div>
+      {raised ? (
+        // The room's primary action, shared with mobile (audit C-5): a real
+        // labelled button, so it is announced, focusable, and Enter/Space
+        // operable — the card <div> only ever carried the pointer gesture.
+        // Push-to-talk rides the same button (audit U-5) via usePttGrant's
+        // hold pair, which stays the single owner of both dispatches.
+        <GrantButton
+          className="card-grant-btn no-drag"
+          pending={pending}
+          disabled={!connected}
+          pendingLabel="Working…"
+          onGrant={ptt.grant}
+          onHoldStart={ptt.holdStart}
+          onHoldEnd={ptt.holdEnd}
+          onMouseDown={(e) => e.stopPropagation()}
+        />
+      ) : null}
       <div
         className={`card-actions actions-${mode === "stage" ? 3 : 5}`}
         aria-label="Agent actions"
@@ -102,6 +119,7 @@ export function AgentCard({
         <ActionCluster
           mode={mode}
           isTeam={agent.isTeam}
+          connected={connected}
           paused={paused}
           killArmed={ui.killArmed.has(agent.sessionId)}
           swapOpen={ui.swapOpen === agent.sessionId}
@@ -109,7 +127,10 @@ export function AgentCard({
           onAction={(action) => handleClusterAction(agent.sessionId, action)}
           onSwapOpenChange={(open) => setSwapOpen(open ? agent.sessionId : null)}
           onSwapCharacter={(character) => {
-            client.send({ type: "set_voice", sessionId: agent.sessionId, character });
+            dispatchCommand(
+              { type: "set_voice", sessionId: agent.sessionId, character },
+              "Couldn't swap character",
+            );
             setSwapOpen(null);
           }}
         />
@@ -144,7 +165,10 @@ function CardName({ agent, renaming }: { agent: AgentView; renaming: boolean }) 
             e.preventDefault();
             e.stopPropagation();
             const label = e.currentTarget.value.trim();
-            client.send({ type: "set_nickname", sessionId: agent.sessionId, label });
+            dispatchCommand(
+              { type: "set_nickname", sessionId: agent.sessionId, label },
+              "Couldn't rename",
+            );
             endRename();
           } else if (e.key === "Escape") {
             e.preventDefault();
