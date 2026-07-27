@@ -84,13 +84,20 @@ function tokensEqual(a: string, b: string): boolean {
 }
 
 /**
- * Fresh token on every daemon start (mirrors panel-ws writeToken). A leaked
- * URL — screenshot, shell history, someone else's browser history — dies at
- * the next restart. Accepted consequence: phones re-auth via mobile_url.sh /
- * the QR after a restart. Same file + format `mobile_url.sh` reads.
+ * Generate-if-absent mobile token and persist it across daemon restarts (#72).
+ * Rotation is explicit only: `scripts/mobile_url.sh --rotate` (then restart
+ * if a daemon is already holding the previous value in memory).
  */
-function createToken(): string {
+function loadOrCreateToken(): string {
   const path = tokenPath();
+  try {
+    if (existsSync(path)) {
+      const existing = readFileSync(path, "utf-8").trim();
+      if (existing) return existing;
+    }
+  } catch {
+    /* recreate below */
+  }
   const t = randomBytes(16).toString("hex");
   writeFileSync(path, `${t}\n`, { mode: 0o600 });
   chmodSync(path, 0o600);
@@ -763,7 +770,7 @@ export function startMobileHttp(portOverride?: number): void {
   if (!port || port <= 0) return;
   if (httpServers.length) return;
 
-  token = createToken();
+  token = loadOrCreateToken();
   actionWindows.clear();
 
   mobileDistReady = existsSync(MOBILE_DIST_DIR) && existsSync(join(MOBILE_DIST_DIR, "index.html"));
@@ -844,7 +851,6 @@ export function stopMobileHttp(): void {
   }
   httpServers = [];
   actionWindows.clear();
-  // The token file stays on disk (mobile_url.sh reads it); the next start
-  // overwrites it with a fresh one.
+  // Persist token across restarts (#72) — do not delete mobile_token.
   token = "";
 }
