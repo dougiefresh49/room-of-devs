@@ -73,6 +73,7 @@ rsync -a --delete \
     --exclude=panel-dev-install.sh \
     --exclude=docs-publish.mjs \
     --exclude=raycast/ \
+        --exclude=__pycache__/ \
     "$PROJECT_DIR/scripts/" "$TTS_DIR/scripts/"
 chmod +x "$TTS_DIR/scripts/"*.sh "$TTS_DIR/scripts/"*.py 2>/dev/null || true
 

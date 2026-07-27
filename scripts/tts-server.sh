@@ -51,6 +51,11 @@ sync_source() {
     # excluded here (exclusion also protects the staged copy from --delete)
     # and staged as real files below. characters.json is runtime data at
     # $TTS_DIR/characters.json — never deploy or retain a copy under src/.
+    # Safety net: if the runtime registry doesn't exist yet, rescue the old
+    # installed copy before it's deleted (setup.sh owns the real migration).
+    if [ ! -f "$TTS_DIR/characters.json" ] && [ -f "$SERVER_DIR/src/characters.json" ]; then
+        cp "$SERVER_DIR/src/characters.json" "$TTS_DIR/characters.json"
+    fi
     rsync -a --delete \
         --exclude=/protocol \
         --exclude=/characters.json \
@@ -108,6 +113,7 @@ sync_source() {
         --exclude=panel-dev-install.sh \
         --exclude=docs-publish.mjs \
         --exclude=raycast/ \
+        --exclude=__pycache__/ \
         "$REPO_SCRIPTS/" "$TTS_DIR/scripts/" \
         || { echo "Error: scripts sync failed"; exit 1; }
     chmod +x "$TTS_DIR/scripts/"*.sh "$TTS_DIR/scripts/"*.py 2>/dev/null || true
