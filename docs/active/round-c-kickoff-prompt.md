@@ -20,6 +20,17 @@ You are the ORCHESTRATOR AND REVIEWER. Per session token hygiene, you do not
 author code beyond small surgical edits — delegates write against the spec,
 you review diffs, merge, deploy, run the verification rounds.
 
+## ARCHITECTURE PRE-GATE (added 2026-07-27, owner rethink)
+
+Issue #73 (architecture concept diagrams: voice layer vs orchestrator) now
+gates the DESIGN-TARGET LOCK — the boards bake in floor/table/group-call
+assumptions the owner no longer trusts (voice may be a layer ABOVE an
+orchestrator, not the working agent's skin; group call likely demoted;
+whiteboard = diagram-artifact loop, not real-time ink). Steps 0–1 below
+(shadcn wiring, PlayerControls dedup) are architecture-agnostic and may
+proceed without it. Do NOT lock design-ui-target.md or launch steps 2–3
+until #73's layering is picked and the target re-cut against it.
+
 ## THE GATE — do this first, launch nothing before it clears
 
 Round C is gated on MY design picks from the four final-synthesis boards

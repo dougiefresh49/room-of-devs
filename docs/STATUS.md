@@ -125,11 +125,13 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-- **Round C design picks** — review the four final-synthesis boards
-  (URLs in the Round C entry / spec) and pick or mix; the Round C
-  kickoff ([active/round-c-kickoff-prompt.md](active/round-c-kickoff-prompt.md))
-  is gated on this. If mixing feels hard, the kickoff's fallback is a
-  per-surface pick matrix built for you first.
+- **Architecture rethink first (#73), then Round C design picks** —
+  owner call 2026-07-27: the design boards assume voice = the working
+  agent's skin; George's framework suggests voice ABOVE an orchestrator,
+  workers silent. #73 produces concept diagrams (current state, George's
+  stack simplified, 2–3 candidate layerings, key flows) that re-cut the
+  design target. Round C steps 0–1 (component dedup) can proceed
+  regardless; the design-target lock and picks wait for #73.
 
 (Cleared 2026-07-27: live mode v2 retest — done; arcade button
 bring-up #16 — done; Round A second-device LAN check — verified working;
