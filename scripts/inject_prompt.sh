@@ -93,13 +93,23 @@ MESSAGE="$(printf '%s' "$MSG" | tr -s '[:space:]' ' ')"
 # executed as a shell command. Empirically (2026-07-27) a live claude pane
 # reports its version string as pane_current_command (e.g. "2.1.218"), not
 # "claude", so this is a shell denylist rather than an agent allowlist.
+#
+# Resolve the session to its concrete pane_id (%NN) in the same query. The "="
+# exact-match prefix is valid for SESSION targets (has-session/list-panes) but
+# NOT for PANE targets — `send-keys -t "=cr-Don"` errors "can't find pane".
+# Pane ids are globally unique, so they give us the exact-match safety `=`
+# provides for sessions with a target send-keys actually accepts (no prefix or
+# fnmatch fallback that could land keystrokes in the wrong session).
+PANE_ID=""
 pane_ready() {
     local info dead cmd
-    info="$(tmux list-panes -t "=$TMUX_TARGET" -F '#{pane_dead} #{pane_current_command}' 2>/dev/null | head -1 || true)"
+    info="$(tmux list-panes -t "=$TMUX_TARGET" -F '#{pane_dead} #{pane_current_command} #{pane_id}' 2>/dev/null | head -1 || true)"
     [ -n "$info" ] || return 1
     dead="${info%% *}"
-    cmd="${info#* }"
+    cmd="${info#* }"; cmd="${cmd%% *}"
+    PANE_ID="${info##* }"
     [ "$dead" = "0" ] || return 1
+    [ -n "$PANE_ID" ] || return 1
     case "$cmd" in
         sh|bash|zsh|dash|ksh|csh|tcsh|fish|login|"") return 1 ;;
     esac
@@ -111,9 +121,9 @@ send_now() {
         echo "pane for $TMUX_TARGET is not running an agent — refusing to send" >&2
         exit 4
     fi
-    tmux send-keys -t "=$TMUX_TARGET" -l -- "$MESSAGE"
+    tmux send-keys -t "$PANE_ID" -l -- "$MESSAGE"
     sleep 0.3
-    tmux send-keys -t "=$TMUX_TARGET" Enter
+    tmux send-keys -t "$PANE_ID" Enter
 }
 
 if [ "$NOW" -eq 1 ]; then
