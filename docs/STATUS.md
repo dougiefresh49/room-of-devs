@@ -3,7 +3,7 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-27_
+_Last updated: 2026-07-27 (Round B)_
 
 ## Inbox
 
@@ -15,6 +15,39 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
+- **Round B SHIPPED & deployed (2026-07-27)**: issues #62–#67 closed
+  (each with a verification note citing what was re-run), plus the #72
+  token-persistence rider. Sequenced sub-rounds: Biome first (config +
+  one pure format sweep, 102 files), then backend lanes in parallel
+  (#62 CI floor + contract single-sourcing; #66+#67 TTS_DIR isolation +
+  PreToolUse hooks), then UI lanes serialized (#65 a11y/primitives →
+  #64 panel error parity). All deployed: setup.sh + daemon restart +
+  panel rebuild/relaunch + mobile dist rebuilt twice.
+  - **CI exists now**: typecheck + fixtures + format:check on every push,
+    proven red/green with an intentionally-broken branch; the
+    container-smoke workflow (daemon in Docker + fake-agent, from #66)
+    passed in CI on day one. `pnpm lint` joins CI after the 494-error
+    Biome debt (BIOME-LINT-REPORT.md) is paid — that's a follow-up round.
+  - **Verification catches this round** (the C-6-regression standard
+    held): (1) the lane's PreToolUse hooks were wired wrong
+    (root-level key, silently inert) — fixed; the hooks then denied this
+    session's own tool calls, which is the proof they work. (2) Codex
+    caught Escape dropping focus to body in the mobile sheets; the first
+    fix was still wrong (effect-ordering), final fix verified in-browser.
+    (3) The #64 lane caught its own billable-path bug (bubbled spacebar
+    → PTT hold) before handing off.
+  - **Owner-visible changes**: panel now shows a real offline banner and
+    disables actions when the daemon is down (and recovers on restart);
+    every panel action reports failures instead of fire-and-forget;
+    "Read update" is a real keyboard-focusable button; mobile sheets are
+    real Radix dialogs (focus trap/Escape/focus return); faint text is
+    AA-contrast; **your phone's bookmarked room URL now survives daemon
+    restarts** (rotate only via `mobile_url.sh --rotate`).
+  - Residuals logged: #72 panel rotate button needs a daemon command;
+    port-fallback hardcodes in panel lib.rs / verify-live.ts; keyboard
+    PTT hold exists on raised cards + dock avatar (mobile-parity model);
+    reduced-motion verified at the CSS level only (no emulation toggle
+    in the browser tooling).
 - **Round A SHIPPED & deployed (2026-07-27)**: issues #58–#61 merged to
   main and deployed (setup.sh + tts-server restart + panel rebuild). Live
   post-deploy checks passed: LAN `curl` to 4785 refused / loopback +
