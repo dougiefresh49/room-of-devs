@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { GEMINI_TIMEOUT_MS, withApiRetry } from "./api-call.js";
 import { log } from "./logger.js";
 
 const BASE_SYSTEM_PROMPT = `You convert AI agent markdown responses into natural spoken text for ElevenLabs v3 TTS.
@@ -67,15 +68,18 @@ export async function processWithGemini(
 
   try {
     const systemPrompt = buildSystemPrompt(character);
-    const response = await ai.models.generateContent({
-      model,
-      contents: text,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: character ? 0.5 : 0.3,
-        maxOutputTokens: 4096,
-      },
-    });
+    const response = await withApiRetry("gemini", GEMINI_TIMEOUT_MS, () =>
+      ai.models.generateContent({
+        model,
+        contents: text,
+        config: {
+          systemInstruction: systemPrompt,
+          temperature: character ? 0.5 : 0.3,
+          maxOutputTokens: 4096,
+          abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+        },
+      })
+    );
 
     const result = response.text?.trim();
     if (!result) {

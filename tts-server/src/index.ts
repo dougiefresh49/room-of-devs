@@ -48,7 +48,9 @@ import { startMobileHttp, stopMobileHttp } from "./mobile-http.js";
 import { startDnd, stopDnd } from "./dnd.js";
 import { startInterpreter, stopInterpreter } from "./interpreter/service.js";
 import { registryPidBySessionId, isPidAlive } from "./session-catalog.js";
-import { rotateLogIfLarge, runStartupRetention } from "./maintenance.js";
+import { rotateLogIfLarge, runStartupRetention, runPeriodicMaintenance } from "./maintenance.js";
+import { emitNotice } from "./services/commands.js";
+import { bumpSnapshot } from "./state-watch.js";
 import { log } from "./logger.js";
 
 loadEnv();
@@ -401,6 +403,8 @@ function moveToFailed(filePath: string): void {
     mkdirSync(FAILED_DIR, { recursive: true });
     renameSync(filePath, join(FAILED_DIR, basename(filePath)));
     log("server", `Moved to failed: ${basename(filePath)}`);
+    emitNotice("A message failed to synthesize — check the failed badge");
+    bumpSnapshot();
   } catch (err: any) {
     log("server", `Move to failed failed: ${err.message}`);
   }
@@ -506,6 +510,7 @@ const REAPER_MIN_AGE_MS = 2 * 60_000;
 const reaperMisses = new Map<string, number>();
 const reaperTimer = setInterval(() => {
   try {
+    runPeriodicMaintenance();
     const pids = registryPidBySessionId();
     for (const sid of listStateSessionIds()) {
       const age = sessionStateAgeMs(sid);
@@ -540,7 +545,6 @@ reaperTimer.unref?.();
 
 const watcher = watch(QUEUE_DIR, {
   ignoreInitial: true,
-  awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
 });
 
 watcher.on("add", (path) => {

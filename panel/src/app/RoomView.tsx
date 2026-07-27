@@ -8,7 +8,7 @@
  * Settings ("Hold the Room").
  */
 import type { PanelSnapshot } from "@room/protocol";
-import { SummaryText } from "@room/ui";
+import { SummaryText, FailedCountBadge } from "@room/ui";
 import { nowPlayingKey } from "@room/room-client";
 import { platform } from "../platform/tauri.js";
 import { AgentCard } from "./AgentCard.js";
@@ -48,6 +48,7 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
   const agents = snapshot?.agents ?? [];
   const nowPlaying = snapshot?.nowPlaying ?? null;
   const paused = snapshot?.paused === true;
+  const failedCount = snapshot?.failedCount ?? 0;
   const triageFocus =
     typeof snapshot?.triageFocus === "string" && snapshot.triageFocus.trim()
       ? snapshot.triageFocus
@@ -61,6 +62,7 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
       <header className="strip">
         <span className="title" />
         <div className="header-actions no-drag">
+          <FailedCountBadge count={failedCount} />
           <span
             className={`conn-dot ${connected ? "up" : "down"}`}
             title={connected ? "Connected" : "Disconnected"}

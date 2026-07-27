@@ -10,6 +10,7 @@ import {
   STATE_DIR,
   QUEUE_DIR,
   PLAYED_DIR,
+  FAILED_DIR,
   TTS_DIR,
   SESSION_VOICES_PATH,
   NICKNAMES_PATH,
@@ -61,6 +62,11 @@ const SNAPSHOT_TTL_MS = 2000;
 
 export function invalidateSnapshot(): void {
   cachedSnapshot = null;
+}
+
+/** Invalidate memoized snapshot and notify subscribers (e.g. after failed/). */
+export function bumpSnapshot(): void {
+  scheduleNotify();
 }
 
 /**
@@ -301,6 +307,15 @@ export function isRoomHeld(): boolean {
   return existsSync(HOLD_ROOM_PATH);
 }
 
+function countFailedItems(): number {
+  if (!existsSync(FAILED_DIR)) return 0;
+  try {
+    return readdirSync(FAILED_DIR).filter((name) => name.endsWith(".json")).length;
+  } catch {
+    return 0;
+  }
+}
+
 export function buildPanelSnapshot(): PanelSnapshot {
   const now = Date.now();
   if (cachedSnapshot && now - cachedSnapshotAt < SNAPSHOT_TTL_MS) {
@@ -315,6 +330,7 @@ export function buildPanelSnapshot(): PanelSnapshot {
     triageFocus: readTriageFocus(),
     paused: existsSync(PAUSED_FLAG_PATH),
     phoneAck: readFreshPhoneAck(),
+    failedCount: countFailedItems(),
   };
   cachedSnapshotAt = now;
   return cachedSnapshot;
@@ -351,8 +367,10 @@ export function startStateWatch(): void {
       ].map((p) => basename(p))
     );
     const relevant = (path: string) =>
-      path.startsWith(STATE_DIR) || ROOT_FILES.has(basename(path));
-    watcher = watch([STATE_DIR, TTS_DIR], {
+      path.startsWith(STATE_DIR) ||
+      path.startsWith(FAILED_DIR) ||
+      ROOT_FILES.has(basename(path));
+    watcher = watch([STATE_DIR, TTS_DIR, FAILED_DIR], {
       ignoreInitial: true,
       depth: 0,
     });

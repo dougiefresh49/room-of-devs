@@ -9,6 +9,7 @@ import {
   watchFile,
   writeFileSync,
   readFileSync,
+  renameSync,
 } from "fs";
 import { homedir } from "os";
 import { basename, join } from "path";
@@ -89,6 +90,12 @@ function isDuplicate(sessionId: string, text: string): boolean {
   return false;
 }
 
+function writeFileAtomic(path: string, data: unknown): void {
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2));
+  renameSync(tmp, path);
+}
+
 function enqueueIntermediate(sessionId: string, text: string): void {
   if (loadMutedSessions().includes(sessionId)) return;
   if (text.trim().length < MIN_INTERMEDIATE_CHARS) return;
@@ -108,7 +115,7 @@ function enqueueIntermediate(sessionId: string, text: string): void {
       spoken: false,
       source: "live-cc",
     };
-    writeFileSync(join(QUEUE_DIR, filename), JSON.stringify(data, null, 2));
+    writeFileAtomic(join(QUEUE_DIR, filename), data);
     log("live", `intermediate queued (${text.length} chars) for ${sessionId.slice(0, 12)}`);
   } catch (err: any) {
     log("live", `enqueueIntermediate failed: ${err.message}`);

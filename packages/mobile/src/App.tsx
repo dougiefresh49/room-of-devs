@@ -233,6 +233,7 @@ export function App() {
     <div className="min-h-dvh bg-bg text-fg">
       <Header
         connected={connected}
+        failedCount={snapshot?.failedCount ?? 0}
         output={prefs.output}
         held={held}
         catchUp={catchUp}

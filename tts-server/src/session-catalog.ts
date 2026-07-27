@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { existsSync, openSync, readFileSync, readSync, closeSync, fstatSync, readdirSync, statSync } from "fs";
 import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
@@ -7,6 +7,7 @@ const PROJECTS_DIR = join(homedir(), ".claude", "projects");
 const LIVE_SESSIONS_DIR = join(homedir(), ".claude", "sessions");
 const CHARACTERS_PATH = join(dirname(fileURLToPath(import.meta.url)), "characters.json");
 const MIN_JSONL_BYTES = 1024;
+const MAX_JSONL_HEAD_BYTES = 64 * 1024;
 const MAX_RESUMABLE = 30;
 const CWD_SCAN_LINES = 100;
 
@@ -19,13 +20,31 @@ function decodeProjectDir(encoded: string): string {
   return encoded.replace(/^-/, "/").replace(/-/g, "/");
 }
 
-function cwdFromJsonl(jsonlPath: string): string | null {
-  let content: string;
+function readJsonlHead(path: string): string | null {
+  let fd: number | null = null;
   try {
-    content = readFileSync(jsonlPath, "utf-8");
+    fd = openSync(path, "r");
+    const size = fstatSync(fd).size;
+    const len = Math.min(size, MAX_JSONL_HEAD_BYTES);
+    const buf = Buffer.alloc(len);
+    readSync(fd, buf, 0, len, 0);
+    return buf.toString("utf-8");
   } catch {
     return null;
+  } finally {
+    if (fd !== null) {
+      try {
+        closeSync(fd);
+      } catch {
+        /* already closed */
+      }
+    }
   }
+}
+
+function cwdFromJsonl(jsonlPath: string): string | null {
+  const content = readJsonlHead(jsonlPath);
+  if (!content) return null;
   for (const line of content.split("\n").slice(0, CWD_SCAN_LINES)) {
     const trimmed = line.trim();
     if (!trimmed) continue;

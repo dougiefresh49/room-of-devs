@@ -7,10 +7,12 @@
  */
 import type { OutputDevice } from "../prefs.js";
 import { IconLaptop, IconPlus, IconSmartphone } from "../icons.js";
+import { FailedCountBadge } from "@room/ui";
 import { OverflowMenu } from "./OverflowMenu.js";
 
 interface HeaderProps {
   connected: boolean;
+  failedCount: number;
   output: OutputDevice;
   held: boolean;
   catchUp: boolean;
@@ -24,6 +26,7 @@ interface HeaderProps {
 
 export function Header({
   connected,
+  failedCount,
   output,
   held,
   catchUp,
@@ -39,6 +42,8 @@ export function Header({
       <h1 className="mr-auto text-base font-semibold tracking-tight">Room of Devs</h1>
 
       <DeviceToggle output={output} onSetOutput={onSetOutput} />
+
+      <FailedCountBadge count={failedCount} />
 
       <span
         className={`inline-block size-2.5 shrink-0 rounded-full ${

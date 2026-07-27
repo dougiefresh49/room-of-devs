@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, writeFileSync } from "fs";
+import { readFileSync, existsSync, writeFileSync, renameSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
@@ -173,6 +173,12 @@ function truncateQuestion(text: string): string {
   return sentenceEnd >= 0 ? firstLine.slice(0, sentenceEnd + 1) : firstLine;
 }
 
+function writeFileAtomic(path: string, data: unknown): void {
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2));
+  renameSync(tmp, path);
+}
+
 // Write an ask-user question into the queue with the same shape ingest uses
 // (`-cc-<shortSession>.json`, source "ask-user") so grant_floor / the daemon
 // read and synthesize it through the normal on-grant path — no second code path.
@@ -196,7 +202,7 @@ function enqueueQuestionFile(
       spoken: false,
       source: "ask-user",
     };
-    writeFileSync(join(QUEUE_DIR, filename), JSON.stringify(data, null, 2));
+    writeFileAtomic(join(QUEUE_DIR, filename), data);
     log("dynamic", `Ask-user queued for grant: ${filename}`);
   } catch (err: any) {
     log("dynamic", `enqueueQuestionFile failed: ${err.message}`);
