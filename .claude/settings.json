@@ -1,49 +1,51 @@
 {
-  "PreToolUse": [
-    {
-      "matcher": "Write|Edit|MultiEdit",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-install-edit.sh\"",
-          "timeout": 10
-        },
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-credit-caps.sh\"",
-          "timeout": 10
-        }
-      ]
-    },
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-credit-caps.sh\"",
-          "timeout": 10
-        },
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-enqueue-loop.sh\"",
-          "timeout": 10
-        },
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-env-read.sh\"",
-          "timeout": 10
-        }
-      ]
-    },
-    {
-      "matcher": "Read",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-env-read.sh\"",
-          "timeout": 10
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-install-edit.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-credit-caps.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-credit-caps.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-enqueue-loop.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-env-read.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/scripts/hooks/block-env-read.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

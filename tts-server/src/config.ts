@@ -167,19 +167,8 @@ export function loadConfig(): Config {
     cachedConfig = parseConfigObject(raw);
     configMtime = mtime;
     return cachedConfig;
-  } catch (err: unknown) {
+  } catch {
     // Missing file / unreadable JSON — same graceful defaults as before.
-    if (
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      (err as { code: string }).code !== "ENOENT"
-    ) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!(err instanceof SyntaxError) && !String(msg).includes("ENOENT")) {
-        // JSON parse errors land here too — keep quiet for missing file only.
-      }
-    }
     rawHasPlaybackMode = false;
     return { ...DEFAULTS };
   }
