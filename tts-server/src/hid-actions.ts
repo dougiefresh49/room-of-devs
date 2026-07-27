@@ -5,6 +5,7 @@ import { TTS_DIR, STATE_DIR, loadSessionVoices, effectivePlaybackMode } from "./
 import { getCharacter } from "./dynamic-response.js";
 import { log } from "./logger.js";
 import { loadTeamMap } from "./team-map.js";
+import { emitNotice } from "./services/commands.js";
 
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
@@ -149,6 +150,7 @@ export function doAction(action: string): void {
     }
     default:
       log("hid", `unknown action: ${action}`);
+      emitNotice(`Arcade button action "${action}" isn't configured`);
   }
 }
 
@@ -156,6 +158,7 @@ export function characterPress(character: string): void {
   const sid = resolveCharacterSession(character);
   if (!sid) {
     log("hid", `no active session wearing ${character}'s voice — press ignored`);
+    emitNotice(`${character} isn't in the room — button press ignored`);
     return;
   }
   // Already talking → the tap means "I heard enough": duck it instead of
@@ -173,6 +176,7 @@ export function characterHold(character: string, phase: "start" | "stop"): void 
   const sid = resolveCharacterSession(character);
   if (!sid) {
     log("hid", `no active session wearing ${character}'s voice — PTT ${phase} ignored`);
+    if (phase === "start") emitNotice(`${character} isn't in the room — push-to-talk ignored`);
     return;
   }
   // Hold-to-talk means INJECTION, which only works for team.sh (tmux) sessions.
@@ -183,6 +187,7 @@ export function characterHold(character: string, phase: "start" | "stop"): void 
   if (!inTeam) {
     if (phase === "start") {
       log("hid", `PTT to ${character} refused — session not in team_map`);
+      emitNotice(`${character} isn't in the team room — push-to-talk needs a team session`);
       try {
         const child = spawn(
           "say",
