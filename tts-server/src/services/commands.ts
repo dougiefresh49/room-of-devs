@@ -36,7 +36,14 @@ import {
   markPhonePlaybackDone,
 } from "../now-playing.js";
 import { setLiveSession, markPendingPhoneAck, clearPendingPhoneAck } from "../live-mode.js";
-import type { Command, CommandSource, ButtonPatch, SpawnModel } from "../protocol/index.js";
+import {
+  parseCommand,
+  isKnownCommandType,
+  type Command,
+  type CommandSource,
+  type ButtonPatch,
+  type SpawnModel,
+} from "../protocol/index.js";
 
 import { CHARACTERS_PATH } from "../characters-path.js";
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
@@ -359,191 +366,22 @@ function isValidDir(dir: string): boolean {
   }
 }
 
+/**
+ * Wire-contract validation — protocol parseCommand is authoritative
+ * (audit Q-1 / R8). Known kinds that fail validation are logged (Q-3);
+ * unknown kinds stay silent so the contract can grow additively.
+ */
 export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message" {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return "bad_message";
-  const msg = raw as Record<string, unknown>;
-  const keys = Object.keys(msg);
-
-  switch (msg.type) {
-    case "grant":
-      if (typeof msg.sessionId !== "string" || !msg.sessionId.trim()) {
-        return "bad_message";
-      }
-      if (keys.length === 2) {
-        return { type: "grant", sessionId: msg.sessionId };
-      }
-      if (keys.length === 3 && (msg.output === "mac" || msg.output === "phone")) {
-        return { type: "grant", sessionId: msg.sessionId, output: msg.output };
-      }
-      return "bad_message";
-    case "ptt":
-      if (
-        keys.length !== 3 ||
-        typeof msg.sessionId !== "string" ||
-        !msg.sessionId.trim() ||
-        (msg.phase !== "start" && msg.phase !== "stop")
-      ) {
-        return "bad_message";
-      }
-      return { type: "ptt", phase: msg.phase, sessionId: msg.sessionId };
-    case "focus_terminal":
-    case "kill_team":
-    case "status_say":
-    case "replay_session":
-      if (keys.length !== 2 || typeof msg.sessionId !== "string" || !msg.sessionId.trim()) {
-        return "bad_message";
-      }
-      return { type: msg.type, sessionId: msg.sessionId };
-    case "replay":
-    case "replay_slower":
-    case "restart":
-    case "stop":
-    case "pause":
-    case "list_resumable":
-    case "known_dirs":
-      if (keys.length !== 1) return "bad_message";
-      return { type: msg.type };
-    case "play_replay": {
-      if (typeof msg.file !== "string" || !msg.file) return "bad_message";
-      // Bare filename only — no path separators / traversal.
-      if (
-        msg.file.includes("/") ||
-        msg.file.includes("\\") ||
-        msg.file.includes("\0") ||
-        msg.file === "." ||
-        msg.file === ".."
-      ) {
-        return "bad_message";
-      }
-      if (keys.length === 2) {
-        return { type: "play_replay", file: msg.file };
-      }
-      if (
-        keys.length === 3 &&
-        typeof msg.offsetSec === "number" &&
-        Number.isFinite(msg.offsetSec) &&
-        msg.offsetSec >= 0
-      ) {
-        return { type: "play_replay", file: msg.file, offsetSec: msg.offsetSec };
-      }
-      return "bad_message";
-    }
-    case "phone_done":
-      if (
-        keys.length !== 2 ||
-        typeof msg.file !== "string" ||
-        !msg.file ||
-        msg.file.includes("/") ||
-        msg.file.includes("\\") ||
-        msg.file.includes("\0")
-      ) {
-        return "bad_message";
-      }
-      return { type: "phone_done", file: msg.file };
-    case "spawn_session":
-      if (
-        keys.length < 3 ||
-        keys.length > 6 ||
-        typeof msg.dir !== "string" ||
-        !msg.dir.trim() ||
-        typeof msg.persona !== "string" ||
-        !msg.persona.trim() ||
-        !validSpawnFlags(msg)
-      ) {
-        return "bad_message";
-      }
-      return {
-        type: "spawn_session",
-        dir: msg.dir,
-        persona: msg.persona,
-        ...spawnFlags(msg),
-      };
-    case "resume_session":
-      if (
-        keys.length < 4 ||
-        keys.length > 7 ||
-        typeof msg.sessionId !== "string" ||
-        !msg.sessionId.trim() ||
-        typeof msg.dir !== "string" ||
-        !msg.dir.trim() ||
-        typeof msg.persona !== "string" ||
-        !msg.persona.trim() ||
-        !validSpawnFlags(msg)
-      ) {
-        return "bad_message";
-      }
-      return {
-        type: "resume_session",
-        sessionId: msg.sessionId,
-        dir: msg.dir,
-        persona: msg.persona,
-        ...spawnFlags(msg),
-      };
-    case "set_live":
-      if (
-        keys.length !== 3 ||
-        typeof msg.sessionId !== "string" ||
-        !msg.sessionId.trim() ||
-        typeof msg.on !== "boolean"
-      ) {
-        return "bad_message";
-      }
-      return { type: "set_live", sessionId: msg.sessionId, on: msg.on };
-    case "set_voice":
-      if (
-        keys.length !== 3 ||
-        typeof msg.sessionId !== "string" ||
-        !msg.sessionId.trim() ||
-        typeof msg.character !== "string" ||
-        !msg.character.trim()
-      ) {
-        return "bad_message";
-      }
-      return { type: "set_voice", sessionId: msg.sessionId, character: msg.character };
-    case "set_nickname":
-      if (
-        keys.length !== 3 ||
-        typeof msg.sessionId !== "string" ||
-        !msg.sessionId.trim() ||
-        typeof msg.label !== "string"
-      ) {
-        return "bad_message";
-      }
-      return { type: "set_nickname", sessionId: msg.sessionId, label: msg.label };
-    case "hold_room":
-      if (keys.length !== 1) return "bad_message";
-      return { type: "hold_room" };
-    case "get_buttons":
-    case "get_shortcuts":
-    case "learn_capture":
-    case "get_settings":
-    case "list_voices":
-      if (keys.length !== 1) return "bad_message";
-      return { type: msg.type };
-    case "set_setting": {
-      if (keys.length !== 3 || typeof msg.key !== "string" || !msg.key.trim()) {
-        return "bad_message";
-      }
-      return { type: "set_setting", key: msg.key.trim(), value: msg.value };
-    }
-    case "set_button": {
-      if (keys.length !== 3) return "bad_message";
-      if (typeof msg.idx !== "number" || !Number.isInteger(msg.idx) || msg.idx < 0) {
-        return "bad_message";
-      }
-      const patch = parseButtonPatch(msg.patch);
-      if (patch === "bad_message") return "bad_message";
-      return { type: "set_button", idx: msg.idx, patch };
-    }
-    case "remove_button":
-      if (keys.length !== 2) return "bad_message";
-      if (typeof msg.idx !== "number" || !Number.isInteger(msg.idx) || msg.idx < 0) {
-        return "bad_message";
-      }
-      return { type: "remove_button", idx: msg.idx };
-    default:
-      return "bad_message";
+  const parsed = parseCommand(raw);
+  if (parsed) return parsed;
+  const type =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as { type?: unknown }).type
+      : undefined;
+  if (isKnownCommandType(type)) {
+    log("commands", `malformed command dropped: ${type}`);
   }
+  return "bad_message";
 }
 
 // ── Spawn / resume ──────────────────────────────────────────────────────
@@ -715,10 +553,19 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const msg = raw as Record<string, unknown>;
   if (msg.type !== "reply") return null;
-  if (typeof msg.sessionId !== "string" || !msg.sessionId.trim()) return null;
-  if (typeof msg.text !== "string") return null;
+  if (typeof msg.sessionId !== "string" || !msg.sessionId.trim()) {
+    log("commands", "malformed command dropped: reply");
+    return null;
+  }
+  if (typeof msg.text !== "string") {
+    log("commands", "malformed command dropped: reply");
+    return null;
+  }
   const text = msg.text.trim();
-  if (!text || text.length > 4000) return null;
+  if (!text || text.length > 4000) {
+    log("commands", "malformed command dropped: reply");
+    return null;
+  }
   if (!sessionInSnapshot(msg.sessionId)) return null;
 
   // Marker BEFORE injecting: the UserPromptSubmit hook can fire while the
