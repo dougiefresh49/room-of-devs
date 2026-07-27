@@ -13,11 +13,22 @@ type PendingRequest = {
   timer: ReturnType<typeof setTimeout>;
 };
 
+/**
+ * Reconnection budget, mirroring WsTransport's reconnecting-websocket
+ * settings so both surfaces behave the same when the daemon goes away.
+ */
+const MIN_RECONNECT_MS = 500;
+const RECONNECT_JITTER_MS = 500;
+const MAX_RECONNECT_MS = 10_000;
+const RECONNECT_GROW = 1.5;
+
 /** Same-origin mobile transport: SSE for events and POST for commands. */
 export class SseTransport implements Transport {
   private source: EventSource | null = null;
   private stopped = false;
   private requestCounter = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryDelay = MIN_RECONNECT_MS;
   private pending = new Set<PendingRequest>();
   private eventListeners = new Set<(ev: ServerEvent) => void>();
   private connectionListeners = new Set<(up: boolean) => void>();
@@ -32,19 +43,50 @@ export class SseTransport implements Transport {
   }
 
   start(): void {
-    if (this.source || this.stopped) return;
-    const source = new EventSource(this.url(this.eventsPath));
-    this.source = source;
-    source.onopen = () => this.emitConnection(true);
-    source.onerror = () => this.emitConnection(false);
-    source.onmessage = (message) => this.handleMessage(message.data);
+    if (this.source || this.retryTimer || this.stopped) return;
+    this.open();
   }
 
   stop(): void {
     if (this.stopped) return;
     this.stopped = true;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     this.source?.close();
+    this.source = null;
     this.rejectPending(new TransportError("stopped", "SSE transport stopped"));
+  }
+
+  private open(): void {
+    const source = new EventSource(this.url(this.eventsPath));
+    this.source = source;
+    source.onopen = () => {
+      this.retryDelay = MIN_RECONNECT_MS;
+      this.emitConnection(true);
+    };
+    source.onerror = () => {
+      this.emitConnection(false);
+      // A browser retries an EventSource by itself ONLY while it stays in
+      // CONNECTING. On an HTTP error status (a rotated mobile token 401s,
+      // audit Q-5) it goes to CLOSED for good — that is the state we own.
+      if (source.readyState === EventSource.CLOSED) this.scheduleReconnect();
+    };
+    source.onmessage = (message) => this.handleMessage(message.data);
+  }
+
+  /** Jittered backoff, same shape as the panel's WebSocket transport. */
+  private scheduleReconnect(): void {
+    if (this.stopped || this.retryTimer) return;
+    this.source?.close();
+    this.source = null;
+    const delay = this.retryDelay + Math.random() * RECONNECT_JITTER_MS;
+    this.retryDelay = Math.min(this.retryDelay * RECONNECT_GROW, MAX_RECONNECT_MS);
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      if (!this.stopped) this.open();
+    }, delay);
   }
 
   send(payload: Record<string, unknown>): boolean {

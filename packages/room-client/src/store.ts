@@ -146,6 +146,13 @@ export class RoomClient {
    * Typed query — resolves with the domain reply event (also cached),
    * rejects on a failed CommandResult or transport error. The reply passes
    * through onEvent as well, so legacy handlers keep working.
+   *
+   * Both legs are bounded by timeoutMs (audit Q-4). The command leg has the
+   * transport's own timeout; the REPLY leg needs its own, because a daemon
+   * that acks `ok:true` and then never sends (or sends a malformed) domain
+   * frame would otherwise leave the promise unsettled and its transport
+   * listener subscribed forever — unreachable from dispose(), and one more
+   * leaked closure per retry.
    */
   query<T extends QueryCommandType>(
     type: T,
@@ -157,30 +164,43 @@ export class RoomClient {
 
     return new Promise<Reply>((resolve, reject) => {
       let settled = false;
-      const un = this.transport.onEvent((ev) => {
+      let un: (() => void) | null = null;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      // Single settle path: unsubscribe + disarm, exactly once.
+      const claim = (): boolean => {
+        if (settled) return false;
+        settled = true;
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        un?.();
+        un = null;
+        return true;
+      };
+
+      timer = setTimeout(() => {
+        if (claim()) reject(new TransportError("timeout", `${type} reply timed out`));
+      }, timeoutMs);
+
+      un = this.transport.onEvent((ev) => {
         if (settled || ev.type !== replyType) return;
         if ((ev as { requestId?: string }).requestId !== requestId) return;
-        settled = true;
-        un();
-        resolve(ev as Reply);
+        if (claim()) resolve(ev as Reply);
       });
+
       this.transport
         .request({ ...this.withSource({ type } as Command), requestId }, timeoutMs)
         .then(
           (result) => {
             // ok=true: the domain reply settles the promise (it arrives
             // before the command_result); nothing to do here.
-            if (!result.ok && !settled) {
-              settled = true;
-              un();
+            if (!result.ok && claim()) {
               reject(new Error(result.code ?? result.message ?? "query rejected"));
             }
           },
           (err: unknown) => {
-            if (settled) return;
-            settled = true;
-            un();
-            reject(err);
+            if (claim()) reject(err);
           },
         );
     });
