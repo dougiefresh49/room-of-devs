@@ -18,7 +18,9 @@ if [ -z "$filepath" ] || [ ! -f "$filepath" ]; then
   exit 0
 fi
 
-TTS_DIR="${HOME}/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 CONFIG="${TTS_DIR}/config.json"
 SESSION_VOICES="${TTS_DIR}/session_voices.json"
 MUTED="${TTS_DIR}/muted_sessions.json"
@@ -100,7 +102,9 @@ else
   sfx="$(bash "$SCRIPTS_DIR/random_sfx.sh" 2>/dev/null || true)"
   if [ -n "$sfx" ] && [ -f "$sfx" ]; then
     loga "no announce phrases for ${VOICE} — legacy SFX $(basename "$sfx")"
-    afplay "$sfx" >/dev/null 2>&1 &
+    if [ "$(uname -s)" = "Darwin" ] && command -v afplay >/dev/null 2>&1; then
+      afplay "$sfx" >/dev/null 2>&1 &
+    fi
   fi
 fi
 

@@ -13,7 +13,9 @@
 #
 set -euo pipefail
 
-TTS_DIR="${TTS_DIR:-$HOME/.cursor/tts}"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 TEAM_MAP="$TTS_DIR/team_map.json"
 PENDING_DIR="$TTS_DIR/ptt"
 PENDING="$PENDING_DIR/pending-inject.json"
@@ -176,7 +178,9 @@ if files:
     print(min(files, key=os.path.getsize))
 PY
 )" || return 0
-    [ -n "$sfx" ] && afplay "$sfx" >/dev/null 2>&1 &
+    if [ -n "$sfx" ] && [ "$(uname -s)" = "Darwin" ] && command -v afplay >/dev/null 2>&1; then
+      afplay "$sfx" >/dev/null 2>&1 &
+    fi
 }
 
 write_pending

@@ -7,8 +7,11 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 ROOM_SRC="$PROJECT_DIR/panel/src-tauri/target/debug/bundle/macos/Room.app"
-ROOM_DST="$HOME/.cursor/tts/Room.app"
+ROOM_DST="$TTS_DIR/Room.app"
 CARGO_BIN="$HOME/.rustup/toolchains/stable-aarch64-apple-darwin/bin"
 
 log() { printf '[panel-dev-install] %s\n' "$*"; }
@@ -39,7 +42,9 @@ rsync -a --delete "$ROOM_SRC/" "$ROOM_DST/"
 
 if pgrep -x room-panel >/dev/null 2>&1 || pgrep -f "Room.app/Contents/MacOS" >/dev/null 2>&1; then
     log "Stopping running Room.app..."
-    osascript -e 'tell application "Room" to quit' 2>/dev/null || true
+    if [ "$(uname -s)" = "Darwin" ] && command -v osascript >/dev/null 2>&1; then
+      osascript -e 'tell application "Room" to quit' 2>/dev/null || true
+    fi
     for _ in 1 2 3 4 5 6 7 8 9 10; do
         pgrep -f "Room.app/Contents/MacOS" >/dev/null 2>&1 || break
         sleep 0.3

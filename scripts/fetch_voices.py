@@ -15,7 +15,8 @@ import subprocess
 import sys
 import time
 
-TTS_DIR = os.path.expanduser("~/.cursor/tts")
+# Q-14: honor exported TTS_DIR (same default as scripts/lib/tts-dir.sh).
+TTS_DIR = os.environ.get("TTS_DIR") or os.path.expanduser("~/.cursor/tts")
 CACHE_DIR = os.path.join(TTS_DIR, "cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "voices.json")
 LOG_PATH = os.path.join(TTS_DIR, "logs", "hook.log")

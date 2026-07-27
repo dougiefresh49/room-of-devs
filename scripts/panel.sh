@@ -8,7 +8,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PANEL_DIR="$PROJECT_DIR/panel"
-TTS_DIR="$HOME/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 INSTALLED_APP="$TTS_DIR/Room.app"
 
 # The panel is a WebSocket client of the tts-server daemon — without it the

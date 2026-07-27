@@ -17,4 +17,6 @@
 
 set -euo pipefail
 
-exec "${HOME}/.cursor/tts/scripts/voice_ptt.sh"
+# Q-14: honor exported TTS_DIR.
+TTS_DIR="${TTS_DIR:-$HOME/.cursor/tts}"
+exec "${TTS_DIR}/scripts/voice_ptt.sh"

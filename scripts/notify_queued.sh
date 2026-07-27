@@ -14,7 +14,9 @@ if [ -z "$filepath" ] || [ ! -f "$filepath" ]; then
   exit 0
 fi
 
-TTS_DIR="${HOME}/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 CONFIG="${TTS_DIR}/config.json"
 LOG_FILE="${TTS_DIR}/logs/hook.log"
 
@@ -62,7 +64,8 @@ from pathlib import Path
 
 filepath, config_path, log_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
-TTS_DIR = os.path.expanduser("~/.cursor/tts")
+# Q-14: honor TTS_DIR from the parent shell (exported via lib/tts-dir.sh).
+TTS_DIR = os.environ.get("TTS_DIR") or os.path.expanduser("~/.cursor/tts")
 PLAY = os.path.join(TTS_DIR, "scripts", "play_node.sh")
 GRANT = os.path.join(TTS_DIR, "scripts", "grant_floor.sh")
 RANDOM_SFX = os.path.join(TTS_DIR, "scripts", "random_sfx.sh")
@@ -167,6 +170,10 @@ if sound_is_random_sfx(notification_sound) and not announce_mode:
     except Exception as e:
         log(f"random_sfx failed: {e}")
 
+
+if sys.platform != "darwin":
+    log("notifications skipped (non-macOS)")
+    raise SystemExit(0)
 
 # ── Resolve terminal-notifier binary ─────────────────────────────
 def exe_from_app_bundle(bundle: Path):
@@ -296,6 +303,9 @@ if not tn_bin:
         and not announce_mode
     ):
         script += f' sound name "{esc(osa_sound)}"'
+    if sys.platform != "darwin":
+        log("osascript skipped (non-macOS)")
+        return
     r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
     if r.returncode == 0:
         log(f"notification sent (osascript) {os.path.basename(filepath)}")

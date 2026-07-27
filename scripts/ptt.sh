@@ -9,7 +9,9 @@
 #
 set -euo pipefail
 
-TTS_DIR="$HOME/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 PTT_DIR="$TTS_DIR/ptt"
 SCRIPTS_DIR="$TTS_DIR/scripts"
 LOG_FILE="$TTS_DIR/logs/hook.log"
@@ -118,7 +120,9 @@ is_playback_playing() {
 play_tick() {
     local sfx
     sfx=$("$SCRIPTS_DIR/random_sfx.sh" 2>/dev/null) || return 0
-    afplay "$sfx" >/dev/null 2>&1 &
+    if [ "$(uname -s)" = "Darwin" ] && command -v afplay >/dev/null 2>&1; then
+      afplay "$sfx" >/dev/null 2>&1 &
+    fi
 }
 
 clean_ptt_files() {
