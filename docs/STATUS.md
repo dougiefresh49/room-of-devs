@@ -3,7 +3,7 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-25_
+_Last updated: 2026-07-27_
 
 ## Inbox
 
@@ -15,7 +15,32 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
-- **UI consolidation round 2 — spec ready, awaiting owner OK**:
+- **Ptheory audit triaged → GitHub Issues (2026-07-27)**: a friend's
+  framework ran a full-stack audit — 106 findings, saved verbatim at
+  [archive/reviews/ptheory-audit-2026-07-26.md](archive/reviews/ptheory-audit-2026-07-26.md)
+  (stable finding IDs; issues cite them). Principles distilled to
+  [reference/agentic-workflow-notes.md](reference/agentic-workflow-notes.md).
+  Plan is three sequential rounds, tracked as **GitHub milestones**
+  (issues are the work surface for fix sessions; `gh issue view` has
+  everything, no session context needed):
+  1. **Round A — criticals & quick wins**: perimeter (LAN bind /
+     token handling / skip-permissions default), deploy safety
+     (characters.json, repo-root default, lockfile pinning), sub-20-line
+     reliability fixes (P-1, P-3, P-4, C-4), hook-layer security batch.
+  2. **Round B — foundation**: CI floor (typecheck + fixtures +
+     both-validators), Biome, contract single-sourcing (Q-1), panel
+     error-handling parity with mobile, a11y batch via @room/ui
+     primitives, TTS_DIR instance-isolation sweep (enables containers +
+     parallel worktree instances), PreToolUse enforcement hooks.
+  3. **Round C — UI redesign round 2** (spec unchanged, executes on the
+     Round B substrate). R6/R7 architecture epics filed but sequenced
+     after all three.
+  Verdicts on your machine: C-3 is a clone-path false positive locally;
+  C-2 doesn't bite while your local characters.json exists (still fixing
+  both). Firewall check 2026-07-27: node has an "allow incoming" rule,
+  so 4785 IS LAN-reachable despite the firewall — C-1 stands.
+- **UI consolidation round 2 — spec ready, ON HOLD behind Rounds A/B**
+  (was: awaiting owner OK):
   deep-module audit ran 2026-07-24 with the codebase-design skill
   (mattpocock/skills now installed in ~/.claude/skills). Headline: nine
   concepts built twice, transport controls ×4, style.css is 2,465 lines
@@ -47,8 +72,8 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
   mobile dist rebuilt. Codex visual round: 6/8 pass; the speaking-card
   finding led to a follow-up (card scrolls into view when it starts
   speaking — shipped). Owner confirmed the phone New flow looks good.
-  Ghost state files cleaned. NOTE: **GitHub remote main is stale** (no
-  push since before the refactor) — push pending owner go-ahead.
+  Ghost state files cleaned. Remote main caught up 2026-07-27
+  (ui-consolidation-round2 fast-forwarded into main and pushed).
 
 ## Awaiting owner
 
@@ -61,6 +86,7 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Next up (likely order)
 
+0. **Audit Rounds A → B → C** — see Now; issues + milestones on GitHub.
 1. **Conversational layer** ("dev in the room") — consensus design:
    [active/design-conversational-layer.md](active/design-conversational-layer.md);
    **Stage 1 build spec ready**:
@@ -97,4 +123,7 @@ mode, Donnie avatar art cleanup, and more.
 
 Rules: a spec moves `active/` → `shipped/` when its feature deploys;
 superseded docs get a pointer line at the top and move to `archive/`.
-This file is the only tracking surface — no external tools.
+This file is the "where are we" surface; per-task tracking for the
+audit rounds lives in GitHub Issues/milestones (agents reach it via
+`gh` from any worktree). Repo wiki intentionally unused — docs stay
+in-tree so delegated agents can read them.

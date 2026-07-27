@@ -83,3 +83,13 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
   hybrid: heavy work stays in background review rounds; the call is the
   sync point where agents present, disagree, and take live steering.
   Docs > voice for deep review rigor; voice wins for steering/debate.
+- **Operator gates spoken by the room** (noted 2026-07-27, from the
+  Ptheory framework exchange — see
+  `reference/agentic-workflow-notes.md`): when a build round runs with
+  review gates (operator-style contract review, blocked waves, decisions
+  needing ratification), those structured findings are the ideal payload
+  for the voice layer — spoken interrupts ("Operator blocked wave 3:
+  test evidence doesn't reproduce — send it back?") with signoff
+  collected by PTT/interpreter. The room becomes the ambient surfacing
+  layer above the build loop; pairs with ceremony-mode work if the
+  contract-gig lane firms up.
