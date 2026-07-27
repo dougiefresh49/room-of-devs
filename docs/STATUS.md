@@ -60,10 +60,9 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
   is correct for session targets but breaks pane targets — `send-keys
   -t "=cr-Don"` errors "can't find pane", which had broken phone-reply
   injection. Fixed by resolving the session's unique pane id (`%NN`) for
-  send-keys while keeping the `=`-exact session lookup. **One owner
-  check remains** (needs a second device): from another LAN device
-  `curl http://<lan-ip>:4785/snapshot` must fail to connect, and via the
-  Tailscale IP it must succeed. Rounds B/C below unchanged.
+  send-keys while keeping the `=`-exact session lookup. The
+  second-device check (LAN curl refused, Tailscale succeeds) was
+  verified by the owner 2026-07-27 — Round A fully closed.
 - **Ptheory audit triaged → GitHub Issues (2026-07-27)**: a friend's
   framework ran a full-stack audit — 106 findings, saved verbatim at
   [archive/reviews/ptheory-audit-2026-07-26.md](archive/reviews/ptheory-audit-2026-07-26.md)
@@ -126,12 +125,16 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-- **Live mode v2 retest** — the Sesame-style call/chat redesign shipped
-  2026-07-21; owner hasn't re-tested the full phone flow since the fixes.
-- **Arcade button bring-up (#16)** — hardware-in-hand step (plug in the
-  Fosiya encoder, run learn mode). Design:
-  [active/design-arcade-button-controller.md](active/design-arcade-button-controller.md).
-- **Mic TCC approval** for the panel (one-time macOS prompt).
+- **Round C design picks** — review the four final-synthesis boards
+  (URLs in the Round C entry / spec) and pick or mix; the Round C
+  kickoff ([active/round-c-kickoff-prompt.md](active/round-c-kickoff-prompt.md))
+  is gated on this. If mixing feels hard, the kickoff's fallback is a
+  per-surface pick matrix built for you first.
+
+(Cleared 2026-07-27: live mode v2 retest — done; arcade button
+bring-up #16 — done; Round A second-device LAN check — verified working;
+mic TCC dropped as a tracked item — it's the one-time macOS microphone
+permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 

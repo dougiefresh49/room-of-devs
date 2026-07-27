@@ -24,8 +24,16 @@ you review diffs, merge, deploy, run the verification rounds.
 
 Round C is gated on MY design picks from the four final-synthesis boards
 (fable "The Den" / opus / sol "Workbench" / grok "Floor & Table" — URLs in
-the spec and STATUS.md). **If this message doesn't include my picks, ask for
-them and stop.** Once picks/mix are in:
+the spec and STATUS.md). **If this message doesn't include my picks, build
+me a PICK MATRIX first, then stop and wait**: fetch the four final boards
+(WebFetch/postplan skill), decompose them into per-surface decision rows
+(floor/turn-taking model, tape vs threads, table/attachments, dock, phone
+mode, palette, copy doctrine, consent framing, PTT/talkback, density
+ladder...), and publish ONE side-by-side page (Postplan) where each row
+shows the four options with a one-line tradeoff each — so I can answer in
+plain text like "base: fable Den; floor: opus baton; palette: sol" instead
+of holding four tabs in my head. The final boards' provenance tables are
+the raw material. Once picks/mix are in:
 
 1. One opus or fable lane builds the locked target as a REAL React + shadcn
    mock — scratch Vite app, actual shadcn CLI components + lucide icons,

@@ -267,6 +267,20 @@ How to apply:
   composer-2.5 or gpt-5.6 (Sol for deep reviews) as an extra independent
   perspective (see the `codex-review` skill).
 - Never use Haiku. For trivial work, composer-2.5 or gpt-5.6 Luna.
+- **Check live quota before big delegation rounds** — the `ai-usage`
+  skill reads the AgentUsageBar app (Claude / OpenAI-Codex / Cursor
+  limits at a glance). If one provider is near its cap, route subagents
+  through another; the rankings above assume headroom exists.
+- **Cursor is an overflow route for frontier models, not just
+  composer/grok** (verified `agent models` 2026-07-27): the Cursor plan
+  can run `claude-fable-5-*`, `claude-opus-5-*`, `gpt-5.6-sol-*` (all
+  1M-context, tiered low→max, thinking variants). Cursor usage has been
+  far under its allotment, so when Anthropic Fable/Opus budget runs low,
+  delegate via e.g. `agent --worktree -p --force --model
+  claude-fable-5-thinking-high "..."` instead of the Agent tool. Caveats:
+  Fable via Cursor is flagged **NO ZDR** (no zero-data-retention — fine
+  for this repo, think twice for sensitive code), and `-fast` variants
+  burn extra quota for the same model.
 
 Mechanics:
 
