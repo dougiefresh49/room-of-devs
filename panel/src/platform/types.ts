@@ -15,7 +15,9 @@ export interface PlatformAdapter {
   /** This webview's realm — drives the App tree + native-chrome variant. */
   windowRole(): WindowRole;
   /** Ask Rust (the mode authority) to swap the visible window. */
-  setRoomMode(mode: RoomMode): Promise<void>;
+  /** Resolves false when the mode switch failed (audit M-31: it used to be
+   *  swallowed, leaving the button looking inert). */
+  setRoomMode(mode: RoomMode): Promise<boolean>;
   /** WS URL provider for RoomClient (ws_token invoke). May reject when the
    *  daemon is down — WsTransport tolerates that. */
   wsUrl(): Promise<string>;

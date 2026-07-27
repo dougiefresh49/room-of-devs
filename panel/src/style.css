@@ -342,7 +342,7 @@ button,
 /* Offline reason, stated where the actions are — not hidden in a tooltip
    on an 8px dot. */
 .room-offline-banner {
-  margin: 0 10px 6px;
+  flex: 0 0 auto;
   padding: 5px 9px;
   border: 1px solid rgba(240, 100, 100, 0.5);
   border-radius: 6px;

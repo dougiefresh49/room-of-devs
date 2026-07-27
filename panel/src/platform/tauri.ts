@@ -162,11 +162,13 @@ export const platform: PlatformAdapter = {
     return getCurrentWindow().label === "dock" ? "dock" : "main";
   },
 
-  async setRoomMode(mode: RoomMode): Promise<void> {
+  async setRoomMode(mode: RoomMode): Promise<boolean> {
     try {
       await invoke("set_room_mode", { mode });
+      return true;
     } catch (err) {
       console.error("set_room_mode failed:", err);
+      return false;
     }
   },
 

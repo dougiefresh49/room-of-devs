@@ -24,6 +24,7 @@ import {
   dismissSummary,
   dockHoverEnter,
   dockHoverLeave,
+  showErrorToast,
   toggleCaptions,
   toggleDockSummaryExpanded,
   type ViewState,
@@ -194,7 +195,9 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
-            void platform.setRoomMode("floating");
+            void platform.setRoomMode("floating").then((ok) => {
+              if (!ok) showErrorToast("Couldn't expand the room");
+            });
           }}
         >
           <IconExpand />

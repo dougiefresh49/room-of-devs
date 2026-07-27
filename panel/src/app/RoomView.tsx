@@ -18,6 +18,7 @@ import {
   dismissSummary,
   openPicker,
   openSettings,
+  showErrorToast,
   toggleSummaryPane,
   type ViewState,
 } from "./view-state.js";
@@ -97,7 +98,11 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
             type="button"
             className="icon-btn window-btn"
             title="Dock room"
-            {...windowBtnProps(() => void platform.setRoomMode("dock"))}
+            {...windowBtnProps(() => {
+              void platform.setRoomMode("dock").then((ok) => {
+                if (!ok) showErrorToast("Couldn't dock the room");
+              });
+            })}
           >
             <IconDock />
           </button>
