@@ -1,5 +1,10 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
-import { parseServerEvent, type CommandResult, type ServerEvent } from "@room/protocol";
+import {
+  parseServerEvent,
+  isKnownServerEventType,
+  type CommandResult,
+  type ServerEvent,
+} from "@room/protocol";
 import { TransportError } from "./types.js";
 import type { Transport } from "./types.js";
 
@@ -123,7 +128,16 @@ export class WsTransport implements Transport {
       return;
     }
     const event = parseServerEvent(raw);
-    if (!event) return;
+    if (!event) {
+      const type =
+        raw && typeof raw === "object" && !Array.isArray(raw)
+          ? (raw as { type?: unknown }).type
+          : undefined;
+      if (isKnownServerEventType(type)) {
+        console.warn(`[ws-transport] malformed ${type} frame dropped`);
+      }
+      return;
+    }
 
     if (event.type === "command_result") this.resolvePending(event);
     // Command results remain observable for legacy panel handlers.

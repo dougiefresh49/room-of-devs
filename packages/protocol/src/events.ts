@@ -173,10 +173,35 @@ export const ServerEventSchema = v.variant("type", [
 ]);
 export type ServerEvent = v.InferOutput<typeof ServerEventSchema>;
 
+/** Every server-event `type` the wire contract knows — known-kind failure logs. */
+export const SERVER_EVENT_TYPES = [
+  "snapshot",
+  "notice",
+  "error",
+  "command_result",
+  "resumable",
+  "known_dirs",
+  "buttons",
+  "settings",
+  "list_voices",
+  "captured",
+  "shortcuts",
+  "snap",
+] as const;
+export type ServerEventType = (typeof SERVER_EVENT_TYPES)[number];
+
+const SERVER_EVENT_TYPE_SET = new Set<string>(SERVER_EVENT_TYPES);
+
+/** True when `type` is a known event kind (even if the rest of the frame is malformed). */
+export function isKnownServerEventType(type: unknown): type is ServerEventType {
+  return typeof type === "string" && SERVER_EVENT_TYPE_SET.has(type);
+}
+
 /**
  * Parse a daemon → client frame. Returns null for unknown event kinds and
- * malformed frames — per contract, callers skip null silently (unknown kinds
- * are ignorable so the protocol can grow additively).
+ * malformed frames — per contract, callers skip null for *unknown* kinds so
+ * the protocol can grow additively. Known kinds that fail validation should
+ * be logged by the transport (audit Q-3), not silently equated with unknown.
  */
 export function parseServerEvent(data: unknown): ServerEvent | null {
   const result = v.safeParse(ServerEventSchema, data);

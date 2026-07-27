@@ -1,4 +1,9 @@
-import { parseServerEvent, type CommandResult, type ServerEvent } from "@room/protocol";
+import {
+  parseServerEvent,
+  isKnownServerEventType,
+  type CommandResult,
+  type ServerEvent,
+} from "@room/protocol";
 import { TransportError } from "./types.js";
 import type { Transport } from "./types.js";
 
@@ -113,7 +118,16 @@ export class SseTransport implements Transport {
       raw = { type: "snapshot", ...raw };
     }
     const event = parseServerEvent(raw);
-    if (!event) return;
+    if (!event) {
+      const type =
+        raw && typeof raw === "object" && !Array.isArray(raw)
+          ? (raw as { type?: unknown }).type
+          : undefined;
+      if (isKnownServerEventType(type)) {
+        console.warn(`[sse-transport] malformed ${type} frame dropped`);
+      }
+      return;
+    }
     for (const cb of this.eventListeners) cb(event);
   }
 
