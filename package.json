@@ -6,7 +6,10 @@
     "typecheck": "pnpm -r --if-present run typecheck",
     "check-fixtures": "pnpm --filter @room/protocol run check-fixtures",
     "check-live-fixtures": "pnpm --dir tts-server exec tsx scripts/mock-live.ts check-tailer",
-    "docs:publish": "node scripts/docs-publish.mjs"
+    "docs:publish": "node scripts/docs-publish.mjs",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -14,6 +17,7 @@
     ]
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
     "marked": "^18.0.7"
   }
 }
