@@ -34,8 +34,10 @@ def log(msg):
 
 
 def load_env():
+    """Load only the ElevenLabs key from .env (H-3 allowlist parity)."""
     if os.environ.get("ELEVENLABS_API_KEY"):
         return
+    allow = {"ELEVENLABS_API_KEY"}
     for env_path in [
         os.path.join(TTS_DIR, ".env"),
         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
@@ -51,7 +53,7 @@ def load_env():
                             key, _, value = line.partition("=")
                             key = key.strip()
                             value = value.strip().strip("\"'")
-                            if key and key not in os.environ:
+                            if key in allow and key not in os.environ:
                                 os.environ[key] = value
             except OSError:
                 pass
@@ -61,12 +63,14 @@ def load_env():
 def fetch_from_api(api_key):
     """Fetch voices from ElevenLabs API v2 using curl (avoids Python SSL issues on macOS)."""
     try:
+        # H-5: pass the key via curl --config stdin, never as -H argv.
+        curl_config = f'header = "xi-api-key: {api_key}"\n'
         r = subprocess.run(
             [
-                "curl", "-s", "-f",
-                "-H", f"xi-api-key: {api_key}",
+                "curl", "-s", "-f", "-K", "-",
                 "https://api.elevenlabs.io/v2/voices?page_size=100",
             ],
+            input=curl_config,
             capture_output=True, text=True, timeout=15,
         )
         if r.returncode != 0:
