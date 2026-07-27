@@ -2,10 +2,14 @@ import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, renameS
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { fileURLToPath } from "url";
+import * as v from "valibot";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const TTS_DIR = process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
+// Q-14: honor TTS_DIR (scripts/lib/tts-dir.sh parity). TTS_DIR_OVERRIDE wins
+// for scratch tests that must not touch a real instance directory.
+export const TTS_DIR =
+  process.env.TTS_DIR_OVERRIDE ?? process.env.TTS_DIR ?? join(homedir(), ".cursor", "tts");
 export const QUEUE_DIR = join(TTS_DIR, "queue");
 export const PLAYED_DIR = join(TTS_DIR, "played");
 export const LOG_FILE = join(TTS_DIR, "logs", "hook.log");
@@ -91,6 +95,59 @@ const DEFAULTS: Config = {
   interpreter_timeout_ms: 4000,
 };
 
+// M-13: validate config.json with valibot; unknown keys are ignored (spread).
+const ConfigSchema = v.object({
+  elevenlabs_voice_id: v.string(),
+  elevenlabs_model_id: v.string(),
+  gemini_model: v.string(),
+  default_speed: v.number(),
+  notifications_enabled: v.boolean(),
+  notification_sound: v.string(),
+  streaming_enabled: v.boolean(),
+  playback_mode: v.picklist(["auto", "announce", "silent"]),
+  streaming_session_prefix: v.picklist(["auto", "always", "never"]),
+  played_retention_count: v.number(),
+  failed_retention_count: v.number(),
+  dynamic_responses: v.picklist(["always", "cached", "off"]),
+  arcade_enabled: v.boolean(),
+  panel_port: v.number(),
+  mobile_port: v.number(),
+  dnd_auto: v.boolean(),
+  dnd_apps: v.array(v.string()),
+  victory_lines: v.boolean(),
+  interpreter_enabled: v.boolean(),
+  interpreter_model: v.string(),
+  interpreter_timeout_ms: v.number(),
+});
+
+function issueKey(issue: v.BaseIssue<unknown>): string {
+  const path = issue.path;
+  if (!path || path.length === 0) return "(root)";
+  return path.map((p) => String(p.key ?? p.type)).join(".");
+}
+
+function parseConfigObject(raw: Record<string, unknown>): Config {
+  const merged = { ...DEFAULTS, ...raw };
+  const result = v.safeParse(ConfigSchema, merged);
+  if (result.success) return result.output;
+
+  // Name every bad key, then retry with those keys stripped (graceful defaults).
+  const badKeys = new Set<string>();
+  for (const issue of result.issues) {
+    const key = issueKey(issue);
+    badKeys.add(key.split(".")[0] ?? key);
+    console.error(`config.json: invalid ${key}: ${issue.message}`);
+  }
+  const cleaned: Record<string, unknown> = { ...raw };
+  for (const key of badKeys) {
+    if (key && key !== "(root)") delete cleaned[key];
+  }
+  const retry = v.safeParse(ConfigSchema, { ...DEFAULTS, ...cleaned });
+  if (retry.success) return retry.output;
+  console.error("config.json: validation failed after stripping bad keys — using defaults");
+  return { ...DEFAULTS };
+}
+
 let cachedConfig: Config | null = null;
 let configMtime = 0;
 let rawHasPlaybackMode = false;
@@ -100,12 +157,29 @@ export function loadConfig(): Config {
     const mtime = statSync(CONFIG_PATH).mtimeMs;
     if (cachedConfig && mtime === configMtime) return cachedConfig;
 
-    const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
+    const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) as Record<string, unknown>;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      console.error("config.json: root must be an object — using defaults");
+      rawHasPlaybackMode = false;
+      return { ...DEFAULTS };
+    }
     rawHasPlaybackMode = "playback_mode" in raw;
-    cachedConfig = { ...DEFAULTS, ...raw };
+    cachedConfig = parseConfigObject(raw);
     configMtime = mtime;
-    return cachedConfig!;
-  } catch {
+    return cachedConfig;
+  } catch (err: unknown) {
+    // Missing file / unreadable JSON — same graceful defaults as before.
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code: string }).code !== "ENOENT"
+    ) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!(err instanceof SyntaxError) && !String(msg).includes("ENOENT")) {
+        // JSON parse errors land here too — keep quiet for missing file only.
+      }
+    }
     rawHasPlaybackMode = false;
     return { ...DEFAULTS };
   }
@@ -318,6 +392,14 @@ export function lookupSessionName(sessionId: string): string | null {
   return match?.name || null;
 }
 
+/**
+ * Load API keys from a .env file.
+ *
+ * M-19 precedence (must match scripts/load_env.sh):
+ *   1. explicit process.env (never overwritten)
+ *   2. .env file ($TTS_DIR/.env, then repo-root .env)
+ *   3. unset
+ */
 export function loadEnv(): void {
   const envPaths = [join(TTS_DIR, ".env"), join(__dirname, "..", "..", ".env")];
   for (const p of envPaths) {
