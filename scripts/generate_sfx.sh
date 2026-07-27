@@ -75,26 +75,34 @@ for i in "${!PROMPTS[@]}"; do
     FILENAME="sfx_$(date +%s)_${i}.mp3"
     OUTFILE="$SFX_DIR/$FILENAME"
 
-    PAYLOAD=$(python3 -c "
-import json, sys
+    # Build JSON via env (not argv) so the SFX description isn't ps-visible (H-5).
+    PAYLOAD=$(PROMPT="$PROMPT" python3 -c "
+import json, os
 print(json.dumps({
-    'text': sys.argv[1],
+    'text': os.environ['PROMPT'],
     'duration_seconds': 1.5,
     'prompt_influence': 0.5
 }))
-" "$PROMPT")
+")
 
-    HTTP_CODE=$(curl -s -o "$OUTFILE" -w "%{http_code}" \
-        -X POST "https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128" \
-        -H "xi-api-key: ${ELEVENLABS_API_KEY}" \
-        -H "Content-Type: application/json" \
-        -d "$PAYLOAD" 2>/dev/null) || HTTP_CODE="000"
+    # H-5: API key + JSON body stay out of curl argv (curl --config - + @file).
+    BODY_FILE=$(mktemp "${TMPDIR:-/tmp}/sfx-body.XXXXXX")
+    printf '%s' "$PAYLOAD" > "$BODY_FILE"
+    HTTP_CODE=$(curl -s -o "$OUTFILE" -w "%{http_code}" -K - <<EOF
+url = "https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128"
+request = "POST"
+header = "Content-Type: application/json"
+header = "xi-api-key: ${ELEVENLABS_API_KEY}"
+data-binary = "@${BODY_FILE}"
+EOF
+) || HTTP_CODE="000"
+    rm -f "$BODY_FILE"
 
     if [ "$HTTP_CODE" = "200" ] && [ -f "$OUTFILE" ] && [ "$(wc -c < "$OUTFILE" | tr -d ' ')" -gt 100 ]; then
-        log "Generated: $FILENAME ($PROMPT)"
+        log "Generated: $FILENAME"
         GENERATED=$((GENERATED + 1))
     else
-        log "Failed to generate sound (HTTP $HTTP_CODE): $PROMPT"
+        log "Failed to generate sound (HTTP $HTTP_CODE)"
         rm -f "$OUTFILE"
     fi
 

@@ -9,8 +9,19 @@ set -euo pipefail
 TTS_DIR="$HOME/.cursor/tts"
 QUEUE_DIR="$TTS_DIR/queue"
 LOG_FILE="$TTS_DIR/logs/hook.log"
+# Single-slot rotate at 5MB (shell-side; daemon reaper is a separate lane — H-6).
+HOOK_LOG_MAX_BYTES=$((5 * 1024 * 1024))
 
 mkdir -p "$QUEUE_DIR" "$(dirname "$LOG_FILE")"
+
+# Rotate hook.log before appending when oversized.
+if [ -f "$LOG_FILE" ]; then
+    _sz=$(wc -c < "$LOG_FILE" | tr -d ' ')
+    if [ "${_sz:-0}" -gt "$HOOK_LOG_MAX_BYTES" ]; then
+        mv -f "$LOG_FILE" "${LOG_FILE}.1" 2>/dev/null || true
+    fi
+fi
+unset _sz
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ingest: $*" >> "$LOG_FILE"; }
 
@@ -24,23 +35,28 @@ if [ -f "$LISTENING_FLAG" ]; then
     esac
 fi
 
-input=$(cat)
+# Payload via temp file — never put conversation text in python argv (H-5 / M-4).
+PAYLOAD_FILE=$(mktemp "${TMPDIR:-/tmp}/cursor-ingest-payload.XXXXXX")
+trap 'rm -f "$PAYLOAD_FILE"' EXIT
+cat > "$PAYLOAD_FILE"
 epoch=$(date +%s)
 
 # One python invocation: parse the payload, resolve the thread title (cached
 # per conversation_id under cache/titles/ so the SQLite scan doesn't run on
 # every response), write the queue file, and print its exact path.
-filepath=$(python3 - "$input" "$TTS_DIR" "$LOG_FILE" "$epoch" <<'PY'
+filepath=$(python3 - "$TTS_DIR" "$LOG_FILE" "$PAYLOAD_FILE" "$epoch" <<'PY'
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
 from datetime import datetime
 
-payload_raw, tts_dir, log_path, epoch = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+tts_dir, log_path, payload_file, epoch = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 queue_dir = os.path.join(tts_dir, "queue")
 titles_cache_dir = os.path.join(tts_dir, "cache", "titles")
+SESSION_ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")
 
 
 def log(msg):
@@ -51,6 +67,13 @@ def log(msg):
     except OSError:
         pass
 
+
+try:
+    with open(payload_file, encoding="utf-8") as f:
+        payload_raw = f.read()
+except OSError:
+    log("Could not read payload file")
+    sys.exit(0)
 
 try:
     payload = json.loads(payload_raw)
@@ -68,6 +91,11 @@ generation_id = payload.get("generation_id", "")
 model = payload.get("model", "")
 roots = payload.get("workspace_roots") or []
 workspace_root = roots[0] if roots else ""
+
+# H-2 / M-2: reject ids that would break paths or shell; same rule as ingest.ts.
+if not SESSION_ID_RE.match(conversation_id):
+    log(f"Rejected invalid conversation_id ({len(conversation_id)} chars)")
+    sys.exit(0)
 
 
 def _workspace_matches_header(header: dict, root: str) -> bool:
@@ -185,6 +213,7 @@ def _lookup_workspace_storage(cid: str, root: str) -> str:
 
 # Thread title: check the per-conversation cache first so the workspaceStorage
 # SQLite scan doesn't run on every response.
+# safe_cid kept for cache filenames (defense in depth; id already regex-validated).
 safe_cid = "".join(ch for ch in conversation_id if ch.isalnum() or ch in "-_")[:64] or "unknown"
 cache_file = os.path.join(titles_cache_dir, f"{safe_cid}.txt")
 
@@ -218,7 +247,8 @@ display_title = thread_title
 if len(display_title) > 40:
     display_title = display_title[:37] + "..."
 
-short_conv = conversation_id[:12]
+# M-2: build queue filename from safe_cid, not the raw conversation_id slice.
+short_conv = safe_cid[:12]
 # Millisecond suffix avoids same-second filename collisions (matches ingest.ts).
 ms = int(time.time() * 1000) % 1000
 filename = f"{epoch}-{ms:03d}-{short_conv}.json"
@@ -233,8 +263,11 @@ data = {
     "thread_title": display_title,
     "spoken": False,
 }
-with open(filepath, "w") as f:
+# Atomic tmp+rename (same discipline as ingest.ts P-4).
+tmp_path = f"{filepath}.tmp"
+with open(tmp_path, "w") as f:
     json.dump(data, f, indent=2)
+os.replace(tmp_path, filepath)
 
 suffix = "" if display_title else " — thread title not resolved"
 log(f"Queued response: {filename} (conv={short_conv}, {len(text)} chars){suffix}")

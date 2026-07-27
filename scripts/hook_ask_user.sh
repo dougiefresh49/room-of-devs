@@ -8,8 +8,18 @@ set -euo pipefail
 TTS_DIR="$HOME/.cursor/tts"
 SERVER_DIR="$TTS_DIR/tts-server"
 LOG_FILE="$TTS_DIR/logs/hook.log"
+HOOK_LOG_MAX_BYTES=$((5 * 1024 * 1024))
 
 mkdir -p "$(dirname "$LOG_FILE")"
+
+# Rotate hook.log when oversized (H-6).
+if [ -f "$LOG_FILE" ]; then
+    _sz=$(wc -c < "$LOG_FILE" | tr -d ' ')
+    if [ "${_sz:-0}" -gt "$HOOK_LOG_MAX_BYTES" ]; then
+        mv -f "$LOG_FILE" "${LOG_FILE}.1" 2>/dev/null || true
+    fi
+fi
+unset _sz
 
 # Check listening flag
 LISTENING_FLAG="$TTS_DIR/listening.enabled"
@@ -24,7 +34,10 @@ SESSION_ID=""
 QUESTION_TEXT=""
 PAYLOAD=$(cat 2>/dev/null || true)
 if [ -n "$PAYLOAD" ]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] hook_ask_user payload: $PAYLOAD" >> "$LOG_FILE" 2>/dev/null || true
+    # Verbatim payload logging is debug-only (H-6).
+    if [ "${TTS_HOOK_DEBUG:-0}" = "1" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] hook_ask_user payload: $PAYLOAD" >> "$LOG_FILE" 2>/dev/null || true
+    fi
     SESSION_ID=$(echo "$PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null || true)
     # Extract questions and options into a readable summary
     QUESTION_TEXT=$(echo "$PAYLOAD" | python3 -c "
@@ -53,7 +66,9 @@ if [ -z "$QUESTION_TEXT" ]; then
     exit 0
 fi
 
-# Route through Node.js signal handler for in-character TTS
+# Route through Node.js signal handler for in-character TTS.
+# H-5: question text still lands in argv until signal.ts grows --text-file /
+# stdin support — see HANDOFF-61.md.
 if [ -f "$SERVER_DIR/src/signal.ts" ] && command -v pnpm &>/dev/null; then
     cd "$SERVER_DIR"
     exec pnpm exec tsx src/signal.ts ask-user "$SESSION_ID" "$QUESTION_TEXT"

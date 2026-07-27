@@ -8,6 +8,7 @@ import {
 } from "fs";
 import { join } from "path";
 import { createHash } from "crypto";
+import { spawnSync } from "child_process";
 import {
   QUEUE_DIR,
   PLAYED_DIR,
@@ -22,6 +23,9 @@ import { setSessionState } from "./state.js";
 import { log } from "./logger.js";
 
 loadEnv();
+
+/** Claude Code session ids are UUIDs; reject anything else before it hits paths/argv. */
+const SESSION_ID_RE = /^[A-Za-z0-9-]{1,64}$/;
 
 interface HookPayload {
   transcript_path?: string;
@@ -120,7 +124,12 @@ try {
 }
 
 const transcriptPath = payload.transcript_path ?? "";
-const sessionId = payload.session_id ?? "unknown";
+const rawSessionId = payload.session_id ?? "unknown";
+if (!SESSION_ID_RE.test(rawSessionId)) {
+  log("ingest", `Rejected invalid session_id (${rawSessionId.length} chars)`);
+  process.exit(0);
+}
+const sessionId = rawSessionId;
 
 if (!transcriptPath || !existsSync(transcriptPath)) {
   log("ingest", `No transcript: ${transcriptPath}`);
@@ -169,7 +178,10 @@ const data = {
   source: "claude-code",
 };
 
-writeFileSync(filepath, JSON.stringify(data, null, 2));
+// Atomic tmp+rename so chokidar sees a complete file (P-4 / issue #60 partial).
+const tmpPath = `${filepath}.tmp`;
+writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+renameSync(tmpPath, filepath);
 log("ingest", `Queued: ${filename} (${text.length} chars)`);
 
 // Raise the hand for this session (has an undelivered update). Mute check
@@ -179,11 +191,10 @@ if (sessionId !== "unknown" && !loadMutedSessions().includes(sessionId)) {
   setSessionState(sessionId, "hand_raised");
 }
 
-const { execSync } = await import("child_process");
 const scriptsDir = join(TTS_DIR, "scripts");
 const notifyScript = join(scriptsDir, "notify_queued.sh");
 if (existsSync(notifyScript)) {
   try {
-    execSync(`bash "${notifyScript}" "${filepath}"`, { stdio: "ignore" });
+    spawnSync("bash", [notifyScript, filepath], { stdio: "ignore" });
   } catch {}
 }

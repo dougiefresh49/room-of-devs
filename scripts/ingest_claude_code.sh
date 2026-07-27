@@ -9,8 +9,18 @@ set -euo pipefail
 TTS_DIR="$HOME/.cursor/tts"
 QUEUE_DIR="$TTS_DIR/queue"
 LOG_FILE="$TTS_DIR/logs/hook.log"
+HOOK_LOG_MAX_BYTES=$((5 * 1024 * 1024))
 
 mkdir -p "$QUEUE_DIR" "$(dirname "$LOG_FILE")"
+
+# Rotate hook.log before appending when oversized (H-6).
+if [ -f "$LOG_FILE" ]; then
+    _sz=$(wc -c < "$LOG_FILE" | tr -d ' ')
+    if [ "${_sz:-0}" -gt "$HOOK_LOG_MAX_BYTES" ]; then
+        mv -f "$LOG_FILE" "${LOG_FILE}.1" 2>/dev/null || true
+    fi
+fi
+unset _sz
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ingest_cc: $*" >> "$LOG_FILE"; }
 
@@ -36,6 +46,7 @@ QUEUED_FILE=$(python3 - "$TTS_DIR" "$LOG_FILE" "$PAYLOAD_FILE" <<'PY'
 import json
 import hashlib
 import os
+import re
 import sys
 from datetime import datetime
 
@@ -43,6 +54,7 @@ tts_dir = sys.argv[1]
 log_path = sys.argv[2]
 payload_file = sys.argv[3]
 queue_dir = os.path.join(tts_dir, "queue")
+SESSION_ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")
 
 def log(msg):
     try:
@@ -71,6 +83,11 @@ except json.JSONDecodeError as e:
 
 transcript_path = payload.get("transcript_path", "")
 session_id = payload.get("session_id", "unknown")
+
+# H-2: same session_id gate as ingest.ts / ingest.sh.
+if not SESSION_ID_RE.match(session_id):
+    log(f"Rejected invalid session_id ({len(session_id)} chars)")
+    sys.exit(0)
 
 if not transcript_path or not os.path.isfile(transcript_path):
     log(f"No transcript file: {transcript_path}")
@@ -139,6 +156,7 @@ now = datetime.now().timestamp()
 epoch = int(now)
 # Millisecond suffix avoids same-second filename collisions (matches ingest.ts).
 ms = int(now * 1000) % 1000
+# Filename from validated id only (H-2 / M-2).
 short_session = session_id[:12] if session_id else "unknown"
 filename = f"{epoch}-{ms:03d}-cc-{short_session}.json"
 filepath = os.path.join(queue_dir, filename)
@@ -173,8 +191,10 @@ data = {
     "source": "claude-code",
 }
 
-with open(filepath, "w", encoding="utf-8") as f:
+tmp_path = f"{filepath}.tmp"
+with open(tmp_path, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
+os.replace(tmp_path, filepath)
 
 log(f"Queued Claude Code response: {filename} ({len(text)} chars)")
 print(filepath)

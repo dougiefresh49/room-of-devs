@@ -20,7 +20,21 @@ fi
 
 RETENTION=50
 if [ -f "$CONFIG" ]; then
-    RETENTION=$(python3 -c "import json; print(json.load(open('$CONFIG')).get('played_retention_count', 50))" 2>/dev/null || echo "50")
+    RETENTION=$(python3 -c "
+import json, sys
+try:
+    v = json.load(open(sys.argv[1])).get('played_retention_count', 50)
+except Exception:
+    v = 50
+print(v)
+" "$CONFIG" 2>/dev/null || echo "50")
+fi
+
+# M-8: refuse to mass-delete unless retention is a positive integer.
+if ! [[ "$RETENTION" =~ ^[1-9][0-9]*$ ]]; then
+    echo "cleanup_played: abort — played_retention_count must be a positive integer (got: ${RETENTION})" >&2
+    log "ABORT — invalid played_retention_count: ${RETENTION}"
+    exit 1
 fi
 
 TOTAL=$(find "$PLAYED_DIR" -name '*.json' -maxdepth 1 2>/dev/null | wc -l | tr -d ' ')
