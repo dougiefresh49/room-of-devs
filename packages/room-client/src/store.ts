@@ -23,12 +23,7 @@ import type {
   SettingsEvent,
   ShortcutsEvent,
 } from "@room/protocol";
-import {
-  NO_PENDING_GRANTS,
-  PENDING_GRANT_MS,
-  beginGrant,
-  reduceGrants,
-} from "./grant.js";
+import { NO_PENDING_GRANTS, PENDING_GRANT_MS, beginGrant, reduceGrants } from "./grant.js";
 import { TransportError } from "./types.js";
 import type { RoomClientOptions, RoomState, Transport } from "./types.js";
 
@@ -82,7 +77,10 @@ export class RoomClient {
   private readonly requestTimeoutMs: number;
   private readonly source?: RoomClientOptions["source"];
 
-  constructor(private transport: Transport, opts: RoomClientOptions = {}) {
+  constructor(
+    private transport: Transport,
+    opts: RoomClientOptions = {},
+  ) {
     this.now = opts.now ?? Date.now;
     this.requestTimeoutMs = opts.requestTimeoutMs ?? 10_000;
     this.source = opts.source;
@@ -274,11 +272,7 @@ export class RoomClient {
   private armGrantTimer(): void {
     const timer = setTimeout(() => {
       this.grantTimers.delete(timer);
-      const pendingGrants = reduceGrants(
-        this.state.pendingGrants,
-        this.state.snapshot,
-        this.now(),
-      );
+      const pendingGrants = reduceGrants(this.state.pendingGrants, this.state.snapshot, this.now());
       if (pendingGrants !== this.state.pendingGrants) {
         this.setState({ ...this.state, pendingGrants });
       }

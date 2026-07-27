@@ -77,12 +77,21 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
   };
   const moveToPhone = () => {
     if (isPhone || !dock.np || busy) return;
-    audioController.beginMacToPhone(dock.np, { character: dock.character, name: dock.name }, macOffsetSec(dock.np));
+    audioController.beginMacToPhone(
+      dock.np,
+      { character: dock.character, name: dock.name },
+      macOffsetSec(dock.np),
+    );
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label="Playback">
+    <div
+      className="fixed inset-0 z-40 flex flex-col justify-end"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Playback"
+    >
       <button
         type="button"
         aria-label="Close"
@@ -104,14 +113,23 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
 
         <div className="flex shrink-0 items-center gap-3">
           <Avatar
-            agent={dock.agent ?? { character: dock.character === "default" ? null : dock.character, name: dock.name }}
+            agent={
+              dock.agent ?? {
+                character: dock.character === "default" ? null : dock.character,
+                name: dock.name,
+              }
+            }
             frame={playing || !isPhone ? "speaking" : "idle"}
             className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface-strong text-sm font-semibold text-fg-muted"
           />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15px] font-bold text-fg">{dock.name}</div>
             <div className="text-[11px] font-medium text-fg-muted">
-              {isPhone ? (player.live ? "streaming on this phone" : "on this phone") : "playing on Mac"}
+              {isPhone
+                ? player.live
+                  ? "streaming on this phone"
+                  : "on this phone"
+                : "playing on Mac"}
             </div>
           </div>
           {/* Always-present, reachable close affordance (never trap the user). */}
@@ -121,7 +139,15 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
             aria-label="Close"
             className="grid size-9 shrink-0 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="size-5"
+              aria-hidden="true"
+            >
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
@@ -203,7 +229,9 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           </button>
         </div>
         {busy ? (
-          <div className="mt-2 shrink-0 text-center text-[12px] text-fg-muted">Moving playback…</div>
+          <div className="mt-2 shrink-0 text-center text-[12px] text-fg-muted">
+            Moving playback…
+          </div>
         ) : null}
 
         {/* speed — phone static playback only */}

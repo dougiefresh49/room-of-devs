@@ -102,7 +102,6 @@ export class WsTransport implements Transport {
         reject(new TransportError("down", "WebSocket connection is down"));
         return;
       }
-
     });
   }
 

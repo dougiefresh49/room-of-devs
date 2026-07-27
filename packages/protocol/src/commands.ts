@@ -17,12 +17,7 @@
  */
 import * as v from "valibot";
 
-export const CommandSourceSchema = v.picklist([
-  "desktop",
-  "mobile",
-  "voice",
-  "interpreter",
-]);
+export const CommandSourceSchema = v.picklist(["desktop", "mobile", "voice", "interpreter"]);
 export type CommandSource = v.InferOutput<typeof CommandSourceSchema>;
 
 const envelope = {
@@ -79,8 +74,7 @@ export type ButtonPatch = v.InferOutput<typeof ButtonPatchSchema>;
 const sessionCommand = <T extends string>(type: T) =>
   v.object({ type: v.literal(type), sessionId: v.string(), ...envelope });
 
-const bareCommand = <T extends string>(type: T) =>
-  v.object({ type: v.literal(type), ...envelope });
+const bareCommand = <T extends string>(type: T) => v.object({ type: v.literal(type), ...envelope });
 
 export const GrantCommandSchema = v.object({
   type: v.literal("grant"),

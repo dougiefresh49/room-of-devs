@@ -10,13 +10,7 @@
  * assembled by App from prefs.launchFlags() at launch time.
  */
 import { useEffect, useRef, useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@room/ui";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@room/ui";
 import {
   basename,
   dirOf,
@@ -128,10 +122,7 @@ export function PickerSheet({ open, onOpenChange, onSpawn, onResume }: PickerShe
             <SheetDescription>Spawn a fresh persona or resume a past session.</SheetDescription>
           </SheetHeader>
 
-          <div
-            className="flex min-w-0 rounded-lg border border-line-strong p-0.5"
-            role="tablist"
-          >
+          <div className="flex min-w-0 rounded-lg border border-line-strong p-0.5" role="tablist">
             {(["new", "resume"] as const).map((value) => (
               <button
                 key={value}

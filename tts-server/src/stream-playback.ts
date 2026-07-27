@@ -5,11 +5,7 @@ import { log } from "./logger.js";
 import type { WordTiming } from "./elevenlabs.js";
 import { basename } from "path";
 import { releaseLock } from "./playback-locks.js";
-import {
-  saveReplayFile,
-  openReplayWriter,
-  type ReplayMeta,
-} from "./replay-store.js";
+import { saveReplayFile, openReplayWriter, type ReplayMeta } from "./replay-store.js";
 import {
   type PlaybackContext,
   beginSessionSpeaking,
@@ -51,10 +47,7 @@ export function awaitPendingDrain(capMs = 95_000): Promise<void> {
   if (!pendingDrain) return Promise.resolve();
   // The drain's 90s cap only ticks per received chunk — a fully stalled
   // stream would never resolve it. Cap the wait so `once` always exits.
-  return Promise.race([
-    pendingDrain,
-    new Promise<void>((r) => setTimeout(r, capMs).unref?.()),
-  ]);
+  return Promise.race([pendingDrain, new Promise<void>((r) => setTimeout(r, capMs).unref?.())]);
 }
 
 /** Stream synthesis into a replay file; phone plays it live. No Mac speakers. */
@@ -65,7 +58,7 @@ async function playStreamToPhone(
   replayMeta: ReplayMeta | undefined,
   getWords: (() => WordTiming[]) | undefined,
   tempoRate: number,
-  onPersisted?: () => void
+  onPersisted?: () => void,
 ): Promise<number> {
   const grantId = basename(queueFile);
   const captioned = !!getWords && ctx !== "meta";
@@ -142,12 +135,9 @@ async function playStreamToPhone(
 
   const waitMs = Math.max(
     0,
-    startedAtMs + phoneGrantDurationMs(alignment) + PHONE_GRANT_SLACK_MS - Date.now()
+    startedAtMs + phoneGrantDurationMs(alignment) + PHONE_GRANT_SLACK_MS - Date.now(),
   );
-  log(
-    "audio",
-    `Phone grant ${grantId}: waiting ${Math.round(waitMs / 1000)}s for playback window`
-  );
+  log("audio", `Phone grant ${grantId}: waiting ${Math.round(waitMs / 1000)}s for playback window`);
   await sleep(waitMs);
 
   // Compare-and-set: newer playback (e.g. Mac auto-play) may own now-playing
@@ -170,7 +160,7 @@ export function playStreamBuffer(
   sink: StreamSink = "ffplay",
   // Called once the replay + now-playing are durably written (phone sink) —
   // the caller retires the queue item here, before the playback-window wait.
-  onPersisted?: () => void
+  onPersisted?: () => void,
 ): Promise<number> {
   return new Promise(async (resolve) => {
     const config = loadConfig();
@@ -187,20 +177,13 @@ export function playStreamBuffer(
           replayMeta,
           getWords,
           tempoRate,
-          onPersisted
-        )
+          onPersisted,
+        ),
       );
       return;
     }
 
-    const ffplayArgs = [
-      "-nodisp",
-      "-autoexit",
-      "-loglevel",
-      "quiet",
-      "-i",
-      "pipe:0",
-    ];
+    const ffplayArgs = ["-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "pipe:0"];
     if (tempoRate > 1.0) {
       ffplayArgs.push("-af", `atempo=${tempoRate}`);
       log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elMax}x)`);
@@ -312,11 +295,7 @@ export function playStreamBuffer(
         }
         if (!playerClosed) pushAlignment();
         // Detached drain after player-kill — stop at the hard cap.
-        if (
-          playerClosed &&
-          drainDeadline != null &&
-          Date.now() >= drainDeadline
-        ) {
+        if (playerClosed && drainDeadline != null && Date.now() >= drainDeadline) {
           log("audio", "Early-stop drain hit 90s cap — saving what we have");
           break;
         }

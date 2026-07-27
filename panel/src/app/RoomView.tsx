@@ -67,10 +67,20 @@ export function RoomView({ snapshot, connected, staleSessions, view, ui, clock }
             className={`conn-dot ${connected ? "up" : "down"}`}
             title={connected ? "Connected" : "Disconnected"}
           />
-          <button type="button" className="icon-btn window-btn" title="New session" {...windowBtnProps(openPicker)}>
+          <button
+            type="button"
+            className="icon-btn window-btn"
+            title="New session"
+            {...windowBtnProps(openPicker)}
+          >
             <IconPlus />
           </button>
-          <button type="button" className="icon-btn window-btn" title="Settings" {...windowBtnProps(openSettings)}>
+          <button
+            type="button"
+            className="icon-btn window-btn"
+            title="Settings"
+            {...windowBtnProps(openSettings)}
+          >
             <IconGear />
           </button>
           <button

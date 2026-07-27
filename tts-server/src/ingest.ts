@@ -1,11 +1,4 @@
-import {
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  renameSync,
-} from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, renameSync } from "fs";
 import { join } from "path";
 import { createHash } from "crypto";
 import { spawnSync } from "child_process";

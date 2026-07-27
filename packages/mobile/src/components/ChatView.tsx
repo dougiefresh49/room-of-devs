@@ -39,9 +39,7 @@ interface ChatViewProps {
   onSend: (text: string) => Promise<boolean>;
 }
 
-type Row =
-  | { kind: "msg"; at: number; item: ThreadItem }
-  | { kind: "ack"; at: number; key: string };
+type Row = { kind: "msg"; at: number; item: ThreadItem } | { kind: "ack"; at: number; key: string };
 
 export function ChatView({
   agent,
@@ -164,7 +162,9 @@ export function ChatView({
                 : "border-accent/40 bg-accent/5 text-accent/90 hover:bg-accent/10"
             }`}
           >
-            <span className={`size-[7px] rounded-full ${liveOn ? "bg-accent cv-breathe" : "bg-accent/50"}`} />
+            <span
+              className={`size-[7px] rounded-full ${liveOn ? "bg-accent cv-breathe" : "bg-accent/50"}`}
+            />
             {liveTransition === "starting"
               ? "Going live…"
               : liveTransition === "ending"

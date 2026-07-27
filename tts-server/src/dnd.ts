@@ -9,12 +9,7 @@ const HOLD_FILE = join(TTS_DIR, ".hold-room.json");
 const POLL_MS = 15_000;
 const RECENT_ACTIVE_MS = 60_000;
 
-const DEFAULT_DND_APPS = [
-  "zoom.us",
-  "FaceTime",
-  "Microsoft Teams",
-  "Webex",
-];
+const DEFAULT_DND_APPS = ["zoom.us", "FaceTime", "Microsoft Teams", "Webex"];
 
 export interface HoldInfo {
   active: boolean;
@@ -24,10 +19,7 @@ export interface HoldInfo {
 export type DndAction = "hold" | "release" | "noop";
 
 /** Pure decision: given meeting-app signal + hold state → action. */
-export function decideDndAction(
-  meetingActive: boolean,
-  hold: HoldInfo
-): DndAction {
+export function decideDndAction(meetingActive: boolean, hold: HoldInfo): DndAction {
   if (meetingActive) {
     if (!hold.active) return "hold";
     return "noop";
@@ -70,7 +62,7 @@ function getFrontmostApp(): string | null {
       "-e",
       'tell application "System Events" to get name of first application process whose frontmost is true',
     ],
-    { encoding: "utf-8" }
+    { encoding: "utf-8" },
   );
   const name = r.stdout?.trim();
   return name || null;
@@ -106,8 +98,7 @@ function runHoldRoom(args: string[], env: Record<string, string> = {}): void {
 
 function tick(): void {
   const config = loadConfig();
-  const apps =
-    config.dnd_apps?.length > 0 ? config.dnd_apps : DEFAULT_DND_APPS;
+  const apps = config.dnd_apps?.length > 0 ? config.dnd_apps : DEFAULT_DND_APPS;
   const active = meetingAppActive(apps);
   const hold = readHoldInfo();
   const action = decideDndAction(active, hold);

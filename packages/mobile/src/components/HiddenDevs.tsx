@@ -19,12 +19,14 @@ export function HiddenDevs({ hiddenNames, agents, onShow }: HiddenDevsProps) {
   const listId = useId();
   if (hiddenNames.length === 0) return null;
 
-  const rows = [...hiddenNames].sort((a, b) => a.localeCompare(b)).map((rawName) => {
-    const live = agents.find((agent) => agent.name.trim() === rawName);
-    const label = live ? live.label || live.name : rawName;
-    const sub = label !== rawName ? rawName : null;
-    return { rawName, label, sub };
-  });
+  const rows = [...hiddenNames]
+    .sort((a, b) => a.localeCompare(b))
+    .map((rawName) => {
+      const live = agents.find((agent) => agent.name.trim() === rawName);
+      const label = live ? live.label || live.name : rawName;
+      const sub = label !== rawName ? rawName : null;
+      return { rawName, label, sub };
+    });
 
   return (
     <section className="mt-4">

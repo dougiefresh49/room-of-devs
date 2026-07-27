@@ -2,9 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "dock-window",
   "description": "dock NSPanel: geometry + drag only — no dialog, no close (Rust owns visibility)",
-  "windows": [
-    "dock"
-  ],
+  "windows": ["dock"],
   "permissions": [
     "allow-ws-token",
     "allow-set-room-mode",

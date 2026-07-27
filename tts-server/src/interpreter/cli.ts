@@ -14,7 +14,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args[0] !== "route") {
     console.error(
-      'Usage: tsx src/interpreter/cli.ts route [--target <sessionId>] [--dry-run] "<transcript>"'
+      'Usage: tsx src/interpreter/cli.ts route [--target <sessionId>] [--dry-run] "<transcript>"',
     );
     process.exit(1);
   }
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const transcript = rest.join(" ").trim();
   if (!transcript) {
     console.error(
-      'Usage: tsx src/interpreter/cli.ts route [--target <sessionId>] [--dry-run] "<transcript>"'
+      'Usage: tsx src/interpreter/cli.ts route [--target <sessionId>] [--dry-run] "<transcript>"',
     );
     process.exit(1);
   }
@@ -55,7 +55,7 @@ async function main(): Promise<void> {
       capturedAt: Date.now(),
       duckToken: null,
     },
-    intentId
+    intentId,
   );
   process.exit(0);
 }

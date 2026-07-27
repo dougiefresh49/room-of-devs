@@ -7,10 +7,7 @@ export function QueuedPreview({ text }: { text: string }) {
   const trimmed = text.trim();
   if (!trimmed) return null;
   return (
-    <div
-      className="queued-preview"
-      title={trimmed}
-    >
+    <div className="queued-preview" title={trimmed}>
       “{trimmed}”
     </div>
   );

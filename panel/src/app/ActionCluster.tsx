@@ -64,7 +64,17 @@ function hideBrokenAvatar(e: SyntheticEvent<HTMLImageElement>) {
 }
 
 export function ActionCluster(props: ActionClusterProps) {
-  const { mode, isTeam, paused, killArmed, swapOpen, personas, onAction, onSwapOpenChange, onSwapCharacter } = props;
+  const {
+    mode,
+    isTeam,
+    paused,
+    killArmed,
+    swapOpen,
+    personas,
+    onAction,
+    onSwapOpenChange,
+    onSwapCharacter,
+  } = props;
 
   if (mode === "stage") {
     return (
@@ -97,7 +107,11 @@ export function ActionCluster(props: ActionClusterProps) {
   if (mode === "summary") {
     return (
       <>
-        <ClusterBtn className="icon-btn hover-btn" title="Replay" onClick={() => onAction("replay")}>
+        <ClusterBtn
+          className="icon-btn hover-btn"
+          title="Replay"
+          onClick={() => onAction("replay")}
+        >
           <IconReplay />
         </ClusterBtn>
         <ClusterBtn
@@ -108,7 +122,11 @@ export function ActionCluster(props: ActionClusterProps) {
           <IconReplaySlower />
         </ClusterBtn>
         {isTeam && (
-          <ClusterBtn className="icon-btn hover-btn" title="Jump to terminal" onClick={() => onAction("focus")}>
+          <ClusterBtn
+            className="icon-btn hover-btn"
+            title="Jump to terminal"
+            onClick={() => onAction("focus")}
+          >
             <IconTerminal />
           </ClusterBtn>
         )}
@@ -129,13 +147,19 @@ export function ActionCluster(props: ActionClusterProps) {
       </ClusterBtn>
       <ClusterBtn
         className={`icon-btn hover-btn kill-btn${teamOnly ? " disabled" : ""}${killArmed ? " armed" : ""}`}
-        title={teamOnly ? "team sessions only" : killArmed ? "click again to end session" : "End session"}
+        title={
+          teamOnly ? "team sessions only" : killArmed ? "click again to end session" : "End session"
+        }
         disabled={teamOnly}
         onClick={() => onAction("kill")}
       >
         <IconPower />
       </ClusterBtn>
-      <ClusterBtn className="icon-btn hover-btn" title="Speak status" onClick={() => onAction("status")}>
+      <ClusterBtn
+        className="icon-btn hover-btn"
+        title="Speak status"
+        onClick={() => onAction("status")}
+      >
         <IconInfo />
       </ClusterBtn>
       <ClusterBtn
@@ -181,7 +205,12 @@ export function ActionCluster(props: ActionClusterProps) {
               }}
             >
               <span className="swap-chip-av">
-                <img className="avatar swap-chip-img" src={p.avatarSrc} alt="" onError={hideBrokenAvatar} />
+                <img
+                  className="avatar swap-chip-img"
+                  src={p.avatarSrc}
+                  alt=""
+                  onError={hideBrokenAvatar}
+                />
                 <span className="avatar-fallback swap-chip-fallback">{p.label[0]}</span>
               </span>
               <span>{p.label}</span>

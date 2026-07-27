@@ -38,7 +38,8 @@ type NowPlaying = {
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = resolve(SCRIPT_DIR, "..");
-const TTS_DIR = process.env.TTS_DIR ?? process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
+const TTS_DIR =
+  process.env.TTS_DIR ?? process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
 const PROJECTS_DIR = join(homedir(), ".claude", "projects");
 const TRANSCRIPT_DIR = join(PROJECTS_DIR, "mock-live-harness");
 const LIVE_PATH = join(TTS_DIR, "live_sessions.json");
@@ -87,14 +88,20 @@ function transcriptPath(id: string): string {
 }
 
 function isMockFrame(frame: NowPlaying): boolean {
-  return frame.sessionId?.startsWith("mock-") === true && frame.grantId?.startsWith("mock-") === true;
+  return (
+    frame.sessionId?.startsWith("mock-") === true && frame.grantId?.startsWith("mock-") === true
+  );
 }
 
 function realFrameIsFresh(frame: NowPlaying): boolean {
   if (isMockFrame(frame) || frame.endedAt) return false;
   if (frame.synthesisComplete === false) return true;
   const started = Date.parse(frame.startedAt ?? "");
-  return Number.isFinite(started) && Date.now() - started >= 0 && Date.now() - started < REAL_FRAME_FRESH_MS;
+  return (
+    Number.isFinite(started) &&
+    Date.now() - started >= 0 &&
+    Date.now() - started < REAL_FRAME_FRESH_MS
+  );
 }
 
 function assertNoRealNowPlaying(): void {
@@ -102,7 +109,9 @@ function assertNoRealNowPlaying(): void {
   const frame = readJson<NowPlaying | null>(NOW_PLAYING_PATH, null);
   if (!frame) fail("refusing now-playing mutation: existing frame is unreadable");
   if (realFrameIsFresh(frame)) {
-    fail(`refusing now-playing mutation: fresh non-mock frame belongs to ${frame.sessionId ?? "unknown"}`);
+    fail(
+      `refusing now-playing mutation: fresh non-mock frame belongs to ${frame.sessionId ?? "unknown"}`,
+    );
   }
 }
 
@@ -157,13 +166,17 @@ function updateEntry(idArg: string | undefined, mutate: (entry: LiveEntry) => vo
 function commandActivity(id: string | undefined, labelParts: string[]): void {
   const label = labelParts.join(" ").trim();
   if (!label) fail("activity requires a label");
-  updateEntry(id, (entry) => { entry.lastActivity = { label, at: new Date().toISOString() }; });
+  updateEntry(id, (entry) => {
+    entry.lastActivity = { label, at: new Date().toISOString() };
+  });
 }
 
 function commandTools(id: string | undefined, rawN: string | undefined): void {
   const n = Number(rawN);
   if (!Number.isSafeInteger(n) || n < 0) fail("tools requires a non-negative integer");
-  updateEntry(id, (entry) => { entry.toolCount += n; });
+  updateEntry(id, (entry) => {
+    entry.toolCount += n;
+  });
 }
 
 function smallestCachedClip(): string {
@@ -172,7 +185,10 @@ function smallestCachedClip(): string {
     files = readdirSync(REPLAY_DIR).filter((f) => f.endsWith(".mp3") && !f.includes("mock-"));
   } catch {}
   if (!files.length) fail(`no cached replay clips found in ${REPLAY_DIR}`);
-  files.sort((a, b) => statSync(join(REPLAY_DIR, a)).size - statSync(join(REPLAY_DIR, b)).size || a.localeCompare(b));
+  files.sort(
+    (a, b) =>
+      statSync(join(REPLAY_DIR, a)).size - statSync(join(REPLAY_DIR, b)).size || a.localeCompare(b),
+  );
   return join(REPLAY_DIR, files[0]);
 }
 
@@ -182,12 +198,19 @@ function sleep(ms: number): Promise<void> {
 
 async function commandStream(idArg: string | undefined, args: string[]): Promise<void> {
   const id = requireMockId(idArg);
-  if (!liveMap()[id]?.on || !existsSync(join(STATE_DIR, `${id}.json`))) fail(`live session not found: ${id}`);
+  if (!liveMap()[id]?.on || !existsSync(join(STATE_DIR, `${id}.json`)))
+    fail(`live session not found: ${id}`);
   let output: "phone" | "mac" = "phone";
   let rate = 16_000;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--output" && (args[i + 1] === "phone" || args[i + 1] === "mac")) output = args[++i] as typeof output;
-    else if (args[i] === "--rate" && Number.isFinite(Number(args[i + 1])) && Number(args[i + 1]) > 0) rate = Number(args[++i]);
+    if (args[i] === "--output" && (args[i + 1] === "phone" || args[i + 1] === "mac"))
+      output = args[++i] as typeof output;
+    else if (
+      args[i] === "--rate" &&
+      Number.isFinite(Number(args[i + 1])) &&
+      Number(args[i + 1]) > 0
+    )
+      rate = Number(args[++i]);
     else fail(`unknown stream option: ${args[i]}`);
   }
   assertNoRealNowPlaying();
@@ -207,7 +230,8 @@ async function commandStream(idArg: string | undefined, args: string[]): Promise
     const meta = {
       source: "mock-live",
       sessionId: id,
-      sessionName: readJson<{ name?: string }>(join(STATE_DIR, `${id}.json`), {}).name ?? "Mock Live",
+      sessionName:
+        readJson<{ name?: string }>(join(STATE_DIR, `${id}.json`), {}).name ?? "Mock Live",
       textPreview: "Cached audio — mock live stream",
       spokenText: "Cached audio — mock live stream",
       rawText: "Cached audio — mock live stream",
@@ -250,11 +274,21 @@ async function commandStream(idArg: string | undefined, args: string[]): Promise
     atomicWrite(NOW_PLAYING_PATH, { ...frame, synthesisComplete: true });
     console.log(`streamed cached ${basename(source)} as ${filename} (${input.length} bytes)`);
   } catch (error) {
-    if (partPath) { try { unlinkSync(partPath); } catch {} }
-    if (sidecarPath) { try { unlinkSync(sidecarPath); } catch {} }
+    if (partPath) {
+      try {
+        unlinkSync(partPath);
+      } catch {}
+    }
+    if (sidecarPath) {
+      try {
+        unlinkSync(sidecarPath);
+      } catch {}
+    }
     const frame = readJson<NowPlaying | null>(NOW_PLAYING_PATH, null);
     if (ownsFrame && frame?.sessionId === id && isMockFrame(frame)) {
-      try { unlinkSync(NOW_PLAYING_PATH); } catch {}
+      try {
+        unlinkSync(NOW_PLAYING_PATH);
+      } catch {}
     }
     throw error;
   } finally {
@@ -272,10 +306,13 @@ function commandFinal(idArg: string | undefined, textParts: string[]): void {
   if (readFileSync(transcriptPath(id), "utf8").trim()) {
     fail("final already appended; refusing a continuation that could enqueue synthesis");
   }
-  appendFileSync(transcriptPath(id), JSON.stringify({
-    type: "assistant",
-    message: { role: "assistant", content: [{ type: "text", text }] },
-  }) + "\n");
+  appendFileSync(
+    transcriptPath(id),
+    JSON.stringify({
+      type: "assistant",
+      message: { role: "assistant", content: [{ type: "text", text }] },
+    }) + "\n",
+  );
 }
 
 function mockReplayFiles(id?: string): string[] {
@@ -288,18 +325,35 @@ function mockReplayFiles(id?: string): string[] {
 
 function cleanupOne(id: string): void {
   const map = liveMap();
-  if (id in map) { delete map[id]; atomicWrite(LIVE_PATH, map); }
-  try { unlinkSync(join(STATE_DIR, `${id}.json`)); } catch {}
-  try { unlinkSync(transcriptPath(id)); } catch {}
-  for (const file of mockReplayFiles(id)) { try { unlinkSync(join(REPLAY_DIR, file)); } catch {} }
+  if (id in map) {
+    delete map[id];
+    atomicWrite(LIVE_PATH, map);
+  }
+  try {
+    unlinkSync(join(STATE_DIR, `${id}.json`));
+  } catch {}
+  try {
+    unlinkSync(transcriptPath(id));
+  } catch {}
+  for (const file of mockReplayFiles(id)) {
+    try {
+      unlinkSync(join(REPLAY_DIR, file));
+    } catch {}
+  }
 }
 
 function commandDown(target: string | undefined): void {
   const ids = new Set<string>();
   if (target === "--all") {
     for (const id of Object.keys(liveMap())) if (id.startsWith("mock-")) ids.add(id);
-    try { for (const f of readdirSync(STATE_DIR)) if (f.startsWith("mock-") && f.endsWith(".json")) ids.add(f.slice(0, -5)); } catch {}
-    try { for (const f of readdirSync(TRANSCRIPT_DIR)) if (f.startsWith("mock-") && f.endsWith(".jsonl")) ids.add(f.slice(0, -6)); } catch {}
+    try {
+      for (const f of readdirSync(STATE_DIR))
+        if (f.startsWith("mock-") && f.endsWith(".json")) ids.add(f.slice(0, -5));
+    } catch {}
+    try {
+      for (const f of readdirSync(TRANSCRIPT_DIR))
+        if (f.startsWith("mock-") && f.endsWith(".jsonl")) ids.add(f.slice(0, -6));
+    } catch {}
   } else {
     ids.add(requireMockId(target));
   }
@@ -312,10 +366,17 @@ function commandDown(target: string | undefined): void {
     for (const k of teamKeys) delete team[k];
     atomicWrite(TEAM_MAP_PATH, team);
   }
-  if (target === "--all") for (const file of mockReplayFiles()) { try { unlinkSync(join(REPLAY_DIR, file)); } catch {} }
+  if (target === "--all")
+    for (const file of mockReplayFiles()) {
+      try {
+        unlinkSync(join(REPLAY_DIR, file));
+      } catch {}
+    }
   const frame = readJson<NowPlaying | null>(NOW_PLAYING_PATH, null);
   if (frame && isMockFrame(frame) && (target === "--all" || ids.has(frame.sessionId ?? ""))) {
-    try { unlinkSync(NOW_PLAYING_PATH); } catch {}
+    try {
+      unlinkSync(NOW_PLAYING_PATH);
+    } catch {}
   }
   console.log(`removed ${ids.size} mock session(s)`);
 }
@@ -325,15 +386,28 @@ function normalizeOutput(value: string): string {
 }
 
 function commandCheckTailer(): void {
-  const fixtures = readdirSync(FIXTURES_DIR).filter((f) => f.endsWith(".jsonl")).sort();
+  const fixtures = readdirSync(FIXTURES_DIR)
+    .filter((f) => f.endsWith(".jsonl"))
+    .sort();
   if (!fixtures.length) fail("no live fixtures found");
   let failures = 0;
   for (const fixture of fixtures) {
     const path = join(FIXTURES_DIR, fixture);
-    const result = spawnSync(process.execPath, [join(SERVER_DIR, "node_modules", "tsx", "dist", "cli.mjs"), join(SERVER_DIR, "src", "live-tail.ts"), "once", path], { encoding: "utf8" });
+    const result = spawnSync(
+      process.execPath,
+      [
+        join(SERVER_DIR, "node_modules", "tsx", "dist", "cli.mjs"),
+        join(SERVER_DIR, "src", "live-tail.ts"),
+        "once",
+        path,
+      ],
+      { encoding: "utf8" },
+    );
     const actual = normalizeOutput(result.stdout ?? "");
     const expectedPath = path.replace(/\.jsonl$/, ".expected.txt");
-    const expected = existsSync(expectedPath) ? normalizeOutput(readFileSync(expectedPath, "utf8")) : "";
+    const expected = existsSync(expectedPath)
+      ? normalizeOutput(readFileSync(expectedPath, "utf8"))
+      : "";
     if (result.status !== 0 || actual !== expected) {
       failures++;
       console.error(`FAIL ${fixture}`);
@@ -346,7 +420,9 @@ function commandCheckTailer(): void {
 }
 
 function usage(): never {
-  fail("usage: mock-live.ts up [name] | activity <id> <label> | tools <id> <n> | stream <id> [--output phone|mac] [--rate 16000] | final <id> <text> | down [id|--all] | check-tailer");
+  fail(
+    "usage: mock-live.ts up [name] | activity <id> <label> | tools <id> <n> | stream <id> [--output phone|mac] [--rate 16000] | final <id> <text> | down [id|--all] | check-tailer",
+  );
 }
 
 const [command, ...args] = process.argv.slice(2);

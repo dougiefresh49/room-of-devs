@@ -44,18 +44,16 @@ function parseEntries(raw: string): TranscriptEntry[] {
     const blocks = Array.isArray(content) ? content : [];
     const at = typeof entry?.timestamp === "string" ? entry.timestamp : null;
     if (entry?.type === "user") {
-      if (
-        entry.toolUseResult !== undefined ||
-        blocks.some((b: any) => b?.type === "tool_result")
-      ) {
+      if (entry.toolUseResult !== undefined || blocks.some((b: any) => b?.type === "tool_result")) {
         continue;
       }
-      const text = (typeof content === "string"
-        ? content
-        : blocks
-            .filter((b: any) => b?.type === "text" && typeof b.text === "string")
-            .map((b: any) => b.text)
-            .join("\n")
+      const text = (
+        typeof content === "string"
+          ? content
+          : blocks
+              .filter((b: any) => b?.type === "text" && typeof b.text === "string")
+              .map((b: any) => b.text)
+              .join("\n")
       ).trim();
       if (!text || text.startsWith("<task-notification")) continue;
       items.push({ role: "user", text: text.slice(0, 2000), at });

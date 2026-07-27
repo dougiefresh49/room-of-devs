@@ -60,9 +60,7 @@ export async function learn(): Promise<void> {
   const hint = existing.device_hint;
   const path = findDevicePath(hint);
   if (!path) {
-    console.error(
-      `No encoder found matching "${hint}". Plug it in and try again.`
-    );
+    console.error(`No encoder found matching "${hint}". Plug it in and try again.`);
     process.exit(1);
   }
 
@@ -71,15 +69,13 @@ export async function learn(): Promise<void> {
     d = new HID(path);
   } catch (err: any) {
     console.error(`Cannot open the encoder (${err?.message ?? err}).`);
-    console.error(
-      "Most likely the tts-server daemon has it open (arcade_enabled=true)."
-    );
+    console.error("Most likely the tts-server daemon has it open (arcade_enabled=true).");
     console.error("Stop it, learn, then restart:");
     console.error("  ~/.cursor/tts/scripts/tts-server.sh stop");
     console.error("  pnpm exec tsx src/hid.ts learn ...");
     console.error("  ~/.cursor/tts/scripts/tts-server.sh start");
     console.error(
-      "(Or capture through the Room panel: Settings > Buttons > input-code chip — that path works while the daemon runs.)"
+      "(Or capture through the Room panel: Settings > Buttons > input-code chip — that path works while the daemon runs.)",
     );
     process.exit(1);
   }
@@ -205,7 +201,7 @@ export async function learn(): Promise<void> {
       if (bestByte < 0 || bestAbs < STICK_LEARN_MIN_DEV) return null;
       const pole: StickPole = bestSigned < 0 ? "low" : "high";
       process.stdout.write(
-        `recorded stick ${dir} → byte ${bestByte} pole ${pole} (dev ${bestSigned})\n`
+        `recorded stick ${dir} → byte ${bestByte} pole ${pole} (dev ${bestSigned})\n`,
       );
       return { byte: bestByte, pole };
     };
@@ -230,10 +226,7 @@ export async function learn(): Promise<void> {
       if (!latestBuf) continue;
       const v = latestBuf[result.byte] ?? 127;
       const base = baselines.get(result.byte) ?? 127; // release gate tolerates either idle model via the REARM window below
-      if (
-        Math.abs(v - base) < 20 ||
-        (v >= STICK_REARM_LO && v <= STICK_REARM_HI)
-      ) {
+      if (Math.abs(v - base) < 20 || (v >= STICK_REARM_LO && v <= STICK_REARM_HI)) {
         process.stdout.write("ok\n");
         return result;
       }
@@ -293,7 +286,7 @@ export async function learn(): Promise<void> {
     if (idx == null) continue;
     if (buttons[String(idx)]) {
       console.log(
-        `  (index ${idx} already mapped to "${buttons[String(idx)].name}" — overwriting with "${spec.name}")`
+        `  (index ${idx} already mapped to "${buttons[String(idx)].name}" — overwriting with "${spec.name}")`,
       );
     }
     buttons[String(idx)] = {

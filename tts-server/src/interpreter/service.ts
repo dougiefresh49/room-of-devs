@@ -1,14 +1,7 @@
 /**
  * Interpreter service — chokidar watcher on ~/.cursor/tts/intents/.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  renameSync,
-  statSync,
-} from "fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync } from "fs";
 import { basename, join } from "path";
 import { watch, type FSWatcher } from "chokidar";
 import { INTENTS_DIR, INTENTS_DONE_DIR } from "../config.js";
@@ -27,22 +20,11 @@ function parseIntent(raw: unknown): IntentFile | null {
   return {
     transcript: o.transcript,
     boundTarget:
-      typeof o.boundTarget === "string"
-        ? o.boundTarget
-        : o.boundTarget === null
-          ? null
-          : null,
+      typeof o.boundTarget === "string" ? o.boundTarget : o.boundTarget === null ? null : null,
     source: typeof o.source === "string" ? o.source : "voice",
     capturedAt:
-      typeof o.capturedAt === "number" && Number.isFinite(o.capturedAt)
-        ? o.capturedAt
-        : Date.now(),
-    duckToken:
-      typeof o.duckToken === "string"
-        ? o.duckToken
-        : o.duckToken === null
-          ? null
-          : null,
+      typeof o.capturedAt === "number" && Number.isFinite(o.capturedAt) ? o.capturedAt : Date.now(),
+    duckToken: typeof o.duckToken === "string" ? o.duckToken : o.duckToken === null ? null : null,
   };
 }
 
@@ -89,10 +71,7 @@ async function processIntentFile(filePath: string): Promise<void> {
 
     const age = Date.now() - intent.capturedAt;
     if (age > STALE_MS) {
-      log(
-        "interpreter",
-        `dropping stale intent ${basename(filePath)} (age ${age}ms)`
-      );
+      log("interpreter", `dropping stale intent ${basename(filePath)} (age ${age}ms)`);
       moveToDone(filePath);
       return;
     }
@@ -121,17 +100,14 @@ function recoverStranded(): void {
       .sort()
       .map((f) => join(INTENTS_DIR, f));
     if (stranded.length === 0) return;
-    log(
-      "interpreter",
-      `Startup recovery: scanning ${stranded.length} leftover intent(s)`
-    );
+    log("interpreter", `Startup recovery: scanning ${stranded.length} leftover intent(s)`);
     for (const p of stranded) {
       try {
         const age = Date.now() - statSync(p).mtimeMs;
         if (age > STALE_MS) {
           log(
             "interpreter",
-            `dropping stale intent ${basename(p)} at recovery (mtime age ${Math.round(age)}ms)`
+            `dropping stale intent ${basename(p)} at recovery (mtime age ${Math.round(age)}ms)`,
           );
           moveToDone(p);
           continue;

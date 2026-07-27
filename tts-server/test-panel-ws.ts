@@ -32,7 +32,7 @@ async function main(): Promise<void> {
 
   writeFileSync(
     join(tmp, "config.json"),
-    JSON.stringify({ panel_port: port, elevenlabs_voice_id: "" }, null, 2)
+    JSON.stringify({ panel_port: port, elevenlabs_voice_id: "" }, null, 2),
   );
 
   const sessionId = "abc123def456ghi789jkl";
@@ -47,8 +47,8 @@ async function main(): Promise<void> {
         updatedAt: new Date().toISOString(),
       },
       null,
-      2
-    )
+      2,
+    ),
   );
 
   const { validatePanelMessage, isAllowedOrigin } = await import("./src/panel-ws.js");
@@ -60,7 +60,8 @@ async function main(): Promise<void> {
   if (bad !== "bad_message") throw new Error(`expected bad_message, got ${JSON.stringify(bad)}`);
   if (!isAllowedOrigin(undefined)) throw new Error("missing origin should be allowed");
   if (isAllowedOrigin("https://evil.example")) throw new Error("evil origin should be rejected");
-  if (!isAllowedOrigin("http://localhost:1420")) throw new Error("localhost origin should be allowed");
+  if (!isAllowedOrigin("http://localhost:1420"))
+    throw new Error("localhost origin should be allowed");
 
   const snap = buildSnapshot();
   if (snap.length !== 1 || snap[0].sessionId !== sessionId) {

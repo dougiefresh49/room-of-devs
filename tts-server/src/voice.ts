@@ -120,10 +120,7 @@ function executeAction(action: Action, dryRun: boolean): number {
         action.kind === "mute" || action.kind === "unmute"
           ? "set_session_mute.sh"
           : "clear_session_queue.sh";
-      const args =
-        action.kind === "mute" || action.kind === "unmute"
-          ? [sid, action.kind]
-          : [sid];
+      const args = action.kind === "mute" || action.kind === "unmute" ? [sid, action.kind] : [sid];
       if (dryRun) return dry(action.kind, args);
       runScript(script, args);
       return 0;
@@ -187,7 +184,7 @@ function executeAction(action: Action, dryRun: boolean): number {
 
 export function route(
   transcript: string,
-  opts: { target?: string; dryRun?: boolean } = {}
+  opts: { target?: string; dryRun?: boolean } = {},
 ): number {
   // Legacy short-circuit preserved for direct CLI callers. Bound-target PTT
   // now routes through the interpreter (see interpreter/coordinator.ts).
@@ -217,7 +214,9 @@ export type { Action } from "./interpreter/rule-router.js";
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   if (args[0] !== "route") {
-    console.error('Usage: tsx src/voice.ts route [--target <sessionId>] [--dry-run] "<transcript>"');
+    console.error(
+      'Usage: tsx src/voice.ts route [--target <sessionId>] [--dry-run] "<transcript>"',
+    );
     process.exit(1);
   }
 
@@ -236,7 +235,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 
   const transcript = rest.join(" ").trim();
   if (!transcript && !target) {
-    console.error('Usage: tsx src/voice.ts route [--target <sessionId>] [--dry-run] "<transcript>"');
+    console.error(
+      'Usage: tsx src/voice.ts route [--target <sessionId>] [--dry-run] "<transcript>"',
+    );
     process.exit(1);
   }
 

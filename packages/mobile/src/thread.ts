@@ -12,7 +12,9 @@ import { useEffect, useRef, useState } from "react";
 import { fetchThread, type ReplayEntry, type ThreadItem } from "./api.js";
 
 function normalizeWs(s: string): string {
-  return String(s || "").replace(/\s+/g, " ").trim();
+  return String(s || "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export interface ThreadData {

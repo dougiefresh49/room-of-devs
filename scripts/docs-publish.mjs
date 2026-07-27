@@ -31,7 +31,9 @@ function section(title, mdPath) {
 }
 
 const activeDocs = existsSync(join(docsDir, "active"))
-  ? readdirSync(join(docsDir, "active")).filter((f) => f.endsWith(".md")).sort()
+  ? readdirSync(join(docsDir, "active"))
+      .filter((f) => f.endsWith(".md"))
+      .sort()
   : [];
 
 const updated = new Date().toISOString().slice(0, 16).replace("T", " ");
@@ -94,11 +96,14 @@ const out = execFileSync("postplan", args, { encoding: "utf8" });
 process.stdout.write(out);
 
 if (!existsSync(draftIdFile)) {
-  const m = out.match(/draft\s*id[:\s]+([A-Za-z0-9_-]{6,})/i) ?? out.match(/\/d\/([A-Za-z0-9_-]{6,})\//);
+  const m =
+    out.match(/draft\s*id[:\s]+([A-Za-z0-9_-]{6,})/i) ?? out.match(/\/d\/([A-Za-z0-9_-]{6,})\//);
   if (m) {
     writeFileSync(draftIdFile, m[1] + "\n");
     console.log(`saved draft id → docs/.postplan-draft (${m[1]})`);
   } else {
-    console.warn("could not parse draft id from output — save it to docs/.postplan-draft manually to keep a stable URL");
+    console.warn(
+      "could not parse draft id from output — save it to docs/.postplan-draft manually to keep a stable URL",
+    );
   }
 }

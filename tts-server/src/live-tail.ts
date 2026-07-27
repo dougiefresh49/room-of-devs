@@ -141,9 +141,7 @@ function activityLabel(block: any): string {
   } else if (typeof input.prompt === "string") detail = input.prompt;
   else if (typeof input.query === "string") detail = input.query;
   detail = detail.trim().replace(/\s+/g, " ").slice(0, 40);
-  const name = typeof block?.name === "string" && block.name.trim()
-    ? block.name.trim()
-    : "Tool";
+  const name = typeof block?.name === "string" && block.name.trim() ? block.name.trim() : "Tool";
   // Keep command redaction explicit: no text after '=' can survive into state.
   if (isCommand) detail = detail.split("=", 1)[0].trim();
   return (detail ? `${name}: ${detail}` : name).slice(0, 60);
@@ -172,11 +170,7 @@ function isToolResultEntry(entry: TranscriptEntry): boolean {
 
 type Emit = (sessionId: string, text: string) => void;
 
-function processEntry(
-  t: Tailer,
-  entry: TranscriptEntry,
-  emit: Emit = enqueueIntermediate
-): void {
+function processEntry(t: Tailer, entry: TranscriptEntry, emit: Emit = enqueueIntermediate): void {
   if (entry.isSidechain) return; // subagent chatter
 
   if (entry.type === "assistant") {
@@ -406,7 +400,9 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
       }
     }
     console.log(decisions.join("\n"));
-    console.log(`\nheld (would NOT speak — final): ${t.heldText ? t.heldText.slice(0, 90) : "none"}`);
+    console.log(
+      `\nheld (would NOT speak — final): ${t.heldText ? t.heldText.slice(0, 90) : "none"}`,
+    );
     console.log(`toolCount: ${t.toolCount}`);
     process.exit(0);
   }

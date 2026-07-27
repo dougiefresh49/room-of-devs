@@ -2,14 +2,7 @@
  * Scratch WS test for settings feed/dispatch — uses TTS_DIR_OVERRIDE, no daemon/APIs.
  * Run: pnpm exec tsx test-panel-ws-settings.ts
  */
-import {
-  mkdtempSync,
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  rmSync,
-  chmodSync,
-} from "fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync } from "fs";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
 import { createServer } from "net";
@@ -56,12 +49,12 @@ async function main(): Promise<void> {
         elevenlabs_voice_id: "v1",
       },
       null,
-      2
-    )
+      2,
+    ),
   );
   writeFileSync(
     join(tmp, "arcade_buttons.json"),
-    JSON.stringify({ device_hint: "test-joystick", buttons: { "1": { name: "rm" } } }, null, 2)
+    JSON.stringify({ device_hint: "test-joystick", buttons: { "1": { name: "rm" } } }, null, 2),
   );
   writeFileSync(
     join(tmp, "cache", "voices.json"),
@@ -71,8 +64,8 @@ async function main(): Promise<void> {
         { voice_id: "v9", name: "Other", category: "premade" },
       ],
       null,
-      2
-    )
+      2,
+    ),
   );
   writeFileSync(join(tmp, "listening.enabled"), "1\n");
 
@@ -90,18 +83,18 @@ c['default_speed'] = speed
 with open(path, 'w') as f:
     json.dump(c, f, indent=2)
     f.write('\\n')
-" "$1" "$TTS_DIR/config.json"`
+" "$1" "$TTS_DIR/config.json"`,
   );
   writeStubScript(
     join(scriptsDir, "set_listening.sh"),
     `TTS_DIR="\${TTS_DIR:-$HOME/.cursor/tts}"
-case "$1" in on) echo 1 > "$TTS_DIR/listening.enabled" ;; off) echo 0 > "$TTS_DIR/listening.enabled" ;; *) exit 1 ;; esac`
+case "$1" in on) echo 1 > "$TTS_DIR/listening.enabled" ;; off) echo 0 > "$TTS_DIR/listening.enabled" ;; *) exit 1 ;; esac`,
   );
 
   const srcDir = join(dirname(fileURLToPath(import.meta.url)), "src");
   writeFileSync(
     join(srcDir, "characters.json"),
-    JSON.stringify({ v1: { name: "Leonardo" } }, null, 2)
+    JSON.stringify({ v1: { name: "Leonardo" } }, null, 2),
   );
 
   const { startPanelWs, stopPanelWs } = await import("./src/panel-ws.js");
@@ -144,8 +137,10 @@ case "$1" in on) echo 1 > "$TTS_DIR/listening.enabled" ;; off) echo 0 > "$TTS_DI
 
       if (phase === "init" && msg.type === "settings") {
         const v = msg.values ?? {};
-        if (v.default_speed !== 1.25) throw new Error(`expected speed 1.25, got ${v.default_speed}`);
-        if (v.playback_mode !== "announce") throw new Error(`bad playback_mode: ${v.playback_mode}`);
+        if (v.default_speed !== 1.25)
+          throw new Error(`expected speed 1.25, got ${v.default_speed}`);
+        if (v.playback_mode !== "announce")
+          throw new Error(`bad playback_mode: ${v.playback_mode}`);
         if (v.mood !== "custom") throw new Error(`expected custom mood, got ${v.mood}`);
         if (v.default_voice_id !== "v1" || v.default_voice_name !== "Leonardo") {
           throw new Error(`voice resolve failed: ${JSON.stringify(v)}`);

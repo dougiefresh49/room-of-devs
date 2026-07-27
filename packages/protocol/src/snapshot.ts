@@ -8,12 +8,7 @@
  */
 import * as v from "valibot";
 
-export const SessionStateSchema = v.picklist([
-  "working",
-  "hand_raised",
-  "speaking",
-  "idle",
-]);
+export const SessionStateSchema = v.picklist(["working", "hand_raised", "speaking", "idle"]);
 export type SessionState = v.InferOutput<typeof SessionStateSchema>;
 
 /** Word-level karaoke timings from ElevenLabs: [word, startMs][]. */

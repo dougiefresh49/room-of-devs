@@ -31,11 +31,11 @@ async function main(): Promise<void> {
 
   writeFileSync(
     join(tmp, "config.json"),
-    JSON.stringify({ panel_port: port, arcade_enabled: false }, null, 2)
+    JSON.stringify({ panel_port: port, arcade_enabled: false }, null, 2),
   );
   writeFileSync(
     join(tmp, "arcade_buttons.json"),
-    JSON.stringify({ device_hint: "test-joystick", buttons: {} }, null, 2)
+    JSON.stringify({ device_hint: "test-joystick", buttons: {} }, null, 2),
   );
 
   // characters.json is the REAL (gitignored, hand-authored) character
@@ -43,9 +43,7 @@ async function main(): Promise<void> {
   // every persona in production on 2026-07-22. Save it, restore on exit.
   const srcDir = join(dirname(fileURLToPath(import.meta.url)), "src");
   const charactersPath = join(srcDir, "characters.json");
-  const realCharacters = existsSync(charactersPath)
-    ? readFileSync(charactersPath, "utf-8")
-    : null;
+  const realCharacters = existsSync(charactersPath) ? readFileSync(charactersPath, "utf-8") : null;
   const restoreCharacters = () => {
     if (realCharacters !== null) writeFileSync(charactersPath, realCharacters);
     else rmSync(charactersPath, { force: true });
@@ -59,8 +57,8 @@ async function main(): Promise<void> {
         v2: { name: "Donatello" },
       },
       null,
-      2
-    )
+      2,
+    ),
   );
 
   const { captureNextPress, isCaptureReady } = await import("./src/hid.js");
@@ -120,7 +118,12 @@ async function main(): Promise<void> {
         return;
       }
 
-      if (phase === "init" && msg.type === "buttons" && sawSnapshot && Object.keys(msg.buttons ?? {}).length === 0) {
+      if (
+        phase === "init" &&
+        msg.type === "buttons" &&
+        sawSnapshot &&
+        Object.keys(msg.buttons ?? {}).length === 0
+      ) {
         phase = "set";
         ws.send(
           JSON.stringify({
@@ -132,7 +135,7 @@ async function main(): Promise<void> {
               color: "blue",
               notes: "test note",
             },
-          })
+          }),
         );
         return;
       }
@@ -157,22 +160,22 @@ async function main(): Promise<void> {
             type: "set_button",
             idx: 4,
             patch: { character: null },
-          })
+          }),
         );
         return;
       }
 
-      if (
-        phase === "clear-character" &&
-        msg.type === "buttons" &&
-        !msg.buttons?.["4"]?.character
-      ) {
+      if (phase === "clear-character" && msg.type === "buttons" && !msg.buttons?.["4"]?.character) {
         phase = "set-action";
         ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: "replay" } }));
         return;
       }
 
-      if (phase === "set-action" && msg.type === "buttons" && msg.buttons?.["4"]?.action === "replay") {
+      if (
+        phase === "set-action" &&
+        msg.type === "buttons" &&
+        msg.buttons?.["4"]?.action === "replay"
+      ) {
         phase = "clear-action";
         ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: null } }));
         return;
@@ -184,7 +187,11 @@ async function main(): Promise<void> {
         return;
       }
 
-      if (phase === "set-empty-clear" && msg.type === "buttons" && msg.buttons?.["4"]?.action === "replay") {
+      if (
+        phase === "set-empty-clear" &&
+        msg.type === "buttons" &&
+        msg.buttons?.["4"]?.action === "replay"
+      ) {
         phase = "empty-clear";
         ws.send(JSON.stringify({ type: "set_button", idx: 4, patch: { action: "" } }));
         return;
@@ -203,7 +210,7 @@ async function main(): Promise<void> {
             type: "set_button",
             idx: 4,
             patch: { character: "Leonardo", action: "replay" },
-          })
+          }),
         );
         return;
       }

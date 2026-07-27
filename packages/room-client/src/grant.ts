@@ -40,8 +40,7 @@ export function beginGrant(
   now: number,
 ): PendingGrant {
   const np = snapshot?.nowPlaying ?? null;
-  const baselineKey =
-    np && !np.endedAt && !isPhoneRoutedFrame(np) ? nowPlayingKey(np) : null;
+  const baselineKey = np && !np.endedAt && !isPhoneRoutedFrame(np) ? nowPlayingKey(np) : null;
   return { sessionId, at: now, baselineKey };
 }
 

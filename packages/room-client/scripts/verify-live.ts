@@ -16,10 +16,7 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import {
-  RoomClient,
-  WsTransport,
-} from "../src/index.js";
+import { RoomClient, WsTransport } from "../src/index.js";
 
 const tts = join(homedir(), ".cursor", "tts");
 // Re-read per attempt — the daemon rotates the token on every boot, exactly
@@ -49,8 +46,13 @@ const waitFor = (pred: () => boolean, ms: number) =>
   new Promise<boolean>((resolve) => {
     const t0 = Date.now();
     const iv = setInterval(() => {
-      if (pred()) { clearInterval(iv); resolve(true); }
-      else if (Date.now() - t0 > ms) { clearInterval(iv); resolve(false); }
+      if (pred()) {
+        clearInterval(iv);
+        resolve(true);
+      } else if (Date.now() - t0 > ms) {
+        clearInterval(iv);
+        resolve(false);
+      }
     }, 50);
   });
 
@@ -67,7 +69,11 @@ async function main() {
   // 2. typed query round-trip (requestId correlation)
   try {
     const dirs = await client.query("known_dirs", 5000);
-    check("query(known_dirs) resolved", Array.isArray(dirs.dirs), `${dirs.dirs.length} dirs, requestId=${!!dirs.requestId}`);
+    check(
+      "query(known_dirs) resolved",
+      Array.isArray(dirs.dirs),
+      `${dirs.dirs.length} dirs, requestId=${!!dirs.requestId}`,
+    );
   } catch (err) {
     check("query(known_dirs) resolved", false, String(err));
   }
@@ -85,11 +91,18 @@ async function main() {
   await new Promise((r) => setTimeout(r, 400));
   const crAfter = events.filter((e) => e.type === "command_result").length;
   check("legacy known_dirs (no requestId) answered", gotLegacy);
-  check("legacy path emitted NO command_result", crAfter === crBefore, `before=${crBefore} after=${crAfter}`);
+  check(
+    "legacy path emitted NO command_result",
+    crAfter === crBefore,
+    `before=${crBefore} after=${crAfter}`,
+  );
 
   // 4. invalid command with requestId → correlated failure
   try {
-    const res = await client.request({ type: "focus_terminal", sessionId: "no-such-session-xyz" } as never, 5000);
+    const res = await client.request(
+      { type: "focus_terminal", sessionId: "no-such-session-xyz" } as never,
+      5000,
+    );
     check("invalid-session command_result ok:false", res.ok === false, `code=${res.code}`);
   } catch (err) {
     check("invalid-session command_result ok:false", false, `rejected: ${String(err)}`);
@@ -101,18 +114,26 @@ async function main() {
   check("rev monotonic baseline captured", rev0 >= 0, `rev=${rev0}`);
 
   if (process.argv.includes("--wait-restart")) {
-    console.log("\nNow restart the daemon (tts-server.sh restart). Waiting up to 60s for down+up edges...");
+    console.log(
+      "\nNow restart the daemon (tts-server.sh restart). Waiting up to 60s for down+up edges...",
+    );
     const sawDown = await waitFor(() => connectionEdges.includes(false), 60_000);
     const downIdx = connectionEdges.indexOf(false);
     const sawUp = await waitFor(() => connectionEdges.slice(downIdx + 1).includes(true), 60_000);
     check("reconnect: down edge observed", sawDown);
     check("reconnect: up edge observed (backoff loop alive)", sawUp);
     const recovered = await waitFor(
-      () => (client.getState().snapshot?.epoch ?? 0) !== (snap?.epoch ?? 0) && client.getState().snapshot !== snap,
+      () =>
+        (client.getState().snapshot?.epoch ?? 0) !== (snap?.epoch ?? 0) &&
+        client.getState().snapshot !== snap,
       15_000,
     );
     const snap2 = client.getState().snapshot;
-    check("reconnect: fresh snapshot with NEW epoch applied", recovered, `epoch ${snap?.epoch} → ${snap2?.epoch}, rev ${rev0} → ${snap2?.rev}`);
+    check(
+      "reconnect: fresh snapshot with NEW epoch applied",
+      recovered,
+      `epoch ${snap?.epoch} → ${snap2?.epoch}, rev ${rev0} → ${snap2?.rev}`,
+    );
   }
 
   const failed = results.filter(([, ok]) => !ok).length;

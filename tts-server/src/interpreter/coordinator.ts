@@ -95,14 +95,9 @@ async function playPlanAck(boundTarget: string | null): Promise<void> {
   }
 }
 
-type Validated =
-  | { ok: true; action: Action }
-  | { ok: false; clarify: string };
+type Validated = { ok: true; action: Action } | { ok: false; clarify: string };
 
-function validateAction(
-  action: Action,
-  ctx: RouterContext
-): Validated {
+function validateAction(action: Action, ctx: RouterContext): Validated {
   switch (action.kind) {
     case "grant": {
       if (!action.sessionId) return { ok: true, action };
@@ -203,7 +198,7 @@ function validateAction(
 
 async function executeStep(
   action: Action,
-  opts: { inPlan: boolean }
+  opts: { inPlan: boolean },
 ): Promise<{ result: StepResult; floorHeld: boolean }> {
   const floorHeld = isFloorHoldingAction(action);
 
@@ -238,10 +233,7 @@ async function executeStep(
     }
     case "mute":
     case "unmute": {
-      const r = await runScriptAsync("set_session_mute.sh", [
-        action.sessionId,
-        action.kind,
-      ]);
+      const r = await runScriptAsync("set_session_mute.sh", [action.sessionId, action.kind]);
       return { result: r, floorHeld: false };
     }
     case "clear": {
@@ -268,9 +260,7 @@ async function executeStep(
     case "slash_command": {
       const message = `/${action.command.replace(/^\//, "")}`;
       const target = action.target!;
-      const args = opts.inPlan
-        ? ["--now", target, message]
-        : [target, message];
+      const args = opts.inPlan ? ["--now", target, message] : [target, message];
       const r = await runScriptAsync("inject_prompt.sh", args);
       return { result: r, floorHeld: false };
     }
@@ -311,10 +301,7 @@ function isCancelTranscript(text: string): boolean {
  * Resolve transcript → action/plan/clarify/fallback without executing.
  * Used by CLI --dry-run and handleIntent.
  */
-export async function resolveRoute(
-  transcript: string,
-  ctx: RouterContext
-): Promise<ResolvedRoute> {
+export async function resolveRoute(transcript: string, ctx: RouterContext): Promise<ResolvedRoute> {
   const rule = matchIntent(transcript, ctx);
   if (rule) return { type: "action", action: rule };
 
@@ -334,10 +321,7 @@ export async function resolveRoute(
   return { type: "clarify", message: "Didn't catch that" };
 }
 
-function llmResultToRoute(
-  llm: RouterResult,
-  ctx: RouterContext
-): ResolvedRoute | null {
+function llmResultToRoute(llm: RouterResult, ctx: RouterContext): ResolvedRoute | null {
   if (llm.kind === "none") {
     if (ctx.boundTarget) {
       return null; // caller falls through to inject_fallback with original transcript
@@ -357,7 +341,7 @@ function llmResultToRoute(
  */
 export async function dryResolve(
   transcript: string,
-  boundTarget?: string | null
+  boundTarget?: string | null,
 ): Promise<unknown> {
   const ctx: RouterContext = { boundTarget: boundTarget ?? null };
   const resolved = await resolveRoute(transcript, ctx);
@@ -381,10 +365,7 @@ export async function dryResolve(
   };
 }
 
-export async function handleIntent(
-  intent: IntentFile,
-  intentId: string
-): Promise<void> {
+export async function handleIntent(intent: IntentFile, intentId: string): Promise<void> {
   if (wasPlanCompleted(intentId)) {
     log("interpreter", `intent ${intentId}: idempotent skip`);
     unduck(intent.duckToken, false);
@@ -419,7 +400,7 @@ export async function handleIntent(
         if (!result.ok) {
           speak(
             result.message ??
-              `Failed on ${speakableName(v.action.kind === "slash_command" ? v.action.target ?? "" : "")}`
+              `Failed on ${speakableName(v.action.kind === "slash_command" ? (v.action.target ?? "") : "")}`,
           );
           unduck(pending.duckToken, floorHeld);
           return;
@@ -456,12 +437,12 @@ export async function handleIntent(
           target: resolved.target,
           message: resolved.message,
         },
-        { inPlan: false }
+        { inPlan: false },
       );
       if (!result.ok) {
         speak(
           result.message ??
-            `Can't reach ${speakableName(resolved.target)} — not running in the team room.`
+            `Can't reach ${speakableName(resolved.target)} — not running in the team room.`,
         );
       }
       return;
@@ -476,9 +457,7 @@ export async function handleIntent(
       // Single destructive slash → confirm gate even outside a plan.
       if (
         v.action.kind === "slash_command" &&
-        ["clear", "kill", "exit"].includes(
-          v.action.command.toLowerCase().replace(/^\//, "")
-        )
+        ["clear", "kill", "exit"].includes(v.action.command.toLowerCase().replace(/^\//, ""))
       ) {
         const cmd = v.action.command.toLowerCase().replace(/^\//, "");
         pendingConfirm = {
@@ -489,11 +468,8 @@ export async function handleIntent(
           duckToken: intent.duckToken,
           boundTarget: intent.boundTarget,
         };
-        const verb =
-          cmd === "kill" ? "Killing" : cmd === "exit" ? "Exiting" : "Clearing";
-        speak(
-          `${verb} ${pendingConfirm.confirmLabel}'s session — say confirm`
-        );
+        const verb = cmd === "kill" ? "Killing" : cmd === "exit" ? "Exiting" : "Clearing";
+        speak(`${verb} ${pendingConfirm.confirmLabel}'s session — say confirm`);
         // Keep ducked until confirm resolves (don't unduck in finally).
         floorHeld = true;
         return;
@@ -530,9 +506,7 @@ export async function handleIntent(
     if (planResult.awaitingConfirmation && planResult.remaining) {
       const first = planResult.remaining[0];
       const cmd =
-        first?.kind === "slash_command"
-          ? first.command.toLowerCase().replace(/^\//, "")
-          : "clear";
+        first?.kind === "slash_command" ? first.command.toLowerCase().replace(/^\//, "") : "clear";
       pendingConfirm = {
         planId: intentId,
         remaining: planResult.remaining,
@@ -541,11 +515,8 @@ export async function handleIntent(
         duckToken: intent.duckToken,
         boundTarget: intent.boundTarget,
       };
-      const verb =
-        cmd === "kill" ? "Killing" : cmd === "exit" ? "Exiting" : "Clearing";
-      speak(
-        `${verb} ${pendingConfirm.confirmLabel}'s session — say confirm`
-      );
+      const verb = cmd === "kill" ? "Killing" : cmd === "exit" ? "Exiting" : "Clearing";
+      speak(`${verb} ${pendingConfirm.confirmLabel}'s session — say confirm`);
       floorHeld = true; // hold duck through confirmation window
       return;
     }

@@ -7,13 +7,7 @@
  * Everything here is best-effort and side-effect-bounded: failures log and
  * move on — housekeeping must never block the daemon from starting.
  */
-import {
-  existsSync,
-  readdirSync,
-  renameSync,
-  statSync,
-  unlinkSync,
-} from "fs";
+import { existsSync, readdirSync, renameSync, statSync, unlinkSync } from "fs";
 import { join } from "path";
 import { LOG_FILE, PLAYED_DIR, FAILED_DIR, loadConfig } from "./config.js";
 import { log } from "./logger.js";
@@ -82,7 +76,7 @@ export function runStartupRetention(): void {
   if (played || failed) {
     log(
       "maintenance",
-      `retention pruned ${played} played, ${failed} failed (keep ${cfg.played_retention_count}/${cfg.failed_retention_count})`
+      `retention pruned ${played} played, ${failed} failed (keep ${cfg.played_retention_count}/${cfg.failed_retention_count})`,
     );
   }
 }

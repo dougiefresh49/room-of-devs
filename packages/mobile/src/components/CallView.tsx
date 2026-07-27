@@ -79,12 +79,13 @@ export function CallView({
   // the whole sheet — the chat thread/markdown stay off the playback tick.
   const player: PlayerSnapshot = usePlayer();
   const name = agent.label || agent.name;
-  const speakingHere =
-    player.status === "playing" && player.entry?.sessionId === agent.sessionId;
+  const speakingHere = player.status === "playing" && player.entry?.sessionId === agent.sessionId;
   const isLiveClip = nowPlaying?.kind === "live";
   const working = !speakingHere && agent.state === "working";
   const pending =
-    !speakingHere && !working && isFreshPhoneFinal(nowPlaying, agent.sessionId, speakingHere, player);
+    !speakingHere &&
+    !working &&
+    isFreshPhoneFinal(nowPlaying, agent.sessionId, speakingHere, player);
   const activity = agent.live?.lastActivity;
   const tools = agent.live?.toolCount ?? 0;
   // Bug 3: only a final that landed DURING this call may fill the resting card
@@ -101,8 +102,18 @@ export function CallView({
     : pending
       ? { mode: "final", tag: "Final", tagClass: "text-accent", ringClass: "is-final" }
       : working
-        ? { mode: "working", tag: "Working", tagClass: "text-state-working", ringClass: "is-working" }
-        : { mode: "idle", tag: "Done", tagClass: "text-fg-muted", ringClass: done ? "is-final" : "" };
+        ? {
+            mode: "working",
+            tag: "Working",
+            tagClass: "text-state-working",
+            ringClass: "is-working",
+          }
+        : {
+            mode: "idle",
+            tag: "Done",
+            tagClass: "text-fg-muted",
+            ringClass: done ? "is-final" : "",
+          };
 
   return (
     <div
@@ -127,7 +138,9 @@ export function CallView({
         </div>
 
         {/* presence avatar */}
-        <div className={`cv-presence mt-3 size-[120px] overflow-hidden rounded-[28px] ${card.ringClass}`}>
+        <div
+          className={`cv-presence mt-3 size-[120px] overflow-hidden rounded-[28px] ${card.ringClass}`}
+        >
           <Avatar
             agent={agent}
             frame={speakingHere ? "speaking" : "idle"}
@@ -143,7 +156,9 @@ export function CallView({
           key={card.mode}
           className="cv-card-in flex max-h-full w-full max-w-sm flex-col rounded-2xl border border-line bg-surface p-4"
         >
-          <div className={`mb-2 shrink-0 text-[11px] font-bold uppercase tracking-wider ${card.tagClass}`}>
+          <div
+            className={`mb-2 shrink-0 text-[11px] font-bold uppercase tracking-wider ${card.tagClass}`}
+          >
             {card.tag}
           </div>
           {card.mode === "speaking" ? (

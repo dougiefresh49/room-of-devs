@@ -1,12 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { spawn } from "child_process";
-import {
-  TTS_DIR,
-  STATE_DIR,
-  loadSessionVoices,
-  effectivePlaybackMode,
-} from "./config.js";
+import { TTS_DIR, STATE_DIR, loadSessionVoices, effectivePlaybackMode } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { log } from "./logger.js";
 import { loadTeamMap } from "./team-map.js";
@@ -37,11 +32,10 @@ export function runScript(name: string, args: string[]): void {
 
 export function runSignalReplay(): void {
   try {
-    const child = spawn(
-      "pnpm",
-      ["exec", "tsx", "src/signal.ts", "replay", "", "1"],
-      { cwd: SERVER_DIR, stdio: "ignore" }
-    );
+    const child = spawn("pnpm", ["exec", "tsx", "src/signal.ts", "replay", "", "1"], {
+      cwd: SERVER_DIR,
+      stdio: "ignore",
+    });
     child.on("error", (e) => log("hid", `signal replay spawn error: ${e.message}`));
   } catch (err: any) {
     log("hid", `signal replay spawn failed: ${err?.message ?? err}`);
@@ -190,9 +184,11 @@ export function characterHold(character: string, phase: "start" | "stop"): void 
     if (phase === "start") {
       log("hid", `PTT to ${character} refused — session not in team_map`);
       try {
-        const child = spawn("say", [
-          `${character} isn't in the team room yet. Launch them with team dot S H first.`,
-        ], { stdio: "ignore" });
+        const child = spawn(
+          "say",
+          [`${character} isn't in the team room yet. Launch them with team dot S H first.`],
+          { stdio: "ignore" },
+        );
         child.on("error", () => {});
       } catch {}
     }

@@ -58,7 +58,7 @@ function buildButtonRows(): Array<[string, string]> {
   const cfg = loadArcadeButtons();
   const rows: Array<[string, string]> = [];
   for (const [idx, btn] of Object.entries(cfg.buttons).sort(
-    (a, b) => Number(a[0]) - Number(b[0])
+    (a, b) => Number(a[0]) - Number(b[0]),
   )) {
     const label = btn.name || `Button ${idx}`;
     rows.push([label, describeButton(btn)]);
@@ -67,10 +67,7 @@ function buildButtonRows(): Array<[string, string]> {
     for (const dir of ["left", "right", "up", "down"] as const) {
       const m = cfg.sticks[dir];
       if (!m) continue;
-      rows.push([
-        `stick_${dir}`,
-        `Axis byte ${m.byte} (${m.pole}) → triage / snap`,
-      ]);
+      rows.push([`stick_${dir}`, `Axis byte ${m.byte} (${m.pole}) → triage / snap`]);
     }
   }
   if (rows.length === 0) {

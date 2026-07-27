@@ -1,18 +1,10 @@
 import { spawn } from "child_process";
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-} from "fs";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
 import { acquireLock, releaseLock } from "./playback-locks.js";
-import {
-  REPLAY_DIR,
-  loadReplayAttribution,
-  type ReplayMeta,
-} from "./replay-store.js";
+import { REPLAY_DIR, loadReplayAttribution, type ReplayMeta } from "./replay-store.js";
 import {
   type PlaybackContext,
   endSessionPlayback,
@@ -20,12 +12,7 @@ import {
   beginSessionPlayback,
   stampReplayFileCas,
 } from "./now-playing.js";
-import {
-  playerRef,
-  writePidFiles,
-  removePidFiles,
-  startSuspendHealer,
-} from "./player-process.js";
+import { playerRef, writePidFiles, removePidFiles, startSuspendHealer } from "./player-process.js";
 
 // Phase 7 split: locks, now-playing store, replay store, player process,
 // and streaming playback live in their own modules (import them directly).
@@ -35,7 +22,7 @@ export function playFile(
   filePath: string,
   ctx: PlaybackContext = "meta",
   speedFactor = 1.0,
-  replayMeta?: ReplayMeta
+  replayMeta?: ReplayMeta,
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
@@ -73,11 +60,7 @@ export function playFile(
   });
 }
 
-export function replayLast(
-  nth = 1,
-  speedFactor = 1.0,
-  forSessionId?: string
-): Promise<number> {
+export function replayLast(nth = 1, speedFactor = 1.0, forSessionId?: string): Promise<number> {
   try {
     if (!existsSync(REPLAY_DIR)) return Promise.resolve(1);
     let files = readdirSync(REPLAY_DIR)
@@ -88,7 +71,7 @@ export function replayLast(
       files = files.filter((f) => {
         try {
           const sc = JSON.parse(
-            readFileSync(join(REPLAY_DIR, f.replace(/\.mp3$/, ".json")), "utf-8")
+            readFileSync(join(REPLAY_DIR, f.replace(/\.mp3$/, ".json")), "utf-8"),
           );
           return sc?.sessionId === forSessionId;
         } catch {
@@ -141,14 +124,12 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
 
   log(
     "audio",
-    `play_replay: ${file} offset=${offsetSec}s${residual > 1.0 ? ` atempo=${residual}` : ""}`
+    `play_replay: ${file} offset=${offsetSec}s${residual > 1.0 ? ` atempo=${residual}` : ""}`,
   );
 
   // Backdate startedAt by the seek offset (in wall time: file-time ÷ rate) so
   // progress renders the true position and a later Mac→phone hop resumes there.
-  const startedAt = new Date(
-    Date.now() - (offsetSec * 1000) / residual
-  ).toISOString();
+  const startedAt = new Date(Date.now() - (offsetSec * 1000) / residual).toISOString();
   beginSessionPlayback(ctx, meta, startedAt, residual);
   // Surface the file on now-playing so phone handoff can resume the same track.
   if (ctx !== "meta" && ctx.sessionId) {
@@ -182,21 +163,14 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
 export function playMp3Buffer(
   buf: Buffer,
   ctx: PlaybackContext = "meta",
-  replayMeta?: ReplayMeta
+  replayMeta?: ReplayMeta,
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
     // Phrase MP3s are generated once at 1.0x and reused across speed
     // changes, so the full default_speed is applied at playback time.
     const speed = Math.min(2.0, Math.max(0.5, config.default_speed));
-    const ffplayArgs = [
-      "-nodisp",
-      "-autoexit",
-      "-loglevel",
-      "quiet",
-      "-i",
-      "pipe:0",
-    ];
+    const ffplayArgs = ["-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "pipe:0"];
     if (speed !== 1.0) ffplayArgs.push("-af", `atempo=${speed}`);
 
     beginSessionPlayback(ctx, replayMeta, undefined, speed);

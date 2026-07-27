@@ -1,11 +1,4 @@
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  renameSync,
-  unlinkSync,
-  writeFileSync,
-} from "fs";
+import { existsSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import {
@@ -163,7 +156,7 @@ function migrate(oldId: string, newId: string): void {
   const purged = purgeSessionQueue(oldId);
   log(
     "lineage",
-    `Session rotated ${oldId.slice(0, 12)} → ${newId.slice(0, 12)}; migrated [${moved.join(", ") || "nothing"}]${purged ? `, dismissed ${purged} queued` : ""}`
+    `Session rotated ${oldId.slice(0, 12)} → ${newId.slice(0, 12)}; migrated [${moved.join(", ") || "nothing"}]${purged ? `, dismissed ${purged} queued` : ""}`,
   );
 }
 
@@ -177,18 +170,13 @@ export function reconcileSessionLineage(): void {
 
     for (const [pid, now] of Object.entries(current)) {
       const before = previous[pid];
-      if (
-        before &&
-        before.sessionId !== now.sessionId &&
-        before.startedAt === now.startedAt
-      ) {
+      if (before && before.sessionId !== now.sessionId && before.startedAt === now.startedAt) {
         migrate(before.sessionId, now.sessionId);
       }
     }
 
     // Persist current truth (also drops entries for exited processes).
-    const changed =
-      JSON.stringify(current) !== JSON.stringify(previous);
+    const changed = JSON.stringify(current) !== JSON.stringify(previous);
     if (changed) atomicWriteJson(LINEAGE_PATH, current);
   } catch (err: any) {
     log("lineage", `reconcile failed: ${err?.message ?? err}`);

@@ -2,14 +2,15 @@
  * LlmRouter — flash-lite function-calling over the closed voice tool vocabulary.
  * Own client (NOT processWithGemini). No-key / timeout → null (caller falls back).
  */
-import { GoogleGenAI, Type, FunctionCallingConfigMode, type FunctionDeclaration } from "@google/genai";
+import {
+  GoogleGenAI,
+  Type,
+  FunctionCallingConfigMode,
+  type FunctionDeclaration,
+} from "@google/genai";
 import { loadConfig } from "../config.js";
 import { log } from "../logger.js";
-import {
-  type Action,
-  type RouterContext,
-  listCandidateNames,
-} from "./rule-router.js";
+import { type Action, type RouterContext, listCandidateNames } from "./rule-router.js";
 
 export type RouterResult =
   | { kind: "action"; action: Action }
@@ -123,8 +124,7 @@ const TOOL_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: "clear_queue",
-    description:
-      "Clear a session's TTS queue (queue hygiene only — NOT Claude /clear).",
+    description: "Clear a session's TTS queue (queue hygiene only — NOT Claude /clear).",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -190,8 +190,7 @@ const TOOL_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: "none",
-    description:
-      "Not a room command (free-form speech or unclear). Prefer this over guessing.",
+    description: "Not a room command (free-form speech or unclear). Prefer this over guessing.",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -239,7 +238,7 @@ function boolArg(args: Record<string, unknown>, key: string): boolean {
 
 function toolToAction(
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Action | { plan: Action[] } | { none: string } | null {
   switch (name) {
     case "grant":
@@ -325,10 +324,7 @@ function toolToAction(
   }
 }
 
-function toRouterResult(
-  name: string,
-  args: Record<string, unknown>
-): RouterResult | null {
+function toRouterResult(name: string, args: Record<string, unknown>): RouterResult | null {
   const mapped = toolToAction(name, args);
   if (!mapped) return null;
   if ("plan" in mapped) return { kind: "plan", steps: mapped.plan };
@@ -338,7 +334,7 @@ function toRouterResult(
 
 export async function routeWithLlm(
   transcript: string,
-  ctx: RouterContext = {}
+  ctx: RouterContext = {},
 ): Promise<RouterResult | null> {
   const ai = getClient();
   if (!ai) {
@@ -376,10 +372,7 @@ export async function routeWithLlm(
     }
     const args = (call.args ?? {}) as Record<string, unknown>;
     const result = toRouterResult(call.name, args);
-    log(
-      "interpreter",
-      `LlmRouter ${duration}ms tool=${call.name}${result ? "" : " (unmapped)"}`
-    );
+    log("interpreter", `LlmRouter ${duration}ms tool=${call.name}${result ? "" : " (unmapped)"}`);
     return result;
   } catch (err: any) {
     const duration = Date.now() - started;

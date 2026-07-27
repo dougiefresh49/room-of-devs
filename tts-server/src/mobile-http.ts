@@ -1,9 +1,4 @@
-import {
-  createServer,
-  type IncomingMessage,
-  type Server,
-  type ServerResponse,
-} from "http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 import { randomBytes, timingSafeEqual } from "crypto";
 import {
   chmodSync,
@@ -123,10 +118,7 @@ function extractToken(req: IncomingMessage, url: URL): string | null {
 }
 
 function setAuthCookie(res: ServerResponse, t: string): void {
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE_NAME}=${t}; HttpOnly; SameSite=Strict; Path=/`
-  );
+  res.setHeader("Set-Cookie", `${COOKIE_NAME}=${t}; HttpOnly; SameSite=Strict; Path=/`);
 }
 
 function unauthorized(res: ServerResponse): void {
@@ -232,19 +224,15 @@ function listReplays(): ReplayListEntry[] {
     entries.push({
       file: f,
       sessionId: typeof meta.sessionId === "string" ? meta.sessionId : undefined,
-      sessionName:
-        typeof meta.sessionName === "string" ? meta.sessionName : undefined,
+      sessionName: typeof meta.sessionName === "string" ? meta.sessionName : undefined,
       character: typeof meta.character === "string" ? meta.character : undefined,
-      textPreview:
-        typeof meta.textPreview === "string" ? meta.textPreview : undefined,
-      spokenText:
-        typeof meta.spokenText === "string" ? meta.spokenText : undefined,
+      textPreview: typeof meta.textPreview === "string" ? meta.textPreview : undefined,
+      spokenText: typeof meta.spokenText === "string" ? meta.spokenText : undefined,
       // The agent's original message (pre-Gemini) — the Message tab shows
       // this, not the character transcript.
       rawText: typeof meta.rawText === "string" ? meta.rawText : undefined,
       alignment: meta.alignment,
-      playbackRate:
-        typeof meta.playbackRate === "number" ? meta.playbackRate : undefined,
+      playbackRate: typeof meta.playbackRate === "number" ? meta.playbackRate : undefined,
       kind: typeof meta.kind === "string" ? meta.kind : undefined,
       timestamp: typeof meta.timestamp === "string" ? meta.timestamp : undefined,
     });
@@ -271,11 +259,7 @@ function safeReplayName(raw: string): string | null {
 
 /** Complete replay file: Range-capable serving (iOS needs 206 + lengths to
  *  start promptly and to scrub). */
-function serveReplayAudio(
-  req: IncomingMessage,
-  res: ServerResponse,
-  filePath: string
-): void {
+function serveReplayAudio(req: IncomingMessage, res: ServerResponse, filePath: string): void {
   const size = statSync(filePath).size;
   const range = req.headers.range;
   const m = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
@@ -322,7 +306,7 @@ async function serveLiveAudio(
   res: ServerResponse,
   filePath: string,
   partPath: string,
-  from: number
+  from: number,
 ): Promise<void> {
   res.writeHead(200, {
     "Content-Type": "audio/mpeg",
@@ -335,13 +319,21 @@ async function serveLiveAudio(
     closed = true;
     // A pump paused on backpressure would wait forever for a drain that never
     // comes — tear the read stream down so its promise settles.
-    try { activeRead?.destroy(); } catch { /* already gone */ }
+    try {
+      activeRead?.destroy();
+    } catch {
+      /* already gone */
+    }
   };
   req.on("close", onGone);
   res.on("close", onGone);
 
   const currentSize = (p: string): number => {
-    try { return statSync(p).size; } catch { return -1; }
+    try {
+      return statSync(p).size;
+    } catch {
+      return -1;
+    }
   };
   const pump = (p: string, end: number): Promise<void> =>
     new Promise((done) => {
@@ -387,7 +379,11 @@ async function serveLiveAudio(
     }
     await new Promise((r) => setTimeout(r, LIVE_POLL_MS));
   }
-  try { res.end(); } catch { /* client gone */ }
+  try {
+    res.end();
+  } catch {
+    /* client gone */
+  }
 }
 
 function contentTypeFor(path: string): string {
@@ -410,7 +406,7 @@ function contentTypeFor(path: string): string {
 function serveFile(
   res: ServerResponse,
   filePath: string,
-  cacheControl = "public, max-age=3600"
+  cacheControl = "public, max-age=3600",
 ): void {
   if (!existsSync(filePath) || !statSync(filePath).isFile()) {
     res.writeHead(404);
@@ -431,7 +427,7 @@ function serveMobileAppMissing(res: ServerResponse): void {
   });
   res.end(
     "mobile SPA not installed: packages/mobile/dist missing. " +
-      "Build with `pnpm --filter @room/mobile build`, then restart via tts-server.sh."
+      "Build with `pnpm --filter @room/mobile build`, then restart via tts-server.sh.",
   );
 }
 
@@ -475,10 +471,7 @@ function actionRateLimited(key: string): boolean {
   return win.count > ACTION_MAX_PER_WINDOW;
 }
 
-async function handleRequest(
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<void> {
+async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
   // Applied to every response (writeHead's header object merges on top).
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
@@ -773,13 +766,11 @@ export function startMobileHttp(portOverride?: number): void {
   token = createToken();
   actionWindows.clear();
 
-  mobileDistReady =
-    existsSync(MOBILE_DIST_DIR) &&
-    existsSync(join(MOBILE_DIST_DIR, "index.html"));
+  mobileDistReady = existsSync(MOBILE_DIST_DIR) && existsSync(join(MOBILE_DIST_DIR, "index.html"));
   if (!mobileDistReady) {
     log(
       "mobile-http",
-      `WARNING: mobile SPA dist missing at ${MOBILE_DIST_DIR} — GET /app will 503 until packages/mobile/dist is built and synced`
+      `WARNING: mobile SPA dist missing at ${MOBILE_DIST_DIR} — GET /app will 503 until packages/mobile/dist is built and synced`,
     );
   }
 
@@ -816,7 +807,7 @@ export function startMobileHttp(portOverride?: number): void {
   else {
     log(
       "mobile-http",
-      "WARNING: no Tailscale IPv4 (100.64.0.0/10) found — bound to 127.0.0.1 only; the phone can't reach the room until Tailscale is up"
+      "WARNING: no Tailscale IPv4 (100.64.0.0/10) found — bound to 127.0.0.1 only; the phone can't reach the room until Tailscale is up",
     );
   }
 

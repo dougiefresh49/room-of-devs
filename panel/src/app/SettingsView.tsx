@@ -2,8 +2,16 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { client } from "../client.js";
 import { IconBack } from "./icons.js";
 import {
-  armLearnCapture, BUTTON_COLORS, commitButtonPatch, commitSetting, getServerData, removeButton, sendHoldRoom, subscribeServerData,
-  type ButtonConfig, type RoomSettings,
+  armLearnCapture,
+  BUTTON_COLORS,
+  commitButtonPatch,
+  commitSetting,
+  getServerData,
+  removeButton,
+  sendHoldRoom,
+  subscribeServerData,
+  type ButtonConfig,
+  type RoomSettings,
 } from "./server-data.js";
 import { closeSettings, getViewState, setSettingsTab, subscribeViewState } from "./view-state.js";
 
@@ -11,21 +19,94 @@ const MOODS = ["focus", "arcade", "quiet", "normal"] as const;
 const PLAYBACK = ["auto", "announce", "silent"] as const;
 const ACKS = ["always", "cached", "off"] as const;
 
-function settingValue(settings: RoomSettings, key: keyof RoomSettings, fallback: string): string { const value = settings[key]; return typeof value === "string" && value ? value : fallback; }
-function speedOf(settings: RoomSettings): number { const value = settings.speed; return typeof value === "number" && Number.isFinite(value) ? Math.min(2, Math.max(.75, value)) : 1; }
-function voiceLabel(voice: { id: string; name: string; character?: string | null }) { return voice.name || voice.character || voice.id; }
-function voiceAvatar(voice: { character?: string | null }) { return `avatars/tmnt/${(voice.character ?? "default").toLowerCase()}/idle.png`; }
-function colorOf(config: ButtonConfig) { return BUTTON_COLORS.includes(config.color as typeof BUTTON_COLORS[number]) ? config.color as typeof BUTTON_COLORS[number] : "white"; }
-function nextColor(config: ButtonConfig) { const color = colorOf(config); return BUTTON_COLORS[(BUTTON_COLORS.indexOf(color) + 1) % BUTTON_COLORS.length]; }
-function assignment(config: ButtonConfig) { return config.character ? `character:${config.character}` : config.action ? `action:${config.action}` : ""; }
+function settingValue(settings: RoomSettings, key: keyof RoomSettings, fallback: string): string {
+  const value = settings[key];
+  return typeof value === "string" && value ? value : fallback;
+}
+function speedOf(settings: RoomSettings): number {
+  const value = settings.speed;
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(2, Math.max(0.75, value))
+    : 1;
+}
+function voiceLabel(voice: { id: string; name: string; character?: string | null }) {
+  return voice.name || voice.character || voice.id;
+}
+function voiceAvatar(voice: { character?: string | null }) {
+  return `avatars/tmnt/${(voice.character ?? "default").toLowerCase()}/idle.png`;
+}
+function colorOf(config: ButtonConfig) {
+  return BUTTON_COLORS.includes(config.color as (typeof BUTTON_COLORS)[number])
+    ? (config.color as (typeof BUTTON_COLORS)[number])
+    : "white";
+}
+function nextColor(config: ButtonConfig) {
+  const color = colorOf(config);
+  return BUTTON_COLORS[(BUTTON_COLORS.indexOf(color) + 1) % BUTTON_COLORS.length];
+}
+function assignment(config: ButtonConfig) {
+  return config.character
+    ? `character:${config.character}`
+    : config.action
+      ? `action:${config.action}`
+      : "";
+}
 
 function BackButton() {
   const stop = (event: React.SyntheticEvent) => event.stopPropagation();
-  return <button type="button" className="icon-btn window-btn no-drag" data-window-action="settings-back" title="Back to room" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); closeSettings(); }} onMouseDown={stop} onClick={stop}><IconBack /></button>;
+  return (
+    <button
+      type="button"
+      className="icon-btn window-btn no-drag"
+      data-window-action="settings-back"
+      title="Back to room"
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        closeSettings();
+      }}
+      onMouseDown={stop}
+      onClick={stop}
+    >
+      <IconBack />
+    </button>
+  );
 }
 
-function Segmented({ group, options, current, labels, writable }: { group: keyof RoomSettings; options: readonly string[]; current: string; labels: Record<string, string>; writable: boolean }) {
-  return <div className="settings-segmented no-drag" data-setting-group={group}>{options.map((value) => <button key={value} type="button" className={`settings-segment${current === value ? " active" : ""}`} data-setting-key={group} data-setting-value={value} aria-pressed={current === value} disabled={!writable} onClick={(event) => { event.stopPropagation(); if (value !== "custom") commitSetting(group, value); }}>{labels[value] ?? value}</button>)}</div>;
+function Segmented({
+  group,
+  options,
+  current,
+  labels,
+  writable,
+}: {
+  group: keyof RoomSettings;
+  options: readonly string[];
+  current: string;
+  labels: Record<string, string>;
+  writable: boolean;
+}) {
+  return (
+    <div className="settings-segmented no-drag" data-setting-group={group}>
+      {options.map((value) => (
+        <button
+          key={value}
+          type="button"
+          className={`settings-segment${current === value ? " active" : ""}`}
+          data-setting-key={group}
+          data-setting-value={value}
+          aria-pressed={current === value}
+          disabled={!writable}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (value !== "custom") commitSetting(group, value);
+          }}
+        >
+          {labels[value] ?? value}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function SettingsView() {
@@ -35,11 +116,15 @@ export function SettingsView() {
   const storedSpeed = speedOf(data.settings);
   const [draggingSpeed, setDraggingSpeed] = useState(false);
   const [previewSpeed, setPreviewSpeed] = useState(storedSpeed);
-  useEffect(() => { if (!draggingSpeed) setPreviewSpeed(storedSpeed); }, [draggingSpeed, storedSpeed]);
+  useEffect(() => {
+    if (!draggingSpeed) setPreviewSpeed(storedSpeed);
+  }, [draggingSpeed, storedSpeed]);
   // ONE deduped commit per final value, from every release path (Sol review:
   // pointer-up alone loses off-control releases and double-sends no-ops).
   const lastCommittedSpeed = useRef<number | null>(null);
-  useEffect(() => { lastCommittedSpeed.current = null; }, [storedSpeed]);
+  useEffect(() => {
+    lastCommittedSpeed.current = null;
+  }, [storedSpeed]);
   const commitSpeed = (value: number) => {
     setDraggingSpeed(false);
     if (value === (lastCommittedSpeed.current ?? storedSpeed)) return;
@@ -48,24 +133,450 @@ export function SettingsView() {
   };
   const connected = clientState.connected;
   const roomHeld = clientState.snapshot?.roomHeld === true;
-  const title = view.settingsTab === "buttons" ? "Button Mapping" : view.settingsTab === "help" ? "Shortcuts" : "Settings";
+  const title =
+    view.settingsTab === "buttons"
+      ? "Button Mapping"
+      : view.settingsTab === "help"
+        ? "Shortcuts"
+        : "Settings";
   let body: React.ReactNode;
   if (view.settingsTab === "general") {
-    if (!connected) body = <section className="settings-panel"><p className="picker-empty">Disconnected</p></section>;
-    else if (!data.settingsWritable) body = <section className="settings-panel"><p className="picker-empty">Settings unavailable</p></section>;
+    if (!connected)
+      body = (
+        <section className="settings-panel">
+          <p className="picker-empty">Disconnected</p>
+        </section>
+      );
+    else if (!data.settingsWritable)
+      body = (
+        <section className="settings-panel">
+          <p className="picker-empty">Settings unavailable</p>
+        </section>
+      );
     else {
-      const currentMood = settingValue(data.settings, "mood", "normal"); const moodOptions: string[] = MOODS.includes(currentMood as typeof MOODS[number]) ? [...MOODS] : [...MOODS, "custom"];
-      const characterVoices = data.voices.filter((voice) => voice.character != null); const otherVoices = data.voices.filter((voice) => voice.character == null); const voice = data.settings.default_voice_id ?? "";
-      body = <section className="settings-panel"><div className="settings-status">{data.settingsLoaded ? "Ready" : "Waiting for settings"}</div><div className="settings-group"><div className="settings-label">Default voice</div>{!data.voicesLoaded ? <p className="settings-note">Waiting for voices</p> : !characterVoices.length ? <p className="settings-note">Character voices unavailable</p> : <div className="settings-voice-rail no-drag">{characterVoices.map((option) => { const label = voiceLabel(option); const active = option.id === voice; return <button key={option.id} type="button" className={`settings-voice-chip${active ? " active" : ""}`} data-default-voice={option.id} title={label} aria-pressed={active} disabled={!data.settingsWritable} onClick={(event) => { event.stopPropagation(); commitSetting("default_voice", option.id); }}><span className="settings-voice-av"><img className="avatar settings-voice-img" src={voiceAvatar(option)} alt="" onError={(event) => { const img = event.currentTarget; img.style.display = "none"; const fallback = img.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = "flex"; }} /><span className="avatar-fallback settings-voice-fallback">{label.slice(0, 1).toUpperCase()}</span></span><span>{label}</span></button>; })}</div>}{data.voicesLoaded && otherVoices.length ? <select className="settings-select no-drag" data-default-voice-select disabled={!data.settingsWritable} value={voice} onChange={(event) => { event.stopPropagation(); if (event.currentTarget.value) commitSetting("default_voice", event.currentTarget.value); }}><option value="">Other voices...</option>{otherVoices.map((option) => <option key={option.id} value={option.id}>{voiceLabel(option)}</option>)}</select> : null}</div><div className="settings-grid"><div className="settings-group"><div className="settings-label">Playback mode</div><Segmented group="playback_mode" options={PLAYBACK} current={settingValue(data.settings, "playback_mode", "auto")} labels={{ auto: "Auto", announce: "Announce", silent: "Silent" }} writable={data.settingsWritable} /></div><div className="settings-group"><div className="settings-label">Mood</div><Segmented group="mood" options={moodOptions} current={moodOptions.includes(currentMood) ? currentMood : "custom"} labels={{ focus: "Focus", arcade: "Arcade", quiet: "Quiet", normal: "Normal", custom: "Custom" }} writable={data.settingsWritable} /></div></div><div className="settings-group"><div className="settings-label settings-label-row"><span>Speed</span><span className="settings-value" data-setting-speed-label>{previewSpeed.toFixed(2)}x</span></div><input className="settings-slider no-drag" data-setting-speed type="range" min="0.75" max="2" step="0.25" value={previewSpeed} disabled={!data.settingsWritable} onPointerDown={() => setDraggingSpeed(true)} onChange={(event) => setPreviewSpeed(Number(event.currentTarget.value))} onPointerUp={(event) => commitSpeed(Number(event.currentTarget.value))} onPointerCancel={(event) => commitSpeed(Number(event.currentTarget.value))} onBlur={(event) => commitSpeed(Number(event.currentTarget.value))} onKeyUp={(event) => { if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(event.key)) commitSpeed(Number(event.currentTarget.value)); }} /></div><div className="settings-grid">{(["notifications", "listening"] as const).map((key) => <label key={key} className="settings-toggle no-drag"><span>{key === "notifications" ? "Notifications" : "Listening"}</span><input type="checkbox" data-setting-toggle={key} checked={data.settings[key] === true} disabled={!data.settingsWritable} onChange={(event) => { event.stopPropagation(); commitSetting(key, event.currentTarget.checked); }} /></label>)}</div><div className="settings-group"><div className="settings-label">Dynamic acks</div><Segmented group="dynamic_acks" options={ACKS} current={settingValue(data.settings, "dynamic_acks", "cached")} labels={{ always: "Always", cached: "Cached", off: "Off" }} writable={data.settingsWritable} /></div><button type="button" className={`settings-hold no-drag${roomHeld ? " active" : ""}`} data-settings-hold aria-pressed={roomHeld} onClick={(event) => { event.stopPropagation(); sendHoldRoom(); }}>{roomHeld ? "Release the Room" : "Hold the Room"}</button></section>;
+      const currentMood = settingValue(data.settings, "mood", "normal");
+      const moodOptions: string[] = MOODS.includes(currentMood as (typeof MOODS)[number])
+        ? [...MOODS]
+        : [...MOODS, "custom"];
+      const characterVoices = data.voices.filter((voice) => voice.character != null);
+      const otherVoices = data.voices.filter((voice) => voice.character == null);
+      const voice = data.settings.default_voice_id ?? "";
+      body = (
+        <section className="settings-panel">
+          <div className="settings-status">
+            {data.settingsLoaded ? "Ready" : "Waiting for settings"}
+          </div>
+          <div className="settings-group">
+            <div className="settings-label">Default voice</div>
+            {!data.voicesLoaded ? (
+              <p className="settings-note">Waiting for voices</p>
+            ) : !characterVoices.length ? (
+              <p className="settings-note">Character voices unavailable</p>
+            ) : (
+              <div className="settings-voice-rail no-drag">
+                {characterVoices.map((option) => {
+                  const label = voiceLabel(option);
+                  const active = option.id === voice;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`settings-voice-chip${active ? " active" : ""}`}
+                      data-default-voice={option.id}
+                      title={label}
+                      aria-pressed={active}
+                      disabled={!data.settingsWritable}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        commitSetting("default_voice", option.id);
+                      }}
+                    >
+                      <span className="settings-voice-av">
+                        <img
+                          className="avatar settings-voice-img"
+                          src={voiceAvatar(option)}
+                          alt=""
+                          onError={(event) => {
+                            const img = event.currentTarget;
+                            img.style.display = "none";
+                            const fallback = img.nextElementSibling as HTMLElement | null;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <span className="avatar-fallback settings-voice-fallback">
+                          {label.slice(0, 1).toUpperCase()}
+                        </span>
+                      </span>
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {data.voicesLoaded && otherVoices.length ? (
+              <select
+                className="settings-select no-drag"
+                data-default-voice-select
+                disabled={!data.settingsWritable}
+                value={voice}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  if (event.currentTarget.value)
+                    commitSetting("default_voice", event.currentTarget.value);
+                }}
+              >
+                <option value="">Other voices...</option>
+                {otherVoices.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {voiceLabel(option)}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
+          <div className="settings-grid">
+            <div className="settings-group">
+              <div className="settings-label">Playback mode</div>
+              <Segmented
+                group="playback_mode"
+                options={PLAYBACK}
+                current={settingValue(data.settings, "playback_mode", "auto")}
+                labels={{ auto: "Auto", announce: "Announce", silent: "Silent" }}
+                writable={data.settingsWritable}
+              />
+            </div>
+            <div className="settings-group">
+              <div className="settings-label">Mood</div>
+              <Segmented
+                group="mood"
+                options={moodOptions}
+                current={moodOptions.includes(currentMood) ? currentMood : "custom"}
+                labels={{
+                  focus: "Focus",
+                  arcade: "Arcade",
+                  quiet: "Quiet",
+                  normal: "Normal",
+                  custom: "Custom",
+                }}
+                writable={data.settingsWritable}
+              />
+            </div>
+          </div>
+          <div className="settings-group">
+            <div className="settings-label settings-label-row">
+              <span>Speed</span>
+              <span className="settings-value" data-setting-speed-label>
+                {previewSpeed.toFixed(2)}x
+              </span>
+            </div>
+            <input
+              className="settings-slider no-drag"
+              data-setting-speed
+              type="range"
+              min="0.75"
+              max="2"
+              step="0.25"
+              value={previewSpeed}
+              disabled={!data.settingsWritable}
+              onPointerDown={() => setDraggingSpeed(true)}
+              onChange={(event) => setPreviewSpeed(Number(event.currentTarget.value))}
+              onPointerUp={(event) => commitSpeed(Number(event.currentTarget.value))}
+              onPointerCancel={(event) => commitSpeed(Number(event.currentTarget.value))}
+              onBlur={(event) => commitSpeed(Number(event.currentTarget.value))}
+              onKeyUp={(event) => {
+                if (
+                  [
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "ArrowUp",
+                    "ArrowDown",
+                    "Home",
+                    "End",
+                    "PageUp",
+                    "PageDown",
+                  ].includes(event.key)
+                )
+                  commitSpeed(Number(event.currentTarget.value));
+              }}
+            />
+          </div>
+          <div className="settings-grid">
+            {(["notifications", "listening"] as const).map((key) => (
+              <label key={key} className="settings-toggle no-drag">
+                <span>{key === "notifications" ? "Notifications" : "Listening"}</span>
+                <input
+                  type="checkbox"
+                  data-setting-toggle={key}
+                  checked={data.settings[key] === true}
+                  disabled={!data.settingsWritable}
+                  onChange={(event) => {
+                    event.stopPropagation();
+                    commitSetting(key, event.currentTarget.checked);
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="settings-group">
+            <div className="settings-label">Dynamic acks</div>
+            <Segmented
+              group="dynamic_acks"
+              options={ACKS}
+              current={settingValue(data.settings, "dynamic_acks", "cached")}
+              labels={{ always: "Always", cached: "Cached", off: "Off" }}
+              writable={data.settingsWritable}
+            />
+          </div>
+          <button
+            type="button"
+            className={`settings-hold no-drag${roomHeld ? " active" : ""}`}
+            data-settings-hold
+            aria-pressed={roomHeld}
+            onClick={(event) => {
+              event.stopPropagation();
+              sendHoldRoom();
+            }}
+          >
+            {roomHeld ? "Release the Room" : "Hold the Room"}
+          </button>
+        </section>
+      );
     }
   } else if (view.settingsTab === "buttons") {
-    const status = !connected ? "Disconnected" : !data.buttonsLoaded ? "Waiting for button data" : data.buttonsWritable ? data.buttonDeviceHint || "Ready" : "Read-only: server commands unavailable";
+    const status = !connected
+      ? "Disconnected"
+      : !data.buttonsLoaded
+        ? "Waiting for button data"
+        : data.buttonsWritable
+          ? data.buttonDeviceHint || "Ready"
+          : "Read-only: server commands unavailable";
     const rows = Object.entries(data.buttonMappings).sort(([a], [b]) => Number(a) - Number(b));
-    body = <section className="button-panel"><div className="panel-status">{status}</div><div className="button-list">{rows.length ? rows.map(([idx, config]) => { const learning = data.learnCapture?.mode === "rebind" && data.learnCapture.oldIdx === idx; const color = colorOf(config); return <div key={idx} className="button-row" data-button-row={idx}><button type="button" className={`button-color button-color-${color} no-drag`} data-button-color={idx} title="Cycle color" disabled={!data.buttonsWritable} onClick={(event) => { event.stopPropagation(); commitButtonPatch(idx, { color: nextColor(config) }); }}></button><input key={`name:${config.name ?? ""}`} className="button-name no-drag" data-button-name={idx} defaultValue={config.name || `Button ${idx}`} title="display name - safe to rename" aria-label="Button display name" disabled={!data.buttonsWritable} onClick={(event) => event.stopPropagation()} onBlur={(event) => { const name = event.currentTarget.value.trim(); if (name) commitButtonPatch(idx, { name }); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); } }} /><button type="button" className={`button-code-chip${learning ? " learning" : ""} no-drag`} data-button-learn={idx} disabled={!data.buttonsWritable} onClick={(event) => { event.stopPropagation(); armLearnCapture("rebind", idx); }}>{learning ? "press a button..." : `#${idx}`}</button><select className="button-assign no-drag" data-button-assign={idx} value={assignment(config)} disabled={!data.buttonsWritable} onChange={(event) => { event.stopPropagation(); const value = event.currentTarget.value; if (value.startsWith("character:")) commitButtonPatch(idx, { character: value.slice(10), action: null }); else if (value.startsWith("action:")) commitButtonPatch(idx, { action: value.slice(7), character: null }); else commitButtonPatch(idx, { action: null, character: null }); }}><option value="">Unassigned</option><optgroup label="Characters">{data.buttonCharacters.length ? data.buttonCharacters.map((character) => <option key={character} value={`character:${character}`}>{character}</option>) : <option disabled>No characters</option>}</optgroup><optgroup label="Actions">{data.buttonActions.length ? data.buttonActions.map((action) => <option key={action} value={`action:${action}`}>{action}</option>) : <option disabled>No actions</option>}</optgroup></select><input key={`notes:${config.notes ?? ""}`} className="button-notes no-drag" data-button-notes={idx} defaultValue={config.notes ?? ""} placeholder="Notes" disabled={!data.buttonsWritable} onClick={(event) => event.stopPropagation()} onBlur={(event) => commitButtonPatch(idx, { notes: event.currentTarget.value.trim() })} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); } }} /><button type="button" className="button-delete no-drag" data-button-delete={idx} title="Delete mapping" disabled={!data.buttonsWritable} onClick={(event) => event.stopPropagation()} onDoubleClick={(event) => { event.preventDefault(); event.stopPropagation(); removeButton(idx); }}>&times;</button></div>; }) : <p className="picker-empty">No mapped buttons</p>}<button type="button" className={`button-add no-drag${data.learnCapture?.mode === "add" ? " learning" : ""}`} data-button-add disabled={!data.buttonsWritable} onClick={(event) => { event.stopPropagation(); armLearnCapture("add"); }}>{data.learnCapture?.mode === "add" ? "press a button..." : "+ Add button"}</button></div></section>;
-  } else if (!connected) body = <div className="shortcut-panel"><p className="picker-empty">Disconnected</p></div>;
-  else if (!data.shortcutsAvailable) body = <div className="shortcut-panel"><p className="picker-empty">Shortcuts unavailable</p></div>;
-  else if (!data.shortcutsLoaded) body = <div className="shortcut-panel"><p className="picker-empty">Waiting for shortcuts</p></div>;
-  else if (!data.shortcutsSections.length) body = <div className="shortcut-panel"><p className="picker-empty">No shortcuts</p></div>;
-  else body = <div className="shortcut-panel">{data.shortcutsSections.map((section) => <section key={section.title} className="shortcut-section"><h2>{section.title}</h2><div className="shortcut-table">{section.rows.map(([key, description]) => <div key={key} className="shortcut-row"><kbd>{key}</kbd><span>{description}</span></div>)}</div></section>)}</div>;
-  return <><header className="strip"><div className="strip-left"><BackButton /><span className="title">{title}</span></div><div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span></div></header><main className="picker"><div className="picker-tabs no-drag" role="tablist">{([ ["general", "General"], ["buttons", "Buttons"], ["help", "Help"] ] as const).map(([tab, label]) => <button key={tab} type="button" className={`picker-tab${view.settingsTab === tab ? " active" : ""}`} data-settings-tab={tab} role="tab" onClick={() => setSettingsTab(tab)}>{label}</button>)}</div>{body}</main></>;
+    body = (
+      <section className="button-panel">
+        <div className="panel-status">{status}</div>
+        <div className="button-list">
+          {rows.length ? (
+            rows.map(([idx, config]) => {
+              const learning =
+                data.learnCapture?.mode === "rebind" && data.learnCapture.oldIdx === idx;
+              const color = colorOf(config);
+              return (
+                <div key={idx} className="button-row" data-button-row={idx}>
+                  <button
+                    type="button"
+                    className={`button-color button-color-${color} no-drag`}
+                    data-button-color={idx}
+                    title="Cycle color"
+                    disabled={!data.buttonsWritable}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      commitButtonPatch(idx, { color: nextColor(config) });
+                    }}
+                  ></button>
+                  <input
+                    key={`name:${config.name ?? ""}`}
+                    className="button-name no-drag"
+                    data-button-name={idx}
+                    defaultValue={config.name || `Button ${idx}`}
+                    title="display name - safe to rename"
+                    aria-label="Button display name"
+                    disabled={!data.buttonsWritable}
+                    onClick={(event) => event.stopPropagation()}
+                    onBlur={(event) => {
+                      const name = event.currentTarget.value.trim();
+                      if (name) commitButtonPatch(idx, { name });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.currentTarget.blur();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={`button-code-chip${learning ? " learning" : ""} no-drag`}
+                    data-button-learn={idx}
+                    disabled={!data.buttonsWritable}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      armLearnCapture("rebind", idx);
+                    }}
+                  >
+                    {learning ? "press a button..." : `#${idx}`}
+                  </button>
+                  <select
+                    className="button-assign no-drag"
+                    data-button-assign={idx}
+                    value={assignment(config)}
+                    disabled={!data.buttonsWritable}
+                    onChange={(event) => {
+                      event.stopPropagation();
+                      const value = event.currentTarget.value;
+                      if (value.startsWith("character:"))
+                        commitButtonPatch(idx, { character: value.slice(10), action: null });
+                      else if (value.startsWith("action:"))
+                        commitButtonPatch(idx, { action: value.slice(7), character: null });
+                      else commitButtonPatch(idx, { action: null, character: null });
+                    }}
+                  >
+                    <option value="">Unassigned</option>
+                    <optgroup label="Characters">
+                      {data.buttonCharacters.length ? (
+                        data.buttonCharacters.map((character) => (
+                          <option key={character} value={`character:${character}`}>
+                            {character}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No characters</option>
+                      )}
+                    </optgroup>
+                    <optgroup label="Actions">
+                      {data.buttonActions.length ? (
+                        data.buttonActions.map((action) => (
+                          <option key={action} value={`action:${action}`}>
+                            {action}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No actions</option>
+                      )}
+                    </optgroup>
+                  </select>
+                  <input
+                    key={`notes:${config.notes ?? ""}`}
+                    className="button-notes no-drag"
+                    data-button-notes={idx}
+                    defaultValue={config.notes ?? ""}
+                    placeholder="Notes"
+                    disabled={!data.buttonsWritable}
+                    onClick={(event) => event.stopPropagation()}
+                    onBlur={(event) =>
+                      commitButtonPatch(idx, { notes: event.currentTarget.value.trim() })
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.currentTarget.blur();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="button-delete no-drag"
+                    data-button-delete={idx}
+                    title="Delete mapping"
+                    disabled={!data.buttonsWritable}
+                    onClick={(event) => event.stopPropagation()}
+                    onDoubleClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      removeButton(idx);
+                    }}
+                  >
+                    &times;
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <p className="picker-empty">No mapped buttons</p>
+          )}
+          <button
+            type="button"
+            className={`button-add no-drag${data.learnCapture?.mode === "add" ? " learning" : ""}`}
+            data-button-add
+            disabled={!data.buttonsWritable}
+            onClick={(event) => {
+              event.stopPropagation();
+              armLearnCapture("add");
+            }}
+          >
+            {data.learnCapture?.mode === "add" ? "press a button..." : "+ Add button"}
+          </button>
+        </div>
+      </section>
+    );
+  } else if (!connected)
+    body = (
+      <div className="shortcut-panel">
+        <p className="picker-empty">Disconnected</p>
+      </div>
+    );
+  else if (!data.shortcutsAvailable)
+    body = (
+      <div className="shortcut-panel">
+        <p className="picker-empty">Shortcuts unavailable</p>
+      </div>
+    );
+  else if (!data.shortcutsLoaded)
+    body = (
+      <div className="shortcut-panel">
+        <p className="picker-empty">Waiting for shortcuts</p>
+      </div>
+    );
+  else if (!data.shortcutsSections.length)
+    body = (
+      <div className="shortcut-panel">
+        <p className="picker-empty">No shortcuts</p>
+      </div>
+    );
+  else
+    body = (
+      <div className="shortcut-panel">
+        {data.shortcutsSections.map((section) => (
+          <section key={section.title} className="shortcut-section">
+            <h2>{section.title}</h2>
+            <div className="shortcut-table">
+              {section.rows.map(([key, description]) => (
+                <div key={key} className="shortcut-row">
+                  <kbd>{key}</kbd>
+                  <span>{description}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  return (
+    <>
+      <header className="strip">
+        <div className="strip-left">
+          <BackButton />
+          <span className="title">{title}</span>
+        </div>
+        <div className="header-actions no-drag">
+          <span
+            className={`conn-dot ${connected ? "up" : "down"}`}
+            title={connected ? "Connected" : "Disconnected"}
+          ></span>
+        </div>
+      </header>
+      <main className="picker">
+        <div className="picker-tabs no-drag" role="tablist">
+          {(
+            [
+              ["general", "General"],
+              ["buttons", "Buttons"],
+              ["help", "Help"],
+            ] as const
+          ).map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              className={`picker-tab${view.settingsTab === tab ? " active" : ""}`}
+              data-settings-tab={tab}
+              role="tab"
+              onClick={() => setSettingsTab(tab)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {body}
+      </main>
+    </>
+  );
 }

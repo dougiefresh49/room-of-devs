@@ -1,10 +1,5 @@
 import { watch } from "chokidar";
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, basename } from "path";
 import {
   STATE_DIR,
@@ -215,10 +210,7 @@ function queuedPreviewFrom(queued: string[] | undefined): string | null {
   }
 }
 
-function countSupersededFrom(
-  playedMtimes: number[] | undefined,
-  raisedAt: string | null
-): number {
+function countSupersededFrom(playedMtimes: number[] | undefined, raisedAt: string | null): number {
   if (!raisedAt || !playedMtimes) return 0;
   const threshold = Date.parse(raisedAt);
   if (Number.isNaN(threshold)) return 0;
@@ -267,10 +259,7 @@ export function buildSnapshot(): AgentView[] {
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,
         raisedCount: queueIndex.get(shortSession)?.length ?? 0,
-        supersededCount: countSupersededFrom(
-          playedIndex.get(shortSession),
-          state.raisedAt ?? null
-        ),
+        supersededCount: countSupersededFrom(playedIndex.get(shortSession), state.raisedAt ?? null),
         muted: muted.has(sessionId),
         isTeam: inTeam,
         queuedPreview: queuedPreviewFrom(queueIndex.get(shortSession)),
@@ -364,12 +353,10 @@ export function startStateWatch(): void {
         PAUSED_FLAG_PATH,
         LIVE_SESSIONS_PATH,
         PHONE_ACK_PATH,
-      ].map((p) => basename(p))
+      ].map((p) => basename(p)),
     );
     const relevant = (path: string) =>
-      path.startsWith(STATE_DIR) ||
-      path.startsWith(FAILED_DIR) ||
-      ROOT_FILES.has(basename(path));
+      path.startsWith(STATE_DIR) || path.startsWith(FAILED_DIR) || ROOT_FILES.has(basename(path));
     watcher = watch([STATE_DIR, TTS_DIR, FAILED_DIR], {
       ignoreInitial: true,
       depth: 0,
