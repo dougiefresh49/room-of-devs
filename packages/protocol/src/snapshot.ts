@@ -103,5 +103,7 @@ export const PanelSnapshotSchema = v.object({
   /** pause.sh's SIGSTOP flag — panel freezes the mouth and shows resume. */
   paused: v.boolean(),
   phoneAck: v.nullable(PhoneAckSchema),
+  /** Queue items in failed/ — synthesis/playback failures the user should see. */
+  failedCount: v.optional(v.number()),
 });
 export type PanelSnapshot = v.InferOutput<typeof PanelSnapshotSchema>;

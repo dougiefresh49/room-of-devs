@@ -7,7 +7,7 @@
  */
 import { useLayoutEffect } from "react";
 import type { AgentView, NowPlaying, PanelSnapshot } from "@room/protocol";
-import { LiveBadge, SummaryText, stripMarkdown } from "@room/ui";
+import { LiveBadge, SummaryText, stripMarkdown, FailedCountBadge } from "@room/ui";
 import { isPhoneRoutedFrame, nowPlayingKey } from "@room/room-client";
 import { client } from "../client.js";
 import { platform } from "../platform/tauri.js";
@@ -137,6 +137,11 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
       data-tauri-drag-region
       onMouseDown={dragRegionMouseDown}
     >
+      {(snapshot?.failedCount ?? 0) > 0 ? (
+        <div className="dock-failed-badge no-drag">
+          <FailedCountBadge count={snapshot?.failedCount ?? 0} />
+        </div>
+      ) : null}
       {spot ? (
         <DockSpotlight spot={spot} nowPlaying={nowPlaying} view={view} ui={ui} paused={snapshot?.paused === true} />
       ) : null}

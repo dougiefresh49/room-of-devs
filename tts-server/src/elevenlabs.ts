@@ -1,4 +1,5 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { ELEVENLABS_TIMEOUT_MS, withApiRetry } from "./api-call.js";
 import { loadConfig, loadSessionVoices } from "./config.js";
 import { log } from "./logger.js";
 
@@ -37,17 +38,19 @@ export async function streamTTS(
   const elSpeed = Math.min(1.2, Math.max(0.7, rawSpeed));
 
   try {
-    const response = await el.textToSpeech.stream(opts.voiceId, {
-      text,
-      modelId,
-      outputFormat: "mp3_44100_128",
-      voiceSettings: {
-        stability: opts.stability ?? 0.4,
-        similarityBoost: opts.similarityBoost ?? 0.75,
-        style: opts.style ?? 0.15,
-        speed: elSpeed,
-      },
-    });
+    const response = await withApiRetry("elevenlabs", ELEVENLABS_TIMEOUT_MS, () =>
+      el.textToSpeech.stream(opts.voiceId, {
+        text,
+        modelId,
+        outputFormat: "mp3_44100_128",
+        voiceSettings: {
+          stability: opts.stability ?? 0.4,
+          similarityBoost: opts.similarityBoost ?? 0.75,
+          style: opts.style ?? 0.15,
+          speed: elSpeed,
+        },
+      })
+    );
 
     log(
       "elevenlabs",
@@ -138,17 +141,19 @@ export async function streamTTSWithTimestamps(
     } | null;
   }>;
   try {
-    stream = (await el.textToSpeech.streamWithTimestamps(opts.voiceId, {
-      text,
-      modelId,
-      outputFormat: "mp3_44100_128",
-      voiceSettings: {
-        stability: opts.stability ?? 0.4,
-        similarityBoost: opts.similarityBoost ?? 0.75,
-        style: opts.style ?? 0.15,
-        speed: elSpeed,
-      },
-    })) as any;
+    stream = (await withApiRetry("elevenlabs", ELEVENLABS_TIMEOUT_MS, () =>
+      el.textToSpeech.streamWithTimestamps(opts.voiceId, {
+        text,
+        modelId,
+        outputFormat: "mp3_44100_128",
+        voiceSettings: {
+          stability: opts.stability ?? 0.4,
+          similarityBoost: opts.similarityBoost ?? 0.75,
+          style: opts.style ?? 0.15,
+          speed: elSpeed,
+        },
+      })
+    )) as any;
   } catch (err: any) {
     log("elevenlabs", `Timestamps stream error (will fall back): ${err.message || err}`);
     return null;
@@ -212,17 +217,19 @@ export async function generateTTS(
   const elSpeed = Math.min(1.2, Math.max(0.7, rawSpeed));
 
   try {
-    const audio = await el.textToSpeech.convert(opts.voiceId, {
-      text,
-      modelId,
-      outputFormat: "mp3_44100_128",
-      voiceSettings: {
-        stability: opts.stability ?? 0.4,
-        similarityBoost: opts.similarityBoost ?? 0.75,
-        style: opts.style ?? 0.15,
-        speed: elSpeed,
-      },
-    });
+    const audio = await withApiRetry("elevenlabs", ELEVENLABS_TIMEOUT_MS, () =>
+      el.textToSpeech.convert(opts.voiceId, {
+        text,
+        modelId,
+        outputFormat: "mp3_44100_128",
+        voiceSettings: {
+          stability: opts.stability ?? 0.4,
+          similarityBoost: opts.similarityBoost ?? 0.75,
+          style: opts.style ?? 0.15,
+          speed: elSpeed,
+        },
+      })
+    );
 
     const chunks: Uint8Array[] = [];
     for await (const chunk of audio as any) {

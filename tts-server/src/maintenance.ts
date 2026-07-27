@@ -86,3 +86,9 @@ export function runStartupRetention(): void {
     );
   }
 }
+
+/** Cheap idempotent housekeeping for the 60s reaper (M-9). */
+export function runPeriodicMaintenance(): void {
+  rotateLogIfLarge();
+  runStartupRetention();
+}
