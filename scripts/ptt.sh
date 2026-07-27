@@ -225,7 +225,12 @@ transcribe_wav() {
         return 1
     fi
 
-    log "transcript: $transcript"
+    # Verbatim transcript logging is debug-only (H-6).
+    if [ "${TTS_HOOK_DEBUG:-0}" = "1" ]; then
+        log "transcript: $transcript"
+    else
+        log "transcript: ${#transcript} chars"
+    fi
     echo "$transcript"
 }
 

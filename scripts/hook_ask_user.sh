@@ -67,9 +67,10 @@ if [ -z "$QUESTION_TEXT" ]; then
 fi
 
 # Route through Node.js signal handler for in-character TTS.
-# H-5: question text still lands in argv until signal.ts grows --text-file /
-# stdin support — see HANDOFF-61.md.
+# H-5: question text travels via temp file, not argv (ps-visible).
 if [ -f "$SERVER_DIR/src/signal.ts" ] && command -v pnpm &>/dev/null; then
     cd "$SERVER_DIR"
-    exec pnpm exec tsx src/signal.ts ask-user "$SESSION_ID" "$QUESTION_TEXT"
+    TEXT_FILE=$(mktemp "${TMPDIR:-/tmp}/hook-ask-text.XXXXXX")
+    printf '%s' "$QUESTION_TEXT" > "$TEXT_FILE"
+    exec pnpm exec tsx src/signal.ts ask-user "$SESSION_ID" --text-file "$TEXT_FILE"
 fi

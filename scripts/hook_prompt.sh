@@ -51,9 +51,10 @@ if [[ "$TRIMMED" == \<task-notification* ]]; then
 fi
 
 # Generate dynamic character response via Node.js.
-# H-5: prompt text still lands in argv until signal.ts grows --text-file /
-# stdin support — see HANDOFF-61.md.
+# H-5: prompt text travels via temp file, not argv (ps-visible).
 if [ -f "$SERVER_DIR/src/signal.ts" ] && command -v pnpm &>/dev/null; then
     cd "$SERVER_DIR"
-    exec pnpm exec tsx src/signal.ts prompt-submitted "$SESSION_ID" "$USER_PROMPT"
+    TEXT_FILE=$(mktemp "${TMPDIR:-/tmp}/hook-prompt-text.XXXXXX")
+    printf '%s' "$USER_PROMPT" > "$TEXT_FILE"
+    exec pnpm exec tsx src/signal.ts prompt-submitted "$SESSION_ID" --text-file "$TEXT_FILE"
 fi

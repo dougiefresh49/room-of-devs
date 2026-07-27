@@ -43,7 +43,9 @@ function isTransientError(err: unknown): boolean {
 }
 
 function timeoutError(label: string, timeoutMs: number): Error {
-  return new Error(`${label} timed out after ${timeoutMs}ms`);
+  const err = new Error(`${label} timed out after ${timeoutMs}ms`);
+  (err as { isLocalTimeout?: boolean }).isLocalTimeout = true;
+  return err;
 }
 
 async function raceTimeout<T>(
@@ -67,7 +69,8 @@ async function raceTimeout<T>(
 export async function withApiRetry<T>(
   label: string,
   timeoutMs: number,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
+  opts: { retryOnTimeout?: boolean } = {}
 ): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -75,6 +78,11 @@ export async function withApiRetry<T>(
       return await raceTimeout(label, timeoutMs, fn);
     } catch (err) {
       lastErr = err;
+      // A local race-timeout doesn't abort the underlying request — for
+      // ElevenLabs (no abort signal) the first request may still complete
+      // and bill, so a retry there would double-bill.
+      const localTimeout = (err as { isLocalTimeout?: boolean })?.isLocalTimeout === true;
+      if (localTimeout && opts.retryOnTimeout === false) throw err;
       if (attempt > 0 || !isTransientError(err)) throw err;
       log(label, `Transient error, retrying once: ${(err as Error)?.message ?? err}`);
       await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS));

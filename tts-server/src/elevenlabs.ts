@@ -49,7 +49,8 @@ export async function streamTTS(
           style: opts.style ?? 0.15,
           speed: elSpeed,
         },
-      })
+      }),
+      { retryOnTimeout: false }
     );
 
     log(
@@ -152,7 +153,8 @@ export async function streamTTSWithTimestamps(
           style: opts.style ?? 0.15,
           speed: elSpeed,
         },
-      })
+      }),
+      { retryOnTimeout: false }
     )) as any;
   } catch (err: any) {
     log("elevenlabs", `Timestamps stream error (will fall back): ${err.message || err}`);
@@ -228,7 +230,8 @@ export async function generateTTS(
           style: opts.style ?? 0.15,
           speed: elSpeed,
         },
-      })
+      }),
+      { retryOnTimeout: false }
     );
 
     const chunks: Uint8Array[] = [];

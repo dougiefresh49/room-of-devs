@@ -1,4 +1,5 @@
 import { basename } from "path";
+import { readFileSync, unlinkSync } from "fs";
 import { loadEnv, lookupSessionName, loadMutedSessions } from "./config.js";
 import { resolveVoiceId } from "./elevenlabs.js";
 import { handleDynamicResponse, handleAskUser, getCharacter } from "./dynamic-response.js";
@@ -11,9 +12,30 @@ import { log } from "./logger.js";
 
 loadEnv();
 
+// Hook callers pass text via --text-file so prompt/question text never sits
+// in argv (ps-visible — audit H-5). Replay's numeric argv[4] is unaffected:
+// the file path applies only when the flag is present.
+function resolveTextArg(argv: string[]): string {
+  const idx = argv.indexOf("--text-file");
+  if (idx >= 0 && argv[idx + 1]) {
+    const path = argv[idx + 1];
+    try {
+      const text = readFileSync(path, "utf-8");
+      try {
+        unlinkSync(path);
+      } catch {}
+      return text;
+    } catch (err: any) {
+      log("signal", `Failed to read --text-file: ${err.message}`);
+      return "";
+    }
+  }
+  return argv[4] || "";
+}
+
 const action = process.argv[2];
 const sessionId = process.argv[3] || "";
-const textArg = process.argv[4] || "";
+const textArg = resolveTextArg(process.argv);
 
 // Muted sessions stay silent — checked BEFORE any Gemini/ElevenLabs call.
 if (sessionId && loadMutedSessions().includes(sessionId)) {
