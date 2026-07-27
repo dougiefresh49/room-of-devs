@@ -59,8 +59,7 @@ export {
   type CommandEnvelope,
 } from "./services/commands.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHARACTERS_PATH = join(__dirname, "characters.json");
+import { CHARACTERS_PATH } from "./characters-path.js";
 
 const TOKEN_PATH = join(TTS_DIR, "panel_ws_token");
 const VOICES_CACHE_PATH = join(TTS_DIR, "cache", "voices.json");

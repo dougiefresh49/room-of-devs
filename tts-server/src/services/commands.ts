@@ -51,9 +51,7 @@ import type {
   SpawnModel,
 } from "../protocol/index.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// services/ is one level below src/ — characters.json lives next to src/*.ts.
-const CHARACTERS_PATH = join(__dirname, "..", "characters.json");
+import { CHARACTERS_PATH } from "../characters-path.js";
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
 export const HOLD_ROOM_FILE = join(TTS_DIR, ".hold-room.json");

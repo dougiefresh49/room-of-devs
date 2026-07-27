@@ -25,6 +25,11 @@ err() { echo "[setup] ERROR: $*" >&2; }
 log "Creating directory structure under $TTS_DIR"
 mkdir -p "$TTS_DIR"/{queue,played,cache,scripts,logs,icons,sounds/default,ptt,models}
 
+# Record the repo this setup was run from so tts-server.sh can sync without
+# an ambient env var or a hardcoded home-directory guess (audit C-3).
+echo "$PROJECT_DIR" > "$TTS_DIR/repo_root"
+log "Recorded repo root: $PROJECT_DIR"
+
 # ── 2. Copy .env file ────────────────────────────────────────────
 ENV_FILE="$PROJECT_DIR/.env"
 ENV_DEST="$TTS_DIR/.env"
@@ -38,27 +43,37 @@ if [ -f "$ENV_FILE" ]; then
 else
     log "No .env file found at $ENV_FILE — API keys must be set manually in $ENV_DEST"
 fi
+# API keys must not be world-readable (audit H-7).
+if [ -f "$ENV_DEST" ]; then
+    chmod 600 "$ENV_DEST"
+fi
 
-# ── 4. Copy scripts ──────────────────────────────────────────────
+# ── 3. Seed/migrate characters.json BEFORE tts-server wipe (audit C-2) ─
+# Runtime persona registry lives at TTS_DIR, not under tts-server/src/.
+CHARS_DEST="$TTS_DIR/characters.json"
+CHARS_OLD="$TTS_DIR/tts-server/src/characters.json"
+CHARS_EXAMPLE="$PROJECT_DIR/tts-server/src/characters.example.json"
+if [ -f "$CHARS_DEST" ]; then
+    log "characters.json already exists at $CHARS_DEST"
+elif [ -f "$CHARS_OLD" ]; then
+    log "Migrating characters.json from $CHARS_OLD"
+    cp "$CHARS_OLD" "$CHARS_DEST"
+elif [ -f "$CHARS_EXAMPLE" ]; then
+    log "Seeding characters.json from example"
+    cp "$CHARS_EXAMPLE" "$CHARS_DEST"
+else
+    err "No characters.json seed available (missing example and old install copy)"
+fi
+
+# ── 4. Sync scripts (directory sync + exclude list — audit A-7) ───
+# Dev/install-only tools stay in the repo; everything else deploys.
 log "Installing scripts to $TTS_DIR/scripts/"
-for script in \
-    ingest.sh play_node.sh stop.sh pause.sh \
-    restart.sh set_speed.sh clear_session_queue.sh \
-    grant_floor.sh \
-    set_listening.sh enqueue_manual.sh set_voice.sh \
-    notify_queued.sh set_notifications.sh set_notification_sound.sh \
-    clean_text.py fetch_voices.py load_env.sh \
-    generate_sfx.sh random_sfx.sh cleanup_played.sh \
-    hook_stop.sh hook_prompt.sh hook_ask_user.sh hook_session_end.sh tts-server.sh mobile_url.sh \
-    set_playback_mode.sh set_mood.sh announce.sh panel.sh \
-    set_session_mute.sh set_session_voice.sh nickname.sh \
-    ingest_claude_code.sh \
-    ptt.sh voice_ptt.sh \
-    team.sh inject_prompt.sh hold_room.sh cancel_inject.sh; do
-    if [ -f "$PROJECT_DIR/scripts/$script" ]; then
-        cp "$PROJECT_DIR/scripts/$script" "$TTS_DIR/scripts/$script"
-    fi
-done
+rsync -a --delete \
+    --exclude=setup.sh \
+    --exclude=panel-dev-install.sh \
+    --exclude=docs-publish.mjs \
+    --exclude=raycast/ \
+    "$PROJECT_DIR/scripts/" "$TTS_DIR/scripts/"
 chmod +x "$TTS_DIR/scripts/"*.sh "$TTS_DIR/scripts/"*.py 2>/dev/null || true
 
 # ── 4b. Install Node.js TTS server ──────────────────────────────
@@ -67,6 +82,10 @@ if command -v pnpm &>/dev/null; then
     TTS_SERVER_DEST="$TTS_DIR/tts-server"
     rm -rf "$TTS_SERVER_DEST"
     cp -r "$PROJECT_DIR/tts-server" "$TTS_SERVER_DEST"
+    # Persona registry is runtime data at $TTS_DIR/characters.json — never
+    # leave a stale copy under installed src/ (rsync --delete would also
+    # wipe it on every restart).
+    rm -f "$TTS_SERVER_DEST/src/characters.json"
     # src/protocol is a repo symlink into packages/protocol — replace it with
     # real staged files; the installed daemon must never resolve into the repo.
     rm -rf "$TTS_SERVER_DEST/src/protocol"
@@ -77,8 +96,14 @@ if command -v pnpm &>/dev/null; then
     # In-repo node_modules is a pnpm-workspace symlink farm — never usable in
     # place; make sure the copy didn't drag a broken one along.
     rm -rf "$TTS_SERVER_DEST/node_modules"
+    if [ ! -f "$TTS_SERVER_DEST/pnpm-lock.yaml" ]; then
+        err "pnpm-lock.yaml missing under $TTS_SERVER_DEST — cannot pin install"
+        exit 1
+    fi
     cd "$TTS_SERVER_DEST"
-    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+    # Fail loudly on lockfile drift — never fall back to an unpinned install
+    # (audit H-8 / Q-13).
+    pnpm install --frozen-lockfile
     log "TTS server installed at $TTS_SERVER_DEST"
     cd "$PROJECT_DIR"
 else
@@ -196,18 +221,52 @@ else
     echo '{}' > "$ALIASES_FILE"
 fi
 
-# ── 6. Install hooks.json ─────────────────────────────────────────
+# ── 6. Install hooks.json with ABSOLUTE ingest path (audit H-1) ───
 HOOKS_FILE="$HOOKS_DIR/hooks.json"
+INGEST_ABS="$TTS_DIR/scripts/ingest.sh"
 if [ -f "$HOOKS_FILE" ]; then
     if grep -q "afterAgentResponse" "$HOOKS_FILE" 2>/dev/null; then
-        log "afterAgentResponse hook already registered in $HOOKS_FILE"
+        # Rewrite our hook command to the absolute install path (idempotent).
+        HOOKS_FILE="$HOOKS_FILE" INGEST_ABS="$INGEST_ABS" python3 - <<'PY'
+import json, os
+path = os.environ["HOOKS_FILE"]
+ingest = os.environ["INGEST_ABS"]
+with open(path, encoding="utf-8") as f:
+    data = json.load(f)
+hooks = data.get("hooks") or {}
+entries = hooks.get("afterAgentResponse") or []
+changed = False
+for entry in entries:
+    if isinstance(entry, dict) and entry.get("command") != ingest:
+        entry["command"] = ingest
+        changed = True
+if changed:
+    tmp = f"{path}.tmp.{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, path)
+    print("updated")
+else:
+    print("ok")
+PY
+        log "afterAgentResponse hook registered in $HOOKS_FILE (absolute path)"
     else
         err "$HOOKS_FILE exists but does not contain afterAgentResponse hook."
-        err "Please merge manually from: $PROJECT_DIR/config/hooks.json"
+        err "Please merge manually — command should be: $INGEST_ABS"
     fi
 else
     log "Installing hooks.json to $HOOKS_FILE"
-    cp "$PROJECT_DIR/config/hooks.json" "$HOOKS_FILE"
+    cat > "$HOOKS_FILE" <<EOF
+{
+  "version": 1,
+  "hooks": {
+    "afterAgentResponse": [
+      { "command": "$INGEST_ABS" }
+    ]
+  }
+}
+EOF
 fi
 
 # ── 6b. Merge SessionEnd into ~/.claude/settings.json (idempotent) ─
@@ -338,6 +397,7 @@ fi
 log ""
 log "Setup complete! Summary:"
 log "  Config:      $CONFIG_FILE"
+log "  Characters:  $CHARS_DEST"
 log "  Scripts:     $TTS_DIR/scripts/"
 log "  TTS Server:  $TTS_DIR/tts-server/"
 log "  Queue:       $TTS_DIR/queue/"

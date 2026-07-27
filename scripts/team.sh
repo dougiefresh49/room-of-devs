@@ -11,7 +11,7 @@ SCRIPTS_DIR="$TTS_DIR/scripts"
 TEAM_MAP="$TTS_DIR/team_map.json"
 SESSIONS_DIR="$HOME/.claude/sessions"
 LOG_FILE="$TTS_DIR/logs/hook.log"
-CHARACTERS_JSON="$TTS_DIR/tts-server/src/characters.json"
+CHARACTERS_JSON="$TTS_DIR/characters.json"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] team: $*" >> "$LOG_FILE" 2>/dev/null || true; }
 
