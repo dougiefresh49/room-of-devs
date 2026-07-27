@@ -5,7 +5,7 @@ import { homedir } from "os";
 
 const PROJECTS_DIR = join(homedir(), ".claude", "projects");
 const LIVE_SESSIONS_DIR = join(homedir(), ".claude", "sessions");
-const CHARACTERS_PATH = join(dirname(fileURLToPath(import.meta.url)), "characters.json");
+import { CHARACTERS_PATH } from "./characters-path.js";
 const MIN_JSONL_BYTES = 1024;
 const MAX_RESUMABLE = 30;
 const CWD_SCAN_LINES = 100;

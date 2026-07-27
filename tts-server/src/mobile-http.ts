@@ -18,6 +18,7 @@ import { networkInterfaces } from "os";
 import { basename, dirname, join, resolve, sep } from "path";
 import { fileURLToPath } from "url";
 import { loadConfig, TTS_DIR, SESSION_VOICES_PATH, PHRASES_DIR } from "./config.js";
+import { CHARACTERS_PATH } from "./characters-path.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
 import { dispatchPanelAction, handleReplyAction, onNotice } from "./services/commands.js";
 import { pickerPayload } from "./session-catalog.js";
@@ -25,7 +26,6 @@ import { log } from "./logger.js";
 import { transcriptThread } from "./services/transcript.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHARACTERS_PATH = join(__dirname, "characters.json");
 /** Built mobile Vite SPA. */
 const MOBILE_DIST_DIR = join(__dirname, "..", "mobile-dist");
 const COOKIE_NAME = "mobile_token";

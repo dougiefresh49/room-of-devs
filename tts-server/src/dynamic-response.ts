@@ -3,6 +3,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import { loadConfig, effectivePlaybackMode, QUEUE_DIR } from "./config.js";
+import { CHARACTERS_PATH } from "./characters-path.js";
 import { streamTTS } from "./elevenlabs.js";
 import { playStreamBuffer } from "./stream-playback.js";
 import { acquireLock, waitForLock, releaseLock } from "./playback-locks.js";
@@ -29,9 +30,8 @@ let characters: Record<string, CharacterProfile> | null = null;
 
 function loadCharacters(): Record<string, CharacterProfile> {
   if (characters) return characters;
-  const p = join(__dirname, "characters.json");
-  if (!existsSync(p)) return {};
-  characters = JSON.parse(readFileSync(p, "utf-8"));
+  if (!existsSync(CHARACTERS_PATH)) return {};
+  characters = JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8"));
   return characters!;
 }
 

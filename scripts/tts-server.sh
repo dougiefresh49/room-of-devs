@@ -10,7 +10,20 @@ TTS_DIR="$HOME/.cursor/tts"
 SERVER_DIR="$TTS_DIR/tts-server"
 PID_FILE="$TTS_DIR/.tts-server.pid"
 LOG_FILE="$TTS_DIR/logs/server.log"
-REPO_SERVER_DIR="${CURSOR_READ_ALOUD_ROOT:-$HOME/projects/cursor-read-aloud}/tts-server"
+# Repo root is recorded by setup.sh (audit C-3). This script runs from the
+# installed copy at ~/.cursor/tts/scripts/, so BASH_SOURCE cannot yield the
+# source checkout — never trust CURSOR_READ_ALOUD_ROOT or a hardcoded path.
+REPO_ROOT_FILE="$TTS_DIR/repo_root"
+if [ ! -f "$REPO_ROOT_FILE" ]; then
+    echo "Error: repo root not recorded at $REPO_ROOT_FILE — re-run scripts/setup.sh from the checkout"
+    exit 1
+fi
+REPO_ROOT="$(tr -d '\n' < "$REPO_ROOT_FILE")"
+if [ -z "$REPO_ROOT" ] || [ ! -d "$REPO_ROOT" ]; then
+    echo "Error: invalid repo root in $REPO_ROOT_FILE: ${REPO_ROOT:-empty}"
+    exit 1
+fi
+REPO_SERVER_DIR="$REPO_ROOT/tts-server"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -36,14 +49,19 @@ sync_source() {
     # deletion of removed files, so a renamed/deleted module can't linger in
     # the install and shadow the new code. src/protocol is a repo symlink —
     # excluded here (exclusion also protects the staged copy from --delete)
-    # and staged as real files below.
-    rsync -a --delete --exclude=/protocol "$REPO_SERVER_DIR/src/" "$SERVER_DIR/src/" \
+    # and staged as real files below. characters.json is runtime data at
+    # $TTS_DIR/characters.json — never deploy or retain a copy under src/.
+    rsync -a --delete \
+        --exclude=/protocol \
+        --exclude=/characters.json \
+        "$REPO_SERVER_DIR/src/" "$SERVER_DIR/src/" \
         || { echo "Error: source sync failed"; exit 1; }
+    rm -f "$SERVER_DIR/src/characters.json"
 
     # Shared protocol package, staged as plain files: the installed daemon
     # must never resolve modules back into the repo workspace (valibot comes
     # from SERVER_DIR's own node_modules).
-    REPO_PROTOCOL_SRC="$(dirname "$REPO_SERVER_DIR")/packages/protocol/src"
+    REPO_PROTOCOL_SRC="$REPO_ROOT/packages/protocol/src"
     if [ ! -d "$REPO_PROTOCOL_SRC" ]; then
         echo "Error: packages/protocol/src missing in repo — not syncing"
         exit 1
@@ -61,7 +79,7 @@ sync_source() {
     rm -f "$SERVER_DIR/mobile.html"
 
     # Mobile Vite SPA artifact — fatal if missing; / serves it.
-    REPO_MOBILE_DIST="$(dirname "$REPO_SERVER_DIR")/packages/mobile/dist"
+    REPO_MOBILE_DIST="$REPO_ROOT/packages/mobile/dist"
     if [ ! -d "$REPO_MOBILE_DIST" ] || [ ! -f "$REPO_MOBILE_DIST/index.html" ]; then
         echo "Error: packages/mobile/dist missing in repo — build with: pnpm --filter @room/mobile build"
         exit 1
@@ -71,22 +89,49 @@ sync_source() {
         || { echo "Error: mobile-dist sync failed"; exit 1; }
 
     # Avatar frames for LAN mobile clients
-    REPO_AVATARS="$(dirname "$REPO_SERVER_DIR")/panel/public/avatars"
+    REPO_AVATARS="$REPO_ROOT/panel/public/avatars"
     if [ -d "$REPO_AVATARS" ]; then
         mkdir -p "$TTS_DIR/mobile-assets/avatars"
         rsync -a --delete "$REPO_AVATARS"/ "$TTS_DIR/mobile-assets/avatars/" \
             || { echo "Error: avatar sync failed"; exit 1; }
     fi
 
-    # Sync package.json too; reinstall deps only when it actually changed.
-    # An install failure is fatal — booting with missing deps is the exact
-    # stale-mix failure this function exists to prevent.
+    # Scripts on the same cadence as the daemon (audit A-7). Exclude
+    # install/dev-only tools that stay in the repo.
+    REPO_SCRIPTS="$REPO_ROOT/scripts"
+    if [ ! -d "$REPO_SCRIPTS" ]; then
+        echo "Error: scripts/ missing in repo — not syncing"
+        exit 1
+    fi
+    rsync -a --delete \
+        --exclude=setup.sh \
+        --exclude=panel-dev-install.sh \
+        --exclude=docs-publish.mjs \
+        --exclude=raycast/ \
+        "$REPO_SCRIPTS/" "$TTS_DIR/scripts/" \
+        || { echo "Error: scripts sync failed"; exit 1; }
+    chmod +x "$TTS_DIR/scripts/"*.sh "$TTS_DIR/scripts/"*.py 2>/dev/null || true
+
+    # Sync package.json + lockfile; reinstall when either changed.
+    # Frozen lockfile only — no silent unpinned fallback (audit H-8 / Q-13).
+    if [ ! -f "$REPO_SERVER_DIR/pnpm-lock.yaml" ]; then
+        echo "Error: pnpm-lock.yaml missing at $REPO_SERVER_DIR — cannot pin install"
+        exit 1
+    fi
+    NEED_INSTALL=false
     if [ -f "$REPO_SERVER_DIR/package.json" ] && \
        ! diff -q "$REPO_SERVER_DIR/package.json" "$SERVER_DIR/package.json" >/dev/null 2>&1; then
         cp "$REPO_SERVER_DIR/package.json" "$SERVER_DIR/package.json"
-        log "package.json changed — running pnpm install"
-        (cd "$SERVER_DIR" && pnpm install >> "$LOG_FILE" 2>&1) \
-            || { echo "Error: pnpm install failed — check $LOG_FILE"; exit 1; }
+        NEED_INSTALL=true
+    fi
+    if ! diff -q "$REPO_SERVER_DIR/pnpm-lock.yaml" "$SERVER_DIR/pnpm-lock.yaml" >/dev/null 2>&1; then
+        cp "$REPO_SERVER_DIR/pnpm-lock.yaml" "$SERVER_DIR/pnpm-lock.yaml"
+        NEED_INSTALL=true
+    fi
+    if [ "$NEED_INSTALL" = true ]; then
+        log "package.json/lockfile changed — running pnpm install --frozen-lockfile"
+        (cd "$SERVER_DIR" && pnpm install --frozen-lockfile >> "$LOG_FILE" 2>&1) \
+            || { echo "Error: pnpm install --frozen-lockfile failed — check $LOG_FILE"; exit 1; }
     fi
     log "Synced source from $REPO_SERVER_DIR"
 }

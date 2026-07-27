@@ -61,7 +61,7 @@ for path in glob.glob(os.path.join(sessions_dir, "*.json")):
         pass
 
 chars_path = os.path.join(
-    os.path.expanduser("~"), ".cursor", "tts", "tts-server", "src", "characters.json"
+    os.path.expanduser("~"), ".cursor", "tts", "characters.json"
 )
 if os.path.isfile(chars_path):
     try:
