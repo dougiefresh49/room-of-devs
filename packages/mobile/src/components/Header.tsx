@@ -99,9 +99,7 @@ function DeviceToggle({
             title={device === "mac" ? "Play on Mac" : "Play on this phone"}
             onClick={() => onSetOutput(device)}
             className={`grid size-8 place-items-center rounded-md transition-colors [&_svg]:size-5 ${
-              active
-                ? "bg-surface-strong text-accent"
-                : "text-fg-faint hover:text-fg-muted"
+              active ? "bg-surface-strong text-accent" : "text-fg-faint hover:text-fg-muted"
             }`}
           >
             <Icon />

@@ -67,7 +67,7 @@ export function setLiveSession(sessionId: string, on: boolean): void {
 /** Tailer heartbeat: bump tool count / turn start without toggling. */
 export function updateLiveEntry(
   sessionId: string,
-  patch: Partial<Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity">>
+  patch: Partial<Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity">>,
 ): void {
   const map = loadLiveSessions();
   const entry = map[sessionId];

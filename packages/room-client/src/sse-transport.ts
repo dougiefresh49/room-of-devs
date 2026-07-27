@@ -54,7 +54,8 @@ export class SseTransport implements Transport {
 
   request(payload: Record<string, unknown>, timeoutMs: number): Promise<CommandResult> {
     if (this.stopped) return Promise.reject(new TransportError("stopped", "SSE transport stopped"));
-    const requestId = typeof payload.requestId === "string" ? payload.requestId : this.newRequestId();
+    const requestId =
+      typeof payload.requestId === "string" ? payload.requestId : this.newRequestId();
     const controller = new AbortController();
 
     return new Promise<CommandResult>((resolve, reject) => {
@@ -74,18 +75,20 @@ export class SseTransport implements Transport {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, requestId }),
         signal: controller.signal,
-      }).then(async (response) => {
-        const body = await this.jsonBody(response);
-        if (!this.pending.delete(pending)) return;
-        clearTimeout(pending.timer);
-        resolve(this.toCommandResult(requestId, body));
-      }).catch(() => {
-        if (!this.pending.delete(pending)) return;
-        clearTimeout(pending.timer);
-        // No response ⇒ almost certainly never reached the daemon; mobile's
-        // old postAction rolled optimism back on this, so mark it "down".
-        reject(new TransportError("down", "POST /action failed"));
-      });
+      })
+        .then(async (response) => {
+          const body = await this.jsonBody(response);
+          if (!this.pending.delete(pending)) return;
+          clearTimeout(pending.timer);
+          resolve(this.toCommandResult(requestId, body));
+        })
+        .catch(() => {
+          if (!this.pending.delete(pending)) return;
+          clearTimeout(pending.timer);
+          // No response ⇒ almost certainly never reached the daemon; mobile's
+          // old postAction rolled optimism back on this, so mark it "down".
+          reject(new TransportError("down", "POST /action failed"));
+        });
     });
   }
 
@@ -123,9 +126,10 @@ export class SseTransport implements Transport {
   }
 
   private toCommandResult(requestId: string, body: unknown): CommandResult {
-    const value = body && typeof body === "object" && !Array.isArray(body)
-      ? body as Record<string, unknown>
-      : {};
+    const value =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
     const status = typeof value.status === "string" ? value.status : undefined;
     const ok = typeof value.ok === "boolean" ? value.ok : status === "ok";
     const result: CommandResult = { type: "command_result", requestId, ok };

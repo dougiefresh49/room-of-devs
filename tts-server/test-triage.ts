@@ -2,11 +2,7 @@
  * Unit tests for triage cycle logic — no device / daemon.
  * Run: pnpm exec tsx test-triage.ts
  */
-import {
-  nextTriageFocus,
-  focusAfterDismiss,
-  type HandEntry,
-} from "./src/triage.js";
+import { nextTriageFocus, focusAfterDismiss, type HandEntry } from "./src/triage.js";
 
 function eq(actual: string | null, expected: string | null, label: string): void {
   if (actual !== expected) {

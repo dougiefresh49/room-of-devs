@@ -1,8 +1,5 @@
 import { devices, HID } from "node-hid";
-import {
-  DEFAULT_DEVICE_HINT,
-  loadArcadeButtons,
-} from "./config.js";
+import { DEFAULT_DEVICE_HINT, loadArcadeButtons } from "./config.js";
 import { log } from "./logger.js";
 import { makeDiffer } from "./hid-report.js";
 import { safe } from "./hid-actions.js";
@@ -56,7 +53,7 @@ function openDevice(): void {
       safe(() => {
         differ(buf, onEdge);
         if (differ.isCalibrated()) onReportAxes(buf);
-      })
+      }),
     );
     d.on("error", (err: any) => {
       log("hid", `device error: ${err?.message ?? err}`);

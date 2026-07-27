@@ -32,28 +32,23 @@ function check(label: string, schema: v.GenericSchema<any, any>, data: unknown):
   }
 }
 
-const snapshot = JSON.parse(
-  readFileSync(join(fixturesDir, "panel-snapshot.json"), "utf-8")
-);
+const snapshot = JSON.parse(readFileSync(join(fixturesDir, "panel-snapshot.json"), "utf-8"));
 check("panel-snapshot.json (PanelSnapshot)", PanelSnapshotSchema, snapshot);
 // The WS frame is the same snapshot with a type tag spread in.
-check(
-  "panel-snapshot.json as WS frame (SnapshotEvent)",
-  SnapshotEventSchema,
-  { type: "snapshot", ...snapshot }
-);
+check("panel-snapshot.json as WS frame (SnapshotEvent)", SnapshotEventSchema, {
+  type: "snapshot",
+  ...snapshot,
+});
 
-const commands = JSON.parse(
-  readFileSync(join(fixturesDir, "commands.json"), "utf-8")
-) as unknown[];
+const commands = JSON.parse(readFileSync(join(fixturesDir, "commands.json"), "utf-8")) as unknown[];
 commands.forEach((cmd, i) =>
-  check(`commands.json[${i}] (${(cmd as any)?.type})`, CommandSchema, cmd)
+  check(`commands.json[${i}] (${(cmd as any)?.type})`, CommandSchema, cmd),
 );
 
 // Negative cases: these must FAIL validation (the daemon rejects them as
 // bad_message; the schema mirrors that so clients learn at the boundary).
 const invalidCommands = JSON.parse(
-  readFileSync(join(fixturesDir, "invalid-commands.json"), "utf-8")
+  readFileSync(join(fixturesDir, "invalid-commands.json"), "utf-8"),
 ) as unknown[];
 invalidCommands.forEach((cmd, i) => {
   const result = v.safeParse(CommandSchema, cmd);
@@ -65,11 +60,9 @@ invalidCommands.forEach((cmd, i) => {
   }
 });
 
-const events = JSON.parse(
-  readFileSync(join(fixturesDir, "events.json"), "utf-8")
-) as unknown[];
+const events = JSON.parse(readFileSync(join(fixturesDir, "events.json"), "utf-8")) as unknown[];
 events.forEach((evt, i) =>
-  check(`events.json[${i}] (${(evt as any)?.type})`, ServerEventSchema, evt)
+  check(`events.json[${i}] (${(evt as any)?.type})`, ServerEventSchema, evt),
 );
 
 if (failures > 0) {

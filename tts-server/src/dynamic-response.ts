@@ -41,7 +41,7 @@ export function getCharacter(voiceId: string): CharacterProfile | null {
 
 async function generateCharacterResponse(
   userPrompt: string,
-  character: CharacterProfile
+  character: CharacterProfile,
 ): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
@@ -94,7 +94,7 @@ export async function handleDynamicResponse(
   voiceId: string,
   userPrompt?: string,
   sessionId?: string,
-  sessionName?: string
+  sessionName?: string,
 ): Promise<boolean> {
   // dynamic_responses governs prompt acks only:
   // "always" = fresh Gemini ack, "cached" = free cached phrase, "off" = silent.
@@ -185,7 +185,7 @@ function writeFileAtomic(path: string, data: unknown): void {
 function enqueueQuestionFile(
   sessionId: string,
   sessionName: string | undefined,
-  text: string
+  text: string,
 ): void {
   try {
     const now = Date.now();
@@ -213,7 +213,7 @@ export async function handleAskUser(
   voiceId: string,
   questionText: string,
   sessionId?: string,
-  sessionName?: string
+  sessionName?: string,
 ): Promise<boolean> {
   if (!questionText?.trim()) return false;
 
@@ -333,7 +333,7 @@ async function streamAndPlay(
   voiceId: string,
   text: string,
   ctx: PlaybackContext,
-  meta?: ReplayMeta
+  meta?: ReplayMeta,
 ): Promise<boolean> {
   const stream = await streamTTS(text, { voiceId });
   if (stream) {

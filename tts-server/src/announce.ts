@@ -17,11 +17,12 @@ const PENDING_ANNOUNCE = join(TTS_DIR, ".pending-announce");
 export function deferAnnounce(sessionId: string): void {
   if (!sessionId) return;
   try {
-    const existing = existsSync(PENDING_ANNOUNCE)
-      ? readFileSync(PENDING_ANNOUNCE, "utf-8")
-      : "";
+    const existing = existsSync(PENDING_ANNOUNCE) ? readFileSync(PENDING_ANNOUNCE, "utf-8") : "";
     const lines = new Set(
-      existing.split("\n").map((l) => l.trim()).filter(Boolean)
+      existing
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
     );
     if (lines.has(sessionId)) return;
     appendFileSync(PENDING_ANNOUNCE, `${sessionId}\n`);
@@ -32,9 +33,7 @@ export function deferAnnounce(sessionId: string): void {
 
 // A deferred hand still counts only if the session is *currently* hand_raised.
 // A hand you granted or cleared in the meantime drops out silently.
-function handRaisedEntry(
-  sessionId: string
-): { sessionId: string; name: string } | null {
+function handRaisedEntry(sessionId: string): { sessionId: string; name: string } | null {
   try {
     const p = join(STATE_DIR, `${sessionId}.json`);
     if (!existsSync(p)) return null;
@@ -71,7 +70,7 @@ export async function maybeFireDeferredAnnounce(): Promise<void> {
           raw
             .split("\n")
             .map((l) => l.trim())
-            .filter(Boolean)
+            .filter(Boolean),
         ),
       ];
 

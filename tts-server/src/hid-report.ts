@@ -32,9 +32,7 @@ function median(samples: number[]): number {
   if (samples.length === 0) return 127;
   const sorted = [...samples].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-    : sorted[mid]!;
+  return sorted.length % 2 === 0 ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2) : sorted[mid]!;
 }
 
 export function makeDiffer(onCalibrated?: (noisyCount: number) => void): Differ {
@@ -115,11 +113,10 @@ export const STICK_LEARN_SAMPLE_MS = 1200;
 export function evaluateStickAxis(
   prev: StickArmState,
   value: number,
-  pole: StickPole
+  pole: StickPole,
 ): { fire: boolean; state: StickArmState } {
   if (prev === "armed") {
-    const crossed =
-      pole === "low" ? value < STICK_FIRE_LOW : value > STICK_FIRE_HIGH;
+    const crossed = pole === "low" ? value < STICK_FIRE_LOW : value > STICK_FIRE_HIGH;
     if (crossed) return { fire: true, state: "fired" };
     return { fire: false, state: "armed" };
   }

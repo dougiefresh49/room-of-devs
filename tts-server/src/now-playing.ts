@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  unlinkSync,
-  renameSync,
-} from "fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from "fs";
 import { TTS_DIR } from "./config.js";
 import { setSessionState, recomputeAfterPlayback } from "./state.js";
 import { join } from "path";
@@ -40,7 +34,7 @@ export function writeNowPlaying(
   alignment?: AlignmentTuples,
   startedAt?: string,
   playbackRate = 1.0,
-  phone?: { replayFile: string; grantId: string; synthesisComplete?: boolean }
+  phone?: { replayFile: string; grantId: string; synthesisComplete?: boolean },
 ): void {
   const data: NowPlaying = {
     sessionId,
@@ -91,8 +85,7 @@ export function activePhoneGrantId(): string | null {
     if (np.synthesisComplete === false) return np.grantId;
     const start = Date.parse(np.startedAt);
     if (!Number.isFinite(start)) return null;
-    const open =
-      Date.now() < start + phoneGrantDurationMs(np.alignment) + PHONE_GRANT_SLACK_MS;
+    const open = Date.now() < start + phoneGrantDurationMs(np.alignment) + PHONE_GRANT_SLACK_MS;
     return open ? np.grantId : null;
   } catch {
     return null;
@@ -153,7 +146,9 @@ export function clearNowPlaying(): void {
       renameSync(tmp, NOW_PLAYING_PATH);
     }
   } catch {
-    try { unlinkSync(NOW_PLAYING_PATH); } catch {}
+    try {
+      unlinkSync(NOW_PLAYING_PATH);
+    } catch {}
   }
 }
 
@@ -163,7 +158,7 @@ export function beginSessionPlayback(
   startedAt?: string,
   // Rate actually applied to this playback (afplay -r / ffplay atempo), not
   // a sidecar's original rate — the panel maps wall time via this factor.
-  playbackRate = 1.0
+  playbackRate = 1.0,
 ): void {
   beginSessionSpeaking(ctx);
   if (ctx !== "meta" && ctx.sessionId)
@@ -179,11 +174,7 @@ export function beginSessionPlayback(
  * that microsecond window of sync fs calls could be resurrected-over. Accepted
  * for this single-user tool — a real conditional write would need a mutex.
  */
-export function stampReplayFileCas(
-  sessionId: string,
-  startedAt: string,
-  replayFile: string
-): void {
+export function stampReplayFileCas(sessionId: string, startedAt: string, replayFile: string): void {
   try {
     if (!existsSync(NOW_PLAYING_PATH)) return;
     const cur = JSON.parse(readFileSync(NOW_PLAYING_PATH, "utf-8")) as NowPlaying;

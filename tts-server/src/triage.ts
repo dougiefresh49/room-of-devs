@@ -16,7 +16,7 @@ export type TriageCycleDir = "left" | "right";
 export function nextTriageFocus(
   hands: HandEntry[],
   currentFocus: string | null,
-  direction: TriageCycleDir
+  direction: TriageCycleDir,
 ): string | null {
   if (hands.length === 0) return null;
   const sorted = [...hands].sort((a, b) => {
@@ -36,10 +36,7 @@ export function nextTriageFocus(
 }
 
 /** After dismissing `removed`, pick the next hand in FIFO order (or null). */
-export function focusAfterDismiss(
-  hands: HandEntry[],
-  removed: string
-): string | null {
+export function focusAfterDismiss(hands: HandEntry[], removed: string): string | null {
   const remaining = hands.filter((h) => h.sessionId !== removed);
   if (remaining.length === 0) return null;
   const sorted = [...remaining].sort((a, b) => {
@@ -73,20 +70,15 @@ export function readTriageFocus(): string | null {
     const raw = JSON.parse(readFileSync(TRIAGE_PATH, "utf-8")) as {
       sessionId?: unknown;
     };
-    return typeof raw.sessionId === "string" && raw.sessionId.trim()
-      ? raw.sessionId
-      : null;
+    return typeof raw.sessionId === "string" && raw.sessionId.trim() ? raw.sessionId : null;
   } catch {
     return null;
   }
 }
 
 export function writeTriageFocus(sessionId: string): void {
-  const payload = JSON.stringify(
-    { sessionId, updatedAt: new Date().toISOString() },
-    null,
-    2
-  ) + "\n";
+  const payload =
+    JSON.stringify({ sessionId, updatedAt: new Date().toISOString() }, null, 2) + "\n";
   const tmp = `${TRIAGE_PATH}.tmp.${process.pid}`;
   writeFileSync(tmp, payload);
   renameSync(tmp, TRIAGE_PATH);

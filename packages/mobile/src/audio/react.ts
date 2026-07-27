@@ -15,10 +15,7 @@ export function usePlayer(): PlayerSnapshot {
  * a subscriber (the replay list's "playing" highlight) does NOT re-render 12×/s.
  */
 export function usePlayingFile(): string | null {
-  return useSyncExternalStore(
-    audioController.subscribe,
-    () => audioController.getSnapshot().file,
-  );
+  return useSyncExternalStore(audioController.subscribe, () => audioController.getSnapshot().file);
 }
 
 /** Transient toast text from the controller (never churns on ticks). */

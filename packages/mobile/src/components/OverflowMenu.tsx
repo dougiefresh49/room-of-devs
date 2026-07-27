@@ -7,12 +7,7 @@
  * progress; hidden otherwise. App computes the unheard queue and drives the
  * AudioController.
  */
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@room/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@room/ui";
 import { IconMore } from "../icons.js";
 
 interface OverflowMenuProps {

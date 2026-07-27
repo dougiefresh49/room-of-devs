@@ -1,15 +1,6 @@
 import { spawnSync, type ChildProcess } from "child_process";
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  unlinkSync,
-} from "fs";
-import {
-  STREAM_PID_FILE,
-  PLAYBACK_PID_FILE,
-  TTS_DIR,
-} from "./config.js";
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
+import { STREAM_PID_FILE, PLAYBACK_PID_FILE, TTS_DIR } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
 import { clearNowPlaying } from "./now-playing.js";
@@ -72,7 +63,9 @@ export function writePidFiles(pid: number | undefined): void {
 
 export function removePidFiles(): void {
   for (const f of [STREAM_PID_FILE, PLAYBACK_PID_FILE]) {
-    try { unlinkSync(f); } catch {}
+    try {
+      unlinkSync(f);
+    } catch {}
   }
 }
 
@@ -80,6 +73,8 @@ export function cleanup(): void {
   removePidFiles();
   clearNowPlaying();
   for (const f of [PAUSED_FLAG, AUDIO_REF, PLAYBACK_FILE_REF]) {
-    try { unlinkSync(f); } catch {}
+    try {
+      unlinkSync(f);
+    } catch {}
   }
 }

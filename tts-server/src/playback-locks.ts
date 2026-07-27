@@ -1,11 +1,4 @@
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  unlinkSync,
-  mkdirSync,
-  renameSync,
-} from "fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync, renameSync } from "fs";
 import { STREAM_LOCK, PROCESSING_DIR } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";

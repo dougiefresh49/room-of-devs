@@ -55,9 +55,7 @@
   { "type": "captured", "idx": 7 },
   {
     "type": "shortcuts",
-    "sections": [
-      { "title": "Voice commands", "rows": [["grant", "speak the focused agent"]] }
-    ]
+    "sections": [{ "title": "Voice commands", "rows": [["grant", "speak the focused agent"]] }]
   },
   { "type": "snap", "corner": "bottom-right" }
 ]

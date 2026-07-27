@@ -7,7 +7,15 @@ import type { JSX } from "react";
 
 function glyph(paths: JSX.Element): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {paths}
     </svg>
   );
@@ -42,8 +50,7 @@ export const IconMore = () =>
 
 export const IconChevron = () => glyph(<path d="m6 9 6 6 6-6" />);
 
-export const IconFolder = () =>
-  glyph(<path d="M4 5h5l2 2h9v11H4z" />);
+export const IconFolder = () => glyph(<path d="M4 5h5l2 2h9v11H4z" />);
 
 export const IconArrowLeft = () => glyph(<path d="M19 12H5m0 0 6 6m-6-6 6-6" />);
 
@@ -69,12 +76,10 @@ export const IconPause = () => (
 );
 
 /** Upward paper-plane send glyph (composer + call "send a text"). */
-export const IconSend = () =>
-  glyph(<path d="M12 20V5m0 0-6 6m6-6 6 6" />);
+export const IconSend = () => glyph(<path d="M12 20V5m0 0-6 6m6-6 6 6" />);
 
 /** Speech bubble (call dock "send a text"). */
-export const IconMessage = () =>
-  glyph(<path d="M4 5h16v11H8l-4 4z" />);
+export const IconMessage = () => glyph(<path d="M4 5h16v11H8l-4 4z" />);
 
 /** Hang-up / end-live glyph (tilted handset with a strike). */
 export const IconPhoneOff = () =>

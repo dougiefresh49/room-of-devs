@@ -14,10 +14,7 @@
 import type { ButtonPatch, Command, ResumableSession, ServerEvent } from "@room/protocol";
 import type { RoomClient } from "@room/room-client";
 import type { PlatformAdapter } from "../platform/types.js";
-import {
-  getViewState,
-  showErrorToast,
-} from "./view-state.js";
+import { getViewState, showErrorToast } from "./view-state.js";
 
 export interface ButtonConfig {
   name: string;
@@ -29,7 +26,15 @@ export interface ButtonConfig {
 }
 
 export type ButtonColor = "white" | "blue" | "red" | "teal" | "yellow" | "green" | "black";
-export const BUTTON_COLORS: ButtonColor[] = ["white", "blue", "red", "teal", "yellow", "green", "black"];
+export const BUTTON_COLORS: ButtonColor[] = [
+  "white",
+  "blue",
+  "red",
+  "teal",
+  "yellow",
+  "green",
+  "black",
+];
 
 export interface ShortcutSection {
   title: string;
@@ -258,20 +263,23 @@ function normalizeVoices(value: unknown): VoiceOption[] {
   return value.flatMap((voice) => {
     if (!voice || typeof voice !== "object") return [];
     const input = voice as Record<string, unknown>;
-    const id = typeof input.id === "string"
-      ? input.id
-      : typeof input.voice_id === "string"
-        ? input.voice_id
-        : "";
+    const id =
+      typeof input.id === "string"
+        ? input.id
+        : typeof input.voice_id === "string"
+          ? input.voice_id
+          : "";
     if (!id) return [];
-    const name = typeof input.name === "string"
-      ? input.name
-      : typeof input.label === "string"
-        ? input.label
-        : id;
-    const character = typeof input.character === "string" || input.character == null
-      ? input.character as string | null | undefined
-      : undefined;
+    const name =
+      typeof input.name === "string"
+        ? input.name
+        : typeof input.label === "string"
+          ? input.label
+          : id;
+    const character =
+      typeof input.character === "string" || input.character == null
+        ? (input.character as string | null | undefined)
+        : undefined;
     return [{ id, name, character }];
   });
 }

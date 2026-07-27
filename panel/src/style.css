@@ -76,8 +76,7 @@ body {
   border-radius: 12px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34px),
-    radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px),
-    var(--bg);
+    radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px), var(--bg);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
@@ -168,8 +167,7 @@ button,
 .window-btn.active {
   border-color: rgba(102, 169, 255, 0.55);
   background:
-    linear-gradient(180deg, rgba(102, 169, 255, 0.22), rgba(102, 169, 255, 0.08)),
-    #172336;
+    linear-gradient(180deg, rgba(102, 169, 255, 0.22), rgba(102, 169, 255, 0.08)), #172336;
   color: #cfe4ff;
 }
 
@@ -215,8 +213,7 @@ button,
   border: 1px solid rgba(178, 194, 216, 0.16);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28px),
-    rgba(14, 18, 26, 0.92);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28px), rgba(14, 18, 26, 0.92);
   overflow: hidden;
 }
 
@@ -299,9 +296,15 @@ button,
   margin-top: 0;
 }
 
-.room-summary-body .md-h1 { font-size: 13px; }
-.room-summary-body .md-h2 { font-size: 12.5px; }
-.room-summary-body .md-h3 { font-size: 12px; }
+.room-summary-body .md-h1 {
+  font-size: 13px;
+}
+.room-summary-body .md-h2 {
+  font-size: 12.5px;
+}
+.room-summary-body .md-h3 {
+  font-size: 12px;
+}
 
 .room-summary-body ul,
 .room-summary-body ol {
@@ -350,9 +353,7 @@ button,
      border-radius regardless, and the ::before accent bar is corner-rounded
      below to keep the rounded-corner look. */
   overflow: visible;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%),
-    var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%), var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow:
@@ -455,7 +456,11 @@ button,
     color-mix(in srgb, var(--room-accent) 90%, transparent) 22%,
     transparent 38%
   );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    #000 calc(100% - 2px)
+  );
   mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
   animation: grant-sweep 1.2s linear infinite;
   pointer-events: none;
@@ -674,8 +679,13 @@ button,
 }
 
 @keyframes live-dot-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .card-actions {
@@ -887,8 +897,7 @@ button,
 .dock-caption-toggle.active {
   border-color: color-mix(in srgb, var(--blue) 70%, var(--border-strong));
   background:
-    linear-gradient(180deg, rgba(102, 169, 255, 0.2), rgba(102, 169, 255, 0.055)),
-    #172336;
+    linear-gradient(180deg, rgba(102, 169, 255, 0.2), rgba(102, 169, 255, 0.055)), #172336;
   color: #d5e8ff;
 }
 
@@ -989,9 +998,15 @@ button,
   margin-top: 0;
 }
 
-.dock-caption-summary .md-h1 { font-size: 13px; }
-.dock-caption-summary .md-h2 { font-size: 12.5px; }
-.dock-caption-summary .md-h3 { font-size: 12px; }
+.dock-caption-summary .md-h1 {
+  font-size: 13px;
+}
+.dock-caption-summary .md-h2 {
+  font-size: 12.5px;
+}
+.dock-caption-summary .md-h3 {
+  font-size: 12px;
+}
 
 .dock-caption-summary ul,
 .dock-caption-summary ol {
@@ -1150,10 +1165,18 @@ button,
 }
 
 /* State → ring color. Without these every ring stays the --grey default. */
-.dock-agent.state-working { --state: var(--state-working); }
-.dock-agent.state-hand_raised { --state: var(--state-hand-raised); }
-.dock-agent.state-speaking { --state: var(--state-speaking); }
-.dock-agent.state-idle { --state: var(--state-idle); }
+.dock-agent.state-working {
+  --state: var(--state-working);
+}
+.dock-agent.state-hand_raised {
+  --state: var(--state-hand-raised);
+}
+.dock-agent.state-speaking {
+  --state: var(--state-speaking);
+}
+.dock-agent.state-idle {
+  --state: var(--state-idle);
+}
 
 .dock-agent.state-hand_raised .dock-ring,
 .dock-agent.state-speaking .dock-ring {
@@ -1243,7 +1266,11 @@ button,
 .dock-actions .dock-live-btn {
   border-color: color-mix(in srgb, var(--room-accent) 36%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 18%, transparent), color-mix(in srgb, var(--room-accent) 5.5%, transparent)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--room-accent) 18%, transparent),
+      color-mix(in srgb, var(--room-accent) 5.5%, transparent)
+    ),
     rgba(15, 38, 28, 0.9);
   color: #c9f6d9;
 }
@@ -1251,7 +1278,11 @@ button,
 .dock-actions .dock-live-btn:hover {
   border-color: color-mix(in srgb, var(--room-accent) 62%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 26%, transparent), color-mix(in srgb, var(--room-accent) 8%, transparent)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--room-accent) 26%, transparent),
+      color-mix(in srgb, var(--room-accent) 8%, transparent)
+    ),
     rgba(18, 48, 34, 0.94);
 }
 
@@ -1395,9 +1426,7 @@ button,
   padding: 8px 9px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 60%),
-    var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 60%), var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     inset 0 -1px 0 rgba(0, 0, 0, 0.18);
@@ -1696,7 +1725,11 @@ button,
   border: 1px solid color-mix(in srgb, var(--room-accent) 55%, transparent);
   border-radius: 7px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--room-accent) 26%, transparent), color-mix(in srgb, var(--room-accent) 12%, transparent)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--room-accent) 26%, transparent),
+      color-mix(in srgb, var(--room-accent) 12%, transparent)
+    ),
     var(--surface-strong);
   color: var(--text);
   cursor: pointer;
@@ -1849,9 +1882,7 @@ button,
   padding: 7px 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 60%),
-    var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 60%), var(--surface);
 }
 
 .button-color {
@@ -1862,13 +1893,27 @@ button,
   cursor: pointer;
 }
 
-.button-color-white { background: #eef3f7; }
-.button-color-blue { background: var(--blue); }
-.button-color-red { background: var(--red); }
-.button-color-teal { background: #40d6c2; }
-.button-color-yellow { background: #f5d15d; }
-.button-color-green { background: var(--green); }
-.button-color-black { background: #05070a; }
+.button-color-white {
+  background: #eef3f7;
+}
+.button-color-blue {
+  background: var(--blue);
+}
+.button-color-red {
+  background: var(--red);
+}
+.button-color-teal {
+  background: #40d6c2;
+}
+.button-color-yellow {
+  background: #f5d15d;
+}
+.button-color-green {
+  background: var(--green);
+}
+.button-color-black {
+  background: #05070a;
+}
 
 .button-name {
   width: 100%;
@@ -2413,7 +2458,11 @@ button,
     color-mix(in srgb, var(--room-accent) 95%, transparent) 22%,
     transparent 38%
   );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 3px),
+    #000 calc(100% - 2.5px)
+  );
   mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
   animation: grant-sweep 1.2s linear infinite;
   pointer-events: none;

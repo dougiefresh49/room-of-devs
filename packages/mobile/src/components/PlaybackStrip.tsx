@@ -16,8 +16,7 @@ export function PlaybackStrip({ sessionId }: { sessionId: string }) {
   const player = usePlayer();
 
   // Strip stays up while a clip is loaded for THIS session (playing OR paused).
-  const active =
-    player.status !== "idle" && !!player.entry && player.entry.sessionId === sessionId;
+  const active = player.status !== "idle" && !!player.entry && player.entry.sessionId === sessionId;
   if (!active) return null;
 
   const playing = player.status === "playing";
@@ -55,7 +54,15 @@ export function PlaybackStrip({ sessionId }: { sessionId: string }) {
         aria-label="Stop"
         className="grid size-8 shrink-0 place-items-center rounded-lg text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-[18px]" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-[18px]"
+          aria-hidden="true"
+        >
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>

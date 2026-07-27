@@ -10,8 +10,7 @@ const RETRY_BACKOFF_MS = 750;
 
 function errorStatus(err: unknown): number | null {
   const status =
-    (err as { status?: unknown })?.status ??
-    (err as { statusCode?: unknown })?.statusCode;
+    (err as { status?: unknown })?.status ?? (err as { statusCode?: unknown })?.statusCode;
   return typeof status === "number" ? status : null;
 }
 
@@ -48,11 +47,7 @@ function timeoutError(label: string, timeoutMs: number): Error {
   return err;
 }
 
-async function raceTimeout<T>(
-  label: string,
-  timeoutMs: number,
-  fn: () => Promise<T>
-): Promise<T> {
+async function raceTimeout<T>(label: string, timeoutMs: number, fn: () => Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -70,7 +65,7 @@ export async function withApiRetry<T>(
   label: string,
   timeoutMs: number,
   fn: () => Promise<T>,
-  opts: { retryOnTimeout?: boolean } = {}
+  opts: { retryOnTimeout?: boolean } = {},
 ): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {

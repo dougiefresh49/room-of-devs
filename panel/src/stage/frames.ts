@@ -5,12 +5,7 @@
  */
 import type { AgentView, NowPlaying } from "@room/protocol";
 import { nowPlayingKey } from "@room/room-client";
-import {
-  expressionsManifest,
-  hasMouthClosed,
-  hasMouthMid,
-  isExprSetReady,
-} from "./preload.js";
+import { expressionsManifest, hasMouthClosed, hasMouthMid, isExprSetReady } from "./preload.js";
 
 export type MouthFrame = "idle" | "speaking" | "mouth-mid" | "mouth-closed";
 export type MessageMood = "excited" | "confused" | "neutral";
@@ -135,7 +130,12 @@ export function gapFrame(character: string, expr: string | null): MouthFrame {
   return "idle";
 }
 
-function flapFrame(audioMs: number, periodMs: number, character: string, expr: string | null): MouthFrame {
+function flapFrame(
+  audioMs: number,
+  periodMs: number,
+  character: string,
+  expr: string | null,
+): MouthFrame {
   const open = Math.floor(audioMs / periodMs) % 2 === 0;
   if (open) return "speaking";
   if (expr || hasMouthMid(character)) return "mouth-mid";

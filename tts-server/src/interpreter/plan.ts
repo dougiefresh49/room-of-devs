@@ -87,10 +87,7 @@ function scriptEnv(): NodeJS.ProcessEnv {
 }
 
 /** Awaitable script run with the same 10s SIGKILL cap as commands.runScriptSync. */
-export function runScriptAsync(
-  name: string,
-  args: string[]
-): Promise<StepResult> {
+export function runScriptAsync(name: string, args: string[]): Promise<StepResult> {
   return new Promise((resolve) => {
     let settled = false;
     const settle = (result: StepResult) => {
@@ -148,7 +145,7 @@ export function runScriptAsync(
 
 export type StepExecutor = (
   action: Action,
-  opts: { inPlan: boolean }
+  opts: { inPlan: boolean },
 ) => Promise<{ result: StepResult; floorHeld: boolean }>;
 
 /**
@@ -158,7 +155,7 @@ export type StepExecutor = (
  */
 export async function runPlan(
   plan: CommandPlan,
-  executeStep: StepExecutor
+  executeStep: StepExecutor,
 ): Promise<PlanRunResult> {
   if (wasPlanCompleted(plan.id)) {
     log("interpreter", `plan ${plan.id}: idempotent skip (already completed)`);

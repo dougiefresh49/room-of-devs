@@ -65,9 +65,7 @@ if (action === "prompt-submitted") {
   // as a free cached clip — never Mac ffplay, never paid synthesis.
   if (sessionId && consumePendingPhoneAck(sessionId)) {
     const files = voiceId ? getPhrasesForVoice(voiceId, "ack") : [];
-    const pick = files.length
-      ? files[Math.floor(Math.random() * files.length)]
-      : null;
+    const pick = files.length ? files[Math.floor(Math.random() * files.length)] : null;
     writePhoneAck({
       sessionId,
       ackFile: pick && voiceId ? `${voiceId}/${basename(pick)}` : null,
@@ -77,7 +75,10 @@ if (action === "prompt-submitted") {
     log("signal", `UserPromptSubmit → phone ack (${pick ? basename(pick) : "chip only"})`);
     process.exit(0);
   }
-  log("signal", `UserPromptSubmit → dynamic response (voice=${voiceId}, prompt=${textArg.slice(0, 60)})`);
+  log(
+    "signal",
+    `UserPromptSubmit → dynamic response (voice=${voiceId}, prompt=${textArg.slice(0, 60)})`,
+  );
   const played = await handleDynamicResponse(voiceId, textArg, sessionId || undefined, sessionName);
   if (!played) log("signal", "No response generated — silent");
 } else if (action === "ask-user") {
@@ -87,9 +88,11 @@ if (action === "prompt-submitted") {
 } else if (action === "replay") {
   const nth = parseInt(textArg, 10) || 1;
   const speedArg = process.argv[5];
-  const speed =
-    speedArg != null && speedArg !== "" ? parseFloat(speedArg) : undefined;
-  log("signal", `Replay request — playing ${nth === 1 ? "last" : `${nth}th from last`} message${speed != null ? ` at ${speed}x` : ""}`);
+  const speed = speedArg != null && speedArg !== "" ? parseFloat(speedArg) : undefined;
+  log(
+    "signal",
+    `Replay request — playing ${nth === 1 ? "last" : `${nth}th from last`} message${speed != null ? ` at ${speed}x` : ""}`,
+  );
   // "Say that again" REPLACES whatever is playing — never talks over it.
   // This also keeps the playback PID files single-writer so stop.sh works.
   stopCurrent();

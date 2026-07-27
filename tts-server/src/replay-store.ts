@@ -46,8 +46,12 @@ function pruneReplayDir(): void {
       .sort();
     while (files.length > MAX_REPLAY_FILES) {
       const oldest = files.shift()!;
-      try { unlinkSync(join(REPLAY_DIR, oldest)); } catch {}
-      try { unlinkSync(join(REPLAY_DIR, oldest.replace(".mp3", ".json"))); } catch {}
+      try {
+        unlinkSync(join(REPLAY_DIR, oldest));
+      } catch {}
+      try {
+        unlinkSync(join(REPLAY_DIR, oldest.replace(".mp3", ".json")));
+      } catch {}
     }
     // Crash leftovers: a .part older than an hour will never finalize.
     for (const f of readdirSync(REPLAY_DIR)) {
@@ -64,7 +68,7 @@ function pruneReplayDir(): void {
 export function saveReplayFile(
   chunks: Uint8Array[],
   queueFile: string,
-  meta?: ReplayMeta
+  meta?: ReplayMeta,
 ): string | null {
   try {
     mkdirSync(REPLAY_DIR, { recursive: true });
@@ -73,12 +77,15 @@ export function saveReplayFile(
     const filename = `${ts}_${label}.mp3`;
     const filePath = join(REPLAY_DIR, filename);
     const total = chunks.reduce((n, c) => n + c.length, 0);
-    const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)), total);
+    const buf = Buffer.concat(
+      chunks.map((c) => Buffer.from(c)),
+      total,
+    );
     writeFileSync(filePath, buf);
     if (meta) {
       writeFileSync(
         join(REPLAY_DIR, filename.replace(".mp3", ".json")),
-        JSON.stringify(meta, null, 2)
+        JSON.stringify(meta, null, 2),
       );
     }
     pruneReplayDir();
@@ -122,7 +129,7 @@ export function openReplayWriter(queueFile: string, meta?: ReplayMeta): ReplayWr
     if (meta) {
       writeFileSync(
         join(REPLAY_DIR, filename.replace(".mp3", ".json")),
-        JSON.stringify(meta, null, 2)
+        JSON.stringify(meta, null, 2),
       );
     }
     let total = 0;
@@ -141,7 +148,9 @@ export function openReplayWriter(queueFile: string, meta?: ReplayMeta): ReplayWr
           // settle immediately instead of wedging the drain.
           if (streamErr) {
             log("audio", `Failed to finalize replay: ${streamErr.message}`);
-            try { stream.destroy(); } catch {}
+            try {
+              stream.destroy();
+            } catch {}
             res(null);
             return;
           }
@@ -169,9 +178,15 @@ export function openReplayWriter(queueFile: string, meta?: ReplayMeta): ReplayWr
         });
       },
       abort(): void {
-        try { stream.destroy(); } catch {}
-        try { unlinkSync(partPath); } catch {}
-        try { unlinkSync(join(REPLAY_DIR, filename.replace(".mp3", ".json"))); } catch {}
+        try {
+          stream.destroy();
+        } catch {}
+        try {
+          unlinkSync(partPath);
+        } catch {}
+        try {
+          unlinkSync(join(REPLAY_DIR, filename.replace(".mp3", ".json")));
+        } catch {}
       },
     };
   } catch (err: any) {
@@ -191,10 +206,7 @@ export function loadReplayAttribution(filePath: string): {
     if (existsSync(sidecarPath)) {
       const parsed = JSON.parse(readFileSync(sidecarPath, "utf-8")) as ReplayMeta;
       meta = parsed;
-      if (
-        parsed.sessionId &&
-        existsSync(join(STATE_DIR, `${parsed.sessionId}.json`))
-      ) {
+      if (parsed.sessionId && existsSync(join(STATE_DIR, `${parsed.sessionId}.json`))) {
         ctx = { sessionId: parsed.sessionId };
       }
     }

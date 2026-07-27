@@ -35,7 +35,12 @@ import type { NowPlaying, PanelSnapshot } from "@room/protocol";
 import { nowPlayingKey } from "@room/room-client";
 import { fetchReplayList, postAction, type ReplayEntry } from "../api.js";
 import * as prefs from "../prefs.js";
-import { clearMediaSession, setMediaPlaybackState, setMediaSession, type MediaMeta } from "./media-session.js";
+import {
+  clearMediaSession,
+  setMediaPlaybackState,
+  setMediaSession,
+  type MediaMeta,
+} from "./media-session.js";
 
 /** 44-byte silent WAV — same primer mobile.html uses to unlock autoplay. */
 const SILENT_WAV =
@@ -764,7 +769,11 @@ export class AudioController {
   }
 
   /** Mac speaking → this phone: capture position, stop the Mac, await replay. */
-  beginMacToPhone(np: NowPlaying, meta: { character: string; name: string }, offsetSec: number): void {
+  beginMacToPhone(
+    np: NowPlaying,
+    meta: { character: string; name: string },
+    offsetSec: number,
+  ): void {
     if (this.handoffBusy()) return; // rapid taps / opposite direction in flight
     this.prime(); // unlock <audio> inside this tap so a later play() works
     const token = ++this.handoffToken;
@@ -777,7 +786,10 @@ export class AudioController {
       token,
     };
     if (this.handoffTimer) clearTimeout(this.handoffTimer);
-    this.handoffTimer = setTimeout(() => this.cancelHandoff("Couldn't move playback", token), HANDOFF_TIMEOUT_MS);
+    this.handoffTimer = setTimeout(
+      () => this.cancelHandoff("Couldn't move playback", token),
+      HANDOFF_TIMEOUT_MS,
+    );
     this.emit();
     void postAction({ type: "stop" }).then((r) => {
       // Only a STILL-CURRENT attempt may be cancelled — a stale older stop
@@ -926,7 +938,8 @@ export class AudioController {
    * divergence, logged in decisions-overnight.md).
    */
   private applySpeed(): void {
-    const base = this.entry?.playbackRate && this.entry.playbackRate > 0 ? this.entry.playbackRate : 1;
+    const base =
+      this.entry?.playbackRate && this.entry.playbackRate > 0 ? this.entry.playbackRate : 1;
     this.audio.playbackRate = this.liveMode ? base : base * prefs.getSpeed();
   }
 
@@ -1058,7 +1071,10 @@ export class AudioController {
     if (Number.isFinite(d) && d > 0) return d;
     const alignment = this.entry?.alignment;
     if (Array.isArray(alignment) && alignment.length) {
-      const maxMs = Math.max(0, ...alignment.map((row) => (typeof row[1] === "number" ? row[1] : 0)));
+      const maxMs = Math.max(
+        0,
+        ...alignment.map((row) => (typeof row[1] === "number" ? row[1] : 0)),
+      );
       if (maxMs > 0) return maxMs / 1000 + 0.4;
     }
     return 0;
@@ -1067,7 +1083,10 @@ export class AudioController {
   private durationFromFrame(np: NowPlaying): number {
     const alignment = np.alignment;
     if (Array.isArray(alignment) && alignment.length) {
-      const maxMs = Math.max(0, ...alignment.map((row) => (typeof row[1] === "number" ? row[1] : 0)));
+      const maxMs = Math.max(
+        0,
+        ...alignment.map((row) => (typeof row[1] === "number" ? row[1] : 0)),
+      );
       if (maxMs > 0) return maxMs + 400;
     }
     const cps = np.approxCharsPerSec > 0 ? np.approxCharsPerSec : 15;

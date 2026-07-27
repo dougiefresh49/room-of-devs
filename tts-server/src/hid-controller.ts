@@ -17,12 +17,7 @@ import {
   writeTriageFocus,
   type HandEntry,
 } from "./triage.js";
-import {
-  type Edge,
-  type StickArmState,
-  mappedAxisBytes,
-  evaluateStickAxis,
-} from "./hid-report.js";
+import { type Edge, type StickArmState, mappedAxisBytes, evaluateStickAxis } from "./hid-report.js";
 import {
   safe,
   runScript,

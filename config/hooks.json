@@ -1,8 +1,6 @@
 {
   "version": 1,
   "hooks": {
-    "afterAgentResponse": [
-      { "command": "./tts/scripts/ingest.sh" }
-    ]
+    "afterAgentResponse": [{ "command": "./tts/scripts/ingest.sh" }]
   }
 }

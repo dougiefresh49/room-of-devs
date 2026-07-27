@@ -143,7 +143,13 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
         </div>
       ) : null}
       {spot ? (
-        <DockSpotlight spot={spot} nowPlaying={nowPlaying} view={view} ui={ui} paused={snapshot?.paused === true} />
+        <DockSpotlight
+          spot={spot}
+          nowPlaying={nowPlaying}
+          view={view}
+          ui={ui}
+          paused={snapshot?.paused === true}
+        />
       ) : null}
       <div className="dock-pill" data-tauri-drag-region>
         <button
@@ -233,15 +239,25 @@ function DockAgent({
         {...gesture}
       >
         <span className="dock-ring">
-          <AvatarImg agent={agent} imgClassName="avatar dock-avatar" fallbackClassName="avatar-fallback dock-fallback" />
+          <AvatarImg
+            agent={agent}
+            imgClassName="avatar dock-avatar"
+            fallbackClassName="avatar-fallback dock-fallback"
+          />
         </span>
         {agent.raisedCount > 0 ? (
-          <span className="dock-badge" title={`${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting`}>
+          <span
+            className="dock-badge"
+            title={`${agent.raisedCount} update${agent.raisedCount > 1 ? "s" : ""} waiting`}
+          >
             {agent.raisedCount}
           </span>
         ) : null}
       </button>
-      <div className={`dock-actions actions-${mode === "stage" ? 3 : 5}`} aria-label="Agent actions">
+      <div
+        className={`dock-actions actions-${mode === "stage" ? 3 : 5}`}
+        aria-label="Agent actions"
+      >
         <ActionCluster
           mode={mode}
           isTeam={agent.isTeam}
@@ -288,7 +304,11 @@ function DockSpotlight({
         : agent.sessionId;
     const mode: ClusterMode | null = loading ? null : onStage ? "stage" : "summary";
     column = (
-      <div key={enterKey} className="spotlight-col no-drag spotlight-enter" data-session={agent.sessionId}>
+      <div
+        key={enterKey}
+        className="spotlight-col no-drag spotlight-enter"
+        data-session={agent.sessionId}
+      >
         {mode ? (
           <div className="spotlight-actions" aria-label="Speaker actions">
             <ActionCluster
@@ -362,7 +382,12 @@ function DockSpotlight({
     );
   }
 
-  return <div className="dock-spotlight">{column}{bubbleNode}</div>;
+  return (
+    <div className="dock-spotlight">
+      {column}
+      {bubbleNode}
+    </div>
+  );
 }
 
 // The caption ✕ is a span INSIDE the caption button (a button can't nest a

@@ -50,7 +50,9 @@ export function KaraokeLine({
   if (!words) {
     // No alignment → plain text. The card wraps; the slim line clips to one row.
     return variant === "card" ? (
-      <div className={`text-[15px] leading-relaxed ${dim ? "text-fg-muted" : "text-fg"}`}>{text}</div>
+      <div className={`text-[15px] leading-relaxed ${dim ? "text-fg-muted" : "text-fg"}`}>
+        {text}
+      </div>
     ) : (
       <div className="truncate text-[13px] text-fg">{text}</div>
     );

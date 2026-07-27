@@ -50,10 +50,7 @@ export interface NameCandidate {
   priority: number;
 }
 
-export type ResolveResult =
-  | { ok: string }
-  | { ambiguous: string[] }
-  | { none: true };
+export type ResolveResult = { ok: string } | { ambiguous: string[] } | { none: true };
 
 function loadAliases(): Record<string, string> {
   try {
@@ -61,10 +58,7 @@ function loadAliases(): Record<string, string> {
     const mtime = statSync(ALIASES_PATH).mtimeMs;
     if (cachedAliases && mtime === aliasesMtime) return cachedAliases;
 
-    const raw = JSON.parse(readFileSync(ALIASES_PATH, "utf-8")) as Record<
-      string,
-      unknown
-    >;
+    const raw = JSON.parse(readFileSync(ALIASES_PATH, "utf-8")) as Record<string, unknown>;
     const out: Record<string, string> = {};
     for (const [spoken, canonical] of Object.entries(raw)) {
       if (typeof canonical !== "string") continue;
@@ -93,10 +87,7 @@ export function levenshtein(a: string, b: string): number {
     row[0] = i;
     for (let j = 1; j <= n; j++) {
       const tmp = row[j];
-      row[j] =
-        a[i - 1] === b[j - 1]
-          ? prev
-          : 1 + Math.min(prev, row[j], row[j - 1]);
+      row[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, row[j], row[j - 1]);
       prev = tmp;
     }
   }
@@ -121,7 +112,10 @@ export function normalizeTranscript(raw: string): string {
       .replace(/\s+(um|uh|please)$/, "")
       .trim();
     if (!/^hey\s+\w/.test(s)) {
-      s = s.replace(/^hey\s+/, "").replace(/\s+hey$/, "").trim();
+      s = s
+        .replace(/^hey\s+/, "")
+        .replace(/\s+hey$/, "")
+        .trim();
     }
   } while (s !== prev);
   return s;
@@ -201,7 +195,7 @@ export function listCandidateNames(): string[] {
 
 export function resolveByName(
   spoken: string,
-  candidates: Array<{ label: string; sessionId: string; priority?: number }>
+  candidates: Array<{ label: string; sessionId: string; priority?: number }>,
 ): ResolveResult {
   const q = normalizeToken(spoken);
   if (!q) return { none: true };
@@ -226,7 +220,7 @@ export function resolveByName(
       const teamIds = new Set(
         Object.values(loadTeamMap())
           .map((e) => e?.sessionId)
-          .filter(Boolean)
+          .filter(Boolean),
       );
       const teamHits = ids.filter((id) => teamIds.has(id));
       if (teamHits.length === 1) return { ok: teamHits[0] };
@@ -312,10 +306,7 @@ export function matchGrammar(text: string): Action | null {
  * Zero-cost rule path. `boundTarget` is the default target for later
  * inject fallback — bare commands still match here (the arcade-waste fix).
  */
-export function matchIntent(
-  transcript: string,
-  _ctx: RouterContext = {}
-): Action | null {
+export function matchIntent(transcript: string, _ctx: RouterContext = {}): Action | null {
   const text = applyAliases(normalizeTranscript(transcript));
   return matchGrammar(text);
 }
@@ -371,9 +362,7 @@ export function composeStatus(): string {
     for (const f of readdirSync(STATE_DIR)) {
       if (!f.endsWith(".json")) continue;
       try {
-        const s = JSON.parse(
-          readFileSync(join(STATE_DIR, f), "utf-8")
-        ) as {
+        const s = JSON.parse(readFileSync(join(STATE_DIR, f), "utf-8")) as {
           sessionId?: string;
           name?: string;
           state?: string;
@@ -403,13 +392,11 @@ export function composeStatus(): string {
           ? `${h.name}, waiting ${h.wait}`
           : i === 0
             ? `${h.name}, waiting ${h.wait}`
-            : h.name
+            : h.name,
       )
       .join(", and ");
     const head =
-      hands.length === 1
-        ? "One hand up"
-        : `${COUNT_WORDS[hands.length] ?? hands.length} hands up`;
+      hands.length === 1 ? "One hand up" : `${COUNT_WORDS[hands.length] ?? hands.length} hands up`;
     parts.push(`${head}: ${detail}.`);
   }
   for (const w of working) parts.push(`${w} is working.`);

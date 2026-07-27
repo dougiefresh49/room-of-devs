@@ -13,7 +13,14 @@ export interface TransportBarProps {
   onHold: () => void;
 }
 
-export function TransportBar({ paused, held, onPause, onStop, onReplay, onHold }: TransportBarProps) {
+export function TransportBar({
+  paused,
+  held,
+  onPause,
+  onStop,
+  onReplay,
+  onHold,
+}: TransportBarProps) {
   return (
     <>
       <button
@@ -27,7 +34,12 @@ export function TransportBar({ paused, held, onPause, onStop, onReplay, onHold }
       <button type="button" className="icon-btn" title="Stop playback" onClick={onStop}>
         <IconStop />
       </button>
-      <button type="button" className="icon-btn" title="Replay last message (free)" onClick={onReplay}>
+      <button
+        type="button"
+        className="icon-btn"
+        title="Replay last message (free)"
+        onClick={onReplay}
+      >
         <IconReplay />
       </button>
       <button

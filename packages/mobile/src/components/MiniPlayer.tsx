@@ -144,7 +144,15 @@ function PhoneBar({
         aria-label="Stop"
         className="grid size-9 shrink-0 place-items-center rounded-lg text-fg-faint transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-5"
+          aria-hidden="true"
+        >
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>
@@ -175,7 +183,9 @@ function MacBar({
       />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-semibold text-fg">{name}</span>
-        <span className="text-[11px] font-medium text-fg-muted">Playing on Mac · tap to move here</span>
+        <span className="text-[11px] font-medium text-fg-muted">
+          Playing on Mac · tap to move here
+        </span>
       </span>
       <span className="mr-1 flex shrink-0 items-end gap-0.5" aria-hidden="true">
         <span className="h-2 w-0.5 rounded bg-accent/70" />

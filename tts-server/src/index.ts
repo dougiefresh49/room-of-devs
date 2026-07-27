@@ -25,11 +25,7 @@ import {
 } from "./playback-locks.js";
 import { stopCurrent } from "./player-process.js";
 import { playStreamBuffer, awaitPendingDrain } from "./stream-playback.js";
-import {
-  activePhoneGrantId,
-  isUnexpiredPhoneGrant,
-  type PlaybackContext,
-} from "./now-playing.js";
+import { activePhoneGrantId, isUnexpiredPhoneGrant, type PlaybackContext } from "./now-playing.js";
 import type { ReplayMeta } from "./replay-store.js";
 import { getPhrasesForVoice, playRandomPhrase } from "./phrases.js";
 import {
@@ -94,10 +90,7 @@ function truncateForTTS(text: string, limit = TTS_CHAR_CAP): string {
   return result || text.slice(0, limit);
 }
 
-function shouldAddPrefix(
-  config: ReturnType<typeof loadConfig>,
-  title?: string
-): boolean {
+function shouldAddPrefix(config: ReturnType<typeof loadConfig>, title?: string): boolean {
   const pref = config.streaming_session_prefix;
   if (pref === "never") return false;
   if (pref === "always" && title) return true;
@@ -137,10 +130,7 @@ function hasNewerLiveItem(name: string, sessionId: string): boolean {
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-async function processQueueFile(
-  filePath: string,
-  auto = false
-): Promise<void> {
+async function processQueueFile(filePath: string, auto = false): Promise<void> {
   const name = basename(filePath);
 
   if (!claimProcessing(name)) {
@@ -267,16 +257,16 @@ async function processQueueFile(
 
     const character = getCharacter(voiceId);
     const characterCtx = character
-      ? { name: character.name, personality: character.personality, speechStyle: character.speechStyle }
+      ? {
+          name: character.name,
+          personality: character.personality,
+          speechStyle: character.speechStyle,
+        }
       : null;
 
     const rawText = item.text.slice(0, GEMINI_INPUT_CAP);
 
-    const geminiResult = await processWithGemini(
-      rawText,
-      config.gemini_model,
-      characterCtx
-    );
+    const geminiResult = await processWithGemini(rawText, config.gemini_model, characterCtx);
     let processed = geminiResult ?? fallbackClean(rawText);
 
     if (!processed.trim()) {
@@ -322,9 +312,7 @@ async function processQueueFile(
     // Live sessions always stream to the phone — that's the whole feature.
     // (stillLive, not the pre-wait value: routing follows the current flag.)
     const sink =
-      process.env.CR_OUTPUT === "phone" || stillLive
-        ? ("none" as const)
-        : ("ffplay" as const);
+      process.env.CR_OUTPUT === "phone" || stillLive ? ("none" as const) : ("ffplay" as const);
 
     // Phone sink retires the queue item as soon as the replay is durably
     // saved — a crash during the playback-window wait must not leave the
@@ -345,7 +333,7 @@ async function processQueueFile(
         replayMeta,
         timestamped.getWords,
         sink,
-        onPersisted
+        onPersisted,
       );
     } else {
       const stream = await streamTTS(processed, { voiceId });
@@ -355,7 +343,15 @@ async function processQueueFile(
         return;
       }
       log("server", `Playing: ${name} (${processed.length} chars, no captions)`);
-      code = await playStreamBuffer(stream as any, filePath, ctx, replayMeta, undefined, sink, onPersisted);
+      code = await playStreamBuffer(
+        stream as any,
+        filePath,
+        ctx,
+        replayMeta,
+        undefined,
+        sink,
+        onPersisted,
+      );
     }
     // TTS succeeded and credits are spent — move to played regardless of
     // exit code. A stopped playback shouldn't leave the item re-buyable;
@@ -528,10 +524,7 @@ const reaperTimer = setInterval(() => {
       reaperMisses.set(sid, misses);
       if (misses < 2) continue;
       reaperMisses.delete(sid);
-      log(
-        "server",
-        `Reaping stale card ${sid.slice(0, 12)} (pid ${pid ?? "gone"})`
-      );
+      log("server", `Reaping stale card ${sid.slice(0, 12)} (pid ${pid ?? "gone"})`);
       cleanupSession(sid);
     }
     for (const sid of [...reaperMisses.keys()]) {

@@ -133,7 +133,8 @@ export function AgentCard({
               grantPending
                 ? undefined
                 : {
-                    backgroundColor: "color-mix(in srgb, var(--room-accent) 18%, var(--room-surface))",
+                    backgroundColor:
+                      "color-mix(in srgb, var(--room-accent) 18%, var(--room-surface))",
                     borderColor: "color-mix(in srgb, var(--room-accent) 40%, transparent)",
                   }
             }
@@ -158,7 +159,9 @@ export function AgentCard({
           const showReplay = !speaking;
           if (!showReplay && !injectable) return null;
           return (
-            <div className={`mt-3 grid gap-2 ${showReplay && injectable ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div
+              className={`mt-3 grid gap-2 ${showReplay && injectable ? "grid-cols-2" : "grid-cols-1"}`}
+            >
               {showReplay ? (
                 <button
                   type="button"

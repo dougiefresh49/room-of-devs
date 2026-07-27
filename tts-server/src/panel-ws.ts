@@ -9,7 +9,17 @@ import { chmodSync, existsSync, readFileSync, unlinkSync, writeFileSync } from "
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer, WebSocket } from "ws";
-import { loadConfig, TTS_DIR, CONFIG_PATH, loadArcadeButtons, saveArcadeButtons, isValidArcadeColor, effectivePlaybackMode, type ArcadeButton, type ArcadeButtons } from "./config.js";
+import {
+  loadConfig,
+  TTS_DIR,
+  CONFIG_PATH,
+  loadArcadeButtons,
+  saveArcadeButtons,
+  isValidArcadeColor,
+  effectivePlaybackMode,
+  type ArcadeButton,
+  type ArcadeButtons,
+} from "./config.js";
 import { buildPanelSnapshot, invalidateSnapshot, subscribe } from "./state-watch.js";
 import { log } from "./logger.js";
 import { isTeamSession } from "./team-map.js";
@@ -102,7 +112,6 @@ const MOOD_PRESETS: Record<
 
 const VALID_SPEEDS = new Set([0.75, 1.0, 1.1, 1.15, 1.2, 1.25, 1.5, 2.0]);
 
-
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;
 let unsub: (() => void) | null = null;
@@ -148,7 +157,10 @@ function isValidAction(name: string): boolean {
   return (HID_ACTIONS as readonly string[]).includes(name);
 }
 
-function applyButtonPatch(existing: ArcadeButton | undefined, patch: ButtonPatch): ArcadeButton | "bad_message" {
+function applyButtonPatch(
+  existing: ArcadeButton | undefined,
+  patch: ButtonPatch,
+): ArcadeButton | "bad_message" {
   const merged: ArcadeButton = { ...(existing ?? { name: "" }) };
   if (patch.name !== undefined) {
     const n = patch.name.trim();
@@ -209,10 +221,7 @@ function sendButtons(ws: WebSocket): void {
 function loadCharactersMap(): Record<string, { name?: string }> {
   if (!existsSync(CHARACTERS_PATH)) return {};
   try {
-    return JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
-      string,
-      { name?: string }
-    >;
+    return JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<string, { name?: string }>;
   } catch {
     return {};
   }
@@ -317,9 +326,7 @@ function parseBoolSetting(value: unknown): boolean | "bad_message" {
 
 function setDynamicResponses(value: string): boolean {
   try {
-    const raw = existsSync(CONFIG_PATH)
-      ? JSON.parse(readFileSync(CONFIG_PATH, "utf-8"))
-      : {};
+    const raw = existsSync(CONFIG_PATH) ? JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) : {};
     raw.dynamic_responses = value;
     writeFileSync(CONFIG_PATH, JSON.stringify(raw, null, 2) + "\n");
     return true;
@@ -420,7 +427,7 @@ function sendCommandResult(
   ok: boolean,
   code?: string,
   message?: string,
-  sessionId?: string
+  sessionId?: string,
 ): void {
   if (!activeRequest || activeRequest.ws !== ws || activeRequest.responded) return;
   activeRequest.responded = true;
@@ -457,7 +464,7 @@ function sendError(
     | "stale_tmux"
     | "no_device",
   sessionId?: string,
-  message?: string
+  message?: string,
 ): void {
   const err: Record<string, string> = { type: "error", code };
   if (sessionId) err.sessionId = sessionId;

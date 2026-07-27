@@ -5,8 +5,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const TTS_DIR =
-  process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
+export const TTS_DIR = process.env.TTS_DIR_OVERRIDE ?? join(homedir(), ".cursor", "tts");
 export const QUEUE_DIR = join(TTS_DIR, "queue");
 export const PLAYED_DIR = join(TTS_DIR, "played");
 export const LOG_FILE = join(TTS_DIR, "logs", "hook.log");
@@ -190,9 +189,7 @@ function parseStickMapping(raw: unknown): StickMapping | null {
   return { byte, pole };
 }
 
-function parseSticks(
-  raw: unknown
-): Partial<Record<StickDirection, StickMapping>> | undefined {
+function parseSticks(raw: unknown): Partial<Record<StickDirection, StickMapping>> | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const out: Partial<Record<StickDirection, StickMapping>> = {};
   for (const dir of ["left", "right", "up", "down"] as const) {
@@ -204,7 +201,7 @@ function parseSticks(
 
 /** Drop legacy stick-in-buttons entries (bit-index model was wrong for axes). */
 function stripLegacyStickButtons(
-  buttons: Record<string, ArcadeButton>
+  buttons: Record<string, ArcadeButton>,
 ): Record<string, ArcadeButton> {
   const out: Record<string, ArcadeButton> = {};
   for (const [k, v] of Object.entries(buttons)) {
@@ -296,9 +293,7 @@ export function getActiveSessions(): SessionInfo[] {
     for (const f of files) {
       if (!f.endsWith(".json")) continue;
       try {
-        const data = JSON.parse(
-          readFileSync(join(SESSIONS_DIR, f), "utf-8")
-        );
+        const data = JSON.parse(readFileSync(join(SESSIONS_DIR, f), "utf-8"));
         if (data.sessionId) {
           sessions.push({
             sessionId: data.sessionId,
@@ -324,10 +319,7 @@ export function lookupSessionName(sessionId: string): string | null {
 }
 
 export function loadEnv(): void {
-  const envPaths = [
-    join(TTS_DIR, ".env"),
-    join(__dirname, "..", "..", ".env"),
-  ];
+  const envPaths = [join(TTS_DIR, ".env"), join(__dirname, "..", "..", ".env")];
   for (const p of envPaths) {
     if (existsSync(p)) {
       const lines = readFileSync(p, "utf-8").split("\n");

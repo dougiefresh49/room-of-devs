@@ -35,13 +35,35 @@
     "persona": "Karai"
   },
   { "type": "set_live", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "on": true },
-  { "type": "set_voice", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "character": "Splinter" },
-  { "type": "set_nickname", "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808", "label": "Sanitized Nick" },
+  {
+    "type": "set_voice",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "character": "Splinter"
+  },
+  {
+    "type": "set_nickname",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "label": "Sanitized Nick"
+  },
   { "type": "set_setting", "key": "speed", "value": 1.5 },
-  { "type": "set_button", "idx": 3, "patch": { "name": "Grant", "action": "grant_focused", "color": "green" } },
+  {
+    "type": "set_button",
+    "idx": 3,
+    "patch": { "name": "Grant", "action": "grant_focused", "color": "green" }
+  },
   { "type": "set_button", "idx": 3, "patch": { "character": null } },
   { "type": "set_button", "idx": 3, "patch": { "action": null } },
-  { "type": "set_button", "idx": 4, "patch": { "name": "Blue", "action": "replay", "character": null, "color": "blue", "notes": "Replay" } },
+  {
+    "type": "set_button",
+    "idx": 4,
+    "patch": {
+      "name": "Blue",
+      "action": "replay",
+      "character": null,
+      "color": "blue",
+      "notes": "Replay"
+    }
+  },
   { "type": "remove_button", "idx": 3 },
   { "type": "get_buttons" },
   { "type": "get_shortcuts" },

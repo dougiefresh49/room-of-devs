@@ -62,7 +62,7 @@ async function snapToCorner(corner: SnapCorner): Promise<void> {
       const wantLeft = corner === "bl";
       const rects = (await availableMonitors()).map(rect);
       const candidates = rects.filter((m) =>
-        wantLeft ? m.x + m.w <= mon.x + 1 : m.x >= mon.x + mon.w - 1
+        wantLeft ? m.x + m.w <= mon.x + 1 : m.x >= mon.x + mon.w - 1,
       );
       if (candidates.length) {
         candidates.sort((a, b) => (wantLeft ? b.x - a.x : a.x - b.x));
@@ -75,7 +75,7 @@ async function snapToCorner(corner: SnapCorner): Promise<void> {
     // the window becomes unfindable. Fall back to the current monitor.
     const all = (await availableMonitors()).map(rect);
     const visible = all.some(
-      (m) => t.x >= m.x - 8 && t.x < m.x + m.w && t.y >= m.y - 8 && t.y < m.y + m.h
+      (m) => t.x >= m.x - 8 && t.x < m.x + m.w && t.y >= m.y - 8 && t.y < m.y + m.h,
     );
     if (!visible) t = target(rect(monitor));
 

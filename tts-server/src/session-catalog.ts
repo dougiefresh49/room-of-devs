@@ -1,4 +1,13 @@
-import { existsSync, openSync, readFileSync, readSync, closeSync, fstatSync, readdirSync, statSync } from "fs";
+import {
+  existsSync,
+  openSync,
+  readFileSync,
+  readSync,
+  closeSync,
+  fstatSync,
+  readdirSync,
+  statSync,
+} from "fs";
 import { basename, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";

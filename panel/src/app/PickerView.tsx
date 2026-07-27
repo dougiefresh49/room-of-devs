@@ -16,7 +16,13 @@ import { platform } from "../platform/tauri.js";
 const SKIP_PERMS = "panel_flag_skip_perms";
 const REMOTE = "panel_flag_remote";
 const MODEL = "panel_flag_model";
-const MODELS = [["", "Default"], ["fable", "Fable"], ["opus", "Opus"], ["sonnet", "Sonnet"], ["haiku", "Haiku"]] as const;
+const MODELS = [
+  ["", "Default"],
+  ["fable", "Fable"],
+  ["opus", "Opus"],
+  ["sonnet", "Sonnet"],
+  ["haiku", "Haiku"],
+] as const;
 type ModelValue = (typeof MODELS)[number][0];
 
 /** A staged (not-yet-launched) choice: persona + project (+ resume session). */
@@ -49,14 +55,20 @@ function humanizeAge(mtimeMs: number): string {
 }
 
 function flagChecked(key: string): boolean {
-  try { return localStorage.getItem(key) !== "0"; } catch { return true; }
+  try {
+    return localStorage.getItem(key) !== "0";
+  } catch {
+    return true;
+  }
 }
 
 function selectedModel(): ModelValue {
   try {
     const value = localStorage.getItem(MODEL) ?? "";
-    return MODELS.some(([model]) => model === value) ? value as ModelValue : "";
-  } catch { return ""; }
+    return MODELS.some(([model]) => model === value) ? (value as ModelValue) : "";
+  } catch {
+    return "";
+  }
 }
 
 function modelLabel(value: ModelValue): string {
@@ -78,7 +90,11 @@ function BackButton() {
       className="icon-btn window-btn no-drag"
       data-window-action="picker-back"
       title="Back to room"
-      onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); closePicker(); }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        closePicker();
+      }}
       onMouseDown={stop}
       onClick={stop}
     >
@@ -123,11 +139,23 @@ function PersonaChips({
             aria-pressed={selected}
             onClick={(event) => {
               event.stopPropagation();
-              onSelect({ rowKey, dir, project, persona: persona.name, label: persona.label, sessionId });
+              onSelect({
+                rowKey,
+                dir,
+                project,
+                persona: persona.name,
+                label: persona.label,
+                sessionId,
+              });
             }}
           >
             <span className="persona-chip-av">
-              <img className="avatar persona-chip-img" src={personaAvatarSrc(persona)} alt="" onError={hideBrokenAvatar} />
+              <img
+                className="avatar persona-chip-img"
+                src={personaAvatarSrc(persona)}
+                alt=""
+                onError={hideBrokenAvatar}
+              />
               <span className="avatar-fallback persona-chip-fallback">{persona.label[0]}</span>
             </span>
             <span className="persona-chip-label">{persona.label}</span>
@@ -149,7 +177,12 @@ export function PickerView() {
   const verb = isResume ? "Resume" : "Start";
 
   const pick = async () => {
-    try { const dir = await platform.pickFolder(); if (dir) setBrowseDir(dir); } catch (error) { console.error("folder picker failed:", error); }
+    try {
+      const dir = await platform.pickFolder();
+      if (dir) setBrowseDir(dir);
+    } catch (error) {
+      console.error("folder picker failed:", error);
+    }
   };
 
   const switchTab = (tab: "new" | "resume") => {
@@ -161,36 +194,93 @@ export function PickerView() {
 
   const start = () => {
     if (!selected) return;
-    const flags = { skipPermissions: flagChecked(SKIP_PERMS), remoteControl: flagChecked(REMOTE), ...(model ? { model } : {}) };
+    const flags = {
+      skipPermissions: flagChecked(SKIP_PERMS),
+      remoteControl: flagChecked(REMOTE),
+      ...(model ? { model } : {}),
+    };
     if (selected.sessionId) {
-      client.send({ type: "resume_session", sessionId: selected.sessionId, dir: selected.dir, persona: selected.persona, ...flags });
+      client.send({
+        type: "resume_session",
+        sessionId: selected.sessionId,
+        dir: selected.dir,
+        persona: selected.persona,
+        ...flags,
+      });
     } else {
-      client.send({ type: "spawn_session", dir: selected.dir, persona: selected.persona, ...flags });
+      client.send({
+        type: "spawn_session",
+        dir: selected.dir,
+        persona: selected.persona,
+        ...flags,
+      });
     }
     showLaunchToast(`launching ${selected.label} in ${selected.project}…`);
     setSelected(null);
   };
 
-  const personaFor = (rowKey: string) => (selected?.rowKey === rowKey ? selected.persona : undefined);
+  const personaFor = (rowKey: string) =>
+    selected?.rowKey === rowKey ? selected.persona : undefined;
 
-  const browse = view.browseDir ? (() => {
-    const dir = view.browseDir!;
-    const name = basenameOf(dir);
-    const path = prettyPath(dir);
-    const rowKey = `browse:${dir}`;
-    return (
-      <div className={`picker-row picker-browse expanded${personaFor(rowKey) ? " selected-row" : ""}`} data-dir={dir} data-project={name} data-browse-row>
-        <div className="picker-row-info picker-browse-info" title="Choose a different folder" onClick={(event) => { event.stopPropagation(); void pick(); }}>
-          <div className="picker-row-name" title={path}>{name}</div>
-          <div className="picker-row-sub" title={path}>{path}</div>
+  const browse = view.browseDir ? (
+    (() => {
+      const dir = view.browseDir!;
+      const name = basenameOf(dir);
+      const path = prettyPath(dir);
+      const rowKey = `browse:${dir}`;
+      return (
+        <div
+          className={`picker-row picker-browse expanded${personaFor(rowKey) ? " selected-row" : ""}`}
+          data-dir={dir}
+          data-project={name}
+          data-browse-row
+        >
+          <div
+            className="picker-row-info picker-browse-info"
+            title="Choose a different folder"
+            onClick={(event) => {
+              event.stopPropagation();
+              void pick();
+            }}
+          >
+            <div className="picker-row-name" title={path}>
+              {name}
+            </div>
+            <div className="picker-row-sub" title={path}>
+              {path}
+            </div>
+          </div>
+          <PersonaChips
+            rowKey={rowKey}
+            dir={dir}
+            project={name}
+            selectedPersona={personaFor(rowKey)}
+            onSelect={setSelected}
+          />
         </div>
-        <PersonaChips rowKey={rowKey} dir={dir} project={name} selectedPersona={personaFor(rowKey)} onSelect={setSelected} />
-      </div>
-    );
-  })() : (
-    <div className="picker-row picker-browse" data-browse-row role="button" tabIndex={0} onClick={() => void pick()} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); void pick(); } }}>
+      );
+    })()
+  ) : (
+    <div
+      className="picker-row picker-browse"
+      data-browse-row
+      role="button"
+      tabIndex={0}
+      onClick={() => void pick()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          void pick();
+        }
+      }}
+    >
       <div className="picker-row-info">
-        <div className="picker-row-name picker-browse-label"><span className="picker-browse-icon" aria-hidden="true"><IconFolder /></span><span>Start in another folder…</span></div>
+        <div className="picker-row-name picker-browse-label">
+          <span className="picker-browse-icon" aria-hidden="true">
+            <IconFolder />
+          </span>
+          <span>Start in another folder…</span>
+        </div>
       </div>
     </div>
   );
@@ -198,17 +288,39 @@ export function PickerView() {
   const rows = !isResume ? (
     <>
       {browse}
-      {data.knownDirs.length ? data.knownDirs.map((dir) => {
-        const name = basenameOf(dir);
-        const path = prettyPath(dir);
-        const rowKey = `new:${dir}`;
-        return (
-          <div key={dir} className={`picker-row${personaFor(rowKey) ? " selected-row" : ""}`} data-dir={dir} data-project={name}>
-            <div className="picker-row-info"><div className="picker-row-name" title={path}>{name}</div><div className="picker-row-sub" title={path}>{path}</div></div>
-            <PersonaChips rowKey={rowKey} dir={dir} project={name} selectedPersona={personaFor(rowKey)} onSelect={setSelected} />
-          </div>
-        );
-      }) : <p className="picker-empty">No known projects</p>}
+      {data.knownDirs.length ? (
+        data.knownDirs.map((dir) => {
+          const name = basenameOf(dir);
+          const path = prettyPath(dir);
+          const rowKey = `new:${dir}`;
+          return (
+            <div
+              key={dir}
+              className={`picker-row${personaFor(rowKey) ? " selected-row" : ""}`}
+              data-dir={dir}
+              data-project={name}
+            >
+              <div className="picker-row-info">
+                <div className="picker-row-name" title={path}>
+                  {name}
+                </div>
+                <div className="picker-row-sub" title={path}>
+                  {path}
+                </div>
+              </div>
+              <PersonaChips
+                rowKey={rowKey}
+                dir={dir}
+                project={name}
+                selectedPersona={personaFor(rowKey)}
+                onSelect={setSelected}
+              />
+            </div>
+          );
+        })
+      ) : (
+        <p className="picker-empty">No known projects</p>
+      )}
     </>
   ) : data.resumable.length ? (
     <>
@@ -216,47 +328,156 @@ export function PickerView() {
         const project = session.project || basenameOf(session.dir);
         const rowKey = `resume:${session.sessionId}`;
         return (
-          <div key={session.sessionId} className={`picker-row${personaFor(rowKey) ? " selected-row" : ""}`} data-dir={session.dir} data-session={session.sessionId} data-project={project}>
-            <div className="picker-row-info"><div className="picker-row-name" title={prettyPath(session.dir)}>{project}</div><div className="picker-row-sub"><span className="picker-age">{humanizeAge(session.mtimeMs)}</span><span className="picker-sid">{session.sessionId.slice(0, 8)}</span></div></div>
-            <PersonaChips rowKey={rowKey} dir={session.dir} project={project} sessionId={session.sessionId} selectedPersona={personaFor(rowKey)} onSelect={setSelected} />
+          <div
+            key={session.sessionId}
+            className={`picker-row${personaFor(rowKey) ? " selected-row" : ""}`}
+            data-dir={session.dir}
+            data-session={session.sessionId}
+            data-project={project}
+          >
+            <div className="picker-row-info">
+              <div className="picker-row-name" title={prettyPath(session.dir)}>
+                {project}
+              </div>
+              <div className="picker-row-sub">
+                <span className="picker-age">{humanizeAge(session.mtimeMs)}</span>
+                <span className="picker-sid">{session.sessionId.slice(0, 8)}</span>
+              </div>
+            </div>
+            <PersonaChips
+              rowKey={rowKey}
+              dir={session.dir}
+              project={project}
+              sessionId={session.sessionId}
+              selectedPersona={personaFor(rowKey)}
+              onSelect={setSelected}
+            />
           </div>
         );
       })}
     </>
-  ) : <p className="picker-empty">No resumable sessions</p>;
+  ) : (
+    <p className="picker-empty">No resumable sessions</p>
+  );
 
   const connected = clientState.connected;
-  const chosenPersona = selected ? PERSONAS.find((persona) => persona.name === selected.persona) ?? null : null;
+  const chosenPersona = selected
+    ? (PERSONAS.find((persona) => persona.name === selected.persona) ?? null)
+    : null;
 
   return (
     <>
       <header className="strip">
-        <div className="strip-left"><BackButton /><span className="title">New Session</span></div>
-        <div className="header-actions no-drag"><span className={`conn-dot ${connected ? "up" : "down"}`} title={connected ? "Connected" : "Disconnected"}></span></div>
+        <div className="strip-left">
+          <BackButton />
+          <span className="title">New Session</span>
+        </div>
+        <div className="header-actions no-drag">
+          <span
+            className={`conn-dot ${connected ? "up" : "down"}`}
+            title={connected ? "Connected" : "Disconnected"}
+          ></span>
+        </div>
       </header>
       <main className="picker">
         <div className="picker-tabs no-drag" role="tablist">
-          <button type="button" className={`picker-tab${!isResume ? " active" : ""}`} data-picker-tab="new" role="tab" onClick={() => switchTab("new")}>New</button>
-          <button type="button" className={`picker-tab${isResume ? " active" : ""}`} data-picker-tab="resume" role="tab" onClick={() => switchTab("resume")}>Resume</button>
+          <button
+            type="button"
+            className={`picker-tab${!isResume ? " active" : ""}`}
+            data-picker-tab="new"
+            role="tab"
+            onClick={() => switchTab("new")}
+          >
+            New
+          </button>
+          <button
+            type="button"
+            className={`picker-tab${isResume ? " active" : ""}`}
+            data-picker-tab="resume"
+            role="tab"
+            onClick={() => switchTab("resume")}
+          >
+            Resume
+          </button>
         </div>
         <div className="picker-flags no-drag">
-          <label className="picker-flag"><input type="checkbox" data-spawn-flag={SKIP_PERMS} defaultChecked={flagChecked(SKIP_PERMS)} onChange={(event) => { try { localStorage.setItem(SKIP_PERMS, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Skip permission prompts</label>
-          <label className="picker-flag"><input type="checkbox" data-spawn-flag={REMOTE} defaultChecked={flagChecked(REMOTE)} onChange={(event) => { try { localStorage.setItem(REMOTE, event.currentTarget.checked ? "1" : "0"); } catch {} }} /> Remote control (Claude app)</label>
-          <label className="picker-flag">Model <select data-spawn-model value={model} onChange={(event) => { const value = event.currentTarget.value as ModelValue; setModel(value); try { localStorage.setItem(MODEL, value); } catch {} }}>{MODELS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label className="picker-flag">
+            <input
+              type="checkbox"
+              data-spawn-flag={SKIP_PERMS}
+              defaultChecked={flagChecked(SKIP_PERMS)}
+              onChange={(event) => {
+                try {
+                  localStorage.setItem(SKIP_PERMS, event.currentTarget.checked ? "1" : "0");
+                } catch {}
+              }}
+            />{" "}
+            Skip permission prompts
+          </label>
+          <label className="picker-flag">
+            <input
+              type="checkbox"
+              data-spawn-flag={REMOTE}
+              defaultChecked={flagChecked(REMOTE)}
+              onChange={(event) => {
+                try {
+                  localStorage.setItem(REMOTE, event.currentTarget.checked ? "1" : "0");
+                } catch {}
+              }}
+            />{" "}
+            Remote control (Claude app)
+          </label>
+          <label className="picker-flag">
+            Model{" "}
+            <select
+              data-spawn-model
+              value={model}
+              onChange={(event) => {
+                const value = event.currentTarget.value as ModelValue;
+                setModel(value);
+                try {
+                  localStorage.setItem(MODEL, value);
+                } catch {}
+              }}
+            >
+              {MODELS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className="picker-list">{rows}</div>
         {selected && chosenPersona ? (
           <div className="picker-confirm no-drag" role="region" aria-label="Confirm new session">
             <span className="picker-confirm-av">
-              <img className="avatar picker-confirm-img" src={personaAvatarSrc(chosenPersona)} alt="" onError={hideBrokenAvatar} />
+              <img
+                className="avatar picker-confirm-img"
+                src={personaAvatarSrc(chosenPersona)}
+                alt=""
+                onError={hideBrokenAvatar}
+              />
               <span className="avatar-fallback picker-confirm-fallback">{selected.label[0]}</span>
             </span>
             <div className="picker-confirm-info">
-              <div className="picker-confirm-title">{selected.label} · {modelLabel(model)}</div>
-              <div className="picker-confirm-sub" title={selected.project}>{verb} in {selected.project}</div>
+              <div className="picker-confirm-title">
+                {selected.label} · {modelLabel(model)}
+              </div>
+              <div className="picker-confirm-sub" title={selected.project}>
+                {verb} in {selected.project}
+              </div>
             </div>
-            <button type="button" className="picker-confirm-clear" onClick={() => setSelected(null)}>Clear</button>
-            <button type="button" className="picker-confirm-start" onClick={start}>{verb}</button>
+            <button
+              type="button"
+              className="picker-confirm-clear"
+              onClick={() => setSelected(null)}
+            >
+              Clear
+            </button>
+            <button type="button" className="picker-confirm-start" onClick={start}>
+              {verb}
+            </button>
           </div>
         ) : null}
       </main>

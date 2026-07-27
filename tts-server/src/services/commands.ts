@@ -18,11 +18,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
 import { TTS_DIR } from "../config.js";
-import {
-  buildPanelSnapshotFresh,
-  buildSnapshot,
-  sessionStateAgeMs,
-} from "../state-watch.js";
+import { buildPanelSnapshotFresh, buildSnapshot, sessionStateAgeMs } from "../state-watch.js";
 import { log } from "../logger.js";
 import {
   isTeamSession,
@@ -39,17 +35,8 @@ import {
   supersedePhoneGrant,
   markPhonePlaybackDone,
 } from "../now-playing.js";
-import {
-  setLiveSession,
-  markPendingPhoneAck,
-  clearPendingPhoneAck,
-} from "../live-mode.js";
-import type {
-  Command,
-  CommandSource,
-  ButtonPatch,
-  SpawnModel,
-} from "../protocol/index.js";
+import { setLiveSession, markPendingPhoneAck, clearPendingPhoneAck } from "../live-mode.js";
+import type { Command, CommandSource, ButtonPatch, SpawnModel } from "../protocol/index.js";
 
 import { CHARACTERS_PATH } from "../characters-path.js";
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
@@ -100,15 +87,7 @@ function scriptEnv(): NodeJS.ProcessEnv {
  * didn't decide to hand over). Only the variables a shell + tmux + the claude
  * CLI genuinely need are copied through — everything else is dropped.
  */
-const SPAWN_ENV_PASSTHROUGH = [
-  "PATH",
-  "HOME",
-  "USER",
-  "SHELL",
-  "LANG",
-  "TMPDIR",
-  "TERM",
-] as const;
+const SPAWN_ENV_PASSTHROUGH = ["PATH", "HOME", "USER", "SHELL", "LANG", "TMPDIR", "TERM"] as const;
 
 function minimalSpawnEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { TTS_DIR };
@@ -119,11 +98,7 @@ function minimalSpawnEnv(): NodeJS.ProcessEnv {
   return env;
 }
 
-export function runScript(
-  name: string,
-  args: string[],
-  extraEnv?: Record<string, string>
-): void {
+export function runScript(name: string, args: string[], extraEnv?: Record<string, string>): void {
   try {
     const child = spawn(join(SCRIPTS_DIR, name), args, {
       stdio: "ignore",
@@ -141,7 +116,7 @@ function runScriptCaptured(
   args: string[],
   onDone: (code: number | null, stderrTail: string) => void,
   extraEnv?: Record<string, string>,
-  baseEnv: NodeJS.ProcessEnv = scriptEnv()
+  baseEnv: NodeJS.ProcessEnv = scriptEnv(),
 ): void {
   try {
     const child = spawn(join(SCRIPTS_DIR, name), args, {
@@ -230,10 +205,7 @@ function runSignalReplay(speed?: number, sessionId?: string): void {
 function loadCharactersMap(): Record<string, { name?: string }> {
   if (!existsSync(CHARACTERS_PATH)) return {};
   try {
-    return JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<
-      string,
-      { name?: string }
-    >;
+    return JSON.parse(readFileSync(CHARACTERS_PATH, "utf-8")) as Record<string, { name?: string }>;
   } catch {
     return {};
   }
@@ -344,8 +316,7 @@ export function splitCommandEnvelope(raw: unknown): CommandEnvelope {
   if (record.requestId === undefined && record.source === undefined) {
     return { requestId: null, source: null, body: raw };
   }
-  const validRequestId =
-    typeof record.requestId === "string" && record.requestId.length > 0;
+  const validRequestId = typeof record.requestId === "string" && record.requestId.length > 0;
   const validSource =
     record.source === "desktop" ||
     record.source === "mobile" ||
@@ -401,10 +372,7 @@ export function validatePanelMessage(raw: unknown): PanelMessage | "bad_message"
       if (keys.length === 2) {
         return { type: "grant", sessionId: msg.sessionId };
       }
-      if (
-        keys.length === 3 &&
-        (msg.output === "mac" || msg.output === "phone")
-      ) {
+      if (keys.length === 3 && (msg.output === "mac" || msg.output === "phone")) {
         return { type: "grant", sessionId: msg.sessionId, output: msg.output };
       }
       return "bad_message";
@@ -585,11 +553,13 @@ const pendingPersonas = new Set<string>();
 
 function tmuxExists(tmuxName: string): boolean {
   try {
-    return spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], {
-      stdio: "ignore",
-      timeout: 3_000,
-      killSignal: "SIGKILL",
-    }).status === 0;
+    return (
+      spawnSync("tmux", ["has-session", "-t", `=${tmuxName}`], {
+        stdio: "ignore",
+        timeout: 3_000,
+        killSignal: "SIGKILL",
+      }).status === 0
+    );
   } catch {
     return false;
   }
@@ -615,7 +585,7 @@ function personaBusyReason(persona: string): string | null {
     if (age !== null && age > GHOST_SESSION_MS) {
       log(
         "commands",
-        `ignoring stale room card for ${persona} (${agent.sessionId.slice(0, 12)}, idle ${Math.round(age / 60000)}m)`
+        `ignoring stale room card for ${persona} (${agent.sessionId.slice(0, 12)}, idle ${Math.round(age / 60000)}m)`,
       );
       continue;
     }
@@ -665,13 +635,11 @@ function spawnTeam(
   persona: string,
   dir: string,
   resumeSessionId?: string,
-  opts: SpawnOpts = {}
+  opts: SpawnOpts = {},
 ): void {
   const key = persona.toLowerCase();
   pendingPersonas.add(key);
-  const args = resumeSessionId
-    ? [persona, dir, "--resume", resumeSessionId]
-    : [persona, dir];
+  const args = resumeSessionId ? [persona, dir, "--resume", resumeSessionId] : [persona, dir];
   const extraEnv = {
     CR_REMOTE_CONTROL: opts.remoteControl === false ? "0" : "1",
     // Permissionless agents are opt-IN: only an explicit `true` from the
@@ -679,30 +647,29 @@ function spawnTeam(
     CR_SKIP_PERMISSIONS: opts.skipPermissions === true ? "1" : "0",
     CR_MODEL: opts.model ?? "",
   };
-  runScriptCaptured("team.sh", args, (code, stderrTail) => {
-    pendingPersonas.delete(key);
-    if (code === 0) return;
-    const detail = stderrTail.split("\n").filter(Boolean).pop() || `exit ${code ?? "?"}`;
-    const msg =
-      code === 2
-        ? `${persona} is already in the room`
-        : `Couldn't start ${persona}: ${detail}`;
-    log("commands", `team.sh failed for ${persona}: ${detail}`);
-    emitNotice(msg);
-  }, extraEnv, minimalSpawnEnv());
+  runScriptCaptured(
+    "team.sh",
+    args,
+    (code, stderrTail) => {
+      pendingPersonas.delete(key);
+      if (code === 0) return;
+      const detail = stderrTail.split("\n").filter(Boolean).pop() || `exit ${code ?? "?"}`;
+      const msg =
+        code === 2 ? `${persona} is already in the room` : `Couldn't start ${persona}: ${detail}`;
+      log("commands", `team.sh failed for ${persona}: ${detail}`);
+      emitNotice(msg);
+    },
+    extraEnv,
+    minimalSpawnEnv(),
+  );
 }
 
-export type SpawnValidateResult =
-  | "ok"
-  | "bad_dir"
-  | "bad_persona"
-  | "bad_session"
-  | "persona_busy";
+export type SpawnValidateResult = "ok" | "bad_dir" | "bad_persona" | "bad_session" | "persona_busy";
 
 export function validateAndSpawn(
   dir: string,
   persona: string,
-  opts: SpawnOpts = {}
+  opts: SpawnOpts = {},
 ): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
   const canon = resolvePersonaName(persona);
@@ -720,7 +687,7 @@ export function validateAndResume(
   sessionId: string,
   dir: string,
   persona: string,
-  opts: SpawnOpts = {}
+  opts: SpawnOpts = {},
 ): SpawnValidateResult {
   if (!isValidDir(dir)) return "bad_dir";
   const canon = resolvePersonaName(persona);
@@ -759,11 +726,7 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
   // linger to claim a wrong later prompt). Cleared below if injection fails.
   markPendingPhoneAck(msg.sessionId);
   // Flag MUST be first — inject_prompt.sh only accepts --now as $1.
-  const status = runScriptSyncStatus("inject_prompt.sh", [
-    "--now",
-    msg.sessionId,
-    text,
-  ]);
+  const status = runScriptSyncStatus("inject_prompt.sh", ["--now", msg.sessionId, text]);
   if (status === 0) return { status: "ok" };
   clearPendingPhoneAck();
   if (status === 3) return { status: "not_in_team" };
@@ -794,7 +757,7 @@ export function focusTerminal(sessionId: string): boolean {
         "-e",
         'tell app "Terminal" to activate',
       ],
-      { stdio: "ignore" }
+      { stdio: "ignore" },
     );
     child.on("error", (e) => log("commands", `focus_terminal spawn error: ${e.message}`));
     return true;
@@ -866,7 +829,7 @@ export function dispatch(msg: PanelMessage): void {
       runScript(
         "grant_floor.sh",
         [msg.sessionId],
-        msg.output === "phone" ? { CR_OUTPUT: "phone" } : undefined
+        msg.output === "phone" ? { CR_OUTPUT: "phone" } : undefined,
       );
       return;
     case "ptt":
@@ -932,10 +895,7 @@ export function dispatchPanelAction(raw: unknown): boolean {
     return startPlayReplay(msg.file, msg.offsetSec ?? 0);
   }
 
-  if (
-    (msg.type === "grant" || msg.type === "status_say") &&
-    !sessionInSnapshot(msg.sessionId)
-  ) {
+  if ((msg.type === "grant" || msg.type === "status_say") && !sessionInSnapshot(msg.sessionId)) {
     return false;
   }
 

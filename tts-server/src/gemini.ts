@@ -37,12 +37,15 @@ function buildSystemPrompt(character?: CharacterContext | null): string {
     return BASE_SYSTEM_PROMPT + `\n\nRead it like a dev friend summarizing what the agent did.`;
   }
 
-  return BASE_SYSTEM_PROMPT + `\n\nYou are rewriting this as ${character.name}. Stay in character throughout.
+  return (
+    BASE_SYSTEM_PROMPT +
+    `\n\nYou are rewriting this as ${character.name}. Stay in character throughout.
 
 Personality: ${character.personality}
 Speech style: ${character.speechStyle}
 
-Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.`;
+Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.`
+  );
 }
 
 let client: GoogleGenAI | null = null;
@@ -58,7 +61,7 @@ function getClient(): GoogleGenAI | null {
 export async function processWithGemini(
   text: string,
   model = "gemini-3.1-flash-lite",
-  character?: CharacterContext | null
+  character?: CharacterContext | null,
 ): Promise<string | null> {
   const ai = getClient();
   if (!ai) {
@@ -78,7 +81,7 @@ export async function processWithGemini(
           maxOutputTokens: 4096,
           abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
         },
-      })
+      }),
     );
 
     const result = response.text?.trim();
@@ -101,14 +104,31 @@ export async function processWithGemini(
 // doesn't send raw markdown (paths, table pipes) to ElevenLabs.
 
 const EXT_SPEECH: Record<string, string> = {
-  ".ts": " T S", ".tsx": " T S X", ".js": " J S", ".jsx": " J S X",
-  ".py": " python", ".json": " JSON", ".md": " markdown",
-  ".html": " H T M L", ".css": " C S S", ".sh": " shell",
-  ".sql": " S Q L", ".yml": " YAML", ".yaml": " YAML",
-  ".env": " env", ".txt": " text", ".csv": " C S V",
-  ".pdf": " P D F", ".png": " P N G", ".jpg": " J P G",
-  ".svg": " S V G", ".xml": " X M L", ".rs": " rust",
-  ".go": " go", ".rb": " ruby", ".onnx": " O N N X",
+  ".ts": " T S",
+  ".tsx": " T S X",
+  ".js": " J S",
+  ".jsx": " J S X",
+  ".py": " python",
+  ".json": " JSON",
+  ".md": " markdown",
+  ".html": " H T M L",
+  ".css": " C S S",
+  ".sh": " shell",
+  ".sql": " S Q L",
+  ".yml": " YAML",
+  ".yaml": " YAML",
+  ".env": " env",
+  ".txt": " text",
+  ".csv": " C S V",
+  ".pdf": " P D F",
+  ".png": " P N G",
+  ".jpg": " J P G",
+  ".svg": " S V G",
+  ".xml": " X M L",
+  ".rs": " rust",
+  ".go": " go",
+  ".rb": " ruby",
+  ".onnx": " O N N X",
 };
 
 function humanizeIdentifier(name: string, withExt = true): string {
@@ -167,8 +187,7 @@ function convertTablesToProse(text: string): string {
     const parseRow = (row: string): string[] => {
       let cells = row.split("|");
       if (cells.length && cells[0].trim() === "") cells = cells.slice(1);
-      if (cells.length && cells[cells.length - 1].trim() === "")
-        cells = cells.slice(0, -1);
+      if (cells.length && cells[cells.length - 1].trim() === "") cells = cells.slice(0, -1);
       return cells.map((c) => c.trim());
     };
 
@@ -198,11 +217,40 @@ function convertTablesToProse(text: string): string {
 }
 
 const CODE_PREFIXES = [
-  "import ", "from ", "const ", "let ", "var ", "function ", "class ",
-  "export ", "SELECT ", "INSERT ", "UPDATE ", "DELETE ", "CREATE ",
-  "curl ", "wget ", "npm ", "pip ", "yarn ", "docker ", "kubectl ",
-  "git ", "cd ", "mkdir ", "cp ", "mv ", "rm ", "chmod ", "brew ",
-  "sudo ", "echo ", "cat ", "#!/", "//", "/*",
+  "import ",
+  "from ",
+  "const ",
+  "let ",
+  "var ",
+  "function ",
+  "class ",
+  "export ",
+  "SELECT ",
+  "INSERT ",
+  "UPDATE ",
+  "DELETE ",
+  "CREATE ",
+  "curl ",
+  "wget ",
+  "npm ",
+  "pip ",
+  "yarn ",
+  "docker ",
+  "kubectl ",
+  "git ",
+  "cd ",
+  "mkdir ",
+  "cp ",
+  "mv ",
+  "rm ",
+  "chmod ",
+  "brew ",
+  "sudo ",
+  "echo ",
+  "cat ",
+  "#!/",
+  "//",
+  "/*",
 ];
 
 const SYMBOL_CHARS = new Set("{}();=><[]|&^~\\@#$%");
@@ -231,10 +279,7 @@ function humanizeRemainingPaths(text: string): string {
   const extPattern = Object.keys(EXT_SPEECH)
     .map((e) => e.replace(".", "\\."))
     .join("|");
-  const pathRe = new RegExp(
-    `(?<!\\w)(?:[a-zA-Z0-9_.@-]+/)+[a-zA-Z0-9_.-]+(?:${extPattern})`,
-    "g"
-  );
+  const pathRe = new RegExp(`(?<!\\w)(?:[a-zA-Z0-9_.@-]+/)+[a-zA-Z0-9_.-]+(?:${extPattern})`, "g");
   text = text.replace(pathRe, (m) => humanizeCodeToken(m));
 
   const camelRe = /(?<!\w)[a-z]+(?:[A-Z][a-z]+){2,}(?:\(\))?(?!\w)/g;

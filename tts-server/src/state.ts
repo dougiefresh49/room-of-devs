@@ -75,10 +75,7 @@ function tmuxSessionAlive(tmuxName: string): boolean {
 function removeSessionVoice(sessionId: string): void {
   try {
     if (!existsSync(SESSION_VOICES_PATH)) return;
-    const data = JSON.parse(readFileSync(SESSION_VOICES_PATH, "utf-8")) as Record<
-      string,
-      unknown
-    >;
+    const data = JSON.parse(readFileSync(SESSION_VOICES_PATH, "utf-8")) as Record<string, unknown>;
     if (!data || typeof data !== "object" || !(sessionId in data)) return;
     delete data[sessionId];
     atomicWriteJson(SESSION_VOICES_PATH, data);
@@ -96,9 +93,7 @@ function sessionHasQueuedItems(shortSession: string, excludeFile?: string): bool
   try {
     if (!existsSync(QUEUE_DIR)) return false;
     const suffix = `-cc-${shortSession}.json`;
-    return readdirSync(QUEUE_DIR).some(
-      (f) => f.endsWith(suffix) && f !== excludeFile
-    );
+    return readdirSync(QUEUE_DIR).some((f) => f.endsWith(suffix) && f !== excludeFile);
   } catch {
     return false;
   }
@@ -122,7 +117,7 @@ function deriveState(sessionId: string, excludeFile?: string): SessionState {
 export function setSessionState(
   sessionId: string,
   state: SessionState,
-  opts?: { name?: string }
+  opts?: { name?: string },
 ): void {
   if (!sessionId) return;
   try {
@@ -134,10 +129,7 @@ export function setSessionState(
     else if (state === "speaking") raisedAt = existing?.raisedAt ?? null;
 
     const name =
-      opts?.name ??
-      lookupSessionName(sessionId) ??
-      existing?.name ??
-      sessionId.slice(0, 12);
+      opts?.name ?? lookupSessionName(sessionId) ?? existing?.name ?? sessionId.slice(0, 12);
 
     const data: StateFile = { sessionId, name, state, raisedAt, updatedAt: now };
     const tmp = `${statePath(sessionId)}.tmp.${process.pid}`;

@@ -206,7 +206,9 @@ export async function fetchThread(sessionId: string, signal?: AbortSignal): Prom
  * the parsed body on success, null on any failure — callers treat null as
  * "didn't reach the daemon".
  */
-export async function postAction(body: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+export async function postAction(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown> | null> {
   try {
     const res = await fetch("/action", {
       method: "POST",

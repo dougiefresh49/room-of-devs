@@ -97,10 +97,7 @@ export function ReplayHistory({
                     <div className="truncate text-xs text-fg-muted">{preview(entry)}</div>
                   </div>
                   {!heard ? (
-                    <span
-                      className="size-2 shrink-0 rounded-full bg-accent"
-                      aria-label="unheard"
-                    />
+                    <span className="size-2 shrink-0 rounded-full bg-accent" aria-label="unheard" />
                   ) : null}
                 </button>
               </li>

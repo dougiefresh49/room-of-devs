@@ -63,10 +63,7 @@ export function getPhrasesForVoice(voiceId: string, kind: PhraseKind = "ack"): s
     .map((f) => join(dir, f));
 }
 
-export async function generatePhrases(
-  voiceId: string,
-  kind: PhraseKind = "ack",
-): Promise<number> {
+export async function generatePhrases(voiceId: string, kind: PhraseKind = "ack"): Promise<number> {
   const phrases = PHRASE_SETS[kind];
   const dir = voiceDir(voiceId);
   mkdirSync(dir, { recursive: true });
@@ -107,7 +104,7 @@ export async function generatePhrases(
 export async function playRandomPhrase(
   voiceId: string,
   kind: PhraseKind = "ack",
-  ctx: PlaybackContext = "meta"
+  ctx: PlaybackContext = "meta",
 ): Promise<boolean> {
   const files = getPhrasesForVoice(voiceId, kind);
   if (files.length === 0) {
