@@ -103,6 +103,16 @@
   text-overflow: ellipsis;
 }
 
+/* Audit reduced-motion: the state dots pulse forever. Users who ask for
+   reduced motion get the steady dot — color + the StateBadge text label
+   still carry the state, so nothing is lost. */
+@media (prefers-reduced-motion: reduce) {
+  .state-hand_raised .dot,
+  .state-speaking .dot {
+    animation: none;
+  }
+}
+
 @keyframes pulse {
   0%,
   100% {
@@ -182,6 +192,14 @@
   }
   50% {
     opacity: 0.35;
+  }
+}
+
+/* The LIVE dot holds at full opacity instead of blinking; the "LIVE" label
+   next to it is the actual signal. */
+@media (prefers-reduced-motion: reduce) {
+  .chip.live-mode .live-dot {
+    animation: none;
   }
 }
 
