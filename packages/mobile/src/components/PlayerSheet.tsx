@@ -117,7 +117,10 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
           e.preventDefault();
           restoreFocusRef.current?.focus();
         }}
-        className="relative z-40 mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col gap-0 rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl"
+        // NOT `relative` — it would beat the primitive's `fixed` in
+        // tailwind-merge and drop the sheet into document flow at the end of
+        // <body> (off-screen, growing the page with the transcript).
+        className="z-40 mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col gap-0 rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl"
       >
         <SheetTitle className="sr-only">Playback</SheetTitle>
         {/* Grab handle — tap OR swipe down to dismiss. Generous tap target. */}
