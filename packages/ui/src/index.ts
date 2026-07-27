@@ -27,6 +27,7 @@ export * from "./components/StateBadge.js";
 export * from "./components/AgentChips.js";
 export * from "./components/QueuedPreview.js";
 export * from "./components/FailedCountBadge.js";
+export * from "./components/GrantButton.js";
 export * from "./components/TransportBar.js";
 export * from "./components/SummaryText.js";
 export * from "./components/icons.js";

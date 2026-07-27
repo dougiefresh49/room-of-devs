@@ -16,7 +16,7 @@
  * classic grant/replay behavior with no chat/call surface (spec §B3).
  */
 import type { AgentView, NowPlaying } from "@room/protocol";
-import { AgentChips, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
+import { AgentChips, GrantButton, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
 import { isPhoneFrame } from "@room/room-client";
 import type { OutputDevice } from "../prefs.js";
 import { Avatar } from "./Avatar.js";
@@ -120,37 +120,11 @@ export function AgentCard({
 
       {raised ? (
         <div className="mt-3 flex flex-col gap-2">
-          {/*
-            Reviewed polish (live verification round): the old fully-saturated
-            #3ecf8e fill dominated the room. Now a darker green SURFACE (accent
-            mixed lightly over the card) with accent icon/text/ring/border.
-          */}
-          <button
-            type="button"
-            disabled={grantPending}
-            onClick={onGrant}
-            style={
-              grantPending
-                ? undefined
-                : {
-                    backgroundColor:
-                      "color-mix(in srgb, var(--room-accent) 18%, var(--room-surface))",
-                    borderColor: "color-mix(in srgb, var(--room-accent) 40%, transparent)",
-                  }
-            }
-            className="flex w-full flex-col items-center rounded-xl border border-transparent px-4 py-2.5 font-semibold text-accent transition-colors hover:brightness-110 disabled:cursor-default disabled:border-transparent disabled:bg-surface-strong disabled:text-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-          >
-            {grantPending ? (
-              <span className="text-sm text-fg-muted">Working…</span>
-            ) : (
-              <>
-                <span className="flex items-center gap-2 text-sm">
-                  <span aria-hidden="true">▶</span> Read update
-                </span>
-                <span className="text-[11px] font-medium text-accent/70">{grantSub}</span>
-              </>
-            )}
-          </button>
+          {/* Shared leaf (audit C-5) — the panel adopts the same affordance so
+              the room's primary action is one labelled, keyboard-operable
+              button on both surfaces. Mobile has no push-to-talk, so no hold
+              handlers are passed and this stays a plain tap-to-grant. */}
+          <GrantButton pending={grantPending} subLabel={grantSub} onGrant={onGrant} />
           {injectable ? <div className="grid grid-cols-1">{chatBtn}</div> : null}
         </div>
       ) : (
