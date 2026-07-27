@@ -16,6 +16,15 @@ import { getServerData, subscribeServerData } from "./server-data.js";
 import { getUiState, subscribeUiState } from "./ui-state.js";
 import { getViewState, subscribeViewState, type ToastState } from "./view-state.js";
 
+function ProtocolMismatchBanner({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="toast error" role="status">
+      Protocol mismatch — update Room or restart the daemon
+    </div>
+  );
+}
+
 export function App({ role }: { role: WindowRole }) {
   const room = useSyncExternalStore(client.subscribe, client.getState);
   const view = useSyncExternalStore(subscribeViewState, getViewState);
@@ -54,6 +63,7 @@ export function App({ role }: { role: WindowRole }) {
     return (
       <div className="shell">
         <PickerView />
+        <ProtocolMismatchBanner show={room.protocolMismatch} />
         <Toast toast={view.toast} />
       </div>
     );
@@ -63,6 +73,7 @@ export function App({ role }: { role: WindowRole }) {
     return (
       <div className="shell">
         <SettingsView />
+        <ProtocolMismatchBanner show={room.protocolMismatch} />
         <Toast toast={view.toast} />
       </div>
     );
@@ -78,6 +89,7 @@ export function App({ role }: { role: WindowRole }) {
         ui={ui}
         clock={clock}
       />
+      <ProtocolMismatchBanner show={room.protocolMismatch} />
       <Toast toast={view.toast} />
     </>
   );

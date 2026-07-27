@@ -23,6 +23,7 @@ import type {
   SettingsEvent,
   ShortcutsEvent,
 } from "@room/protocol";
+import { PROTOCOL_VERSION } from "@room/protocol";
 import { NO_PENDING_GRANTS, PENDING_GRANT_MS, beginGrant, reduceGrants } from "./grant.js";
 import { TransportError } from "./types.js";
 import type { RoomClientOptions, RoomState, Transport } from "./types.js";
@@ -56,6 +57,7 @@ export class RoomClient {
     connected: false,
     snapshot: null,
     pendingGrants: NO_PENDING_GRANTS,
+    protocolMismatch: false,
   };
   private listeners = new Set<() => void>();
   private eventListeners = new Set<(ev: ServerEvent) => void>();
@@ -258,7 +260,9 @@ export class RoomClient {
       this.lastRev = snapshot.rev;
     }
     const pendingGrants = reduceGrants(this.state.pendingGrants, snapshot, this.now());
-    this.setState({ ...this.state, snapshot, pendingGrants });
+    const protocolMismatch =
+      typeof snapshot.protocolVersion === "number" && snapshot.protocolVersion !== PROTOCOL_VERSION;
+    this.setState({ ...this.state, snapshot, pendingGrants, protocolMismatch });
   }
 
   private clearGrant(sessionId: string): void {

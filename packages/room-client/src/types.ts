@@ -19,6 +19,12 @@ export interface RoomState {
   snapshot: PanelSnapshot | null;
   /** Optimistic grants in flight, keyed by sessionId (see grant.ts). */
   pendingGrants: PendingGrants;
+  /**
+   * True when the last applied snapshot carried a protocolVersion that
+   * disagrees with this client's PROTOCOL_VERSION. Absent version (old
+   * daemon) is not a mismatch — additive rollout.
+   */
+  protocolMismatch: boolean;
 }
 
 /**

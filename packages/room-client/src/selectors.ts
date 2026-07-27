@@ -76,3 +76,8 @@ export function selectGrantPending(state: RoomState, sessionId: string): boolean
 export function selectPendingGrantSessions(state: RoomState): string[] {
   return [...state.pendingGrants.keys()];
 }
+
+/** Deploy-skew banner: snapshot protocolVersion ≠ client PROTOCOL_VERSION. */
+export function selectProtocolMismatch(state: RoomState): boolean {
+  return state.protocolMismatch;
+}

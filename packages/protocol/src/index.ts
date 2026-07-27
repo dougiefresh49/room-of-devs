@@ -18,3 +18,4 @@
 export * from "./snapshot.js";
 export * from "./commands.js";
 export * from "./events.js";
+export * from "./version.js";

@@ -21,6 +21,7 @@ import type { AgentView, Command } from "@room/protocol";
 import {
   selectConnected,
   selectGrantPending,
+  selectProtocolMismatch,
   selectRoomHeld,
   selectVisibleAgents,
 } from "@room/room-client";
@@ -124,6 +125,7 @@ export function App() {
 
   const connected = selectConnected(state);
   const held = selectRoomHeld(state);
+  const protocolMismatch = selectProtocolMismatch(state);
   const snapshot = state.snapshot;
   const nowPlaying = snapshot?.nowPlaying ?? null;
   const allAgents = selectVisibleAgents(state);
@@ -231,6 +233,11 @@ export function App() {
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
+      {protocolMismatch ? (
+        <div className="bg-danger/15 px-4 py-2 text-center text-sm text-danger" role="status">
+          Protocol mismatch — reload after updating the room
+        </div>
+      ) : null}
       <Header
         connected={connected}
         failedCount={snapshot?.failedCount ?? 0}

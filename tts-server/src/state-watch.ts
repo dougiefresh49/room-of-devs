@@ -36,6 +36,7 @@ const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
 // repo; staged into src/protocol/ by tts-server.sh). Re-exported so existing
 // daemon imports keep working.
 import type { AgentView, PanelSnapshot } from "./protocol/index.js";
+import { PROTOCOL_VERSION } from "./protocol/index.js";
 export type { AgentView, PanelSnapshot };
 
 /** Daemon-local monotonic snapshot revision — stamped on every build so
@@ -313,6 +314,7 @@ export function buildPanelSnapshot(): PanelSnapshot {
   cachedSnapshot = {
     rev: ++snapshotRev,
     epoch: snapshotEpoch,
+    protocolVersion: PROTOCOL_VERSION,
     agents: buildSnapshot(),
     nowPlaying: readNowPlaying(),
     roomHeld: isRoomHeld(),

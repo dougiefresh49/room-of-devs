@@ -91,6 +91,12 @@ export const PanelSnapshotSchema = v.object({
    * connection-scoped and reset the baseline on every reconnect.
    */
   epoch: v.optional(v.number()),
+  /**
+   * Wire-contract version (additive). Stamped by the daemon; clients compare
+   * against PROTOCOL_VERSION and surface a non-blocking banner on mismatch.
+   * Absent (pre-version daemon) → no mismatch flag.
+   */
+  protocolVersion: v.optional(v.number()),
   agents: v.array(AgentViewSchema),
   nowPlaying: v.nullable(NowPlayingSchema),
   roomHeld: v.boolean(),
