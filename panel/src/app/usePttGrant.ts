@@ -186,6 +186,10 @@ export function usePttGrant(sessionId: string, enabled = true): PttGrant {
     (e: ReactKeyboardEvent<HTMLElement>) => {
       if (!enabled) return;
       if (e.key !== " " && e.key !== "Enter") return;
+      // Keys only count on the bound surface ITSELF. A bubbled keystroke is
+      // someone else's — the rename input's spacebar must never open a
+      // billable hold, and the card's GrantButton runs its own hold logic.
+      if (e.target !== e.currentTarget) return;
       if (isNonGrantTarget(e.target, e.currentTarget)) return;
       // A held key auto-repeats; only the first keydown opens the hold.
       if (e.repeat || keyHeld.current) return;
@@ -202,6 +206,7 @@ export function usePttGrant(sessionId: string, enabled = true): PttGrant {
   const onKeyUp = useCallback(
     (e: ReactKeyboardEvent<HTMLElement>) => {
       if (e.key !== " " && e.key !== "Enter") return;
+      if (e.target !== e.currentTarget) return;
       if (!keyHeld.current) return;
       e.preventDefault();
       keyHeld.current = false;
