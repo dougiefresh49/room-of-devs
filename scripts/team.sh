@@ -42,6 +42,15 @@ if [ -z "$PERSONA" ]; then
     exit 1
 fi
 
+# PERSONA becomes a tmux session name (and a team_map key). Anything outside
+# this set is either a typo or an attempt to smuggle tmux/shell syntax through.
+case "$PERSONA" in
+    *[!A-Za-z0-9_-]*|"")
+        echo "invalid persona: $PERSONA (expected [A-Za-z0-9_-]+)" >&2
+        exit 1
+        ;;
+esac
+
 if ! command -v tmux >/dev/null 2>&1; then
     echo "tmux not found — install with: brew install tmux" >&2
     exit 1
@@ -98,12 +107,13 @@ for path in sorted(paths):
 PY
 )"
 
-# Launch flags — picker checkboxes arrive as env (default on when unset):
-#   CR_SKIP_PERMISSIONS=0 → prompt for permissions instead of skipping
+# Launch flags — picker checkboxes arrive as env:
+#   CR_SKIP_PERMISSIONS=1 → --dangerously-skip-permissions (opt-IN; default OFF,
+#                           so a missing/garbled flag can't grant free rein)
 #   CR_REMOTE_CONTROL=0   → no Claude-mobile-app remote control channel
 #   CR_MODEL=<alias>      → pass --model (empty/unset = CLI default)
 CLAUDE_ARGS=()
-if [ "${CR_SKIP_PERMISSIONS:-1}" = "1" ]; then
+if [ "${CR_SKIP_PERMISSIONS:-0}" = "1" ]; then
     CLAUDE_ARGS+=(--dangerously-skip-permissions)
 fi
 if [ "${CR_REMOTE_CONTROL:-1}" = "1" ]; then

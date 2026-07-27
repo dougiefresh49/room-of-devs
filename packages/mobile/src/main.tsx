@@ -19,6 +19,15 @@ client.onEvent((ev) => {
   if (ev.type === "notice") audioController.announce(ev.message);
 });
 
+// The server seeded the auth cookie while serving this page, so the token in
+// the URL has done its job — drop it before it can reach a screenshot, a
+// shared link, or the browser's history/autocomplete.
+if (new URL(window.location.href).searchParams.has("t")) {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("t");
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 const appEl = document.getElementById("app");
 if (!appEl) throw new Error("#app root missing from index.html");
 

@@ -20,7 +20,12 @@ import { fileURLToPath } from "url";
 import { loadConfig, TTS_DIR, SESSION_VOICES_PATH, PHRASES_DIR } from "./config.js";
 import { CHARACTERS_PATH } from "./characters-path.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
-import { dispatchPanelAction, handleReplyAction, onNotice } from "./services/commands.js";
+import {
+  dispatchPanelAction,
+  handleReplyAction,
+  isMobileActionType,
+  onNotice,
+} from "./services/commands.js";
 import { pickerPayload } from "./session-catalog.js";
 import { log } from "./logger.js";
 import { transcriptThread } from "./services/transcript.js";
@@ -30,6 +35,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const MOBILE_DIST_DIR = join(__dirname, "..", "mobile-dist");
 const COOKIE_NAME = "mobile_token";
 const HEARTBEAT_MS = 25_000;
+/** Slow-loris guards — every real request is fully received in milliseconds. */
+const HEADERS_TIMEOUT_MS = 15_000;
+const REQUEST_TIMEOUT_MS = 30_000;
+/** POST /action budget per token (naive fixed window, no dependency). */
+const ACTION_WINDOW_MS = 10_000;
+const ACTION_MAX_PER_WINDOW = 20;
 
 /** True when mobile-dist/index.html is present; set once at startup. */
 let mobileDistReady = false;
@@ -41,7 +52,8 @@ function replayDir(): string {
   return join(TTS_DIR, "replay");
 }
 
-let httpServer: Server | null = null;
+/** One http.Server per bound address (Node binds a single address each). */
+let httpServers: Server[] = [];
 let token = "";
 const sseUnsubs = new Set<() => void>();
 /** Live SSE response streams — used to push typed notice events. */
@@ -76,16 +88,14 @@ function tokensEqual(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-function loadOrCreateToken(): string {
+/**
+ * Fresh token on every daemon start (mirrors panel-ws writeToken). A leaked
+ * URL — screenshot, shell history, someone else's browser history — dies at
+ * the next restart. Accepted consequence: phones re-auth via mobile_url.sh /
+ * the QR after a restart. Same file + format `mobile_url.sh` reads.
+ */
+function createToken(): string {
   const path = tokenPath();
-  try {
-    if (existsSync(path)) {
-      const existing = readFileSync(path, "utf-8").trim();
-      if (existing) return existing;
-    }
-  } catch {
-    /* recreate below */
-  }
   const t = randomBytes(16).toString("hex");
   writeFileSync(path, `${t}\n`, { mode: 0o600 });
   chmodSync(path, 0o600);
@@ -124,17 +134,28 @@ function unauthorized(res: ServerResponse): void {
   res.end();
 }
 
-function lanIPv4(): string {
-  const ifaces = networkInterfaces();
-  for (const infos of Object.values(ifaces)) {
+/**
+ * Tailscale's IPv4 always lives in the CGNAT range 100.64.0.0/10, so a scan of
+ * the local interfaces identifies the tailnet address without shelling out to
+ * the tailscale CLI. Binding this (plus loopback) instead of 0.0.0.0 keeps the
+ * room off every café/hotel LAN the Mac ever joins.
+ */
+function tailscaleIPv4(): string | null {
+  for (const infos of Object.values(networkInterfaces())) {
     for (const info of infos ?? []) {
       const family = info.family as string | number;
-      if ((family === "IPv4" || family === 4) && !info.internal) {
+      if (family !== "IPv4" && family !== 4) continue;
+      if (info.internal) continue;
+      const octets = info.address.split(".");
+      if (octets.length !== 4 || octets[0] !== "100") continue;
+      const second = Number(octets[1]);
+      // 100.64.0.0/10 → second octet 64…127.
+      if (Number.isInteger(second) && second >= 64 && second <= 127) {
         return info.address;
       }
     }
   }
-  return "127.0.0.1";
+  return null;
 }
 
 function resolveAvatarsRoot(): string {
@@ -414,10 +435,54 @@ function serveMobileAppMissing(res: ServerResponse): void {
   );
 }
 
+/**
+ * Conservative CSP for the SPA shell. The Vite bundle loads its own hashed
+ * JS/CSS from /app/assets (same origin); styles need 'unsafe-inline' because
+ * React writes inline style attributes, and media/img allow blob:/data: for
+ * the media-session artwork canvas. No external origin is reachable.
+ */
+const HTML_CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "connect-src 'self'",
+  "font-src 'self' data:",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+/** Fixed-window POST /action budget, keyed by the presented token. */
+const actionWindows = new Map<string, { start: number; count: number }>();
+
+function actionRateLimited(key: string): boolean {
+  const now = Date.now();
+  const win = actionWindows.get(key);
+  if (!win || now - win.start >= ACTION_WINDOW_MS) {
+    actionWindows.set(key, { start: now, count: 1 });
+    // Single-token deployment, but don't let a churn of rejected keys grow
+    // the map without bound.
+    if (actionWindows.size > 64) {
+      for (const [k, v] of actionWindows) {
+        if (now - v.start >= ACTION_WINDOW_MS) actionWindows.delete(k);
+      }
+    }
+    return false;
+  }
+  win.count += 1;
+  return win.count > ACTION_MAX_PER_WINDOW;
+}
+
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
+  // Applied to every response (writeHead's header object merges on top).
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+
   const host = req.headers.host ?? "127.0.0.1";
   const url = new URL(req.url ?? "/", `http://${host}`);
   const method = req.method ?? "GET";
@@ -449,6 +514,7 @@ async function handleRequest(
     res.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-cache",
+      "Content-Security-Policy": HTML_CSP,
     });
     res.end(readFileSync(indexPath, "utf-8"));
     return;
@@ -470,6 +536,7 @@ async function handleRequest(
     res.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-cache",
+      "Content-Security-Policy": HTML_CSP,
     });
     res.end(html);
     return;
@@ -652,6 +719,11 @@ async function handleRequest(
   }
 
   if (method === "POST" && path === "/action") {
+    if (actionRateLimited(reqToken)) {
+      res.setHeader("Retry-After", String(Math.ceil(ACTION_WINDOW_MS / 1000)));
+      sendJson(res, 429, { ok: false, error: "rate limited" });
+      return;
+    }
     let body: unknown;
     try {
       const raw = await readBody(req);
@@ -660,13 +732,18 @@ async function handleRequest(
       sendJson(res, 400, { ok: false });
       return;
     }
+    // Every mobile intent — reply included — clears the one server-authoritative
+    // allowlist before any dedicated path runs.
+    const bodyType =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as { type?: unknown }).type
+        : undefined;
+    if (typeof bodyType !== "string" || !isMobileActionType(bodyType)) {
+      sendJson(res, 400, { ok: false });
+      return;
+    }
     // Reply needs a real exit-code result — dedicated sync path (not fire-and-forget).
-    if (
-      body &&
-      typeof body === "object" &&
-      !Array.isArray(body) &&
-      (body as { type?: unknown }).type === "reply"
-    ) {
+    if (bodyType === "reply") {
       const result = handleReplyAction(body);
       if (!result) {
         sendJson(res, 400, { ok: false });
@@ -691,9 +768,10 @@ async function handleRequest(
 export function startMobileHttp(portOverride?: number): void {
   const port = portOverride ?? loadConfig().mobile_port;
   if (!port || port <= 0) return;
-  if (httpServer) return;
+  if (httpServers.length) return;
 
-  token = loadOrCreateToken();
+  token = createToken();
+  actionWindows.clear();
 
   mobileDistReady =
     existsSync(MOBILE_DIST_DIR) &&
@@ -709,27 +787,47 @@ export function startMobileHttp(portOverride?: number): void {
     noticeUnsub = onNotice((msg) => broadcastSseNotice(msg.message));
   }
 
-  httpServer = createServer((req, res) => {
-    safe(() => {
-      handleRequest(req, res).catch((err: any) => {
-        log("mobile-http", `request error: ${err?.message ?? err}`);
-        if (!res.headersSent) {
-          res.writeHead(500);
-          res.end();
-        }
+  const listenOn = (address: string): void => {
+    const server = createServer((req, res) => {
+      safe(() => {
+        handleRequest(req, res).catch((err: any) => {
+          log("mobile-http", `request error: ${err?.message ?? err}`);
+          if (!res.headersSent) {
+            res.writeHead(500);
+            res.end();
+          }
+        });
       });
     });
-  });
+    server.headersTimeout = HEADERS_TIMEOUT_MS;
+    server.requestTimeout = REQUEST_TIMEOUT_MS;
+    server.on("error", (err) => {
+      log("mobile-http", `server error (${address}): ${err.message}`);
+    });
+    server.listen(port, address);
+    httpServers.push(server);
+  };
 
-  httpServer.on("error", (err) => {
-    log("mobile-http", `server error: ${err.message}`);
-  });
+  // Bind loopback + the tailnet only — never 0.0.0.0. Node binds one address
+  // per server, so each address gets its own listener over the same handler.
+  const tailscaleIp = tailscaleIPv4();
+  listenOn("127.0.0.1");
+  if (tailscaleIp) listenOn(tailscaleIp);
+  else {
+    log(
+      "mobile-http",
+      "WARNING: no Tailscale IPv4 (100.64.0.0/10) found — bound to 127.0.0.1 only; the phone can't reach the room until Tailscale is up"
+    );
+  }
 
-  httpServer.listen(port, "0.0.0.0", () => {
-    const ip = lanIPv4();
-    log("mobile-http", `Mobile room: http://${ip}:${port}/?t=${token}`);
-    console.log(`Mobile room: http://${ip}:${port}/?t=${token}`);
-  });
+  // NEVER log the token: hook.log is long-lived, shoulder-surfable, and gets
+  // pasted into debugging threads. `mobile_url.sh` prints the full URL.
+  const shownIp = tailscaleIp ?? "127.0.0.1";
+  const line =
+    `Mobile room: http://${shownIp}:${port}/ ` +
+    `(token ${token.slice(0, 6)}… — full URL: mobile_url.sh)`;
+  log("mobile-http", line);
+  console.log(line);
 }
 
 export function stopMobileHttp(): void {
@@ -746,10 +844,16 @@ export function stopMobileHttp(): void {
     noticeUnsub();
     noticeUnsub = null;
   }
-  if (httpServer) {
-    httpServer.close();
-    httpServer = null;
+  for (const server of httpServers) {
+    try {
+      server.close();
+    } catch {
+      /* already closed */
+    }
   }
-  // Persist token across restarts — do not delete mobile_token.
+  httpServers = [];
+  actionWindows.clear();
+  // The token file stays on disk (mobile_url.sh reads it); the next start
+  // overwrites it with a fresh one.
   token = "";
 }

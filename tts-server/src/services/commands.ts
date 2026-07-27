@@ -13,7 +13,7 @@
  * phone grant is mid-synthesis; spawn validation rejects before any script
  * runs; reply marks the phone-ack BEFORE injecting.
  */
-import { existsSync, readFileSync, statSync } from "fs";
+import { existsSync, readFileSync, realpathSync, statSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
@@ -32,7 +32,7 @@ import {
 } from "../team-map.js";
 import { purgeSessionQueue, cleanupSession } from "../state.js";
 import { runStatusSay } from "../status-say.js";
-import { isResumableSession } from "../session-catalog.js";
+import { isResumableSession, knownDirs } from "../session-catalog.js";
 import { startPlayReplay } from "../audio.js";
 import {
   isUnexpiredPhoneGrant,
@@ -94,6 +94,31 @@ function scriptEnv(): NodeJS.ProcessEnv {
   return { ...process.env, TTS_DIR };
 }
 
+/**
+ * The daemon holds ELEVENLABS_API_KEY / GEMINI_API_KEY; a spawned agent is a
+ * different trust domain and must not inherit them (nor anything else we
+ * didn't decide to hand over). Only the variables a shell + tmux + the claude
+ * CLI genuinely need are copied through — everything else is dropped.
+ */
+const SPAWN_ENV_PASSTHROUGH = [
+  "PATH",
+  "HOME",
+  "USER",
+  "SHELL",
+  "LANG",
+  "TMPDIR",
+  "TERM",
+] as const;
+
+function minimalSpawnEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { TTS_DIR };
+  for (const key of SPAWN_ENV_PASSTHROUGH) {
+    const value = process.env[key];
+    if (value !== undefined) env[key] = value;
+  }
+  return env;
+}
+
 export function runScript(
   name: string,
   args: string[],
@@ -115,12 +140,13 @@ function runScriptCaptured(
   name: string,
   args: string[],
   onDone: (code: number | null, stderrTail: string) => void,
-  extraEnv?: Record<string, string>
+  extraEnv?: Record<string, string>,
+  baseEnv: NodeJS.ProcessEnv = scriptEnv()
 ): void {
   try {
     const child = spawn(join(SCRIPTS_DIR, name), args, {
       stdio: ["ignore", "ignore", "pipe"],
-      env: { ...scriptEnv(), ...extraEnv },
+      env: { ...baseEnv, ...extraEnv },
     });
     const chunks: Buffer[] = [];
     let total = 0;
@@ -339,9 +365,24 @@ export function splitCommandEnvelope(raw: unknown): CommandEnvelope {
   };
 }
 
+/**
+ * A spawn dir must exist AND be one the room already knows (the same list the
+ * picker offers). Without the allowlist, anyone who reached /action could
+ * start a permissionless agent anywhere on disk — "is a directory" is not an
+ * authorization check. Compared realpath'd so symlinks/`..` can't smuggle a
+ * different target past a matching string.
+ */
 function isValidDir(dir: string): boolean {
   try {
-    return existsSync(dir) && statSync(dir).isDirectory();
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) return false;
+    const canon = realpathSync(dir);
+    return knownDirs().some((known) => {
+      try {
+        return realpathSync(known) === canon;
+      } catch {
+        return false;
+      }
+    });
   } catch {
     return false;
   }
@@ -633,7 +674,9 @@ function spawnTeam(
     : [persona, dir];
   const extraEnv = {
     CR_REMOTE_CONTROL: opts.remoteControl === false ? "0" : "1",
-    CR_SKIP_PERMISSIONS: opts.skipPermissions === false ? "0" : "1",
+    // Permissionless agents are opt-IN: only an explicit `true` from the
+    // picker skips prompts. An absent/garbled flag must never widen power.
+    CR_SKIP_PERMISSIONS: opts.skipPermissions === true ? "1" : "0",
     CR_MODEL: opts.model ?? "",
   };
   runScriptCaptured("team.sh", args, (code, stderrTail) => {
@@ -646,7 +689,7 @@ function spawnTeam(
         : `Couldn't start ${persona}: ${detail}`;
     log("commands", `team.sh failed for ${persona}: ${detail}`);
     emitNotice(msg);
-  }, extraEnv);
+  }, extraEnv, minimalSpawnEnv());
 }
 
 export type SpawnValidateResult =
@@ -694,7 +737,7 @@ export function validateAndResume(
 
 // ── Reply (phone → tmux inject) ─────────────────────────────────────────
 
-export type ReplyStatus = "ok" | "not_in_team" | "failed";
+export type ReplyStatus = "ok" | "not_in_team" | "pane_not_ready" | "failed";
 
 /**
  * Synchronous mobile reply: inject_prompt.sh --now <sessionId> <text>.
@@ -724,6 +767,9 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
   if (status === 0) return { status: "ok" };
   clearPendingPhoneAck();
   if (status === 3) return { status: "not_in_team" };
+  // 4 = pane isn't running an agent (fell back to a shell / died). Refusing
+  // there is the point: the reply would have been executed as a command.
+  if (status === 4) return { status: "pane_not_ready" };
   return { status: "failed" };
 }
 
@@ -778,8 +824,14 @@ export function killTeam(sessionId: string): void {
 
 // ── Dispatch ────────────────────────────────────────────────────────────
 
-/** Server-authoritative mobile capability allowlist. */
+/**
+ * Server-authoritative mobile capability allowlist. `reply` is here even
+ * though it never reaches `dispatch()` (mobile-http runs it through the
+ * dedicated sync path for a real exit code) — one list decides what the phone
+ * may do, and the transport consults it via isMobileActionType() first.
+ */
 const MOBILE_ACTION_TYPES = new Set([
+  "reply",
   "grant",
   "replay",
   "replay_slower",
@@ -794,6 +846,11 @@ const MOBILE_ACTION_TYPES = new Set([
   "resume_session",
   "set_live",
 ]);
+
+/** Transport-facing guard over the allowlist above. */
+export function isMobileActionType(type: string): boolean {
+  return MOBILE_ACTION_TYPES.has(type);
+}
 
 export function dispatch(msg: PanelMessage): void {
   switch (msg.type) {
