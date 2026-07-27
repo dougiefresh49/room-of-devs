@@ -19,7 +19,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { Markdown } from "@room/ui";
+import { Markdown, Sheet, SheetContent, SheetTitle } from "@room/ui";
 import { IconLaptop, IconPause, IconPlay, IconSmartphone } from "../icons.js";
 import { audioController } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
@@ -86,19 +86,27 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex flex-col justify-end"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Playback"
+    <Sheet
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
     >
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/50"
-      />
-      <div className="relative mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl">
+      {/*
+        Radix bottom sheet (audit U-7): the scrim, focus trap, Escape and
+        focus return come from the primitive — the hand-rolled version
+        claimed aria-modal while implementing none of it, and used a
+        full-bleed <button> as its backdrop. z-40 keeps the player BELOW the
+        conversation sheet, as before.
+      */}
+      <SheetContent
+        side="bottom"
+        showClose={false}
+        overlayClassName="z-40 bg-black/50"
+        aria-describedby={undefined}
+        className="relative z-40 mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col gap-0 rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl"
+      >
+        <SheetTitle className="sr-only">Playback</SheetTitle>
         {/* Grab handle — tap OR swipe down to dismiss. Generous tap target. */}
         <button
           type="button"
@@ -247,8 +255,8 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
             </button>
           </div>
         ) : null}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

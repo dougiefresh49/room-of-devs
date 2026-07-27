@@ -11,8 +11,9 @@
  *
  * Opened from an AgentCard "Chat" action (App owns convo.open + prime-on-tap).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AgentView, Command, CommandResult, NowPlaying } from "@room/protocol";
+import { Sheet, SheetContent, SheetTitle } from "@room/ui";
 import { client } from "../client.js";
 import { audioController } from "../audio/controller.js";
 import { convo, useConvo } from "../convo-state.js";
@@ -101,16 +102,8 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   // so a plain non-live chat never re-renders its thread on a ticker.
   const now = useNow(!!sessionId && (!!agent?.live?.on || state.callView));
   const vp = useViewport(!!sessionId);
-
-  // Body scroll-lock while the sheet is open.
-  useEffect(() => {
-    if (!sessionId) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [sessionId]);
+  // Focus target on open — see onOpenAutoFocus below.
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   if (!sessionId || !agent) return null;
 
@@ -208,59 +201,86 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   };
 
   return (
-    <div
-      className="fixed left-0 right-0 z-50 bg-bg"
-      style={{ top: vp.top, height: vp.height }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Conversation with ${name}`}
+    <Sheet
+      open
+      onOpenChange={(next) => {
+        if (!next) convo.close();
+      }}
     >
-      <div className="relative mx-auto h-full max-w-xl overflow-hidden">
-        {/* CALL surface — the "forward" screen: off-right until callView. */}
-        {agent.injectable ? (
+      {/*
+        Radix owns the modal mechanics now (audit U-7): focus trap, Escape,
+        focus return to the card that opened us, body scroll lock, and
+        aria-hidden on the rest of the app. `side="full"` + the inline
+        visualViewport top/height keeps the sheet pinned above the software
+        keyboard exactly as the hand-rolled version did.
+      */}
+      <SheetContent
+        ref={contentRef}
+        side="full"
+        showClose={false}
+        overlayClassName="bg-transparent"
+        aria-describedby={undefined}
+        className="left-0 right-0 z-50 block gap-0 bg-bg p-0 shadow-none"
+        style={{ top: vp.top, height: vp.height }}
+        // The composer would otherwise take focus on open and throw up the
+        // software keyboard over the conversation. Park focus on the sheet
+        // itself; the trap and Escape work from there.
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          contentRef.current?.focus();
+        }}
+        // Full-screen: the only "outside" is the strip the keyboard leaves
+        // behind, and dismissing on a stray tap there would be a surprise.
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
+        <SheetTitle className="sr-only">{`Conversation with ${name}`}</SheetTitle>
+        <div className="relative mx-auto h-full max-w-xl overflow-hidden">
+          {/* CALL surface — the "forward" screen: off-right until callView. */}
+          {agent.injectable ? (
+            <div
+              className={`cv-slide absolute inset-0 ${callView ? "translate-x-0" : "translate-x-full"}`}
+              aria-hidden={!callView}
+            >
+              <CallView
+                agent={agent}
+                nowPlaying={nowPlaying}
+                items={items}
+                liveClips={state.liveClips}
+                ackFlash={ackFlash}
+                elapsed={elapsed}
+                liveStartedAt={state.liveStartedAt}
+                liveBusy={liveBusy}
+                onEndLive={handleEndLive}
+                onSendText={() => convo.setCallView(false)}
+              />
+            </div>
+          ) : null}
+
+          {/* CHAT surface — base; slides off-left under the call view. */}
           <div
-            className={`cv-slide absolute inset-0 ${callView ? "translate-x-0" : "translate-x-full"}`}
-            aria-hidden={!callView}
+            className={`cv-slide absolute inset-0 ${callView ? "-translate-x-full" : "translate-x-0"}`}
+            aria-hidden={callView}
           >
-            <CallView
+            <ChatView
               agent={agent}
-              nowPlaying={nowPlaying}
               items={items}
-              liveClips={state.liveClips}
-              ackFlash={ackFlash}
+              replayAll={replayAll}
+              liveOn={liveOn}
+              callView={callView}
               elapsed={elapsed}
-              liveStartedAt={state.liveStartedAt}
+              ackAts={state.ackAts}
               liveBusy={liveBusy}
+              liveTransition={state.liveTransition}
+              onGoLive={handleGoLive}
               onEndLive={handleEndLive}
-              onSendText={() => convo.setCallView(false)}
+              onBackToCall={() => convo.setCallView(true)}
+              onCollapse={() => convo.close()}
+              onPlay={handlePlay}
+              onSend={handleSend}
             />
           </div>
-        ) : null}
-
-        {/* CHAT surface — base; slides off-left under the call view. */}
-        <div
-          className={`cv-slide absolute inset-0 ${callView ? "-translate-x-full" : "translate-x-0"}`}
-          aria-hidden={callView}
-        >
-          <ChatView
-            agent={agent}
-            items={items}
-            replayAll={replayAll}
-            liveOn={liveOn}
-            callView={callView}
-            elapsed={elapsed}
-            ackAts={state.ackAts}
-            liveBusy={liveBusy}
-            liveTransition={state.liveTransition}
-            onGoLive={handleGoLive}
-            onEndLive={handleEndLive}
-            onBackToCall={() => convo.setCallView(true)}
-            onCollapse={() => convo.close()}
-            onPlay={handlePlay}
-            onSend={handleSend}
-          />
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

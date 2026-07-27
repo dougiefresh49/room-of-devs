@@ -22,22 +22,44 @@ export function SheetOverlay({
   );
 }
 
-type SheetSide = "top" | "right" | "bottom" | "left";
+/**
+ * `full` is an edge-to-edge surface (no border, no anchor edge) for screens
+ * that take over the whole viewport — a mobile conversation, say. It still
+ * gets the Radix focus trap, Escape handling and focus return, which is the
+ * entire reason to reach for it over a hand-rolled fixed div.
+ */
+type SheetSide = "top" | "right" | "bottom" | "left" | "full";
 const sideClasses: Record<SheetSide, string> = {
   top: "inset-x-0 top-0 border-b",
   right: "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
   bottom: "inset-x-0 bottom-0 border-t",
   left: "inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+  full: "inset-0",
 };
+
+interface SheetContentOptions {
+  side?: SheetSide;
+  /**
+   * The built-in corner close button. Turn it off when the sheet already
+   * renders its own dismiss affordance (a grab handle, a header ✕) — two
+   * close buttons is worse for screen readers than one.
+   */
+  showClose?: boolean;
+  /** Style the scrim (opacity/color/z-index) without restyling the sheet. */
+  overlayClassName?: string;
+}
+
 export function SheetContent({
   className,
   children,
   side = "right",
+  showClose = true,
+  overlayClassName,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content> & { side?: SheetSide }) {
+}: ComponentProps<typeof DialogPrimitive.Content> & SheetContentOptions) {
   return (
     <DialogPrimitive.Portal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         data-slot="sheet-content"
         className={cn(
@@ -48,10 +70,12 @@ export function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm text-fg-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        {showClose ? (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm text-fg-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        ) : null}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
