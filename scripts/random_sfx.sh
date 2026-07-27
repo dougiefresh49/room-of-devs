@@ -5,7 +5,9 @@
 #
 set -euo pipefail
 
-TTS_DIR="$HOME/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 SFX_DIR="$TTS_DIR/sounds/default"
 
 if [ ! -d "$SFX_DIR" ]; then

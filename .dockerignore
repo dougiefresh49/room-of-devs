@@ -1,0 +1,8 @@
+.git
+.github
+**/node_modules
+panel/src-tauri/target
+**/.DS_Store
+.env
+docs/archive
+docs/media

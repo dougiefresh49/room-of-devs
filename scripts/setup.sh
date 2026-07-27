@@ -3,7 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-TTS_DIR="$HOME/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 HOOKS_DIR="$HOME/.cursor"
 
 AUTOSTART=false
@@ -440,8 +442,11 @@ PLIST
     log "LaunchAgent installed: $PLIST"
 
     if [ -d "$ROOM_DST" ]; then
-        log "Adding Room.app to login items..."
-        osascript <<APPLESCRIPT
+        if [ "$(uname -s)" != "Darwin" ] || ! command -v osascript >/dev/null 2>&1; then
+            log "Skipping login item (osascript/macOS only)"
+        else
+            log "Adding Room.app to login items..."
+            osascript <<APPLESCRIPT
 tell application "System Events"
     set roomPath to "$ROOM_DST"
     repeat with li in login items
@@ -450,7 +455,8 @@ tell application "System Events"
     make login item at end with properties {path:roomPath, hidden:false}
 end tell
 APPLESCRIPT
-        log "Room.app login item configured"
+            log "Room.app login item configured"
+        fi
     else
         log "Room.app not installed — skipping login item (build panel first)"
     fi

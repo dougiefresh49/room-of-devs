@@ -7,7 +7,9 @@
 #
 set -euo pipefail
 
-TTS_DIR="$HOME/.cursor/tts"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 CONFIG="$TTS_DIR/config.json"
 PLAYED_DIR="$TTS_DIR/played"
 LOG_FILE="$TTS_DIR/logs/hook.log"

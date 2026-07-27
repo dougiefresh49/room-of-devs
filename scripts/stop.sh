@@ -4,7 +4,9 @@
 #
 set -euo pipefail
 
-TTS_DIR="${TTS_DIR:-$HOME/.cursor/tts}"
+# Q-14: honor exported TTS_DIR (shared resolver).
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
 PID_FILE="$TTS_DIR/.playback-pid"
 STREAM_PID_FILE="$TTS_DIR/.stream-playback-pid"
 PLAYBACK_FILE_REF="$TTS_DIR/.playback-file"
