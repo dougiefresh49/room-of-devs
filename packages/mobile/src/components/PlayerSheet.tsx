@@ -58,13 +58,8 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
 
   // Controlled open (no Radix Trigger) — capture the opener when the sheet
   // opens so close can hand focus back instead of dropping it on <body>.
+  // Captured inside onOpenAutoFocus, while the opener still holds focus.
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (open) {
-      restoreFocusRef.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    }
-  }, [open]);
 
   if (!open || !dock) return null;
 
@@ -114,6 +109,10 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
         showClose={false}
         overlayClassName="z-40 bg-black/50"
         aria-describedby={undefined}
+        onOpenAutoFocus={() => {
+          restoreFocusRef.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           restoreFocusRef.current?.focus();

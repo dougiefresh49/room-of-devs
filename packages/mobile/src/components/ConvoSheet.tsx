@@ -106,11 +106,9 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   // We open without a Radix Trigger (controlled `open`), so Radix has no
   // element to return focus to on close — capture the opener ourselves.
+  // Captured inside onOpenAutoFocus: a mount effect is too late (child
+  // effects run first, so Radix has already moved focus into the sheet).
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    restoreFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  }, []);
 
   if (!sessionId || !agent) return null;
 
@@ -233,6 +231,8 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
         // software keyboard over the conversation. Park focus on the sheet
         // itself; the trap and Escape work from there.
         onOpenAutoFocus={(e) => {
+          restoreFocusRef.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
           e.preventDefault();
           contentRef.current?.focus();
         }}
