@@ -231,7 +231,7 @@ Taste covers UI/UX, code quality, API design, and copy.
 | gpt-5.6 Terra | 8    | 7\*          | 5     | codex CLI (default tier)                                                             |
 | gpt-5.6 Luna  | 8    | 4\*          | 4     | codex CLI (`codex -m` Luna tier)                                                     |
 | sonnet-5      | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'`                                                     |
-| opus-5        | 4    | 8\*          | 8\*   | Agent/Workflow `model: 'opus'`                                                       |
+| opus-5        | 7    | 8\*          | 8\*   | Agent/Workflow `model: 'opus'`                                                       |
 | fable-5       | 2    | 9            | 9     | Agent/Workflow `model: 'fable'`                                                      |
 
 \* Provisional (2026-07-11, unauditioned): GPT-5.6 replaced gpt-5.x with
@@ -239,8 +239,9 @@ three tiers — **Sol** (flagship frontier reasoning), **Terra** (balanced
 daily driver), **Luna** (fast/lightweight for high-volume work). Ranked
 from OpenAI's positioning, not our own testing; audition before relying on
 them for anything intricate. opus-5 (2026-07-27) replaced opus-4.8 as the
-`'opus'` alias — rankings carried over from 4.8 plus a notch of intelligence
-per Anthropic's positioning; unauditioned, judge its output the usual way.
+`'opus'` alias — intelligence/taste carried over from 4.8
+plus a notch per Anthropic's positioning; cost 7 — near Sol, far cheaper
+than fable (owner call 2026-07-27). Unauditioned; judge output as usual.
 Prose references to "gpt-5.6" without a tier
 mean Terra. Sol burns subscription limits faster — reach for it where you'd
 otherwise consider fable-5 for a codex-side task; Luna only for
