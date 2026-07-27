@@ -26,3 +26,7 @@ jobs:
 
       # lint joins once BIOME-LINT-REPORT.md debt is paid (~494 pre-existing errors).
       - run: pnpm format:check
+
+      # Tailwind-merge position conflicts in primitive overrides (the
+      # off-screen PlayerSheet bug class) — no linter covers this.
+      - run: pnpm check-overrides

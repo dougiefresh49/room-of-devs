@@ -8,6 +8,7 @@
     "check-live-fixtures": "pnpm --dir tts-server exec tsx scripts/mock-live.ts check-tailer",
     "docs:publish": "node scripts/docs-publish.mjs",
     "lint": "biome lint .",
+    "check-overrides": "node scripts/check-class-overrides.mjs",
     "format": "biome format --write .",
     "format:check": "biome format ."
   },
