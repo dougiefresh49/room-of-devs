@@ -104,6 +104,13 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   const vp = useViewport(!!sessionId);
   // Focus target on open — see onOpenAutoFocus below.
   const contentRef = useRef<HTMLDivElement | null>(null);
+  // We open without a Radix Trigger (controlled `open`), so Radix has no
+  // element to return focus to on close — capture the opener ourselves.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }, []);
 
   if (!sessionId || !agent) return null;
 
@@ -232,6 +239,10 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
         // Full-screen: the only "outside" is the strip the keyboard leaves
         // behind, and dismissing on a stray tap there would be a surprise.
         onPointerDownOutside={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          restoreFocusRef.current?.focus();
+        }}
       >
         <SheetTitle className="sr-only">{`Conversation with ${name}`}</SheetTitle>
         <div className="relative mx-auto h-full max-w-xl overflow-hidden">

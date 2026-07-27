@@ -56,6 +56,16 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
     setShowOriginal(false);
   }, [file]);
 
+  // Controlled open (no Radix Trigger) — capture the opener when the sheet
+  // opens so close can hand focus back instead of dropping it on <body>.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      restoreFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+  }, [open]);
+
   if (!open || !dock) return null;
 
   const isPhone = dock.kind === "phone";
@@ -104,6 +114,10 @@ export function PlayerSheet({ open, dock, onClose }: PlayerSheetProps) {
         showClose={false}
         overlayClassName="z-40 bg-black/50"
         aria-describedby={undefined}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          restoreFocusRef.current?.focus();
+        }}
         className="relative z-40 mx-auto flex max-h-[88dvh] w-full max-w-xl flex-col gap-0 rounded-t-3xl border border-line-strong bg-bg-elevated px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 shadow-2xl"
       >
         <SheetTitle className="sr-only">Playback</SheetTitle>
