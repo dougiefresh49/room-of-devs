@@ -110,3 +110,37 @@ sequenceDiagram
 Thread-type roster so far: **build** (any ceremony gear), **one-off**
 (no ticket), **sentinel** (watch + push on anomaly). Reviews/walkthroughs
 are build-thread stages plus voice checkout, not their own type.
+
+## Saved verbs — the room learns tools from conversation
+
+The first time a flow is asked for, it's concierge work; if it earned
+its keep, it gets a **name** and becomes a project-scoped, parameterized
+verb in the spine. Same promotion ladder as everything else in this
+model: one-off → ticket, prose rule → hook, ad-hoc flow → saved tool.
+
+```mermaid
+sequenceDiagram
+  actor O as 🧑 Owner
+  participant M as 🎙 Mikey
+  participant TM as 🗂 spine (room's tool registry)
+
+  O->>M: "use the supabase MCP to check for db spikes"
+  Note over M: first time — no such verb
+  M->>M: wire it ad hoc (temp agent: connector, query, threshold)
+  M->>O: result — "want me to save that as a tool? what do I call it?"
+  O->>M: "call it db-cpu-watcher"
+  M->>TM: write verb: name, connector, params (interval, window, threshold)
+  Note over O,TM: weeks later…
+  O->>M: "start a db cpu watcher, 5 min interval, for an hour"
+  M->>TM: resolve verb + bind params
+  M->>M: start sentinel thread from the saved definition — no setup
+```
+
+Concept-level rules: saved verbs live **in the room's spine as files**
+(reviewable, git-versioned, deletable — never buried in a model's
+memory); they're project-scoped with room defaults; the interpreter's
+registered-vocabulary design (Stage 1's closed tool list) is exactly
+the seam they plug into — a saved verb is a new entry in that
+vocabulary, added by conversation instead of by code. Saving is always
+**offered, never silent** — the owner names the verb, which doubles as
+consent.

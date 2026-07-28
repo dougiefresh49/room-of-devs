@@ -3,7 +3,7 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-27 (Round B)_
+_Last updated: 2026-07-28 (#73 architecture target picked)_
 
 ## Inbox
 
@@ -15,6 +15,26 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
+- **#73 CLOSED — architecture target picked (2026-07-28)**: concept
+  diagrams in [active/architecture-concepts/](active/architecture-concepts/)
+  (00–07: legend, current state, George's framework, layerings A/B/C,
+  generalized model, rooms/brains/sentinels, scenario flows, NOT-building
+  list; all phone-rendered via docs:publish, which now renders Mermaid →
+  SVG at build time). **Picked: Option B as generalized in docs 04–05** —
+  one always-on concierge voice (Mikey) above the interpreter line; the
+  task manager (GH issues) is the spine/durable mind; N mortal
+  orchestration threads (build / one-off / sentinel) pulled from it;
+  silent ephemeral workers; three dials (ceremony per thread, voice
+  attachment incl. 1:1 checkout, brain tier per turn); rooms = per-project
+  config (cast + spine + default gear) when project #2 joins; saved verbs
+  added by conversation. Rejected: Mikey-as-orchestrator (measured cost +
+  mortality), three-voice huddles (memo beats meeting), voice+KB chatbot
+  shape. **Round C re-cut**: the design target is no longer "a room of
+  talking workers" — it's one voice you can always talk to cheaply, a
+  status surface for silent threads/tickets underneath, and an artifact
+  loop for diagrams. Round C steps 0–1 (shadcn wiring, component dedup)
+  unaffected; the design-target lock and board picks now evaluate against
+  docs 04–07.
 - **Round B SHIPPED & deployed (2026-07-27)**: issues #62–#67 closed
   (each with a verification note citing what was re-run), plus the #72
   token-persistence rider. Sequenced sub-rounds: Biome first (config +
@@ -125,13 +145,11 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-- **Architecture rethink first (#73), then Round C design picks** —
-  owner call 2026-07-27: the design boards assume voice = the working
-  agent's skin; George's framework suggests voice ABOVE an orchestrator,
-  workers silent. #73 produces concept diagrams (current state, George's
-  stack simplified, 2–3 candidate layerings, key flows) that re-cut the
-  design target. Round C steps 0–1 (component dedup) can proceed
-  regardless; the design-target lock and picks wait for #73.
+- **Round C design picks, against the #73 target** — the 20 boards +
+  final-4 get re-read through docs 04–07 (one voice / thread status
+  surface / artifact loop; group-call & ink concepts are out per
+  07-not-building). Then lock `design-ui-target.md` and launch Round C
+  lanes.
 
 (Cleared 2026-07-27: live mode v2 retest — done; arcade button
 bring-up #16 — done; Round A second-device LAN check — verified working;
@@ -159,6 +177,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-07-28 | **#73 architecture concepts** — target layering picked (docs 00–07 in active/architecture-concepts/); docs-publish renders Mermaid → SVG; dock-runaway regression filed as #74 |
 | 2026-07-27 | **Round A — audit criticals & quick wins** (#58–#61): perimeter closed (loopback+Tailscale bind, token rotation/no-log, skip-permissions opt-in, spawn-dir allowlist, minimal spawn env, tmux exact-match + pane guard), deploy safety (characters.json survives deploys, recorded repo-root, frozen-lockfile installs, scripts dir-sync), reliability (API timeouts+retry, failedCount badge, 64KB picker read → 0.98s→0.024s, atomic queue writes, periodic retention), hook-layer security (ingest session-id validation, .env allowlist, secrets/text out of argv, log hygiene, retention guard) |
 | 2026-07-23 | Refactor Phases 6-7: legacy deletion (mobile.html, SwiftBar), audio/hid splits |
 | 2026-07-22 | Mock live harness (free live-mode regression testing)                 |

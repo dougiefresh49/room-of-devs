@@ -45,6 +45,10 @@ function renderMermaid(src) {
        "-b", "transparent", "-t", "neutral", "-I", `m${hash}`],
       { stdio: ["ignore", "ignore", "inherit"] },
     );
+    // Postplan caps pages at 512KB; minified SVGs buy real headroom.
+    execFileSync("pnpm", ["dlx", "svgo", "--multipass", "-q", svgFile], {
+      stdio: ["ignore", "ignore", "inherit"],
+    });
   }
   return `<figure class="mermaid">${readFileSync(svgFile, "utf8")}</figure>\n`;
 }
@@ -74,45 +78,38 @@ function section(title, mdPath) {
 </details>`;
 }
 
-// docs/active/*.md plus one level of subfolders (e.g. architecture-concepts/).
+// docs/active/*.md on the main page; each active/ subfolder (e.g.
+// architecture-concepts/) becomes its OWN Postplan draft — Postplan caps a
+// page at 512KB and diagram-heavy folders blow that fast.
 function listActive() {
   const activeDir = join(docsDir, "active");
-  if (!existsSync(activeDir)) return [];
-  const out = [];
+  const top = [];
+  const subs = [];
+  if (!existsSync(activeDir)) return { top, subs };
   for (const entry of readdirSync(activeDir, { withFileTypes: true }).sort((a, b) =>
     a.name.localeCompare(b.name),
   )) {
     if (entry.isFile() && entry.name.endsWith(".md")) {
-      out.push({ title: entry.name.replace(/\.md$/, ""), path: join(activeDir, entry.name) });
+      top.push({ title: entry.name.replace(/\.md$/, ""), path: join(activeDir, entry.name) });
     } else if (entry.isDirectory()) {
-      for (const f of readdirSync(join(activeDir, entry.name))
+      const docs = readdirSync(join(activeDir, entry.name))
         .filter((f) => f.endsWith(".md"))
-        .sort()) {
-        out.push({
-          title: `${entry.name}/${f.replace(/\.md$/, "")}`,
+        .sort()
+        .map((f) => ({
+          title: f.replace(/\.md$/, ""),
           path: join(activeDir, entry.name, f),
-        });
-      }
+        }));
+      if (docs.length) subs.push({ name: entry.name, docs });
     }
   }
-  return out;
+  return { top, subs };
 }
 
-const activeDocs = listActive();
+const { top: activeDocs, subs: subPages } = listActive();
 
 const updated = new Date().toISOString().slice(0, 16).replace("T", " ");
-const body = [
-  section("STATUS", join(docsDir, "STATUS.md")),
-  ...activeDocs.map((d) => section(d.title, d.path)),
-].join("\n");
 
-const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Room of Devs — Status</title>
-<style>
+const PAGE_CSS = `
   :root { color-scheme: light dark; }
   body { margin: 0 auto; max-width: 46rem; padding: 1rem 1.1rem 4rem;
          font: 16px/1.55 -apple-system, system-ui, sans-serif; }
@@ -134,43 +131,101 @@ const html = `<!doctype html>
   .meta { opacity: .6; font-size: .8rem; margin: .2rem 0 1rem; }
   figure.mermaid { background: #fff; border-radius: 10px; padding: .6rem;
                    margin: 1rem 0; overflow-x: auto; }
-  figure.mermaid svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  figure.mermaid svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }`;
+
+function pageHtml(title, heading, subtitle, body) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${esc(title)}</title>
+<style>${PAGE_CSS}
 </style>
 </head>
 <body>
-<h1>🐢 Room of Devs</h1>
-<p class="meta">Published ${esc(updated)} UTC · STATUS + ${activeDocs.length} active doc(s)</p>
+<h1>${heading}</h1>
+<p class="meta">${esc(subtitle)}</p>
 ${body}
 </body>
 </html>`;
+}
 
 // Render inside the repo (gitignored): postplan reads git metadata from the
 // uploaded file's directory, which groups the draft under this repo.
 const buildDir = join(docsDir, ".build");
 mkdirSync(buildDir, { recursive: true });
-const outFile = join(buildDir, "room-status.html");
-writeFileSync(outFile, html);
-console.log(`rendered: ${outFile}`);
-if (dryRun) process.exit(0);
 
-const args = ["upload", outFile, "--description", "Room of Devs — status + active docs"];
-if (existsSync(draftIdFile)) {
-  args.push("--draft", readFileSync(draftIdFile, "utf8").trim());
-} else {
-  args.push("--new");
-}
-const out = execFileSync("postplan", args, { encoding: "utf8" });
-process.stdout.write(out);
-
-if (!existsSync(draftIdFile)) {
+// Upload a page, keeping its draft id (→ stable URL) in draftFile. Returns
+// the page URL, or null on dry-run / when the URL can't be determined yet.
+function uploadPage(outFile, draftFile, description) {
+  const kb = Math.round(readFileSync(outFile).length / 1024);
+  console.log(`rendered: ${outFile} (${kb}KB)`);
+  const existingId = existsSync(draftFile) ? readFileSync(draftFile, "utf8").trim() : null;
+  if (dryRun) return existingId ? `https://${existingId}.postplan.dev` : null;
+  const args = ["upload", outFile, "--description", description];
+  args.push(...(existingId ? ["--draft", existingId] : ["--new"]));
+  const out = execFileSync("postplan", args, { encoding: "utf8" });
+  process.stdout.write(out);
   const m =
     out.match(/draft\s*id[:\s]+([A-Za-z0-9_-]{6,})/i) ?? out.match(/\/d\/([A-Za-z0-9_-]{6,})\//);
-  if (m) {
-    writeFileSync(draftIdFile, m[1] + "\n");
-    console.log(`saved draft id → docs/.postplan-draft (${m[1]})`);
-  } else {
-    console.warn(
-      "could not parse draft id from output — save it to docs/.postplan-draft manually to keep a stable URL",
-    );
+  const id = existingId ?? m?.[1];
+  if (!existingId) {
+    if (id) {
+      writeFileSync(draftFile, id + "\n");
+      console.log(`saved draft id → ${basename(draftFile)} (${id})`);
+    } else {
+      console.warn(`could not parse draft id — save it to ${basename(draftFile)} manually`);
+    }
   }
+  return id ? `https://${id}.postplan.dev` : null;
 }
+
+// Sub-pages first so the main page can link to them.
+const subLinks = [];
+for (const sub of subPages) {
+  const body = sub.docs.map((d) => section(`${sub.name}/${d.title}`, d.path)).join("\n");
+  const outFile = join(buildDir, `room-${sub.name}.html`);
+  writeFileSync(
+    outFile,
+    pageHtml(
+      `Room of Devs — ${sub.name}`,
+      `🐢 ${esc(sub.name)}`,
+      `Published ${updated} UTC · ${sub.docs.length} doc(s)`,
+      body,
+    ),
+  );
+  const url = uploadPage(
+    outFile,
+    join(docsDir, `.postplan-draft-${sub.name}`),
+    `Room of Devs — ${sub.name}`,
+  );
+  subLinks.push({ name: sub.name, count: sub.docs.length, url });
+}
+
+const linkList = subLinks.length
+  ? `<h2>Doc collections</h2>\n<ul>${subLinks
+      .map(
+        (s) =>
+          `<li>${s.url ? `<a href="${s.url}">${esc(s.name)}</a>` : esc(s.name)} (${s.count} docs)</li>`,
+      )
+      .join("")}</ul>`
+  : "";
+
+const mainBody = [
+  section("STATUS", join(docsDir, "STATUS.md")),
+  linkList,
+  ...activeDocs.map((d) => section(d.title, d.path)),
+].join("\n");
+
+const mainFile = join(buildDir, "room-status.html");
+writeFileSync(
+  mainFile,
+  pageHtml(
+    "Room of Devs — Status",
+    "🐢 Room of Devs",
+    `Published ${updated} UTC · STATUS + ${activeDocs.length} active doc(s)`,
+    mainBody,
+  ),
+);
+uploadPage(mainFile, draftIdFile, "Room of Devs — status + active docs");
