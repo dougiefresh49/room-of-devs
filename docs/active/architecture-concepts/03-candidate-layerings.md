@@ -1,5 +1,11 @@
 # Candidate layerings — and a recommendation
 
+> **Amended:** owner feedback (2026-07-27/28) sharpened Option B — task
+> manager as the spine, N mortal orchestration threads, voice checkout.
+> The current canonical picture is
+> [04-generalized-model.md](04-generalized-model.md); this doc remains
+> the A/B/C decision record.
+
 Issue #73, deliverable 3. Legend: [00-legend.md](00-legend.md). Each
 option answers the three questions: who holds conversational state, who
 spends credits, what dies when a session ends.
