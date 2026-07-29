@@ -17,17 +17,21 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 - **#73 CLOSED — architecture target picked (2026-07-28)**: concept
   diagrams in [active/architecture-concepts/](active/architecture-concepts/)
-  (00–07: legend, current state, George's framework, layerings A/B/C,
-  generalized model, rooms/brains/sentinels, scenario flows, NOT-building
-  list; all phone-rendered via docs:publish, which now renders Mermaid →
-  SVG at build time). **Picked: Option B as generalized in docs 04–05** —
-  one always-on concierge voice (Mikey) above the interpreter line; the
-  task manager (GH issues) is the spine/durable mind; N mortal
-  orchestration threads (build / one-off / sentinel) pulled from it;
-  silent ephemeral workers; three dials (ceremony per thread, voice
-  attachment incl. 1:1 checkout, brain tier per turn); rooms = per-project
-  config (cast + spine + default gear) when project #2 joins; saved verbs
-  added by conversation. Rejected: Mikey-as-orchestrator (measured cost +
+  (00–08: legend, current state, George's framework, layerings A/B/C,
+  generalized model, rooms/brains/watchers, scenario flows, NOT-building
+  list, spine mechanics; all phone-rendered via docs:publish, which now
+  renders Mermaid → SVG at build time). **Picked: Option B as generalized
+  in docs 04–05** — one always-on concierge voice (Mikey) above the
+  interpreter line; the task manager (GH issues) is the spine/durable
+  mind; N mortal orchestration threads (build / one-off / watcher) pulled
+  from it; silent ephemeral workers; three dials (ceremony per thread,
+  voice attachment incl. 1:1 checkout, brain tier per turn — a routing
+  table + cost log, never model-self-assessed); rooms = per-project
+  manifest (cast + spine + default gear) when project #2 joins; saved
+  verbs added by conversation (stacked for later design review).
+  George's review folded in 2026-07-28: manifest wording, routing-table
+  brains, sentinel→watcher rename, and watchers hard-gated on spine
+  validation. Rejected: Mikey-as-orchestrator (measured cost +
   mortality), three-voice huddles (memo beats meeting), voice+KB chatbot
   shape. **Round C re-cut**: the design target is no longer "a room of
   talking workers" — it's one voice you can always talk to cheaply, a
@@ -159,12 +163,19 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 ## Next up (likely order)
 
 0. **Audit Rounds A → B → C** — see Now; issues + milestones on GitHub.
-1. **Conversational layer** ("dev in the room") — consensus design:
+1. **Spine validation experiment** (first concrete build item from #73 —
+   [architecture-concepts/08](active/architecture-concepts/08-spine-mechanics.md)):
+   define machine-readable ticket state labels; test whether a
+   flash-tier reader answers "where are we?" well from `gh issue list` +
+   transcripts; tighten write-back cadence if that's where it fails.
+   Gates tap-in Q&A (interpreter Stage 2 leaning on the tracker) and any
+   watcher threads.
+2. **Conversational layer** ("dev in the room") — consensus design:
    [active/design-conversational-layer.md](active/design-conversational-layer.md);
    **Stage 1 build spec ready**:
    [active/spec-interpreter-stage1.md](active/spec-interpreter-stage1.md).
-2. **Phone image attachments** in live mode.
-3. Cross-persona spawn race + subagent-finish announce filtering (small
+3. **Phone image attachments** in live mode.
+4. Cross-persona spawn race + subagent-finish announce filtering (small
    daemon fixes — see backlog).
 
 ## Someday

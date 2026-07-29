@@ -1,13 +1,17 @@
-# Rooms, borrowed brains, sentinel threads
+# Rooms, borrowed brains, watcher threads
 
 Owner feedback round 3 (2026-07-28) extending
-[04-generalized-model.md](04-generalized-model.md). Three additions —
-none change the layering; two add dials, one adds a thread type.
+[04-generalized-model.md](04-generalized-model.md), amended same day
+with George's review (routing table, manifest wording, watcher rename,
+spine-lock gate). Three additions — none change the layering; two add
+dials, one adds a thread type.
 
 ## Rooms — Option C arrives as configuration
 
 A **room** = one project's space: repo(s) + spine + **cast** + default
-ceremony gear. The cast is one lead voice (the concierge) plus
+ceremony gear. Concretely it's a **manifest file, checked in** (George's
+phrasing, adopted): cast, spine pointer, gear default, connectors.
+The cast is one lead voice (the concierge) plus
 alternates who exist *only* for checkout — never simultaneous chatter.
 One audio floor globally; the salience queue is shared across rooms
 with room attribution.
@@ -34,7 +38,7 @@ flowchart TB
   subgraph R2["room: podlink — default gear: one-off/light"]
     RA["🎙 Raph (lead, solo cast)"]:::voice
     S2["🗂 spine"]:::memory
-    T2["🧠 threads: sentinel · one-offs"]:::orch
+    T2["🧠 threads: watcher · one-offs"]:::orch
     RA --- S2 --- T2
   end
 
@@ -72,26 +76,46 @@ and why Mikey stays immortal and cheap. Durable cross-month "Mikey
 remembers conclusions" is the ContextDB/room-memory line (conversational
 layer Stage 6), behind the same identity.
 
+**The dial is a routing table, not model judgment** (George's
+amendment, adopted): self-assessed escalation is unauditable — models
+flatter the question. Escalation criteria live in **config** (turn
+classes → tier), every escalation is a **logged event with its cost**,
+and the flash router may only *propose* escalation against those
+rules. Same doctrine as the hook ladder in
+[agentic-workflow-notes](../../reference/agentic-workflow-notes.md):
+deterministic enforcement beats prompt rules — applied to our own
+spending. The interpreter spec's one-log-line-per-LLM-call is the seed
+of the cost log.
+
 Full dial set: **(1) ceremony per thread · (2) voice attachment ·
 (3) brain tier per turn.** What runs in the box / who speaks / how
 smart is this turn.
 
-## Sentinel threads — the release-day watcher
+## Watcher threads — the release-day watcher
 
-A third thread type beside build/one-off: long-lived-but-mortal,
-cheap, mostly silent, push-on-anomaly. Polling needs no big brain;
-diagnosis borrows one on demand.
+(Renamed from "sentinel" — the old name collided with real monitoring
+products and confused the first reviewer.) A third thread type beside
+build/one-off: long-lived-but-mortal, cheap, mostly silent,
+push-on-anomaly. Polling needs no big brain; diagnosis borrows one on
+demand.
+
+**Hard gate (George's sequencing, adopted): no watcher threads until
+the spine is validated** — states machine-readable, write-back
+discipline proven (see [08-spine-mechanics.md](08-spine-mechanics.md)).
+A watcher pushing alerts into an unvalidated state store is a
+long-night generator, and a bad watcher config is itself the thing
+that pages you.
 
 ```mermaid
 sequenceDiagram
   actor O as 🧑 Owner
   participant M as 🎙 Raph (podlink lead)
   participant TM as 🗂 spine
-  participant W as 🧠 sentinel thread
+  participant W as 🧠 watcher thread
   participant D as ⚡ diagnosis thread
 
   O->>M: "release watch on podlink til tonight"
-  M->>TM: file ticket: sentinel, sources, cadence, window
+  M->>TM: file ticket: watcher, sources, cadence, window
   M->>W: start: poll Vercel/PostHog/Sentry every 10 min
   loop every 10 min
     W->>W: fetch → cheap classifier: "ordinary?"
@@ -108,7 +132,7 @@ sequenceDiagram
 ```
 
 Thread-type roster so far: **build** (any ceremony gear), **one-off**
-(no ticket), **sentinel** (watch + push on anomaly). Reviews/walkthroughs
+(no ticket), **watcher** (watch + push on anomaly). Reviews/walkthroughs
 are build-thread stages plus voice checkout, not their own type.
 
 ## Saved verbs — the room learns tools from conversation
