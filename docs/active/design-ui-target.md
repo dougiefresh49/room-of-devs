@@ -40,6 +40,13 @@ Object grammar, used identically at every scale:
 > scrapped, pilot back on the manifest. **A blip is a node is a face —
 > same object, three magnifications.**
 
+To be explicit, because the boards blur it: **a card/blip/node is the
+SESSION — the mortal thread working a task — never the task itself.**
+The task/ticket is the plan docked on the rail; the craft is what flies
+it. ("Craft" is provisional — owner isn't sold on the word and no better
+one has surfaced yet. It appears only in UI copy and this doc, so a
+rename stays cheap; revisit before P3 ships plot labels.)
+
 ## 2. Visual system of record
 
 The v6 board's CSS is the reference implementation; values below are
@@ -320,8 +327,8 @@ answer is audio-first with the chip as the visual receipt.
 (`ask`), wire interpreter routing, speak the result. The assembly and
 cost line already exist.*
 
-**(b) Look into a craft (thread tap-in).** Opening a node = attaching
-to a running thread to look around: the open node's innards show the
+**(b) Look into a running session (thread tap-in).** Opening a node =
+attaching to a running thread to look around: the open node's innards show the
 live tail (open node only), the last turns from `/thread/<id>`
 history, spend strip, and the diff. No new daemon surface — this is
 the existing history + live machinery given the RIG open-node anatomy.
