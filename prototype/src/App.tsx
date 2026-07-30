@@ -2,10 +2,25 @@ import { setView } from "./mock/scenario";
 import { useRoom } from "./mock/store";
 import { ConsoleView } from "./console/ConsoleView";
 import { ControlDeck } from "./deck/ControlDeck";
+import { FieldView } from "./field/FieldView";
 import { LongRangePlot } from "./plot/LongRangePlot";
+
+const isField =
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/field");
 
 export function App() {
   const room = useRoom();
+
+  if (isField) {
+    return (
+      <>
+        <FieldView />
+        <ControlDeck />
+      </>
+    );
+  }
+
   const moodClass =
     room.mood === "mic-open"
       ? "mic-open"
@@ -46,6 +61,24 @@ export function App() {
         >
           NODE
         </button>
+        <a
+          href="/field"
+          className={undefined}
+          style={{
+            font: "inherit",
+            fontFamily: "var(--mono)",
+            fontSize: 10,
+            letterSpacing: ".14em",
+            textTransform: "uppercase",
+            color: "var(--steel-dim)",
+            textDecoration: "none",
+            padding: "6px 10px",
+            border: "1px solid #3a3f45",
+            borderRadius: 4,
+          }}
+        >
+          FIELD ▸
+        </a>
         <span className="clock sseg">REV {room.rev} · {room.clock}</span>
       </div>
 

@@ -257,10 +257,14 @@ export function liveClip() {
   const watched = s.crafts.find((c) => c.watched) ?? s.crafts[0];
   if (!watched) return;
   const clip = `LIVE · ${watched.ticket} · tests green · staging patch`;
+  const queueLine = `${watched.callsign.toLowerCase()}'s live clip`;
   setRoom((prev) => ({
     ...prev,
     rev: prev.rev + 1,
     liveClip: clip,
+    queuedForLull: prev.queuedForLull.includes(queueLine)
+      ? prev.queuedForLull
+      : [...prev.queuedForLull, queueLine].slice(-4),
     crafts: mapCraft(prev.crafts, watched.id, (c) => ({
       ...c,
       lastStamp: "LAST EVENT 00:00 AGO",
@@ -283,10 +287,14 @@ export function settleCraft(craftId = "c-0452") {
   setRoom((s) => {
     const craft = s.crafts.find((c) => c.id === craftId);
     if (!craft) return s;
+    const queueLine = `${craft.callsign.toLowerCase()}'s conclusions`;
     return {
       ...s,
       rev: s.rev + 1,
       mood: "normal",
+      queuedForLull: s.queuedForLull.includes(queueLine)
+        ? s.queuedForLull
+        : [...s.queuedForLull, queueLine].slice(-4),
       crafts: mapCraft(s.crafts, craftId, (c) => ({
         ...c,
         state: "settled" as const,
@@ -318,6 +326,7 @@ export function theLull() {
     dockLedRed: false,
     heldQuestion: null,
     micHot: false,
+    queuedForLull: [],
     salience: {
       clearPct: 100,
       threshold: s.salience.threshold,
@@ -582,6 +591,78 @@ export function toggleVerb(verbId: string) {
 
 export function setComposer(text: string) {
   patchRoom({ composerText: text });
+}
+
+/** Flip speaker-gate route between phone and Mac. */
+export function toggleAudioRoute() {
+  const s = getRoom();
+  const next = s.audio.route === "phone" ? "mac" : "phone";
+  patchRoom({
+    audio: {
+      ...s.audio,
+      route: next,
+      gateCountdown: next === "phone" ? "04:58" : "—",
+    },
+  });
+}
+
+/** STOP playback — free by construction (clip already paid). */
+export function stopPlayback() {
+  stopSpeaking();
+  patchRoom({ speakingPersona: null });
+}
+
+/** Mock text inject into the focused craft's tmux. */
+export function injectReply(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  setRoom((s) => {
+    const craftId =
+      s.focusCraftId ??
+      s.heldQuestion?.craftId ??
+      s.crafts.find((c) => c.state === "needs-you")?.id ??
+      s.crafts.find((c) => c.state !== "empty")?.id ??
+      null;
+    return {
+      ...s,
+      rev: s.rev + 1,
+      composerText: "",
+      transcript: [
+        ...s.transcript,
+        { who: "YOU" as const, text: trimmed, you: true },
+      ],
+      crafts: craftId
+        ? mapCraft(s.crafts, craftId, (c) => ({
+            ...c,
+            tail: [
+              ...c.tail,
+              { kind: "cmd" as const, text: `inject · ${trimmed}` },
+            ],
+          }))
+        : s.crafts,
+    };
+  });
+}
+
+/** Focus a craft for the ANSWER screen (field plot / row taps). */
+export function focusCraftForAnswer(craftId: string) {
+  setRoom((s) => ({
+    ...s,
+    rev: s.rev + 1,
+    focusCraftId: craftId,
+    crafts: s.crafts.map((c) => ({
+      ...c,
+      open: c.id === craftId,
+    })),
+  }));
+}
+
+/** Replay the last Mikey transcript line (free speechSynthesis). */
+export function replayLastMikey() {
+  const s = getRoom();
+  const last = [...s.transcript].reverse().find((r) => r.who === "MIKEY");
+  if (!last) return;
+  speakMikey(last.text);
 }
 
 export type ScenarioTrigger = {

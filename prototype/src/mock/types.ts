@@ -180,4 +180,8 @@ export interface RoomState {
   speakingPersona: PersonaId | null;
   dockTicker: string;
   dockLedRed: boolean;
+  /** Which device holds the speaker gate — routed chip + AUD LED. Wishlist wire field. */
+  audio: { route: "phone" | "mac"; gateCountdown: string };
+  /** Turn-final digests parked for the lull — LISTEN's dim queue line. Wishlist wire field. */
+  queuedForLull: string[];
 }

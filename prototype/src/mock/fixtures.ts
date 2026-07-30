@@ -27,6 +27,8 @@ export function makeFixtures(): RoomState {
     speakingPersona: null,
     liveClip: null,
     composerText: "",
+    audio: { route: "phone", gateCountdown: "04:58" },
+    queuedForLull: ["shredder's svgo digest", "leo step 5"],
     dockTicker: "RAPH · WATCH ORDER ACTIVE · SPLINTER HOLDING PLAN 0007-B · LEO QUIET ON STEP 5",
     dockLedRed: false,
     donnieCheckout: {
