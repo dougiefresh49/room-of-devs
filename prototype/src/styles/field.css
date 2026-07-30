@@ -81,23 +81,7 @@
 .field-root .vswitch { cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit; }
 .field-root .trow { cursor: pointer; }
 .field-root .stopkey { cursor: pointer; border: 1px solid #5c1f16; color: inherit; font: inherit; }
-.field-root .composer .field {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--amber);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .04em;
-}
-.field-root .composer { display: flex; gap: 8px; align-items: center; margin-top: 10px;
-  padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,179,71,.2); background: rgba(0,0,0,.4); }
-.field-root .sendkey {
-  flex: none; font-family: var(--mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase;
-  padding: 8px 10px; border-radius: 5px; border: 1px solid var(--amber-dim); color: #181206;
-  background: linear-gradient(180deg, var(--amber-hot), var(--amber)); cursor: pointer; font-weight: 700;
-}
+.field-root .composer .field { color: var(--amber); }
 .field-root .dial.burning svg { filter: drop-shadow(0 0 8px rgba(255,179,71,.55)); }
 .field-root.mood-mic-open .fscr .inner > *:not(.fdock):not(.introw) { opacity: .55; }
 .field-root.mood-mic-open .fdock, .field-root.mood-mic-open .pttpill { opacity: 1; }
@@ -244,16 +228,18 @@
 .field-root .optbtn b{color:var(--amber-hot)}
 .field-root .optbtn .odim{color:var(--amber-dim);font-size:7.5px;white-space:nowrap}
 .field-root .optbtn.armed{border-color:var(--amber);box-shadow:0 0 16px rgba(255,150,30,.28);animation: field-needglow 1.8s ease-in-out infinite}
-/* composer + grant chip (v4) */
-.field-root .composer{display:flex;gap:8px;align-items:center;margin-top:10px}
-.field-root .composer .field{flex:1;min-width:0;padding:10px 10px;font-family:var(--mono);font-size:10px;color:#e8e5df;
-  letter-spacing:.03em;background:var(--screen);border:1px solid rgba(255,179,71,.3);border-radius:5px;
+/* composer: one screen-bed pill, submit key embedded at the right end */
+.field-root .composer{display:flex;gap:8px;align-items:center;margin-top:10px;padding:5px 5px 5px 12px;
+  border-radius:6px;border:1px solid rgba(255,179,71,.3);background:var(--screen);
   box-shadow:inset 0 0 14px rgba(0,0,0,.7)}
+.field-root .composer .field{flex:1;min-width:0;padding:8px 0;font-family:var(--mono);font-size:10px;color:#e8e5df;
+  letter-spacing:.03em;background:transparent;border:none;box-shadow:none;outline:none}
 .field-root .composer .field .cursor{display:inline-block;width:7px;height:11px;background:var(--amber);vertical-align:-1px;
   animation:curs 1s steps(1,end) infinite;box-shadow:0 0 6px rgba(255,179,71,.8)}
-.field-root .sendkey{flex:none;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:#181206;padding:11px 12px;
-  border-radius:5px;background:linear-gradient(180deg,var(--amber-hot),var(--amber));border:1px solid #7a5518;
-  box-shadow:0 3px 8px rgba(0,0,0,.5),0 0 12px rgba(255,160,40,.25);text-transform:uppercase;font-weight:700;cursor:pointer}
+.field-root .sendkey{flex:none;width:32px;height:32px;display:grid;place-items:center;font-family:var(--mono);
+  font-size:13px;color:#181206;border-radius:5px;background:linear-gradient(180deg,var(--amber-hot),var(--amber));
+  border:1px solid #7a5518;box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 10px rgba(255,160,40,.25);
+  font-weight:700;cursor:pointer;line-height:1}
 .field-root .grantchip{display:flex;gap:9px;align-items:center;margin-top:9px;padding:7px 10px;border-radius:4px;
   border:1px dashed var(--green-dim);background:rgba(143,232,110,.06);font-family:var(--mono);font-size:8px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--green);line-height:1.7}

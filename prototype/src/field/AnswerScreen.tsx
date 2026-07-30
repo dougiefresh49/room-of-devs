@@ -113,6 +113,22 @@ export function AnswerScreen() {
           ))
         : null}
 
+      {tailLines.length > 0 ? (
+        <div className="vt" style={{ padding: "8px 2px 0" }}>
+          {tailLines.map((t, i) => (
+            <div className="row" key={`${t.text.slice(0, 16)}-${i}`}>
+              <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
+              <span
+                className="say"
+                style={{ color: "var(--amber-dim)", opacity: 0.8 }}
+              >
+                {t.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="composer">
         <input
           className="field"
@@ -129,27 +145,13 @@ export function AnswerScreen() {
         <button
           type="button"
           className="sendkey"
+          aria-label="Inject reply"
+          title="INJECT"
           onClick={() => injectReply(room.composerText)}
         >
-          INJECT ⏎
+          ⏎
         </button>
       </div>
-
-      {tailLines.length > 0 ? (
-        <div className="vt" style={{ padding: "6px 2px 0" }}>
-          {tailLines.map((t, i) => (
-            <div className="row" key={`${t.text.slice(0, 16)}-${i}`}>
-              <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
-              <span
-                className="say"
-                style={{ color: "var(--amber-dim)", opacity: 0.8 }}
-              >
-                {t.text}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
 
       {room.grantArmed ? (
         <div className="grantchip">
