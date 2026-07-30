@@ -1,5 +1,16 @@
 # Build spec — RIG prototype P2: the console
 
+> **OWNER CORRECTION (2026-07-30, same day):** this phase was built as a
+> reskin of the LIVE panel, which is not what the owner wanted from the
+> prototype program. Prototypes are siloed mock-data builds
+> (React+shadcn, no real contracts) used to lock the target BEFORE the
+> real UI is refactored — see
+> [spec-rig-prototype.md](../active/spec-rig-prototype.md). The work
+> below stays shipped (legacy buckets deleted, input parity landed, the
+> panel-ws reply fix is a real daemon fix) but the incremental-adoption
+> approach it embodies is retired; remaining RIG design work happens in
+> the prototype first.
+
 _2026-07-30. Phase 2 of [design-ui-target.md](design-ui-target.md) §9.
 This spec is the delegate's work order; target §2/§3 are the design
 authority and `docs/active/concepts-round-c-v6/board-rig-refined.html`

@@ -386,6 +386,19 @@ allowed), **theme switching** (BLACK // GLASS preserved in
 
 ## 9. Prototype phases (cheap-first)
 
+> **CORRECTED 2026-07-30 (owner):** this table originally read as an
+> incremental-adoption plan against the LIVE app, and P1+P2 were
+> executed that way. That approach is retired. The design target is
+> locked in a **standalone siloed prototype** (`prototype/` — mock
+> data, mock flows/triggers, no real contracts; see
+> [spec-rig-prototype.md](spec-rig-prototype.md)); only once flows are
+> nailed there do we work backwards to daemon/wire changes and the real
+> UI refactor into shared mobile/desktop components. The rows below
+> remain useful as a SURFACE inventory and dependency order, not as a
+> deploy sequence. P1's primitives (`packages/ui/src/rig/`) are pure
+> and feed the prototype directly; P2's console reskin stays shipped
+> but is not the pattern for what follows.
+
 Each phase ships something visible, typechecks clean, and is
 independently deployable. UI work and daemon work are separated so
 `packages/ui` phases carry zero wire risk.

@@ -25,6 +25,19 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > adopted day-1 cuts, and prototype phases P1–P7.
 > Architecture (#73, docs 04–09) remains settled separately.
 
+- **COURSE CORRECTION (2026-07-30, owner):** P1/P2 were executed as
+  incremental builds on the LIVE app — that is not what the owner
+  wanted from "prototype." A prototype is a **siloed mock-data build**
+  (React+shadcn, mock flows/triggers, canned audio ok, no real
+  contracts) whose job is to lock the target BEFORE the real UI is
+  refactored into shared mobile/desktop components. New system of
+  record for the build:
+  [spec-rig-prototype.md](active/spec-rig-prototype.md); the target
+  §9 phase table is re-scoped to a surface inventory. The P2 console
+  reskin stays deployed (legacy deletion + input parity + a real
+  daemon fix rode along) but the approach is retired; say the word if
+  you'd rather revert the panel to pre-RIG (`git revert 97ab295
+  6e0e13e` + redeploy).
 - **RIG P2 "the console" SHIPPED & DEPLOYED (2026-07-30)** per
   [spec-rig-p2.md](shipped/spec-rig-p2.md). The panel main window is now
   the RIG console over the existing snapshot — no daemon-surface or
@@ -469,15 +482,12 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-1. **Open the main window — the RIG console is live.** Try: open a
-   node (thread history), type a reply to a tmux session from the
-   desktop, paste an image into the composer. The console is
-   deliberately airy at full screen until P3/P4 add the rail +
-   instruments; judgment calls to bless or veto: hero face = current
-   speaker (falls back to Mikey), Donnie bay as a dark empty plate,
-   attachments delivered as `[attached file: <path>]` lines in the
-   inject. Also still open: a better word than "craft" — cheap to
-   rename until P3.
+1. **Keep or revert the P2 panel reskin?** It stays deployed for now
+   (desktop typed chat, attachments, and the reply-inject daemon fix
+   are real keepers regardless); if you'd rather the live panel go
+   back to pre-RIG while the prototype locks the target, say so —
+   `git revert` + redeploy, ten minutes. Also still open: a better
+   word than "craft".
 2. **Does mobile Talk absorb live mode?** Carried forward from candidate
    A. Deferrable, but must not be lost — it is the only decision that
    *deletes shipped behavior*, and one board silently assumes "yes".
@@ -495,12 +505,14 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
-0. **RIG prototype phases P3–P7** per
-   [design-ui-target.md](active/design-ui-target.md) — P1+P2 shipped;
-   next is **P3 salience + instruments** (first daemon change:
-   `salience`/`salienceThreshold` per target §6 + fixtures; salience
-   ring, LED bars fed by the real number, dock notch, LONG-RANGE
-   PLOT); P4 the spine mirror; P6 mobile FIELD UNIT.
+0. **THE RIG standalone prototype** per
+   [spec-rig-prototype.md](active/spec-rig-prototype.md) — siloed
+   React+shadcn app, mock snapshot + scenario triggers, ALL target
+   surfaces (spine rail, plot, salience ring, CORE, reply deck with
+   keycaps, verb rack — none of which the live app can render yet
+   because their data doesn't exist). Lock flows/interactions there,
+   then work backwards to the daemon/wire changes and the shared
+   mobile/desktop component refactor.
 1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
    parse STATUS's ordered "Next up" into the tap-in digest (closes the
    last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
