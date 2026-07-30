@@ -93,3 +93,18 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
   collected by PTT/interpreter. The room becomes the ambient surfacing
   layer above the build loop; pairs with ceremony-mode work if the
   contract-gig lane firms up.
+- **The 10,000-ft view — planetary/starmap canvas** (noted 2026-07-29,
+  owner's ask during round C v5 review): a zoom level above the
+  LONG-RANGE PLOT, styled like sci-fi planetary maps (ref:
+  `docs/active/concepts-round-c-v6/refs-titanfall/frontier-war-starmap.jpg`).
+  The spine as origin; tickets/issues as **ships** with visible flight
+  paths through **planets = phases**, ending at a destination whose name
+  is TBD (needs a term as good as "the spine" — candidates worth
+  auditioning: the dock, harbor, the settled system). Owner: "kool
+  concept, not necessary for day 1 — revisit once the other pieces are
+  in place."
+- **Theme switching** (noted 2026-07-29): THE RIG won round C, but
+  BLACK // GLASS (and the other round-C boards) are preserved under
+  `docs/active/concepts-round-c-*/` precisely so a theme system can
+  offer them later — the UI architecture already routes color through
+  tokens.css, which is the natural seam. Not a day-1 feature.

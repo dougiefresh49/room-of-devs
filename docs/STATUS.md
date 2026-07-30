@@ -3,7 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-28 (#73 architecture target picked)_
+_Last updated: 2026-07-29 (Round C concept round v5 — mobile boards
+awaiting your reaction)_
 
 ## Inbox
 
@@ -15,6 +16,215 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
+> ⛔ **NOTHING UI-DESIGN IS LOCKED.** There is no `design-ui-target.md`
+> and there deliberately isn't one yet. No concept has been chosen; the
+> former "locked target" now competes as `candidate-a-work-item.md`. Two
+> concept rounds have run (v1 rejected, v2 futurist — owner likes pieces,
+> picked none; v3 reference-seeded boards are out for reaction). Do not
+> skip to a mock or a target.
+> Architecture (#73, docs 04–09) IS settled — only the look and feel is
+> open.
+
+- **Round C CONCEPT ROUND v5 — MOBILE, 2 boards, AWAITING YOUR REACTION
+  (2026-07-29)**. Owner on v4: *"looks awesome, I'm really liking both
+  lanes"* — no corrections, both aesthetics locked-in-play.
+  **[design-brief-round-c-v5.md](active/design-brief-round-c-v5.md)**
+  reframes mobile: NOT a shrunk desktop — the phone's ranked jobs are
+  be-spoken-to → answer-from-the-pocket → glance → start-work-by-voice,
+  with "walk to the Mac" an honest handoff for heavy surfaces
+  (supersedes v2's "mobile deliberately thin"). Both boards: 6
+  phone-frame screens, thumb-reach annotations, grounded in the real
+  mobile SPA bones (SSE RoomClient, one audio adapter, speaker gate),
+  inventions flagged in the cut panels.
+  - **[THE RIG mobile](https://9orx1jbxt4zd.postplan.dev)**:
+    fixed-camera polar plot (tap a blip → cut to thread, no pinch
+    camera), thumb-size held-question keycaps with the armed key =
+    Mikey's spoken recommendation, lock-screen notification frame,
+    STOP + hold-to-duck listening, speakable verb rack,
+    walk-to-the-rig handoff on spend/dials.
+  - **[BLACK // GLASS mobile](https://jlcnqhnh1i9a.postplan.dev)**:
+    *salience becomes gravity* — portrait sky where YOU sit above your
+    thumb and craft FALL toward the threshold ring as they near
+    needing you; warm lock card, grant chip
+    (`AUDIO GRANT · phone · you · 0:24`), route chip making the
+    speaker gate legible, one-thumb-reach arc drawn on the glance
+    screen.
+  - Group: `room-of-devs/round-c-v5`. Honest-cut highlights both
+    flagged: phone-mic STT and lock-screen push are inventions beyond
+    today's SPA (v1 answers by keycap+text; audio IS the
+    notification).
+  - **NEXT: owner reacts to v5 → settle all play rounds (v3+v4+v5)
+    into a real design target** — that's the exit from the world of
+    play into prototyping.
+- **Round C CONCEPT ROUND v4 — feature build-out, 2 boards, owner
+  verdict: "looks awesome, really liking both lanes" (2026-07-29)**. Owner on v3: *"I like them both a lot"*
+  — BOTH lanes survive; v4 is additive in each board's own language per
+  **[design-brief-round-c-v4.md](active/design-brief-round-c-v4.md)**.
+  Added everywhere: **replying** (text inject, PTT with a visible grant
+  chip, held AskUserQuestion options answerable by click or voice), the
+  **zoomed-out space map** (owner's ask — everything in flight, thread
+  distance = salience, threshold visible at map scale, zoom ladder
+  map ↔ rail/room ↔ node), **starting work** (concierge intake +
+  saved-verb shelf, newborn thread materializing), the **three dials**
+  (ceremony/voice/brain-tier) with visible homes, and a
+  **thread/persona legend** fixing the v3 confusion ("a face is a
+  persona; a card is a mortal thread wearing it").
+  - **[THE RIG v4](https://tkp7ee1qlpld.postplan.dev)**: LONG-RANGE PLOT
+    (polar salience cartography, radar sweep, archived plans as
+    derelicts), REPLY DECK on one interpreter rail, machined amber
+    option keys on Splinter's held question, pilot-roster legend, verb
+    rack with watcher verbs visibly gated on #75.
+  - **[BLACK // GLASS v4](https://4nomjorqlcok.postplan.dev)**: orbital
+    chart reusing the salience threshold ring at map scale (nothing
+    plotted twice), grant chip with owner/device/countdown, sleeve
+    legend at all three zoom scales, interpreter classification readout
+    on intake.
+  - Group: `room-of-devs/round-c-v4`; v3 stays up for comparison. Both
+    updated their "what I'd cut" panels for the new features.
+  - **NEXT: v5 = MOBILE concept rounds** in both lanes (owner's ask,
+    same world-of-play footing) after the owner reacts to v4 — still no
+    prototyping until the play rounds settle.
+- **Round C CONCEPT ROUND v3 — reference-seeded, 2 boards, superseded by
+  v4 same day (2026-07-29)**. Owner verdict on v2: better, still missing
+  the mark. Couldn't find usable screenshots from the media in mind
+  (Altered Carbon, Foundation, Halo, Titanfall 2), so we generated the
+  references instead: **Nano Banana Pro fragment images** (5 UI pieces ×
+  2 style lanes, ~$1.30 Gemini spend) that the owner reacted to before
+  any HTML was written. Owner's industrial notes (machined chrome
+  sparingly, data on digital displays, don't chase 3D) are binding in
+  **[design-brief-round-c-v3.md](active/design-brief-round-c-v3.md)**;
+  downscaled refs live in `concepts-round-c-v3/refs/`.
+  - **[THE RIG](https://s6fg1wv3k1v4.postplan.dev)** (Lane A —
+    industrial / Titanfall 2): gunmetal chassis at corners + two hero
+    housings only, amber instruments carry all data; spine as a machined
+    rail of blueprint plan-cards with threads as terminal nodes on
+    animated conduits; Salience Ring with threshold tab; voice
+    subscription as a WATCH ORDER chip.
+  - **[BLACK // GLASS](https://qpfxzv23bs85.postplan.dev)** (Lane B —
+    clean cyber / Altered Carbon + Foundation): light is the only status
+    system; salience threshold ring with drifting thread dots as the
+    interrupt policy; TMNT frames mounted in machined-glass faceplate
+    housings; spine as a vertical light column with glass plan slabs.
+  - Group: `room-of-devs/round-c-v3`. Both boards self-contained, all 7
+    animated avatars, "what I'd cut" panels included. Fragment
+    generation pipeline: scratchpad `genfrag.py` (rerunnable for more
+    pieces/lanes).
+- **Round C CONCEPT ROUND v2 — FUTURIST, 4 boards, AWAITING YOUR REACTION
+  (2026-07-29)**. Round 1's boards were rejected by the owner: *"text
+  heavy, nothing incorporates the avatars, pure 2014, those designs say
+  task manager — I can just tie stuff to Linear for that."* **The brief
+  was the bug**, not the agents: it said *work board / status surface /
+  work item / ledger* and added a tiebreaker rewarding designs that
+  needed no new backend. That reads as "draw me a cheap Trello."
+  - **[design-brief-round-c-v2.md](active/design-brief-round-c-v2.md)**
+    rewrites it around what the product actually is — an **animated
+    character on top of an agentic workflow, visual and voice first**.
+    The cost tiebreaker is REVOKED (it suppressed the wanted ambition);
+    every board instead ships a *"what I'd cut to rein it in"* note.
+    "Live" is re-specced as a spoken subscription ("keep me posted on the
+    prod bug"), not a mode. Mobile is deliberately thin — owner is still
+    thinking.
+  - **Avatars are now unavoidable**: real TMNT frames downscaled to
+    51KB of data URIs with working CSS lipsync + blink, shared via
+    `concepts-round-c-v2/_avatar-frames.css`. Every board embeds all 7.
+  - **Four blind boards, high-taste models only** (Opus + Fable; Grok and
+    Sol dropped on taste), each seeded a different visual direction so
+    they can't converge:
+    [FACEPLATE](https://ewje7vmln140.postplan.dev) (the window IS Mikey's
+    field of view; motes placed by how close they are to needing you;
+    salience threshold is a draggable ring) ·
+    [THE DEEP](https://llsb1sfdqflg.postplan.dev) (wildcard — a lit cabin
+    over black water; depth = distance from wanting you; settling is
+    sinking; spend is hull pressure) ·
+    [APPROACH](https://w6ad33cdskq6.postplan.dev) (airspace over done;
+    craft descend toward a SETTLED pad; waiting = amber holding pattern) ·
+    [THE BRIDGE](https://30krq7pmdrs8.postplan.dev) (one station, every
+    gauge real; live stdout as the honored guest; no invented telemetry).
+    Group: `room-of-devs/round-c-v2-futurist`.
+  - **The finding worth keeping**: all four independently made *distance
+    from you* the organizing quantity — threshold ring / depth / altitude
+    — and all four want the daemon to compute it as ONE number in the
+    snapshot. That's the salience filter with a number attached, and it's
+    the cheapest shared dependency across every design.
+  - Round 1 boards + pick matrix retained for reference (rejected
+    aesthetic, useful decision rows): group
+    `room-of-devs/round-c-concepts`.
+- **Round C concept round v1 — REJECTED (2026-07-28)**, kept for the
+  decision rows only. Course correction, owner's call: a design target was
+  drafted and briefly locked, but locking an exact target *before* a
+  concept round makes every board the same board. So the target was
+  un-locked and split in two:
+  - **[active/design-brief-round-c.md](active/design-brief-round-c.md)** —
+    the LOCKED brief. Explicitly separated into "do not re-litigate"
+    (the #73 layering, the ten anti-goals as screen tests, the three
+    dials needing homes, hard technical invariants, input parity) and
+    "WIDE OPEN" (the shape of every surface, the concierge's presence,
+    how work reads, the salience surface, the cost readout, the artifact
+    loop, material/voice, what to cut). Primary object is a **strong
+    default you may challenge but must beat**, not a lock.
+  - **The former target became a competing entry**:
+    `concepts-round-c/candidate-a-work-item.md`.
+  - **Four blind boards** drawn against that brief, forbidden from
+    reading each other:
+    [Opus "The Settle Line"](https://vbjkjmx9o5dx.postplan.dev) ·
+    [Fable "The Quiet Floor"](https://qtefoaplf7gt.postplan.dev) ·
+    [Sol "Signal Desk / Ledger"](https://1i2xbi1gzsv1.postplan.dev) ·
+    [Grok "Signal Desk / Tray"](https://hxlruxym71vp.postplan.dev).
+    (Sol and Grok hit the same name independently — Sol's transcript
+    shows no read of Grok's file.) Each names its concept, covers all
+    three surfaces in load-bearing states, prices any subsystem it
+    invents, and self-checks against the ten anti-goals.
+  - **[PICK MATRIX — start here](https://sup7lp3bb68r.postplan.dev)**:
+    19 decision rows across all five entries, one tradeoff line per
+    cell, unanimous rows flagged as skippable, and the **six rows that
+    actually matter** called out. All grouped on the Postplan dashboard
+    under `room-of-devs/round-c-concepts`.
+  - **Notable**: the brief's "no new backend wins" tiebreaker does NOT
+    discriminate — all five need the same three pieces (salience router,
+    spine mirror, cost rollup), two of which are already committed
+    architecture work. The sharpest fork is Grok vs the other four on
+    whether the durable work ledger belongs in the middle of the window
+    at all; it shows up in their own anti-goal self-checks (three named
+    #7 "no orchestrator runtime", Grok alone named #1).
+  - **Next**: your picks → `design-ui-target.md` written from the
+    winning mix → React+shadcn mock → build steps 0–3. Routing note:
+    Fable's Anthropic 7-day quota hit 98%, so that board ran via Cursor
+    and Sol via Codex.
+- **Spine VALIDATED (2026-07-28)** —
+  [architecture-concepts/09](active/architecture-concepts/09-spine-validation.md).
+  The first build item out of #73, run and graded. **The state vocabulary
+  is live on the tracker**: 7 `state/*` + 3 `gear/*` labels, applied to
+  all open issues and 7 settled ones (`type/*` deliberately not created).
+  Free harness: `tts-server/scripts/tap-in.ts` (assembles the spine, asks
+  flash-lite, emits one cost line per call — the seed of the brain-tier
+  cost log; `--dry` prints the context and makes no API call, free
+  forever). Graded 11 questions twice, harshly: **5✅/3~/3❌ → 7✅/4~/0❌**
+  after pre-computing the roll-up deterministically, at $0.0019 and ~1.5s
+  a turn. Total spend for the whole experiment: **under 4 cents**.
+  - **Zero retrieval failures in either pass** — every miss had its
+    evidence in the context window. Dumping the whole spine is the right
+    assembly strategy at this size, and **ContextDB stays parked** (its
+    trigger is retrieval failing; retrieval never failed).
+  - **It refused the question whose answer isn't in the spine** and named
+    where the answer lives, in both passes. The confabulation failure
+    mode never fired.
+  - **Lesson worth keeping**: the first re-grade was *worse* than
+    baseline because the new deterministic resolver fed the model
+    confident noise. A confidently wrong deterministic input is more
+    damaging than a vague prose one, because the model defers to it.
+  - **Gate lifted for tracker-derived roll-ups** (what shipped + what
+    verified it, what's waiting, what's blocked, which ticket do you
+    mean, is anyone working) — safe for interpreter Stage 2 at flash
+    tier. **Still gated**: STATUS-prose roll-ups ("what's next up, in
+    order") — a code-shaped gap, not a model limit. Frontier escalation
+    shrank from 3 turn classes to 1 (`recommend`/`prioritize` — judgment,
+    not aggregation).
+  - **Watcher threads stay hard-gated**, now narrowly: liveness is
+    answered by a transcript-freshness heuristic, but alerts can't yet be
+    joined to a ticket. Un-gate when a mid-flight tap-in names the thread
+    *and* its ticket. Blocker filed as **#75** (file-at-start +
+    claim-at-start write-back) — needs an owner decision, since it
+    changes how every delegated thread behaves.
 - **#73 CLOSED — architecture target picked (2026-07-28)**: concept
   diagrams in [active/architecture-concepts/](active/architecture-concepts/)
   (00–08: legend, current state, George's framework, layerings A/B/C,
@@ -149,11 +359,24 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-- **Round C design picks, against the #73 target** — the 20 boards +
-  final-4 get re-read through docs 04–07 (one voice / thread status
-  surface / artifact loop; group-call & ink concepts are out per
-  07-not-building). Then lock `design-ui-target.md` and launch Round C
-  lanes.
+1. **Round C — a THIRD concept round, seeded by your visual references.**
+   You liked concepts from the v2 futurist boards but picked none, and
+   want to gather examples from other media (films, games, other apps)
+   to seed the next round. Drop them in the Inbox above — links, stills,
+   or just names — and the next session builds a v3 brief around them.
+   Nothing gets locked before that round. The v1
+   [pick matrix](https://sup7lp3bb68r.postplan.dev) is still useful for
+   its *decision rows* (what questions a design has to answer), even
+   though its aesthetic was rejected.
+2. **Does mobile Talk absorb live mode?** Carried forward from candidate
+   A. Deferrable, but must not be lost — it is the only decision that
+   *deletes shipped behavior*, and one board silently assumes "yes".
+3. **#75 — file-at-start + claim-at-start write-back.** Changes how every
+   delegated thread behaves (CLAUDE.md, possibly the hooks), so it wasn't
+   done unilaterally. Watcher threads stay gated until it lands.
+4. **Optional overrule: the tape.** Killed in candidate A and not
+   resurrected by any of the four boards — five independent designs all
+   let it go. Say so if scrubbing was the part you actually wanted.
 
 (Cleared 2026-07-27: live mode v2 retest — done; arcade button
 bring-up #16 — done; Round A second-device LAN check — verified working;
@@ -162,14 +385,15 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
-0. **Audit Rounds A → B → C** — see Now; issues + milestones on GitHub.
-1. **Spine validation experiment** (first concrete build item from #73 —
-   [architecture-concepts/08](active/architecture-concepts/08-spine-mechanics.md)):
-   define machine-readable ticket state labels; test whether a
-   flash-tier reader answers "where are we?" well from `gh issue list` +
-   transcripts; tighten write-back cadence if that's where it fails.
-   Gates tap-in Q&A (interpreter Stage 2 leaning on the tracker) and any
-   watcher threads.
+0. **Round C** — awaiting your picks from the concept round; then the
+   **React + shadcn mock** of it (one opus/fable lane, published via
+   Postplan), then build steps 0–3. Kickoff prompt is updated and
+   current: [active/round-c-kickoff-prompt.md](active/round-c-kickoff-prompt.md).
+1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
+   parse STATUS's ordered "Next up" into the tap-in digest (closes the
+   last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
+   itself misfiled, which is the argument for it); add the
+   `recommend`/`prioritize` routing-table entry with cost logging.
 2. **Conversational layer** ("dev in the room") — consensus design:
    [active/design-conversational-layer.md](active/design-conversational-layer.md);
    **Stage 1 build spec ready**:
@@ -188,6 +412,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-07-28 | **Spine validated + Round C concept round** — `state/*`+`gear/*` labels live on the tracker, free `tap-in.ts` harness, 11 questions graded twice (0 wrong answers after deterministic roll-up, <4¢ total); design brief locked and 4 blind concept boards + pick matrix published |
 | 2026-07-28 | **#73 architecture concepts** — target layering picked (docs 00–07 in active/architecture-concepts/); docs-publish renders Mermaid → SVG; dock-runaway regression filed as #74 |
 | 2026-07-27 | **Round A — audit criticals & quick wins** (#58–#61): perimeter closed (loopback+Tailscale bind, token rotation/no-log, skip-permissions opt-in, spawn-dir allowlist, minimal spawn env, tmux exact-match + pane guard), deploy safety (characters.json survives deploys, recorded repo-root, frozen-lockfile installs, scripts dir-sync), reliability (API timeouts+retry, failedCount badge, 64KB picker read → 0.98s→0.024s, atomic queue writes, periodic retention), hook-layer security (ingest session-id validation, .env allowlist, secrets/text out of argv, log hygiene, retention guard) |
 | 2026-07-23 | Refactor Phases 6-7: legacy deletion (mobile.html, SwiftBar), audio/hid splits |

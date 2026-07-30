@@ -271,8 +271,11 @@ How to apply:
   skill reads the AgentUsageBar app (Claude / OpenAI-Codex / Cursor
   limits at a glance). If one provider is near its cap, route subagents
   through another; the rankings above assume headroom exists.
-- **Cursor is an overflow route for frontier models, not just
-  composer/grok** (verified `agent models` 2026-07-27): the Cursor plan
+- **Cursor overflow route for frontier models: SUSPENDED** (owner call
+  2026-07-29 — Opus-via-Cursor burned 57% of the monthly Cursor quota;
+  Anthropic Fable is back, so Fable/Opus go through the Agent tool only,
+  cursor-agent is composer/grok only until the owner re-opens this).
+  Original note kept for when it does: the Cursor plan
   can run `claude-fable-5-*`, `claude-opus-5-*`, `gpt-5.6-sol-*` (all
   1M-context, tiered low→max, thinking variants). Cursor usage has been
   far under its allotment, so when Anthropic Fable/Opus budget runs low,

@@ -103,7 +103,10 @@ wildcard) and the Sol wildcard have "very neat off the wall ideas";
 opus-5 wildcard "interesting, not sure as a whole but has neat
 elements"; full side-by-side review + picks pending.
 
-**Input-parity requirements for the locked target** (owner, 2026-07-25
+**Input-parity requirements for whatever design wins** (there is no
+locked target — see the banner in STATUS.md; these two requirements hold
+across every concept because they shape component interfaces)
+(owner, 2026-07-25
 — gaps every board missed; these are REQUIREMENTS, not stretch ideas):
 
 1. **Desktop typed chat.** Today the desktop is voice-only (replies

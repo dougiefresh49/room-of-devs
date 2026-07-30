@@ -20,42 +20,43 @@ You are the ORCHESTRATOR AND REVIEWER. Per session token hygiene, you do not
 author code beyond small surgical edits — delegates write against the spec,
 you review diffs, merge, deploy, run the verification rounds.
 
-## ARCHITECTURE PRE-GATE (added 2026-07-27, owner rethink)
+## ⛔ NOTHING UI-DESIGN IS LOCKED (as of 2026-07-29)
 
-Issue #73 (architecture concept diagrams: voice layer vs orchestrator) now
-gates the DESIGN-TARGET LOCK — the boards bake in floor/table/group-call
-assumptions the owner no longer trusts (voice may be a layer ABOVE an
-orchestrator, not the working agent's skin; group call likely demoted;
-whiteboard = diagram-artifact loop, not real-time ink). Steps 0–1 below
-(shadcn wiring, PlayerControls dedup) are architecture-agnostic and may
-proceed without it. Do NOT lock design-ui-target.md or launch steps 2–3
-until #73's layering is picked and the target re-cut against it.
+**There is no `design-ui-target.md`, and there deliberately isn't one
+yet.** Do not create one, do not treat any concept as chosen, and do not
+launch build steps 2–3.
 
-## THE GATE — do this first, launch nothing before it clears
+History, so nobody re-derives it: a design target *was* drafted and
+briefly locked on 2026-07-28. The owner correctly killed that — locking an
+exact target before a concept round makes every board the same board. The
+former target now competes as one entry
+(`docs/active/concepts-round-c/candidate-a-work-item.md`).
 
-Round C is gated on MY design picks from the four final-synthesis boards
-(fable "The Den" / opus / sol "Workbench" / grok "Floor & Table" — URLs in
-the spec and STATUS.md). **If this message doesn't include my picks, build
-me a PICK MATRIX first, then stop and wait**: fetch the four final boards
-(WebFetch/postplan skill), decompose them into per-surface decision rows
-(floor/turn-taking model, tape vs threads, table/attachments, dock, phone
-mode, palette, copy doctrine, consent framing, PTT/talkback, density
-ladder...), and publish ONE side-by-side page (Postplan) where each row
-shows the four options with a one-line tradeoff each — so I can answer in
-plain text like "base: fable Den; floor: opus baton; palette: sol" instead
-of holding four tabs in my head. The final boards' provenance tables are
-the raw material. Once picks/mix are in:
+Two concept rounds have run:
 
-1. One opus or fable lane builds the locked target as a REAL React + shadcn
-   mock — scratch Vite app, actual shadcn CLI components + lucide icons,
-   mapped to the `--room-*` tokens (the static boards hand-rolled their
-   "shadcn"; the real mock is also the step-0 component shopping list).
-   Publish it for me via Postplan.
-2. I review → we lock `docs/active/design-ui-target.md` (include the two
-   input-parity REQUIREMENTS from the spec: desktop typed chat, attachments
-   on every reply surface — they shape component interfaces even where this
-   round doesn't build them).
-3. Then steps 0–3 launch.
+- **Round v1 (rejected)** — `docs/active/design-brief-round-c.md` and
+  `docs/active/concepts-round-c/`. Owner's verdict: *"text heavy, nothing
+  incorporates the avatars, pure 2014, those designs say task manager."*
+  The brief caused it (it said work board / status surface / ledger, and
+  rewarded designs needing no new backend). Kept only for its decision
+  rows and its pick matrix.
+- **Round v2 (futurist, current)** — `docs/active/design-brief-round-c-v2.md`
+  and `docs/active/concepts-round-c-v2/`: FACEPLATE, THE DEEP, APPROACH,
+  THE BRIDGE. Owner likes concepts from these but **has not picked any**.
+
+**Next is a THIRD round**, seeded with visual references the owner will
+supply from other media. Do not skip to a mock or a target. If you are
+picking this file up cold, read `docs/STATUS.md` first — it is current.
+
+Architecture is settled and is NOT what's open: #73 closed (one concierge
+voice above the orchestration line, tracker as the spine, mortal threads,
+three dials); docs `architecture-concepts/04`–`09` bind. What is open is
+purely *what it looks like and how it behaves on screen*.
+
+Consequences for the build steps below: **step 0 is architecture-agnostic
+and may still proceed.** Steps 1–3 as written assume the session-card
+model and will need re-specifying against whatever design wins, so treat
+their component names as provisional.
 
 ## Steps are SEQUENTIAL — packages/ui is a hot file every step reshapes
 

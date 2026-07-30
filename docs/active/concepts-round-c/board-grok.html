@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Signal Desk — Round C concept · Grok</title>
+<style>
+  /* ── Signal Desk ──────────────────────────────────────────────
+     Inline only. No CDN, no remote fonts, no remote images.
+     Palette: blotter paper + charcoal ink + signal amber + speak teal.
+     Deliberately not: dark neon HUD, purple SaaS, cream+serif+terracotta.
+  ──────────────────────────────────────────────────────────── */
+  :root {
+    --paper: #e6e1d6;
+    --paper-2: #ddd6c8;
+    --blotter: #cfc6b4;
+    --ink: #1c1a16;
+    --ink-2: #3a3630;
+    --mute: #6a6458;
+    --faint: #8a8374;
+    --line: #b7ae9c;
+    --line-2: #9e9584;
+    --panel: #f3efe6;
+    --panel-2: #ebe5d8;
+    --booth: #2a2824;
+    --booth-2: #3a3732;
+    --amber: #c47a12;
+    --amber-soft: #f0d4a0;
+    --amber-glow: #e8a43a;
+    --teal: #1f7a6c;
+    --teal-soft: #b8ddd4;
+    --teal-speak: #2a9a88;
+    --sage: #5a6e52;
+    --sage-soft: #c5d0bc;
+    --danger: #a33a2c;
+    --danger-soft: #e8c4be;
+    --cost: #2c4a3e;
+    --mono: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+    --sans: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --display: "Avenir Next Condensed", "Futura", "Gill Sans", "Trebuchet MS", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.45;
+    font-size: 15px;
+  }
+
+  /* ── Board chrome ─────────────────────────────────────────── */
+  .board-hero {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 48px 40px 40px;
+    border-bottom: 6px solid var(--amber-glow);
+  }
+  .board-hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber-glow);
+    margin-bottom: 14px;
+  }
+  .board-hero h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 64px);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    margin-bottom: 18px;
+  }
+  .board-hero h1 span {
+    color: var(--amber-glow);
+  }
+  .thesis {
+    max-width: 720px;
+    font-size: 18px;
+    line-height: 1.5;
+    color: #d8d2c4;
+    border-left: 3px solid var(--teal-speak);
+    padding-left: 16px;
+  }
+  .thesis em { color: #fff; font-style: normal; font-weight: 600; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 28px 80px; }
+
+  section.block { margin-bottom: 56px; }
+  section.block > h2 {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  section.block > h2 .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    background: var(--booth);
+    color: var(--amber-soft);
+    padding: 3px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  section.block > .lede {
+    color: var(--mute);
+    max-width: 640px;
+    margin-bottom: 22px;
+    font-size: 14.5px;
+  }
+
+  /* ── Doctrine strip ───────────────────────────────────────── */
+  .doctrine {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 48px;
+  }
+  .doctrine article {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+  }
+  .doctrine h3 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .doctrine p { font-size: 13.5px; color: var(--ink-2); }
+  .doctrine ul { margin-top: 8px; padding-left: 16px; font-size: 13px; color: var(--mute); }
+  .doctrine li { margin-bottom: 3px; }
+  .cut { border-color: var(--danger); }
+  .cut h3 { color: var(--danger); }
+
+  /* ── Mock frame chrome ────────────────────────────────────── */
+  .frame {
+    background: var(--blotter);
+    border: 1px solid var(--line-2);
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+  .frame-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .frame-label .state-pill {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+  .frame-label .state-pill.wait { background: var(--amber); color: #1a1200; }
+  .frame-label .state-pill.speak { background: var(--teal); color: #fff; }
+  .frame-label .state-pill.mic { background: var(--danger); color: #fff; }
+  .frame-label .state-pill.quiet { background: var(--sage); color: #fff; }
+
+  /* ── Desktop main window ──────────────────────────────────── */
+  .desk {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    display: grid;
+    grid-template-columns: 56px 1fr 220px;
+    grid-template-rows: 44px 1fr 36px;
+    min-height: 420px;
+    box-shadow: 0 12px 0 rgba(28,26,22,0.08);
+    overflow: hidden;
+  }
+  .desk.titlebar {
+    grid-column: 1 / -1;
+    background: var(--booth);
+    color: var(--panel);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .desk.titlebar .dots { display: flex; gap: 6px; }
+  .desk.titlebar .dots i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #5a564e; display: block;
+  }
+  .desk.titlebar .room-name {
+    font-family: var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--amber-soft);
+  }
+  .desk.titlebar .spacer { flex: 1; }
+  .desk.titlebar .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #9a9488;
+    letter-spacing: 0.06em;
+  }
+
+  /* Booth rail — concierge lives here, never full-bleed hero */
+  .booth-rail {
+    grid-row: 2;
+    background: var(--booth);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0 10px;
+    gap: 10px;
+    border-right: 1px solid #1a1814;
+  }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--booth-2);
+    border: 2px solid #5a564e;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar svg { width: 100%; height: 100%; display: block; }
+  .avatar.speaking {
+    border-color: var(--teal-speak);
+    box-shadow: 0 0 0 3px rgba(42,154,136,0.35);
+  }
+  .avatar.listening {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(163,58,44,0.35);
+  }
+  .avatar.quiet { border-color: #4a4640; opacity: 0.85; }
+  .avatar.checkout { border-color: var(--amber-glow); }
+  .lamp {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4a4640;
+  }
+  .lamp.on-amber { background: var(--amber-glow); box-shadow: 0 0 8px var(--amber-glow); }
+  .lamp.on-teal { background: var(--teal-speak); box-shadow: 0 0 8px var(--teal-speak); }
+  .lamp.on-red { background: #e07060; box-shadow: 0 0 8px #e07060; }
+  .booth-rail .who {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #8a8478;
+    margin-top: auto;
+  }
+  .booth-rail .who.hot { color: var(--teal-soft); }
+  .booth-rail .who.wait { color: var(--amber-soft); }
+
+  /* Main stage — the TRAY is the hero */
+  .stage {
+    grid-row: 2;
+    padding: 16px 18px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--panel);
+    min-width: 0;
+  }
+  .tray-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .tray-head h3 {
+    font-family: var(--display);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .tray-head .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--mute);
+  }
+  .tray {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  .signal {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line-2);
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 12px;
+  }
+  .signal.wait { border-left-color: var(--amber); background: #faf4e8; }
+  .signal.artifact { border-left-color: var(--teal); }
+  .signal.settled { border-left-color: var(--sage); opacity: 0.7; }
+  .signal .kind {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    grid-column: 1 / -1;
+  }
+  .signal.artifact .kind { color: var(--teal); }
+  .signal .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .signal .sub {
+    font-size: 12px;
+    color: var(--mute);
+    grid-column: 1;
+  }
+  .signal .actions {
+    grid-row: 2 / 4;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: stretch;
+    justify-content: center;
+  }
+  .btn {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--panel);
+    padding: 5px 10px;
+    cursor: default;
+    white-space: nowrap;
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border-color: var(--line-2);
+  }
+  .btn.amber { background: var(--amber); border-color: var(--amber); color: #1a1200; }
+  .btn.teal { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  .empty-tray {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--line);
+    background: var(--paper-2);
+    color: var(--mute);
+    padding: 28px;
+    text-align: center;
+  }
+  .empty-tray .big {
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sage);
+  }
+  .empty-tray .detail { font-size: 12.5px; max-width: 280px; }
+
+  /* Caption / speak banner inside stage */
+  .caption {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 10px 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border-left: 3px solid var(--teal-speak);
+  }
+  .caption .cap-who {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-soft);
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  .caption .cap-text { font-size: 13.5px; line-height: 1.4; }
+  .caption .cap-brain {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: #8a8478;
+    white-space: nowrap;
+  }
+
+  /* Composer — always present on desk */
+  .composer {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: var(--paper);
+    border: 1px solid var(--line-2);
+    padding: 6px 8px;
+  }
+  .composer .attach {
+    width: 28px; height: 28px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    display: grid; place-items: center;
+    font-size: 14px; color: var(--mute);
+  }
+  .composer .field {
+    flex: 1;
+    font-size: 13px;
+    color: var(--faint);
+    padding: 4px 6px;
+  }
+  .composer .ptt {
+    width: 36px; height: 28px;
+    background: var(--booth);
+    color: var(--panel);
+    display: grid; place-items: center;
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    border: none;
+  }
+  .composer .ptt.live {
+    background: var(--danger);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Hinterland rail — work + spend, NOT the hero */
+  .hinterland {
+    grid-row: 2;
+    background: var(--paper-2);
+    border-left: 1px solid var(--line);
+    padding: 12px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 12px;
+  }
+  .hinterland h4 {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 6px;
+  }
+  .work-stack { display: flex; flex-direction: column; gap: 4px; }
+  .work-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 6px;
+    background: var(--panel);
+    border: 1px solid transparent;
+    gap: 6px;
+  }
+  .work-row.hot {
+    border-color: var(--amber);
+    background: var(--amber-soft);
+  }
+  .work-row .wid {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--mute);
+  }
+  .work-row .wtitle {
+    flex: 1;
+    font-size: 11.5px;
+    color: var(--ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gear {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    background: var(--blotter);
+    color: var(--ink-2);
+  }
+  .gear.full { background: var(--booth); color: var(--amber-soft); }
+  .gear.light { background: var(--sage-soft); color: var(--sage); }
+  .gear.one { background: var(--panel); color: var(--faint); border: 1px solid var(--line); }
+
+  .density {
+    display: flex;
+    gap: 3px;
+    height: 6px;
+    margin-top: 4px;
+  }
+  .density i {
+    flex: 1;
+    background: var(--sage-soft);
+  }
+  .density i.wait { background: var(--amber); }
+  .density i.done { background: var(--line); }
+
+  .spend-block .figure {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--cost);
+    letter-spacing: -0.02em;
+  }
+  .spend-block .sub { font-size: 10px; color: var(--mute); margin-top: 2px; }
+  .spend-bar {
+    margin-top: 8px;
+    height: 8px;
+    background: var(--blotter);
+    position: relative;
+    overflow: visible;
+  }
+  .spend-bar .fill {
+    height: 100%;
+    background: var(--cost);
+    width: 42%;
+  }
+  .spend-bar .blip {
+    position: absolute;
+    top: -3px;
+    width: 3px; height: 14px;
+    background: var(--amber-glow);
+  }
+  .spend-log {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--mute);
+    line-height: 1.6;
+  }
+  .spend-log .esc { color: var(--amber); }
+
+  /* Footer strip — salience policy always visible */
+  .policy-bar {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    background: var(--booth-2);
+    color: #c8c2b4;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  .policy-bar .label { color: var(--amber-soft); text-transform: uppercase; letter-spacing: 0.14em; }
+  .policy-bar .slot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .policy-bar .chip {
+    padding: 2px 6px;
+    background: #1a1814;
+    color: #9a9488;
+  }
+  .policy-bar .chip.speak { color: var(--teal-soft); }
+  .policy-bar .chip.queue { color: var(--amber-soft); }
+  .policy-bar .chip.silent { color: #6a6458; }
+  .policy-bar .edit {
+    margin-left: auto;
+    color: #8a8478;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ── Dock strip ───────────────────────────────────────────── */
+  .dock-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dock {
+    background: rgba(42,40,36,0.94);
+    border: 1px solid #1a1814;
+    border-radius: 18px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: fit-content;
+    max-width: 100%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .dock .avatars {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .dock .avatars .avatar { width: 32px; height: 32px; }
+  .dock .signal-one {
+    background: #1a1814;
+    border-radius: 10px;
+    padding: 6px 12px;
+    min-width: 200px;
+    max-width: 320px;
+  }
+  .dock .signal-one .k {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-glow);
+  }
+  .dock .signal-one .t {
+    font-size: 12px;
+    color: #e8e2d4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dock .quiet-mark {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6a6458;
+    padding: 0 8px;
+  }
+  .dock .ptt-dock {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #1a1814;
+    border: 2px solid #5a564e;
+    display: grid; place-items: center;
+    color: #9a9488;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+  }
+  .dock .ptt-dock.live {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: #fff;
+  }
+  .dock .expand {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid #5a564e;
+    color: #8a8478;
+    display: grid; place-items: center;
+    font-size: 12px;
+  }
+  .dock-note {
+    font-size: 12.5px;
+    color: var(--mute);
+    max-width: 520px;
+  }
+
+  /* Spotlight above dock when speaking */
+  .dock-spot {
+    background: rgba(42,40,36,0.96);
+    border: 1px solid #1a1814;
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: fit-content;
+    max-width: 480px;
+  }
+  .dock-spot .avatar { width: 48px; height: 48px; }
+  .dock-spot .words {
+    font-size: 13px;
+    color: #e8e2d4;
+    max-width: 340px;
+    line-height: 1.35;
+  }
+  .dock-spot .meta {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--teal-soft);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  /* ── Mobile ───────────────────────────────────────────────── */
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .phone {
+    background: var(--booth);
+    border-radius: 28px;
+    padding: 12px 10px 16px;
+    border: 2px solid #1a1814;
+    box-shadow: 0 16px 0 rgba(28,26,22,0.12);
+    max-width: 300px;
+  }
+  .phone-notch {
+    width: 90px; height: 18px;
+    background: #1a1814;
+    border-radius: 0 0 12px 12px;
+    margin: -12px auto 10px;
+  }
+  .phone-screen {
+    background: var(--panel);
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-head {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .phone-head .title {
+    font-family: var(--display);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .phone-head .badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    background: var(--amber);
+    color: #1a1200;
+    padding: 2px 6px;
+    letter-spacing: 0.08em;
+  }
+  .phone-head .dev {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    color: #8a8478;
+    border: 1px solid #5a564e;
+    padding: 2px 5px;
+  }
+  .phone-body {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .phone-body .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .m-signal {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--amber);
+    padding: 8px 10px;
+  }
+  .m-signal .k {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .m-signal .t { font-size: 13px; font-weight: 600; margin: 2px 0; }
+  .m-signal .s { font-size: 11px; color: var(--mute); }
+  .m-signal .row { display: flex; gap: 6px; margin-top: 8px; }
+  .m-signal .row .btn { flex: 1; text-align: center; padding: 7px 4px; }
+
+  .phone-quiet {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    color: var(--mute);
+    padding: 20px;
+  }
+  .phone-quiet .big {
+    font-family: var(--display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sage);
+    font-size: 13px;
+  }
+
+  .phone-speak {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .phone-speak .avatar { width: 40px; height: 40px; flex-shrink: 0; }
+  .phone-speak .txt { font-size: 12.5px; line-height: 1.35; }
+  .phone-speak .who {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal-soft);
+    margin-bottom: 3px;
+  }
+
+  .phone-grind {
+    font-size: 11px;
+    color: var(--mute);
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+  }
+  .phone-grind strong { color: var(--ink-2); font-weight: 600; }
+
+  .phone-composer {
+    margin-top: auto;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .phone-composer .field {
+    flex: 1;
+    font-size: 12px;
+    color: var(--faint);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 8px;
+  }
+  .phone-composer .ptt {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--booth);
+    color: var(--panel);
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    border: none;
+  }
+  .phone-composer .ptt.live { background: var(--danger); }
+  .phone-composer .attach {
+    width: 32px; height: 32px;
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+    color: var(--mute);
+    font-size: 14px;
+  }
+
+  /* ── Salience policy editor ───────────────────────────────── */
+  .policy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--ink);
+    padding: 16px;
+  }
+  .policy-col {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    min-height: 200px;
+  }
+  .policy-col header {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .policy-col.speak header { background: var(--teal-soft); color: var(--teal); }
+  .policy-col.queue header { background: var(--amber-soft); color: var(--amber); }
+  .policy-col.silent header { background: var(--blotter); color: var(--mute); }
+  .policy-col ul { list-style: none; padding: 8px; }
+  .policy-col li {
+    font-size: 12px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    margin-bottom: 6px;
+    cursor: default;
+  }
+  .policy-col li .hint {
+    display: block;
+    font-size: 10px;
+    color: var(--faint);
+    margin-top: 2px;
+  }
+
+  /* ── Artifact loop ────────────────────────────────────────── */
+  .artifact-flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .art-step {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 12px;
+  }
+  .art-step .n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+  .art-step h4 { font-size: 13px; margin-bottom: 6px; }
+  .art-step p { font-size: 12px; color: var(--mute); }
+  .art-preview {
+    margin-top: 8px;
+    background: var(--paper);
+    border: 1px dashed var(--line-2);
+    padding: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+  .art-preview .ver {
+    display: inline-block;
+    background: var(--booth);
+    color: var(--teal-soft);
+    padding: 1px 5px;
+    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Dial homes ───────────────────────────────────────────── */
+  .dials {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .dial {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+  .dial h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .dial p { font-size: 13px; color: var(--ink-2); margin-bottom: 10px; }
+  .dial .where {
+    font-size: 12px;
+    color: var(--mute);
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  .seg {
+    display: flex;
+    gap: 0;
+    margin-bottom: 8px;
+  }
+  .seg span {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 6px 4px;
+    border: 1px solid var(--line-2);
+    color: var(--mute);
+  }
+  .seg span.on {
+    background: var(--booth);
+    color: var(--amber-soft);
+    border-color: var(--booth);
+  }
+
+  /* ── Decisions / price / self-check tables ───────────────── */
+  table.dec {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--panel);
+    border: 1px solid var(--ink);
+  }
+  table.dec th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--booth);
+    color: var(--amber-soft);
+    border-bottom: 1px solid var(--ink);
+  }
+  table.dec td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--ink-2);
+  }
+  table.dec tr:last-child td { border-bottom: none; }
+  table.dec td:first-child { font-weight: 600; color: var(--ink); width: 22%; }
+  table.dec td.rej { color: var(--mute); width: 28%; }
+  table.dec td.trade { width: 50%; }
+
+  .price-list {
+    background: var(--panel);
+    border: 1px solid var(--ink);
+  }
+  .price-list .row {
+    display: grid;
+    grid-template-columns: 1fr 100px 1fr;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .price-list .row:last-child { border-bottom: none; }
+  .price-list .row .sys { font-weight: 600; }
+  .price-list .row .cost {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .price-list .row .cost.zero { color: var(--sage); }
+  .price-list .row .cost.small { color: var(--teal); }
+  .price-list .row .cost.med { color: var(--amber); }
+  .price-list .row .note { color: var(--mute); font-size: 12.5px; }
+
+  .selfcheck {
+    background: var(--booth);
+    color: var(--panel);
+    padding: 20px 22px;
+    border-left: 4px solid var(--amber-glow);
+  }
+  .selfcheck h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber-glow);
+    margin-bottom: 10px;
+  }
+  .selfcheck p { font-size: 14px; line-height: 1.5; color: #d8d2c4; }
+  .selfcheck strong { color: #fff; font-weight: 600; }
+
+  .mortality {
+    background: var(--amber-soft);
+    border: 1px solid var(--amber);
+    padding: 16px 18px;
+    margin-bottom: 28px;
+  }
+  .mortality h3 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .mortality p { font-size: 13.5px; color: var(--ink-2); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 820px) {
+    .doctrine, .two-col, .artifact-flow, .dials, .policy-grid {
+      grid-template-columns: 1fr;
+    }
+    .desk { grid-template-columns: 48px 1fr; }
+    .hinterland { display: none; }
+    .price-list .row { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  footer.board-end {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+</style>
+</head>
+<body>
+
+<header class="board-hero">
+  <div class="eyebrow">Round C · Concept board · Grok · Blind entry</div>
+  <h1>SIGNAL <span>DESK</span></h1>
+  <p class="thesis">
+    The room earns silence. The primary object is not a ticket and not a session —
+    it is the <em>short tray of things that broke silence</em>, reconstructed every
+    snapshot from spine operator-gate events, while work and spend sit as hinterland
+    you open. Empty tray = the product working.
+  </p>
+</header>
+
+<div class="wrap">
+
+  <!-- Mortality argument -->
+  <div class="mortality">
+    <h3>Beating the mortality argument (primary object ≠ work item)</h3>
+    <p>
+      A ticket is durable — but a full ticket catalog as primary UI recreates the
+      same failure mode at a slower cadence: you stare at grinding inventory while
+      the thing you actually needed (a plan-review, a blocker, a diagram) competes
+      with noise. Sessions die at <code>/clear</code>; tickets proliferate into wallpaper.
+      The tray dies and reforms with every gate event — keyed to <em>attention debt</em>,
+      not a context window. Work items remain first-class in the hinterland and in
+      ticket detail; they are just not what the window is <em>for</em>. Salience is why
+      this round exists — so salience is the noun.
+    </p>
+  </div>
+
+  <!-- Doctrine -->
+  <div class="doctrine">
+    <article>
+      <h3>Surface doctrine</h3>
+      <p>Three surfaces, three jobs. They do <strong>not</strong> share a shape.</p>
+      <ul>
+        <li><strong>Desk</strong> — tray + hinterland + policy + talk</li>
+        <li><strong>Dock</strong> — lamp + one signal + PTT. Never a list.</li>
+        <li><strong>Phone</strong> — away supervision: waiting-on-you only</li>
+      </ul>
+    </article>
+    <article>
+      <h3>Concierge presence</h3>
+      <p>Mikey is a <strong>booth rail</strong>, not a stage star. Small avatar, vertical name, status lamp. Expands only into captions when speaking. Checkout voice swaps the booth face with a temporary badge — never a second card in a grid.</p>
+    </article>
+    <article class="cut">
+      <h3>Cut from today</h3>
+      <ul>
+        <li>Agent card grid (N talking personas)</li>
+        <li>Hand-raise / grant-per-session theater</li>
+        <li>“New session” as primary verb</li>
+        <li>Per-card state badges as the room’s truth</li>
+        <li>Shared shape across panel / dock / phone</li>
+      </ul>
+    </article>
+  </div>
+
+  <!-- ════════ DESK: QUIET ════════ -->
+  <section class="block">
+    <h2>Desktop · main window <span class="tag">resting / quiet</span></h2>
+    <p class="lede">
+      Success state. Tray empty. Hinterland shows density of grinding work without
+      demanding a read. Policy bar reminds you silence is configured, not accidental.
+    </p>
+    <div class="frame">
+      <div class="frame-label">
+        <span>Room of Devs · desk</span>
+        <span class="state-pill quiet">Floor quiet</span>
+      </div>
+      <div class="desk">
+        <div class="desk titlebar" style="display:contents">
+          <div class="titlebar" style="grid-column:1/-1;grid-row:1">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="room-name">room-of-devs</span>
+            <span class="spacer"></span>
+            <span class="meta">4 grinding · $1.82 today</span>
+          </div>
+        </div>
+        <aside class="booth-rail">
+          <div class="avatar quiet" title="Mikey idle">
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="14" r="7" fill="#6a6458"/>
+              <ellipse cx="18" cy="30" rx="11" ry="8" fill="#5a564e"/>
+              <circle cx="15" cy="13" r="1.2" fill="#1a1814"/>
+              <circle cx="21" cy="13" r="1.2" fill="#1a1814"/>
+            </svg>
+          </div>
+          <div class="lamp" title="quiet"></div>
+          <div class="who">Mikey</div>
+        </aside>
+        <main class="stage">
+          <div class="tray-head">
+            <h3>Attention tray</h3>
+            <span class="count">0 waiting · last gate 42m ago</span>
+          </div>
+          <div class="empty-tray">
+            <div class="big">Floor is quiet</div>
+            <div class="detail">4 threads grinding. Milestones queued for a lull. Tool chatter stays off-mic by policy.</div>
+          </div>
+          <div class="composer">
+            <div class="attach" title="Attach">+</div>
+            <div class="field">Ask Mikey, file work, or drop a file…</div>
+            <button class="ptt" type="button">PTT</button>
+          </div>
+        </main>
+        <aside class="hinterland">
+          <div>
+            <h4>Work · hinterland</h4>
+            <div class="work-stack">
+              <div class="work-row">
+                <span class="wid">#74</span>
+                <span class="wtitle">Dedup hash race</span>
+                <span class="gear full">full</span>
+              </div>
+              <div class="work-row">
+                <span class="wid">#75</span>
+                <span class="wtitle">Dock relaunch test</span>
+                <span class="gear light">light</span>
+              </div>
+              <div class="work-row">
+                <span class="wid">#76</span>
+                <span class="wtitle">Mobile attach parity</span>
+                <span class="gear light">light</span>
+              </div>
+              <div class="work-row">
+                <span class="wid">—</span>
+                <span class="wtitle">diagram boot order</span>
+                <span class="gear one">one-off</span>
+              </div>
+            </div>
+            <div class="density" title="state mix">
+              <i></i><i></i><i></i><i class="wait"></i><i></i><i class="done"></i><i class="done"></i>
+            </div>
+          </div>
+          <div class="spend-block">
+            <h4>Spend · today</h4>
+            <div class="figure">$1.82</div>
+            <div class="sub">billed · 1 escalation logged</div>
+            <div class="spend-bar">
+              <div class="fill"></div>
+              <div class="blip" style="left:68%" title="frontier borrow"></div>
+            </div>
+            <div class="spend-log">
+              14:02 flash tap-in · $0.01<br/>
+              <span class="esc">14:18 frontier · plan conflict · $0.41</span><br/>
+              15:01 flash route · $0.01
+            </div>
+          </div>
+        </aside>
+        <footer class="policy-bar">
+          <span class="label">Salience</span>
+          <span class="slot"><span class="chip speak">speak</span> gates</span>
+          <span class="slot"><span class="chip queue">queue</span> milestones</span>
+          <span class="slot"><span class="chip silent">silent</span> tools · subagents</span>
+          <span class="edit">edit policy</span>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DESK: WAITING ════════ -->
+  <section class="block">
+    <h2>Desktop · waiting on you <span class="tag">load-bearing</span></h2>
+    <p class="lede">
+      Operator gates land in the tray — not as speaking cards. You act on the
+      signal; Mikey stays quiet until you ask or a gate is configured to speak.
+    </p>
+    <div class="frame">
+      <div class="frame-label">
+        <span>Room of Devs · desk</span>
+        <span class="state-pill wait">2 need you</span>
+      </div>
+      <div class="desk">
+        <div class="titlebar" style="grid-column:1/-1;grid-row:1">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <span class="room-name">room-of-devs</span>
+          <span class="spacer"></span>
+          <span class="meta">amber lamp · tray hot</span>
+        </div>
+        <aside class="booth-rail">
+          <div class="avatar" title="Mikey — waiting posture">
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="14" r="7" fill="#8a7a5a"/>
+              <ellipse cx="18" cy="30" rx="11" ry="8" fill="#6a5e48"/>
+              <circle cx="15" cy="13" r="1.2" fill="#1a1814"/>
+              <circle cx="21" cy="13" r="1.2" fill="#1a1814"/>
+            </svg>
+          </div>
+          <div class="lamp on-amber"></div>
+          <div class="who wait">Mikey</div>
+        </aside>
+        <main class="stage">
+          <div class="tray-head">
+            <h3>Attention tray</h3>
+            <span class="count">2 waiting · 1 artifact</span>
+          </div>
+          <div class="tray">
+            <div class="signal wait">
+              <div class="kind">Plan review · #74</div>
+              <div class="title">Dedup race — plan ready for your ruling</div>
+              <div class="sub">Ceremony full · thread settled a written plan onto the ticket</div>
+              <div class="actions">
+                <button class="btn amber" type="button">Open plan</button>
+                <button class="btn ghost" type="button">Ask Mikey</button>
+                <button class="btn ghost" type="button">Checkout voice</button>
+              </div>
+            </div>
+            <div class="signal wait">
+              <div class="kind">Needs feedback · #75</div>
+              <div class="title">Dock relaunch — which fixture should we pin?</div>
+              <div class="sub">Light ceremony · blocker text on ticket</div>
+              <div class="actions">
+                <button class="btn amber" type="button">Reply</button>
+                <button class="btn ghost" type="button">Snooze</button>
+              </div>
+            </div>
+            <div class="signal artifact">
+              <div class="kind">Artifact · one-off</div>
+              <div class="title">Daemon boot order diagram · v2</div>
+              <div class="sub">File loop · not ink · ask to revise or keep</div>
+              <div class="actions">
+                <button class="btn teal" type="button">View</button>
+                <button class="btn ghost" type="button">Keep</button>
+              </div>
+            </div>
+          </div>
+          <div class="composer">
+            <div class="attach">+</div>
+            <div class="field">Approve #74 and tell the dock thread to also test relaunch…</div>
+            <button class="ptt" type="button">PTT</button>
+          </div>
+        </main>
+        <aside class="hinterland">
+          <div>
+            <h4>Work · hinterland</h4>
+            <div class="work-stack">
+              <div class="work-row hot">
+                <span class="wid">#74</span>
+                <span class="wtitle">Dedup hash race</span>
+                <span class="gear full">full</span>
+              </div>
+              <div class="work-row hot">
+                <span class="wid">#75</span>
+                <span class="wtitle">Dock relaunch test</span>
+                <span class="gear light">light</span>
+              </div>
+              <div class="work-row">
+                <span class="wid">#76</span>
+                <span class="wtitle">Mobile attach parity</span>
+                <span class="gear light">light</span>
+              </div>
+            </div>
+          </div>
+          <div class="spend-block">
+            <h4>Spend · today</h4>
+            <div class="figure">$2.14</div>
+            <div class="sub">billed · tray not free — gates are</div>
+            <div class="spend-bar">
+              <div class="fill" style="width:51%"></div>
+              <div class="blip" style="left:68%"></div>
+            </div>
+          </div>
+        </aside>
+        <footer class="policy-bar">
+          <span class="label">Salience</span>
+          <span class="slot"><span class="chip speak">speak</span> gates</span>
+          <span class="slot"><span class="chip queue">queue</span> milestones</span>
+          <span class="slot"><span class="chip silent">silent</span> tools · subagents</span>
+          <span class="edit">edit policy</span>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DESK: SPEAKING + MIC ════════ -->
+  <section class="block">
+    <h2>Desktop · concierge speaking · mic open <span class="tag">two states</span></h2>
+    <p class="lede">
+      Speaking is a caption from the booth, not a grown card. Mic open is a
+      deliberate PTT press — red lamp, no VAD. Brain tier rides the caption as a
+      logged badge, never as personality.
+    </p>
+    <div class="two-col">
+      <div class="frame">
+        <div class="frame-label">
+          <span>Speaking</span>
+          <span class="state-pill speak">Mikey on air</span>
+        </div>
+        <div class="desk" style="min-height:300px;grid-template-columns:56px 1fr">
+          <div class="titlebar" style="grid-column:1/-1;grid-row:1">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="room-name">room-of-devs</span>
+            <span class="spacer"></span>
+            <span class="meta">flash · $0.01</span>
+          </div>
+          <aside class="booth-rail">
+            <div class="avatar speaking">
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle cx="18" cy="14" r="7" fill="#4a8a7c"/>
+                <ellipse cx="18" cy="30" rx="11" ry="8" fill="#3a6e62"/>
+                <circle cx="15" cy="13" r="1.2" fill="#1a1814"/>
+                <circle cx="21" cy="13" r="1.2" fill="#1a1814"/>
+                <rect x="14" y="17" width="8" height="2" rx="1" fill="#1a1814"/>
+              </svg>
+            </div>
+            <div class="lamp on-teal"></div>
+            <div class="who hot">Mikey</div>
+          </aside>
+          <main class="stage">
+            <div class="caption">
+              <div class="cap-who">Mikey</div>
+              <div class="cap-text">Plan-review on #74. Raph’s notes flagged the lock order; the build thread disagrees because the hash is scoped per queue dir. Your ruling?</div>
+              <div class="cap-brain">flash</div>
+            </div>
+            <div class="tray" style="flex:0">
+              <div class="signal wait" style="opacity:0.55">
+                <div class="kind">Still in tray</div>
+                <div class="title">#74 plan review — waiting while he speaks it</div>
+                <div class="sub">Speech doesn’t remove the signal; you do</div>
+              </div>
+            </div>
+            <div class="composer">
+              <div class="attach">+</div>
+              <div class="field">Type a ruling or hold PTT…</div>
+              <button class="ptt" type="button">PTT</button>
+            </div>
+          </main>
+          <footer class="policy-bar">
+            <span class="label">On air</span>
+            <span class="slot">attributed memo · not a huddle</span>
+            <span class="edit">stop</span>
+          </footer>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">
+          <span>Your mic</span>
+          <span class="state-pill mic">PTT held</span>
+        </div>
+        <div class="desk" style="min-height:300px;grid-template-columns:56px 1fr">
+          <div class="titlebar" style="grid-column:1/-1;grid-row:1">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="room-name">room-of-devs</span>
+            <span class="spacer"></span>
+            <span class="meta">capture · deliberate</span>
+          </div>
+          <aside class="booth-rail">
+            <div class="avatar listening">
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle cx="18" cy="14" r="7" fill="#8a6458"/>
+                <ellipse cx="18" cy="30" rx="11" ry="8" fill="#6e4e48"/>
+                <circle cx="15" cy="13" r="1.2" fill="#1a1814"/>
+                <circle cx="21" cy="13" r="1.2" fill="#1a1814"/>
+              </svg>
+            </div>
+            <div class="lamp on-red"></div>
+            <div class="who">listening</div>
+          </aside>
+          <main class="stage">
+            <div class="empty-tray" style="background:#f5e8e4;border-color:#c4a098">
+              <div class="big" style="color:var(--danger)">Mic open</div>
+              <div class="detail">Release to send. Attachments still available after. No wake word. No always-listen.</div>
+            </div>
+            <div class="composer">
+              <div class="attach">+</div>
+              <div class="field" style="color:var(--ink-2)">“…approve the plan, and have the dock thread also test relaunch.”</div>
+              <button class="ptt live" type="button">REC</button>
+            </div>
+          </main>
+          <footer class="policy-bar">
+            <span class="label">Grant</span>
+            <span class="slot">usePttGrant owns this · one floor</span>
+            <span class="edit">release</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DOCK ════════ -->
+  <section class="block">
+    <h2>Dock · NSPanel strip <span class="tag">non-activating</span></h2>
+    <p class="lede">
+      Never a ticket list. Never steals focus. A lamp, at most one signal, PTT, expand-to-desk.
+      Speaking lifts a spotlight above the pill; quiet shows the word QUIET as a feature.
+    </p>
+    <div class="dock-row">
+      <div>
+        <div class="frame-label" style="margin-bottom:8px">
+          <span>Quiet dock</span>
+          <span class="state-pill quiet">Success</span>
+        </div>
+        <div class="dock">
+          <div class="avatars">
+            <div class="avatar quiet">
+              <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#6a6458"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#5a564e"/></svg>
+            </div>
+          </div>
+          <div class="quiet-mark">Quiet · 4 grinding</div>
+          <button class="ptt-dock" type="button">PTT</button>
+          <div class="expand" title="Open desk">↗</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="frame-label" style="margin-bottom:8px">
+          <span>Waiting dock</span>
+          <span class="state-pill wait">1 signal</span>
+        </div>
+        <div class="dock">
+          <div class="avatars">
+            <div class="avatar" style="border-color:var(--amber-glow)">
+              <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#8a7a5a"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#6a5e48"/></svg>
+            </div>
+          </div>
+          <div class="signal-one">
+            <div class="k">Plan review · #74</div>
+            <div class="t">Dedup race — your ruling needed</div>
+          </div>
+          <button class="ptt-dock" type="button">PTT</button>
+          <div class="expand">↗</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="frame-label" style="margin-bottom:8px">
+          <span>Speaking + mic</span>
+          <span class="state-pill speak">On air / PTT</span>
+        </div>
+        <div class="dock-spot">
+          <div class="avatar speaking">
+            <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#4a8a7c"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#3a6e62"/><rect x="14" y="17" width="8" height="2" rx="1" fill="#1a1814"/></svg>
+          </div>
+          <div>
+            <div class="meta">Mikey · flash</div>
+            <div class="words">Plan-review on #74. Two positions on the ticket — your ruling?</div>
+          </div>
+        </div>
+        <div class="dock" style="margin-top:8px">
+          <div class="avatars">
+            <div class="avatar listening">
+              <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#8a6458"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#6e4e48"/></svg>
+            </div>
+          </div>
+          <div class="quiet-mark" style="color:#e07060">Listening…</div>
+          <button class="ptt-dock live" type="button">REC</button>
+          <div class="expand">↗</div>
+        </div>
+      </div>
+      <p class="dock-note">
+        Checkout voice: the single dock avatar swaps to Donnie with a “checked out · temporary” chip.
+        Still one face. Still one floor. Spotlight copy attributes the walkthrough; settle writes back to the ticket.
+      </p>
+    </div>
+  </section>
+
+  <!-- ════════ MOBILE ════════ -->
+  <section class="block">
+    <h2>Mobile · away supervision <span class="tag">not a shrunk desk</span></h2>
+    <p class="lede">
+      Phone shows the tray and talk. Hinterland collapses to a one-line grind count.
+      No agent grid. Attachments on the composer. Output device toggle stays.
+    </p>
+    <div class="phones">
+      <!-- quiet -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-head">
+            <div class="title">Room</div>
+            <span class="dev">PHONE</span>
+          </div>
+          <div class="phone-body">
+            <div class="section-label">Attention</div>
+            <div class="phone-quiet">
+              <div class="avatar quiet" style="width:48px;height:48px">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#6a6458"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#5a564e"/></svg>
+              </div>
+              <div class="big">Quiet</div>
+              <div>4 grinding · $1.82 today</div>
+            </div>
+            <div class="phone-grind"><strong>Hinterland</strong> · tap for ticket list (secondary)</div>
+          </div>
+          <div class="phone-composer">
+            <div class="attach">+</div>
+            <div class="field">Message Mikey…</div>
+            <button class="ptt" type="button">PTT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- waiting -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-head">
+            <div class="title">Room</div>
+            <span class="badge">2</span>
+            <span class="dev">PHONE</span>
+          </div>
+          <div class="phone-body">
+            <div class="section-label">Needs you</div>
+            <div class="m-signal">
+              <div class="k">Plan review · #74</div>
+              <div class="t">Dedup race — ruling</div>
+              <div class="s">Full ceremony · plan on ticket</div>
+              <div class="row">
+                <button class="btn amber" type="button">Open</button>
+                <button class="btn ghost" type="button">Ask</button>
+              </div>
+            </div>
+            <div class="m-signal">
+              <div class="k">Needs feedback · #75</div>
+              <div class="t">Which fixture to pin?</div>
+              <div class="s">Light · blocker on ticket</div>
+              <div class="row">
+                <button class="btn amber" type="button">Reply</button>
+              </div>
+            </div>
+            <div class="phone-grind"><strong>Also</strong> · boot-order diagram v2 ready</div>
+          </div>
+          <div class="phone-composer">
+            <div class="attach">+</div>
+            <div class="field">Approve #74 and…</div>
+            <button class="ptt" type="button">PTT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- speaking -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-head">
+            <div class="title">Room</div>
+            <span class="dev">PHONE</span>
+          </div>
+          <div class="phone-body">
+            <div class="phone-speak">
+              <div class="avatar speaking">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="14" r="7" fill="#4a8a7c"/><ellipse cx="18" cy="30" rx="11" ry="8" fill="#3a6e62"/></svg>
+              </div>
+              <div>
+                <div class="who">Mikey · flash</div>
+                <div class="txt">Plan-review on #74. Two positions cited on the ticket. Your ruling?</div>
+              </div>
+            </div>
+            <div class="section-label">Still waiting</div>
+            <div class="m-signal" style="opacity:0.7">
+              <div class="k">Plan review · #74</div>
+              <div class="t">Act when you’re ready</div>
+              <div class="s">Speech ≠ resolution</div>
+            </div>
+          </div>
+          <div class="phone-composer">
+            <div class="attach">+</div>
+            <div class="field">Type or hold…</div>
+            <button class="ptt live" type="button">REC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SALIENCE POLICY ════════ -->
+  <section class="block">
+    <h2>Salience surface <span class="tag">the centre of the round</span></h2>
+    <p class="lede">
+      Today the filter is <code>true</code>. This board makes the three buckets a visible,
+      editable strip on the desk — and an empty tray the designed quiet. Draining =
+      act on a signal or snooze it; muting a class = move the chip to Silent.
+    </p>
+    <div class="policy-grid">
+      <div class="policy-col speak">
+        <header>Speak now</header>
+        <ul>
+          <li>blocker<div class="hint">operator gate</div></li>
+          <li>needs-feedback<div class="hint">operator gate</div></li>
+          <li>plan-review<div class="hint">operator gate</div></li>
+          <li>settled / failed<div class="hint">operator gate</div></li>
+        </ul>
+      </div>
+      <div class="policy-col queue">
+        <header>Queue for lull</header>
+        <ul>
+          <li>milestones<div class="hint">progress worth a breath later</div></li>
+          <li>artifact ready<div class="hint">unless you asked just now</div></li>
+          <li>watcher anomaly<div class="hint">after spine validated</div></li>
+        </ul>
+      </div>
+      <div class="policy-col silent">
+        <header>Silent · log only</header>
+        <ul>
+          <li>tool chatter<div class="hint">UI hinterland only</div></li>
+          <li>subagent finish<div class="hint">today’s leak → policy</div></li>
+          <li>routine commits<div class="hint">ticket trail, not mic</div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ ARTIFACT LOOP ════════ -->
+  <section class="block">
+    <h2>Artifact loop <span class="tag">file, not ink</span></h2>
+    <div class="artifact-flow">
+      <div class="art-step">
+        <div class="n">01 · arrive</div>
+        <h4>Tray card</h4>
+        <p>“Diagram ready” lands as an attention signal with a View action — never a canvas.</p>
+        <div class="art-preview"><span class="ver">NEW</span><br/>daemon-boot.md</div>
+      </div>
+      <div class="art-step">
+        <div class="n">02 · render</div>
+        <h4>File preview</h4>
+        <p>Mermaid → SVG in a pane. Ask about it in the same composer (“why hid before audio?”).</p>
+        <div class="art-preview">flowchart TB<br/>boot → hid → audio</div>
+      </div>
+      <div class="art-step">
+        <div class="n">03 · revise</div>
+        <h4>Version chips</h4>
+        <p>v1 / v2 as files. Annotation is a new revision, not stroke timing.</p>
+        <div class="art-preview"><span class="ver">V2</span><br/>+ hid note answered</div>
+      </div>
+      <div class="art-step">
+        <div class="n">04 · keep</div>
+        <h4>Graduate</h4>
+        <p>Keep commits to docs/ and offers a ticket if follow-up work. Named, confirmed.</p>
+        <div class="art-preview">Keep → docs/<br/>File ticket? [yes]</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DIALS ════════ -->
+  <section class="block">
+    <h2>Three dials · homes <span class="tag">visible · steerable</span></h2>
+    <div class="dials">
+      <div class="dial">
+        <h4>1 · Ceremony</h4>
+        <div class="seg">
+          <span>one-off</span>
+          <span class="on">light</span>
+          <span>full</span>
+        </div>
+        <p>Spawn-time choice when Mikey files work. Shown as a gear chip on every hinterland row and on tray signals.</p>
+        <div class="where">Home: confirm sheet + ticket detail. Never a kanban drag.</div>
+      </div>
+      <div class="dial">
+        <h4>2 · Voice attachment</h4>
+        <div class="seg">
+          <span class="on">Mikey</span>
+          <span>checkout</span>
+          <span>—</span>
+        </div>
+        <p>Default booth face. Checkout swaps the one avatar, badges “temporary,” settles with a written summary.</p>
+        <div class="where">Home: booth rail / dock face. Max two avatars ever — usually one.</div>
+      </div>
+      <div class="dial">
+        <h4>3 · Brain tier</h4>
+        <div class="seg">
+          <span>rules</span>
+          <span class="on">flash</span>
+          <span>frontier</span>
+        </div>
+        <p>Routing table in config. Caption badge + spend blip on every escalation. Flash may propose; table decides.</p>
+        <div class="where">Home: caption chip + spend ledger. Settings edits the table, not a model.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DECISIONS ════════ -->
+  <section class="block">
+    <h2>Decisions table <span class="tag">chose · rejected · tradeoff</span></h2>
+    <table class="dec">
+      <thead>
+        <tr><th>Chose</th><th>Rejected</th><th>Tradeoff</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Primary object = attention tray</td>
+          <td class="rej">Ticket as primary · session card as primary · day timeline</td>
+          <td class="trade">Tray makes silence legible; you must open hinterland to browse all work — intentional friction against inventory staring.</td>
+        </tr>
+        <tr>
+          <td>Three surfaces, three shapes</td>
+          <td class="rej">One responsive layout shrunk three ways</td>
+          <td class="trade">More design surface area; dock stays focus-safe and phone stays away-mode without dragging desk chrome onto either.</td>
+        </tr>
+        <tr>
+          <td>Concierge as booth rail + lamp</td>
+          <td class="rej">Hero avatar stage · summon-only voice · cast grid</td>
+          <td class="trade">Less character spectacle; presence never competes with the tray for primary attention.</td>
+        </tr>
+        <tr>
+          <td>Quiet empty tray as success UI</td>
+          <td class="rej">Always-populated activity feed · live play-by-play</td>
+          <td class="trade">Owner may feel “is it broken?” once — copy and grind count fix that; chatter never returns as default.</td>
+        </tr>
+        <tr>
+          <td>Salience as three visible buckets</td>
+          <td class="rej">Hidden defaults · per-message mute only · AI-judged importance</td>
+          <td class="trade">Policy editing is a small config UI; owner must care once. Auditable beats clever.</td>
+        </tr>
+        <tr>
+          <td>Spend as ledger + escalation blips</td>
+          <td class="rej">Ambient texture only · single vanity number · hide cost</td>
+          <td class="trade">A bit of density in the hinterland; billed truth stays one click from every escalation.</td>
+        </tr>
+        <tr>
+          <td>Artifacts as tray → file versions → keep</td>
+          <td class="rej">Realtime ink board · stroke replay · canvas as noun</td>
+          <td class="trade">No wow-motion whiteboard; uses existing mermaid→SVG path; keep is an explicit graduate.</td>
+        </tr>
+        <tr>
+          <td>Wire-desk material (paper + charcoal + amber/teal)</td>
+          <td class="rej">Today’s dark neon room · purple SaaS · cream editorial</td>
+          <td class="trade">Breaks visual continuity with current panel; signals the product thesis change, not a reskin.</td>
+        </tr>
+        <tr>
+          <td>Work as hinterland density</td>
+          <td class="rej">Kanban board · process designer · drag-to-transition</td>
+          <td class="trade">Obeys anti-goal #7; spine remains authority; UI mirrors, never becomes tracker.</td>
+        </tr>
+        <tr>
+          <td>Rooms as titlebar attribution only (v1)</td>
+          <td class="rej">Multi-room tabs as primary chrome</td>
+          <td class="trade">v1 stays one room; dock/phone can later prefix signals with room name without redesigning the tray.</td>
+        </tr>
+        <tr>
+          <td>Cut agent cards / hand-raise / new-session-first</td>
+          <td class="rej">Keep cards “but quieter”</td>
+          <td class="trade">Migration pain for muscle memory; necessary to kill multi-voice theater at the root.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════════ PRICE ════════ -->
+  <section class="block">
+    <h2>Price what was invented <span class="tag">subsystems</span></h2>
+    <div class="price-list">
+      <div class="row">
+        <div class="sys">Salience filter + policy config</div>
+        <div class="cost med">Medium · new</div>
+        <div class="note">Daemon: speak/queue/silent by event class. The round’s actual centre. Snapshot exposes tray + policy.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Attention tray projection</div>
+        <div class="cost small">Small</div>
+        <div class="note">Derived from spine gate events already implied by 04/06. No DB — filesystem/ticket comments → snapshot field.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Work hinterland (ticket mirror)</div>
+        <div class="cost med">Medium · implied</div>
+        <div class="note">Spine projection into PanelSnapshot. Already required by architecture; this board just doesn’t make it primary.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Spend ledger + escalation blips</div>
+        <div class="cost small">Small</div>
+        <div class="note">Aggregate existing one-log-line-per-LLM-call. UI only + thin snapshot rollup.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Booth presence component</div>
+        <div class="cost zero">UI only</div>
+        <div class="note">Avatar ref mutation stays in stage engine. No lipsync-driven layout.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Artifact file loop UI</div>
+        <div class="cost zero">UI only</div>
+        <div class="note">Uses docs-publish mermaid→SVG + temp-agent spawn already practiced. No ink/seek engine.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Voice checkout badge swap</div>
+        <div class="cost small">Small</div>
+        <div class="note">Snapshot field for checked-out persona + settle summary writeback. No floor/queue machinery.</div>
+      </div>
+      <div class="row">
+        <div class="sys">Not invented</div>
+        <div class="cost zero">$0 avoided</div>
+        <div class="note">No VAD, no stroke canvas, no huddle floor, no resident brain UI, no client conversation store, no DB, no process runtime.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SELF-CHECK ════════ -->
+  <section class="block">
+    <h2>Anti-goal self-check</h2>
+    <div class="selfcheck">
+      <h3>Closest call · anti-goal #1</h3>
+      <p>
+        <strong>Not a voice+KB chatbot.</strong> Elevating the tray and demoting the cast
+        risks reading as “chat with Mikey plus a todo list.” The counter is structural:
+        work state, spend, and salience policy are visible with the mic closed and the
+        tray empty — the conversation is never the whole app. Still the nearest miss,
+        because the booth + composer are persistent chrome. Watch that in the pick:
+        if the tray ever becomes optional secondary, this board has failed #1.
+      </p>
+      <p style="margin-top:12px;font-size:12.5px;color:#9a9488">
+        Others clear: #2 one/two avatars only · #3 file loop not ink · #4 lipsync cosmetic ·
+        #5 PTT only · #6 answers cite spine/ticket · #7 hinterland mirrors tracker ·
+        #8 snapshot-derived · #9 no DB · #10 Keep / save-tool always named.
+      </p>
+    </div>
+  </section>
+
+  <footer class="board-end">
+    Signal Desk · Round C · board-grok.html · no external assets · no API spend
+  </footer>
+</div>
+
+</body>
+</html>

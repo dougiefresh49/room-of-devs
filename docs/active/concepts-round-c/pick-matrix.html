@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round C — pick matrix</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --panel: #ffffff;
+    --panel-2: #f4f2ee;
+    --ink: #1a1a19;
+    --ink-2: #4d4c48;
+    --faint: #8b8a84;
+    --line: #e2ded7;
+    --line-2: #cfcabf;
+    --flag: #1f5fbf;
+    --warn: #9a6412;
+    --good: #27693f;
+    --c-opus: #4a5fd0;
+    --c-fable: #2f7d55;
+    --c-sol: #a8631a;
+    --c-grok: #1c7a86;
+    --c-a: #7a6a8c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131315;
+      --panel: #1a1a1d;
+      --panel-2: #201f23;
+      --ink: #ece9e4;
+      --ink-2: #b4b0a9;
+      --faint: #7e7a74;
+      --line: #2c2b30;
+      --line-2: #3b393f;
+      --flag: #6fa4f5;
+      --warn: #d7a04a;
+      --good: #64c98c;
+      --c-opus: #8f9df0;
+      --c-fable: #6cc593;
+      --c-sol: #dda15e;
+      --c-grok: #5fc0cc;
+      --c-a: #b5a4c9;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131315; --panel: #1a1a1d; --panel-2: #201f23; --ink: #ece9e4;
+    --ink-2: #b4b0a9; --faint: #7e7a74; --line: #2c2b30; --line-2: #3b393f;
+    --flag: #6fa4f5; --warn: #d7a04a; --good: #64c98c;
+    --c-opus: #8f9df0; --c-fable: #6cc593; --c-sol: #dda15e; --c-grok: #5fc0cc; --c-a: #b5a4c9;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfaf8; --panel: #ffffff; --panel-2: #f4f2ee; --ink: #1a1a19;
+    --ink-2: #4d4c48; --faint: #8b8a84; --line: #e2ded7; --line-2: #cfcabf;
+    --flag: #1f5fbf; --warn: #9a6412; --good: #27693f;
+    --c-opus: #4a5fd0; --c-fable: #2f7d55; --c-sol: #a8631a; --c-grok: #1c7a86; --c-a: #7a6a8c;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    margin: 0; padding: 0 16px 96px;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1320px; margin: 0 auto; }
+  h1, h2, h3, h4 { line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
+  p { margin: 0 0 12px; }
+  code, .mono { font-family: var(--mono); font-size: 0.88em; }
+  a { color: var(--flag); }
+
+  /* ---------- masthead ---------- */
+  .masthead { padding: 48px 0 26px; border-bottom: 1px solid var(--line-2); }
+  .kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 12px;
+  }
+  .masthead h1 { font-size: clamp(28px, 6vw, 42px); margin: 0 0 14px; }
+  .masthead p { color: var(--ink-2); max-width: 68ch; }
+  .answer-shape {
+    font-family: var(--mono); font-size: 13px; background: var(--panel-2);
+    border: 1px solid var(--line); border-left: 3px solid var(--flag);
+    padding: 12px 14px; border-radius: 4px; color: var(--ink-2);
+    margin-top: 18px; overflow-wrap: anywhere;
+  }
+
+  /* ---------- section headers ---------- */
+  section { margin: 52px 0 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .sec-num {
+    font-family: var(--mono); font-size: 11px; color: var(--faint);
+    letter-spacing: 0.12em;
+  }
+  h2 { font-size: clamp(20px, 3.4vw, 25px); margin: 0; }
+  .sec-note { color: var(--ink-2); max-width: 74ch; font-size: 14.5px; }
+
+  /* ---------- orientation cards ---------- */
+  .orient { display: grid; gap: 14px; grid-template-columns: 1fr; margin-top: 22px; }
+  @media (min-width: 760px) { .orient { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1140px) { .orient { grid-template-columns: 1fr 1fr 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-top: 3px solid var(--accent, var(--line-2));
+    border-radius: 5px; padding: 16px 16px 14px;
+  }
+  .card .who {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 5px;
+  }
+  .card h3 { font-size: 18px; margin: 0 0 10px; }
+  .card dl { margin: 0; font-size: 13.5px; }
+  .card dt {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint); margin-top: 11px;
+  }
+  .card dd { margin: 2px 0 0; color: var(--ink-2); }
+  .card dd strong { color: var(--ink); font-weight: 600; }
+  .op { --accent: var(--c-opus); }
+  .fa { --accent: var(--c-fable); }
+  .so { --accent: var(--c-sol); }
+  .gr { --accent: var(--c-grok); }
+  .ca { --accent: var(--c-a); }
+
+  .namewarn {
+    margin-top: 18px; font-size: 13.5px; color: var(--ink-2);
+    background: var(--panel-2); border: 1px dashed var(--line-2);
+    border-radius: 4px; padding: 11px 13px;
+  }
+
+  /* ---------- matrix rows ---------- */
+  .row {
+    margin-top: 26px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  }
+  .row-head {
+    padding: 14px 16px 12px; border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .row-head h3 { font-size: 17px; margin: 0 0 5px; }
+  .row-head .why { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+  .verdict {
+    display: inline-block; font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.13em; text-transform: uppercase; padding: 2px 7px;
+    border-radius: 3px; margin-bottom: 7px; border: 1px solid currentColor;
+  }
+  .v-agree { color: var(--good); }
+  .v-fork { color: var(--warn); }
+  .v-sharp { color: var(--flag); }
+
+  .cells { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 1000px) { .cells { grid-template-columns: repeat(5, 1fr); } }
+  .cell {
+    padding: 13px 15px 15px; border-top: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    font-size: 13.5px;
+  }
+  @media (min-width: 1000px) {
+    .cell { border-top: 0; border-left: 1px solid var(--line); box-shadow: inset 3px 0 0 var(--accent); }
+    .cell:first-child { border-left: 0; }
+  }
+  .cell .lbl {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .cell .pos { color: var(--ink); margin: 0 0 8px; }
+  .cell .trade {
+    color: var(--ink-2); font-size: 12.8px; padding-top: 8px;
+    border-top: 1px dotted var(--line-2); margin: 0;
+  }
+  .cell .trade::before {
+    content: "costs you "; font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint);
+  }
+  .cell.none .pos { color: var(--faint); font-style: italic; }
+
+  /* agreement banner inside a unanimous row */
+  .agreed {
+    padding: 14px 16px; font-size: 14px; color: var(--ink-2);
+    border-left: 3px solid var(--good);
+    background: color-mix(in srgb, var(--good) 7%, transparent);
+  }
+  .agreed strong { color: var(--ink); }
+  .agreed .sub {
+    display: block; margin-top: 9px; padding-top: 9px;
+    border-top: 1px dotted var(--line-2); font-size: 13px;
+  }
+
+  /* collapsible deferrable rows */
+  details.row > summary {
+    list-style: none; cursor: pointer; padding: 13px 16px;
+    background: var(--panel-2); border-bottom: 1px solid transparent;
+  }
+  details.row[open] > summary { border-bottom-color: var(--line); }
+  details.row > summary::-webkit-details-marker { display: none; }
+  summary .stitle { font-size: 16px; font-weight: 600; }
+  summary .shint { display: block; font-size: 13px; color: var(--ink-2); margin-top: 3px; }
+  summary .caret {
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+    letter-spacing: 0.12em; text-transform: uppercase; float: right;
+  }
+
+  /* quotes block */
+  .quotes { display: grid; gap: 13px; grid-template-columns: 1fr; margin-top: 20px; }
+  @media (min-width: 900px) { .quotes { grid-template-columns: 1fr 1fr; } }
+  .quote {
+    background: var(--panel); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 5px; padding: 14px 16px;
+  }
+  .quote .lbl {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .quote .ag { font-family: var(--mono); font-size: 12px; color: var(--warn); margin-bottom: 8px; }
+  .quote blockquote {
+    margin: 0 0 9px; font-size: 14px; color: var(--ink);
+    border-left: 2px solid var(--line-2); padding-left: 11px;
+  }
+  .quote .guard { font-size: 13px; color: var(--ink-2); margin: 0; }
+
+  /* fast block */
+  .fast { border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); overflow: hidden; }
+  .fast-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+  .fast-head h2 { margin-bottom: 6px; }
+  ol.ask { margin: 0; padding: 4px 0; list-style: none; counter-reset: q; }
+  ol.ask li {
+    padding: 13px 18px 13px 52px; border-bottom: 1px solid var(--line); position: relative;
+    font-size: 14.5px;
+  }
+  ol.ask li:last-child { border-bottom: 0; }
+  ol.ask li::before {
+    counter-increment: q; content: counter(q);
+    position: absolute; left: 18px; top: 13px;
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    border: 1px solid var(--line-2); border-radius: 50%;
+    width: 21px; height: 21px; display: grid; place-items: center;
+  }
+  ol.ask .q { font-weight: 600; }
+  ol.ask .opts { display: block; color: var(--ink-2); font-size: 13.3px; margin-top: 4px; }
+  .defer {
+    padding: 15px 18px; font-size: 13.8px; color: var(--ink-2);
+    background: var(--panel-2); border-top: 1px solid var(--line);
+  }
+  .defer strong { color: var(--ink); }
+
+  .opinion {
+    margin-top: 34px; border: 1px solid var(--line-2); border-left: 3px solid var(--warn);
+    border-radius: 5px; padding: 16px 18px; background: var(--panel);
+  }
+  .opinion .tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--warn); display: block; margin-bottom: 8px;
+  }
+  .opinion p { font-size: 14.5px; color: var(--ink-2); margin: 0; }
+  .opinion p strong { color: var(--ink); }
+
+  footer {
+    margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; color: var(--faint);
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="kicker">Round C · pick matrix · five concepts, one brief</div>
+  <h1>Pick a base. Graft the rows.</h1>
+  <p>
+    Five designs were drawn against the same locked brief. This page exists so the choice can
+    be made in plain text instead of five open tabs. Every row below is a decision the brief
+    left <em>open</em>; every cell is a position plus what that position costs you. Rows where
+    all five landed in the same place are marked as settled — skip them.
+  </p>
+  <div class="answer-shape">
+    base: Settle Line; salience queue: Settle Line; cost readout: Work Item;
+    concierge presence: Quiet Floor; dock: Settle Line; mobile: Sol · Ledger
+  </div>
+</header>
+
+<!-- ============================ ORIENTATION ============================ -->
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>The five, in the same shape</h2></div>
+  <p class="sec-note">
+    Same four fields each, so they are actually comparable. Read this block first; the matrix
+    assumes it.
+  </p>
+
+  <div class="orient">
+
+    <article class="card op">
+      <div class="who">Opus</div>
+      <h3>The Settle Line</h3>
+      <dl>
+        <dt>Thesis</dt>
+        <dd>The scarce resource is your attention and the one audio floor, so the app is a
+          vertical column where <strong>height means audibility</strong> — above the line you hear
+          it, below it you can see it, below the second line it is only written down.</dd>
+        <dt>Primary object</dt>
+        <dd><strong>The ticket, as a row.</strong> The live thread is a hatched sprig hanging under
+          it that vanishes on settle.</dd>
+        <dt>Distinctive bet</dt>
+        <dd>One material rule — <strong>hatched is mortal, solid is settled</strong> — teaches #73's
+          whole doctrine without a word of onboarding, and the same column renders on all three
+          surfaces, merely cropped.</dd>
+      </dl>
+    </article>
+
+    <article class="card fa">
+      <div class="who">Fable</div>
+      <h3>The Quiet Floor</h3>
+      <dl>
+        <dt>Thesis</dt>
+        <dd>The room is working correctly when it is silent, so every surface is an attention
+          ledger that makes silence legible and interruptions earned; work is text you glance at
+          and <strong>the only faces belong to voices</strong>.</dd>
+        <dt>Primary object</dt>
+        <dd><strong>The work item</strong> — but the primary <em>axis</em> is attention: layout is
+          Needs you → Holding for a lull → Working → Settled today, and tracker state is demoted to
+          a chip.</dd>
+        <dt>Distinctive bet</dt>
+        <dd>The held queue is a first-class group in the ledger with one drain button,
+          <strong>"Brief me · one breath"</strong>, which collapses N held items into one Gemini
+          call and one synthesis.</dd>
+      </dl>
+    </article>
+
+    <article class="card so">
+      <div class="who">Sol</div>
+      <h3>Signal Desk · Ledger</h3>
+      <dl>
+        <dt>Thesis</dt>
+        <dd>A quiet editorial control desk: durable work stays visible, speech is a scarce
+          broadcast channel, and the owner sees <strong>only the decisions worth interrupting life
+          for</strong>.</dd>
+        <dt>Primary object</dt>
+        <dd><strong>The obligation</strong> — a durable work item plus the decision it may
+          eventually require of you. Sessions and workers are never shown at all.</dd>
+        <dt>Distinctive bet</dt>
+        <dd>The dock is a <strong>broadcast valve</strong>: it shows the line being spoken and the
+          speak-now / next-lull / log-only counts, so you can demote a whole event class from the
+          periphery without opening the window.</dd>
+      </dl>
+    </article>
+
+    <article class="card gr">
+      <div class="who">Grok</div>
+      <h3>Signal Desk · Tray</h3>
+      <dl>
+        <dt>Thesis</dt>
+        <dd>The room earns silence, so the window should be about <strong>the short list of
+          things that broke it</strong> — not about the inventory of work, which becomes wallpaper
+          you stare at.</dd>
+        <dt>Primary object</dt>
+        <dd><strong>The attention tray</strong>: rebuilt every snapshot from spine gate events,
+          keyed to attention debt rather than to any context window. Work is demoted to a
+          "hinterland" side column.</dd>
+        <dt>Distinctive bet</dt>
+        <dd>It refuses the work ledger as the main view — the only board to argue that
+          <strong>a full ticket catalog recreates the failure at a slower cadence</strong> — and
+          gives the three surfaces three different shapes.</dd>
+      </dl>
+    </article>
+
+    <article class="card ca">
+      <div class="who">Candidate A</div>
+      <h3>Work Item</h3>
+      <dl>
+        <dt>Thesis</dt>
+        <dd>The UI has exactly three jobs — talk to the concierge cheaply, see what is true
+          underneath without asking, and receive/question/keep artifacts — plus one new control,
+          the salience surface, which is <strong>the reason the round exists</strong>.</dd>
+        <dt>Primary object</dt>
+        <dd><strong>The work item</strong> — ticket + thread + activity + artifacts + spend. The
+          concierge is chrome, not an object.</dd>
+        <dt>Distinctive bet</dt>
+        <dd>Cost is a first-class readout: a four-row mono meter
+          (<span class="mono">rules · flash · borrowed · synthesis</span>) plus an escalation log
+          keyed to <strong>the config rule that fired</strong>.</dd>
+      </dl>
+      <p class="namewarn" style="margin-top:14px">
+        Written before the round and demoted to a competing entry. It is prose, not a board — so it
+        has <strong>no drawn surfaces, no material language, and no anti-goal self-check</strong>.
+        Where a row below reads "no answer", that is why.
+      </p>
+    </article>
+  </div>
+
+  <p class="namewarn">
+    <strong>Name collision, resolved.</strong> Two entries independently landed on
+    <em>Signal Desk</em>. Throughout this page they are always
+    <strong>Sol&nbsp;·&nbsp;Ledger</strong> (obligation rows + a decision desk; the dock is a
+    broadcast valve) and <strong>Grok&nbsp;·&nbsp;Tray</strong> (an attention tray with work pushed
+    to a hinterland column). They are not variants of each other — they disagree about the primary
+    object.
+  </p>
+</section>
+
+<!-- ============================ THE MATRIX ============================ -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>The matrix</h2></div>
+  <p class="sec-note">
+    One row per real decision. <span class="verdict v-sharp">sharp fork</span>
+    <span class="verdict v-fork">fork</span>
+    <span class="verdict v-agree">settled — all five agree</span>
+    Rows that are settled, or that a mock can safely answer later, are collapsed. Tap to open.
+  </p>
+
+  <!-- ROW 1 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-sharp">sharp fork</span>
+      <h3>1 · Primary object</h3>
+      <p class="why">The noun everything else hangs off. The brief said the work item is the strong
+        default and must be beaten explicitly — two entries tried.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">The <strong>ticket</strong>, as a row. The thread is a hatched sprig under it
+          that disappears on settle and leaves a solid green settle-note.</p>
+        <p class="trade">a ticketless one-off never gets a row at all — quick asks live only in the
+          floor line and the log tail, and vanish with them.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">The <strong>work item</strong>, with attention as the primary axis. Accepts
+          the brief's default and sharpens it rather than beating it.</p>
+        <p class="trade">the tracker's actual state geometry is never visible at a glance; GitHub is
+          the escape hatch for anything shaped like planning.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">The <strong>obligation</strong> — work item plus the decision it may require.
+          Sessions and workers are never rendered.</p>
+        <p class="trade">work with no pending decision is structurally second-class, so "grinding for
+          three hours, fine" is the state this board serves worst.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">The <strong>attention tray</strong> — things that broke silence, rebuilt each
+          snapshot. Tickets exist, in a hinterland column.</p>
+        <p class="trade">browsing all work becomes a deliberate detour, and the screen you stare at
+          all day is empty by design — which is either the thesis or a void.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">The <strong>work item</strong>, argued from mortality: a card keyed to a
+          context window dies at <span class="mono">/clear</span>.</p>
+        <p class="trade">it never answers the tray or obligation framings, because it predates them —
+          its argument is only against session cards.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>2 · Main-window shape / IA</h3>
+      <p class="why">What is on screen at rest, and how many panes it takes. The panel is ~940px
+        wide in practice, which is the constraint that decides this.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos"><strong>One column + a detail pane.</strong> Column runs floor → speak line →
+          ledger → log line → composer, top to bottom, in that order always.</p>
+        <p class="trade">one region carries salience, work and log at once, so the column gets long
+          and the detail pane is the only place with any density.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos"><strong>Ledger + inspector</strong>, with the concierge as a desk bar across
+          the bottom. Ledger is grouped by what the room wants from you.</p>
+        <p class="trade">two dense columns plus a desk bar leaves nothing spare; a long Needs-you
+          group pushes Working off screen entirely.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos"><strong>Three panes</strong>: nav rail (Attention / In motion / Quiet /
+          Artifacts / Cost / Rules), editorial ledger, decision desk.</p>
+        <p class="trade">three panes at 940px is exactly the density problem Candidate A named, and
+          the rail spends a whole column on six links.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos"><strong>Booth rail + tray + hinterland</strong>, with a persistent salience
+          policy bar as the footer.</p>
+        <p class="trade">two of three columns are secondary, so most of the window is chrome around
+          a region that is empty when things go well.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos"><strong>Concierge rail (260px) + work board</strong>; item detail
+          <em>replaces</em> the board rather than adding a third column.</p>
+        <p class="trade">you cannot see the board and an item at once, and a quarter of the window is
+          permanently a face plus two readouts.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 3 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-sharp">sharp fork</span>
+      <h3>3 · Should the three surfaces share a shape?</h3>
+      <p class="why">The brief asked this directly. It is the row with the largest build-cost
+        consequence: one component tree versus three IAs.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos"><strong>Hard yes.</strong> All three render the same ordered column; the dock
+          is the top of it, the phone is it full-bleed, the panel adds a detail pane.</p>
+        <p class="trade">the desktop gives up density a wide screen could afford, and the phone
+          inherits desktop ordering it did not ask for.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos"><strong>Yes for panel and phone</strong> (same ledger, folded); the dock is
+          its own thing — a one-line pager.</p>
+        <p class="trade">the phone could have been a purer remote control; instead it carries the
+          desk's grouping and its scroll.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos"><strong>Explicit no</strong> — "they do not share a shape because they do not
+          share a job": read / govern / decide.</p>
+        <p class="trade">three IAs to design, build, and keep from drifting — the most expensive
+          answer on this row, and the hardest to keep consistent across two JS realms.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos"><strong>Explicit no</strong>, three shapes, and it lists "shared shape across
+          surfaces" as something to <em>cut</em> from today.</p>
+        <p class="trade">same bill as Sol — it calls it "more design surface area" itself — for a
+          product with one developer.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos"><strong>Same objects, different arrangement</strong>: glance (dock) → work
+          (window) → away (phone); nothing exists on one surface that is invented there.</p>
+        <p class="trade">the middle path buys neither a single component tree nor a phone tuned to
+          the phone; parity has to be maintained by discipline.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 4 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-sharp">sharp fork</span>
+      <h3>4 · The concierge's physical presence</h3>
+      <p class="why">The widest spread on the board — from zero avatars in the main window to the
+        largest avatar the product has ever had. Taste-critical and structural at once.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos"><strong>Zero avatars in the window.</strong> The speak line <em>is</em> the
+          presence — it lights and its rule animates. Exactly one avatar, in the dock.</p>
+        <p class="trade">the biggest screen loses all the warmth you paid ElevenLabs and an art
+          pipeline for; buys a work surface with no face watching you.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos"><strong>One 38px face in a bottom desk bar</strong> with a caption line, PTT,
+          typed input and attach — the whole conversational surface is one strip.</p>
+        <p class="trade">its own decisions table admits the risk: "Mikey can feel like a widget."</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">An <strong>abstract broadcast lens</strong>, salient only in the dock; the
+          main window has no persistent presence at all.</p>
+        <p class="trade">the least character of the five — a lens is not a cast, and the persona work
+          becomes almost purely audio.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">A <strong>booth rail</strong>: small avatar, vertical name, status lamp;
+          expands into a caption only while speaking.</p>
+        <p class="trade">spends a permanent column on something that is a lamp for most of the day.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">A <strong>260px rail</strong> holding the one avatar "at the largest size it
+          has ever had", with the salience queue and spend meter beneath it.</p>
+        <p class="trade">a face watches you while you work, and the rail must earn a quarter of a
+          940px window every day — not just on the days it speaks.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 5 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>5 · How work reads — grouping, sort, density</h3>
+      <p class="why">How you tell "waiting on me" from "grinding" from "done" without reading
+        words. All five refuse a kanban; they differ on what the sort key is.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">One list "sorted by what it wants". <strong>Blue gutter is the only chromatic
+          alarm</strong>; amber grinding, grey watching, green settled. Ceremony is a 3-bar gauge,
+          spend a hairline.</p>
+        <p class="trade">four states is all you get — anything finer has to live in the detail pane,
+          by explicit rule.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos"><strong>Grouped by attention state</strong> — Needs you / Holding / Working /
+          Settled today — with tracker state demoted to a chip and an amber pulse for grinding.</p>
+        <p class="trade">group membership changes under you as states flip, and it is the only
+          grouping that does not match what GitHub shows.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">Numbered <strong>editorial rows</strong> — ordinal, state dot, one line of
+          "what must be decided", ceremony gauge. Agent-state colors retired; orange means you owe a
+          decision.</p>
+        <p class="trade">an ordinal implies a queue position that nothing actually maintains, and
+          rows are tall, so six is a screenful.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">A dense <strong>hinterland stack</strong> (id, title, gear chip) plus a
+          density strip of state dots — deliberately not readable at a glance.</p>
+        <p class="trade">answers "what is the state of #75" worst of the five, on purpose; you go to
+          the tracker instead.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">Grouped by state, with a <strong>stable sort that never reorders under the
+          pointer</strong> — a state change restyles the row in place. Row shows gear, spend,
+          artifact count, room chip.</p>
+        <p class="trade">the densest row of the five, and the rule that rows never move means the
+          list is briefly lying about its own order.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 6 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-sharp">sharp fork</span>
+      <h3>6 · The salience surface — the held queue</h3>
+      <p class="why">"Killing the <span class="mono">true</span> filter is the reason this round
+        exists." The <em>policy</em> is settled (row 7). What is genuinely open is whether the
+        queue of unspoken things is a browsable place or deliberately not.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">A <strong>pill welded to the speak line</strong> ("3 held for a lull"), not a
+          region. Held items <strong>coalesce into one spoken sentence</strong> at the next lull
+          (90s of no audio and no press). Past ~6 the pill turns amber — "that is a policy bug".</p>
+        <p class="trade">you cannot skim what is pending without a click; buys a surface whose
+          correct state is empty and that never invites queue-gardening, and cuts synthesis N→1.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">A permanent <strong>"Holding for a lull" group</strong> in the ledger, each
+          row naming the rule that held it, with <strong>"Brief me · one breath"</strong> as the
+          drain (1 Gemini + 1 ElevenLabs for N items).</p>
+        <p class="trade">pending items occupy real estate every day even though the right number is
+          zero; the honesty of naming the holding rule per row is the payoff.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos"><strong>Counts, in the dock valve</strong>: speak now / next lull / log only,
+          with "ROOM QUIET · 0 waiting · 3 events logged silently" as the resting mark.</p>
+        <p class="trade">you can see how many are held but not what they are — the weakest read of
+          the queue's contents, traded for the strongest peripheral control of it.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">The tray <em>is</em> the surface, but only for things that already broke
+          silence; queued classes appear as chips on a policy bar, not as a list.</p>
+        <p class="trade">the "waiting for a lull" bucket has no home at all — the one bucket the
+          round was called to design gets a chip.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">A full <strong>SalienceQueue list</strong>: per entry Play / <strong>Read
+          (expand as text, free, no TTS — the default cheap path)</strong> / Dismiss, plus "Play all
+          (N)" with a duration estimate and "Hold the room".</p>
+        <p class="trade">the most machinery and the most invitation to manage a queue that should be
+          empty; but "Read" is the only free drain path anyone designed, and it deserves grafting
+          onto whatever wins.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 7 — unanimous -->
+  <details class="row">
+    <summary>
+      <span class="caret">settled · open</span>
+      <span class="stitle">7 · The salience <em>policy</em> — how speak/queue/silent is expressed</span>
+      <span class="shint">All five: a checked-in table of event class → speak / queue / log, edited
+        by a human, never a model's judgment. Same defaults. Nothing to decide.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Unanimous, including the default values.</strong> Gates speak (blocker,
+      needs-feedback, plan-review, settled/failed); milestones and routine progress queue for a
+      lull; <strong>tool chatter and subagent-finish are silent — today's announce-leak inverted
+      into a visible default rule</strong>. All five make it config, versioned and diffable, and all
+      five say explicitly that no model gets to rate its own importance.
+      <span class="sub">
+        Only the doorway differs, and it is cosmetic: Opus makes the speak line itself the button
+        (click the rule, get the table); Fable a settings sheet with two rows pinned to log-only in
+        v1; Grok a three-column policy strip pinned to the desk footer with an "edit policy" link;
+        Sol a nav item; Candidate A a table reachable from the queue header, scoped per room. Take
+        whichever the base gives you.
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 8 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>8 · The cost readout</h3>
+      <p class="why">Number, meter, texture, ledger, or ambient — and specifically whether "today's
+        burn" is visible in chrome at all. Opus is the outlier here and knows it.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos"><strong>Ambient.</strong> A hairline per row, explicit chips only for
+          escalations, each naming the rule that fired. <strong>No day total in chrome</strong> — it
+          lives in settings.</p>
+        <p class="trade">you cannot glance at what today cost, which in a repo whose stated top
+          priority is credit efficiency is the one place this board's austerity actually bites.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">A <strong>header total</strong> ("today $1.12 billed · $0.09 est") plus a full
+          <span class="mono">cost.jsonl</span> ledger, one line per LLM and synthesis call.</p>
+        <p class="trade">a number in the chrome nags; its own answer is that ambient displays cannot
+          be audited, and spend here is a product concern, not telemetry.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos"><strong>Per-obligation</strong> block on the decision desk — BILLED · ESTIMATE
+          · FRONTIER BORROWS — plus the day total as a nav-rail figure.</p>
+        <p class="trade">spend is scoped to whatever is selected, so "what is today costing me" is
+          always one click and one selection away.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">A hinterland block: big today figure, a bar with an escalation
+          <strong>blip</strong>, and a three-line log.</p>
+        <p class="trade">the blip is the closest thing on any board to cost-as-decoration; least
+          auditable of the four numeric treatments.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">A four-row mono <strong>SpendMeter</strong> —
+          <span class="mono">rules / flash / borrowed / synthesis</span> — plus an EscalationLog with
+          the matched rule, tier, model, duration, cost and the first line of the ask.</p>
+        <p class="trade">permanent rail space; but it is <strong>the only readout that separates
+          ElevenLabs characters — this repo's actual cash cost — from LLM spend</strong>, which is
+          the distinction the credit rules are written around.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 9 — unanimous -->
+  <details class="row">
+    <summary>
+      <span class="caret">settled · open</span>
+      <span class="stitle">9 · Escalation legibility &amp; estimate honesty</span>
+      <span class="shint">All five: every escalation names the config rule that fired, and estimates
+        are visually distinct from billed truth. Only the notation differs.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Unanimous, and it matches architecture doc 05 exactly.</strong> No board lets a model
+      declare its own difficulty; every escalation prints the rule
+      (<span class="mono">rule: plan-review → frontier</span>) beside its cost. Estimates never
+      masquerade as billed: Opus hatches estimates and keeps billed rows solid; Fable sets billed in
+      bold and estimates in grey italic and <em>never sums them into one number</em>; Sol splits
+      BILLED from ESTIMATE as separate lines; Grok tags escalations in the log; Candidate A states
+      the rule as copy ("where a figure is an estimate, the readout says so").
+      <span class="sub">
+        <strong>One sub-fork worth a sentence:</strong> only Candidate A adds a manual per-turn
+        override — a "Think hard" toggle on the composer that forces the borrowed tier and writes an
+        escalation row with <span class="mono">rule: manual</span>, visually distinct in the log.
+        Opus explicitly refuses any "be smarter" control near the conversation. That is a real
+        choice, but a one-line one.
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 10 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>10 · The dock — content and states</h3>
+      <p class="why">A non-activating NSPanel that must never steal focus. All five agree it has no
+        text input. They disagree about how much authority it gets.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">Four states (resting / wants you / speaking / voice checked out) and it
+          <strong>promotes the top flagged row's most common action to one click</strong> —
+          "approve #74" — plus hold-to-talk and hush.</p>
+        <p class="trade">the most useful dock and the most exposed: acting on work from a
+          never-focusing panel is one careless build from writing tracker state from the periphery.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">A <strong>one-line pager (~40px)</strong>: the quiet line, plus exactly one
+          urgent thing when one exists. "Speak it" / "brief me" / open. Never a list — two waiting
+          things defers to the floor.</p>
+        <p class="trade">no per-thread action at all, so every real decision costs a window
+          activation.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">A <strong>broadcast valve</strong>: the line being spoken with its source and
+          billed cost, plus speak-now / next-lull / log-only counts you can demote from.</p>
+        <p class="trade">the only dock that edits policy from the periphery — powerful, and the
+          easiest to change something important by accident on a panel with no focus.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">Lamp + at most one signal + PTT + expand; a spotlight lifts above the pill
+          while speaking; resting shows the word QUIET as a feature.</p>
+        <p class="trade">the least you can do from the dock of the five — safest against focus theft,
+          weakest as a reason to keep the surface.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">Four states in priority order: speaking (caption + transport) / something
+          waiting (<strong>Play it · Later</strong>) / mic open (whole strip inverts to light) /
+          quiet ticker. Rejects type-through by name as a TCC subsystem.</p>
+        <p class="trade">"Play it / Later" is a salience action, not a work action — cheaper and
+          safer than Opus's approve button, and correspondingly less reason to glance at it.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 11 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>11 · Mobile shape</h3>
+      <p class="why">"A walkie, not a tiny Mac" was the round-1 consensus. The open question is
+        whether the phone can still browse the room or only clear it.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">The column, <strong>full bleed</strong>; the detail pane becomes a pushed
+          screen. Identical ordering to the desktop.</p>
+        <p class="trade">a long scroll on a small screen, and the phone inherits a log tail it will
+          never read.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">The same ledger folded to one column, with a <strong>thumb-sized
+          hold-to-talk bar</strong>; the thread view is bubbles + artifact card, and the composer
+          header states where a reply routes.</p>
+        <p class="trade">carries desktop grouping onto a screen that mostly wants the top group.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">A <strong>decision inbox</strong> — "clear decisions without waking or
+          stalling threads" — plus a separate full-screen deliberate-capture view.</p>
+        <p class="trade">you cannot browse the room from the phone, only clear it; the couch use case
+          ("what's happening?") is unserved.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">Tray + talk; the hinterland collapses to one tappable line
+          ("tap for ticket list (secondary)").</p>
+        <p class="trade">same as Sol, and because the tray is usually empty the phone is often a
+          blank success screen — a hard thing to keep a person's trust with.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">Room (<strong>queue-first</strong>) + three overlays — Item, Talk, Artifact.
+          Folds today's CallView into Talk and makes "live" a property of a work item.</p>
+        <p class="trade">the only entry that says what happens to shipped live/call mode — and it
+          deletes a feature you use; A flags this as its one open question, which is honest but
+          leaves it open.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 12 — unanimous -->
+  <details class="row">
+    <summary>
+      <span class="caret">settled · open</span>
+      <span class="stitle">12 · The artifact loop</span>
+      <span class="shint">All five drew the same loop: a rendered file, version chips, Ask, and a
+        named Keep. No canvas anywhere. Nothing to decide beyond where the card lives.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Unanimous, down to the mechanics.</strong> An artifact arrives as a
+      <em>file</em>; mermaid renders to SVG through the path
+      <span class="mono">docs-publish</span> already runs (hash-cached, so the phone ships no
+      diagram engine); versions are chips (v1 / v2 / v3) and a revision is a new file, never a
+      stroke; "Ask about it" aims the existing composer at the artifact; "Keep" is a
+      confirm-as-a-sentence that names its destination path, with Sol and Grok additionally offering
+      to file a follow-up ticket. No board drew side-by-side version diffing — comparing is
+      tap-tap on all five.
+      <span class="sub">
+        <strong>Two small graftable flourishes:</strong> Opus renders an unkept artifact
+        <em>hatched</em>, so Keep is a visible material change from mortal to durable; Candidate A
+        puts unkept one-off artifacts on a shelf of the last N that ages out ("if it mattered, you
+        kept it").
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 13 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork</span>
+      <h3>13 · Voice checkout — replace or add the second face?</h3>
+      <p class="why">Anti-goal 2 caps the product at two avatars. Three boards spend one; two spend
+        both. Everything else about checkout is agreed.</p>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos"><strong>Replaces</strong> the concierge everywhere, including the dock and the
+          phone header. Hatched avatar; "end &amp; settle".</p>
+        <p class="trade">you lose Mikey's last line while the checkout is out; buys a one-face
+          guarantee across two JS realms with zero coordination logic.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos"><strong>Adds</strong> — Mikey dims but stays, Donnie appears with a dashed
+          ring. "The only second face this design ever shows."</p>
+        <p class="trade">the only board that actually spends the two-avatar allowance, and the
+          hardest to keep honest when the dock and the window are separate realms.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos"><strong>Replaces</strong> the lens identity, with a stated purpose and a
+          named settle condition.</p>
+        <p class="trade">with an abstract lens, a checkout is a label change — the moment is
+          announced rather than felt.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos"><strong>Replaces</strong> — the booth face swaps to Donnie with a "checked
+          out · temporary" chip. "Still one face. Still one floor."</p>
+        <p class="trade">same as Sol but with a real face, so it reads better and gives up the same
+          continuity.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos"><strong>Adds</strong> — a second, visibly temporary presence beneath Mikey in
+          the rail, dashed frame, with the write-back destination printed on the button:
+          <span class="mono">Settle → note on #74</span>.</p>
+        <p class="trade">two faces in permanent chrome; but that button copy is the clearest
+          statement of the settle mechanic anyone wrote and should be grafted regardless of base.</p></div>
+    </div>
+    <div class="agreed">
+      <strong>Already agreed, so do not re-litigate it:</strong> a checkout is entered from a
+      <em>work item</em> ("walk me through it"), never from a roster or a picker; it is visibly
+      temporary (dashed or hatched on every board that draws it); and it ends by writing a summary
+      back to the ticket. No board has two voices in conversation with each other.
+    </div>
+  </div>
+
+  <!-- ROW 14 — near-unanimous -->
+  <details class="row">
+    <summary>
+      <span class="caret">near-settled · open</span>
+      <span class="stitle">14 · Ceremony dial (one-off / light / full)</span>
+      <span class="shint">Same home on all five — a chip on the row, set at spawn in the confirm
+        step. The only fork is whether it can be changed afterwards, which the mock can answer.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Agreed:</strong> ceremony is displayed as a small machine-state chip or gauge on every
+      row that has a thread and in the detail header, and it is chosen at spawn inside the
+      confirm-as-a-sentence step. No board lets you drag it, and no board hides it in a settings
+      page.
+      <span class="sub">
+        <strong>The fork, and it is small:</strong> Opus makes it <em>read-only after spawn</em> —
+        "changing ceremony mid-thread is a different thread, and the UI refuses to pretend
+        otherwise." Candidate A allows a change that takes effect at the next stage boundary, never
+        mid-step. Sol shows it as an editable dial row on the decision desk. Fable and Grok display
+        it and put editing in ticket detail. Opus's position is the most defensible; Candidate A's
+        is the most forgiving. Either is safe to defer to the mock.
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 15 -->
+  <details class="row">
+    <summary>
+      <span class="caret">fork · deferrable · open</span>
+      <span class="stitle">15 · Palette and material</span>
+      <span class="shint">A real fork, but the cheapest one to change later — and two of the rules
+        are graftable onto any base for nothing.</span>
+    </summary>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">Dark charcoal. <strong>One chromatic alarm only</strong> — blue gutter means
+          wants you; amber grinding, grey quiet, green settled. Plus the material rule:
+          <strong>hatched = mortal, solid = settled</strong>, applied to threads, artifacts, spend
+          estimates and checked-out voices alike.</p>
+        <p class="trade">hatching is subtle at small sizes and needs a legend exactly once; buys one
+          rule that teaches the architecture instead of nine labels describing it.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">Dark, with blue as the only loud thing (needs you), amber pulse for grinding,
+          green for ok — and a <strong>typographic honesty rule</strong>: billed truth is bold,
+          estimates are grey italic.</p>
+        <p class="trade">three semantic hues plus a type rule is more system to hold than Opus's
+          one; the type rule is excellent and portable.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">Editorial — newspaper ledger, cream and ink, chartreuse confirm accents;
+          agent-state colors retired outright, orange reserved for "you owe a decision".</p>
+        <p class="trade">the furthest from today's panel tokens, and a light editorial surface fights
+          the dock's dark peripheral job.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">Paper + charcoal + amber/teal, and it says the break is the point:
+          "signals the product thesis change, not a reskin."</p>
+        <p class="trade">discards visual continuity deliberately — a real cost when the shipped
+          <span class="mono">--room-*</span> tokens are the migration path.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">Rules, not a palette: <strong>amber is you</strong>, achromatic luminance means
+          audio is happening, mono means machine-known state, and persona color leaves chrome
+          entirely to live only in avatar art.</p>
+        <p class="trade">no drawn surfaces, so this is an untested set of rules rather than a look —
+          but they are the cheapest rules on the page and conflict with nothing.</p></div>
+    </div>
+    <div class="agreed">
+      <strong>Graft-anywhere:</strong> Opus's <em>hatched = mortal / solid = settled</em>, Fable's
+      <em>bold billed / italic estimate</em>, and Candidate A's <em>amber is you, luminance is
+      audio, mono is machine state</em> are all rules rather than palettes. Any of the three drops
+      onto any base at essentially zero cost.
+    </div>
+  </details>
+
+  <!-- ROW 16 -->
+  <details class="row">
+    <summary>
+      <span class="caret">near-settled · open</span>
+      <span class="stitle">16 · Copy doctrine and confirmation style</span>
+      <span class="shint">Confirm-as-a-sentence is unanimous. Silence-in-words is unanimous. Only
+        Opus adds a rule the others don't.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Agreed on all five:</strong> destructive and durable actions confirm as a
+      <em>sentence naming the destination</em> — "Keep <span class="mono">daemon-boot-order.md
+      v2</span> in <span class="mono">docs/architecture/</span> and file the follow-up?"; chrome uses
+      operations nouns rather than character voice, with personality reserved for speech; and
+      <strong>silence is reported in words rather than left blank</strong> — "Nothing needs you",
+      "Floor is quiet", "queue empty", "QUIET BY DESIGN", "ROOM QUIET · 0 waiting". Every board
+      states that an empty queue is a positive report, not an empty state.
+      <span class="sub">
+        <strong>Opus adds one rule worth taking:</strong> the concierge speaks in the second person
+        about work, cites ticket numbers inline, and <em>never narrates itself</em> ("I'm looking
+        into that"). Fable pairs with it: studio nouns in chrome, character only in audio.
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 17 -->
+  <details class="row">
+    <summary>
+      <span class="caret">settled · open</span>
+      <span class="stitle">17 · Rooms and attribution</span>
+      <span class="shint">v1 has one room and all five refuse to hard-assume it the same way. Nothing
+        to decide.</span>
+    </summary>
+    <div class="agreed">
+      <strong>Unanimous:</strong> one merged view with a room label plus a switcher that filters —
+      never tabs, never a split view, never a column per room. A second room is a manifest entry, not
+      a redesign. Opus uses a 2-character mono tag on every row and keeps one shared audio floor
+      across rooms; Candidate A puts a <span class="mono">RoomChip</span> on every work item and
+      salience entry from day one, with one shared queue sorted by class then age and rules scoped
+      per room; Fable uses the quiet line plus a caret; Grok puts it in the titlebar; Sol in the nav
+      rail.
+      <span class="sub">
+        Candidate A's version is the most complete — <span class="mono">roomId</span> as a field on
+        every entity from the first commit — and it costs nothing while there is one room.
+      </span>
+    </div>
+  </details>
+
+  <!-- ROW 18 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-fork">fork on the extras only</span>
+      <h3>18 · What each concept cuts from today's UI</h3>
+      <p class="why">The brief called naming a cut a contribution. The core cut is unanimous; what
+        each adds on top is the interesting part.</p>
+    </div>
+    <div class="agreed">
+      <strong>All five cut the same core:</strong> the agent card grid as the room's content, session
+      cards as a navigable object, per-agent chat as a <em>place</em>, persona colors as a chrome
+      system, and all hand-raise / floor / speaker-queue language. That is the cancelled premise,
+      deleted five times independently.
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">Also: <strong>CallView as a distinct mode</strong> (it becomes
+          <span class="mono">milestone → speak</span> for one thread — one screen and one state
+          machine fewer), the hidden-devs/picker sheet, replay history as a surface, and every state
+          badge except four.</p>
+        <p class="trade">the deepest cut list, and the CallView kill removes something you shipped
+          and use.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">Also: the dock avatar pill, per-session PTT targets (you talk to the room and
+          the interpreter routes to a <em>ticket</em>), the five-button action cluster reduced to
+          three verbs, and per-session character swap.</p>
+        <p class="trade">"talk to the room, not to a card" is a real behavior change in muscle
+          memory.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">Also: hand-raise language and <strong>per-session replay as
+          navigation</strong>.</p>
+        <p class="trade">the shortest list — it names less than the others, so less is decided by
+          picking it.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">Also: <strong>"new session" as a primary verb</strong>, per-card state badges
+          as the room's truth, and — uniquely — a shared shape across the three surfaces.</p>
+        <p class="trade">cutting "new session" as a verb is right and unsettling: spawning becomes
+          something you ask for, not something you click.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">The only entry that names <strong>files and line counts</strong>: RoomGrid /
+          HiddenDevs plus ~536 lines of style.css, ActionCluster (290 lines), the consumer-less
+          TransportBar, the 4× duplicate transport implementations, persona choice per spawn, live
+          mode as a distinct mode.</p>
+        <p class="trade">no visual proposal to weigh the cuts against — but this is the list an
+          implementer can actually execute on Monday.</p></div>
+    </div>
+  </div>
+
+  <!-- ROW 19 -->
+  <div class="row">
+    <div class="row-head">
+      <span class="verdict v-agree">effectively settled — the tiebreaker does not break</span>
+      <h3>19 · New backend required</h3>
+      <p class="why">The brief says a design needing no new backend beats an equally good one that
+        does. Gathered from each board's own pricing — and the answer is that this row cannot decide
+        anything.</p>
+    </div>
+    <div class="agreed">
+      <strong>All five need the same three things, and nothing else of consequence:</strong>
+      (1) a salience router — an event-class policy file plus a held-queue state file, surfaced in
+      <span class="mono">PanelSnapshot</span>; (2) a spine mirror — <span class="mono">gh issue
+      list</span> plus the live <span class="mono">state/*</span> labels projected into the
+      snapshot; (3) a cost rollup over the per-call log the interpreter already emits. All five
+      reuse the existing hash-cached mermaid→SVG path for artifacts, and all five explicitly refuse
+      timing capture, a seek engine, a canvas, a floor/turn system, and a database.
+      <span class="sub">
+        Two of the three are already committed architecture work, not new bills. So price is not the
+        discriminator the brief hoped it would be — <strong>pick on shape.</strong>
+      </span>
+    </div>
+    <div class="cells">
+      <div class="cell op"><div class="lbl">Opus · Settle Line</div>
+        <p class="pos">The only board with <strong>day estimates</strong>: ~1d salience policy +
+          queue, ~2h lull detection, ~1d ticket projection, ~½d spend tail, ~½d artifacts. Adds a
+          <strong>lull timer</strong> (90s no audio, no press) nobody else has, which coalesces N
+          announcements into 1 — <em>net cheaper than today</em>.</p>
+        <p class="trade">it also declares a hard dependency: "if <span class="mono">needs-feedback</span>
+          stays prose, the blue gutter is a lie" — the spine labels must land first.</p></div>
+      <div class="cell fa"><div class="lbl">Fable · Quiet Floor</div>
+        <p class="pos">Same three, priced as "small daemon module" each, plus the "Brief me" drain
+          (1 Gemini + 1 ElevenLabs for N items) and an artifact registry. "Everything else on this
+          board: <strong>$0</strong> — pure client rendering of the snapshot."</p>
+        <p class="trade">no time figures, so "small" is doing some work; the drain is genuinely
+          cheaper than today.</p></div>
+      <div class="cell so"><div class="lbl">Sol · Ledger</div>
+        <p class="pos">Declares three items <strong>"no new backend"</strong> (ledger projection, PTT
+          surfaces, concierge lens) and three "small" (salience policy snapshot, cost rollups,
+          artifact metadata). The lightest declared bill.</p>
+        <p class="trade">it is lightest partly because it prices <em>categories</em> rather than
+          work — the ledger projection it calls free is the same spine mirror others price as a day.</p></div>
+      <div class="cell gr"><div class="lbl">Grok · Tray</div>
+        <p class="pos">Same three, plus an <strong>attention-tray projection on top of</strong> the
+          hinterland ticket mirror — the only entry with a backend line item the others do not have.</p>
+        <p class="trade">pays for two projections where the others pay for one, and its salience
+          filter is priced "Medium · new" — the heaviest honest bill on the page.</p></div>
+      <div class="cell ca"><div class="lbl">Candidate A · Work Item</div>
+        <p class="pos">Names the snapshot fields precisely (<span class="mono">workItems[] ·
+          salience[] · spend · artifacts[] · roomId</span>) and claims exactly <strong>one genuinely
+          new daemon capability</strong>: server-side mermaid→SVG with a hash cache. Nullable ticket
+          means no component interface changes when the spine lights up.</p>
+        <p class="trade">no time estimates at all; and the "one new capability" is the same renderer
+          the other four also assume, so the claim is a shade generous.</p></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================ ANTI-GOALS ============================ -->
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>Each board's self-declared closest anti-goal violation</h2></div>
+  <p class="sec-note">
+    Quoted from the boards. Three of the four drawn boards independently named the same one —
+    <strong>#7, no new orchestrator runtime</strong> — which is the round's clearest shared risk
+    signal: any ledger of tickets is one interaction away from being a tracker.
+  </p>
+
+  <div class="quotes">
+    <div class="quote op">
+      <div class="lbl">Opus · The Settle Line</div>
+      <div class="ag">Anti-goal 7 — no new orchestrator runtime</div>
+      <blockquote>"A column of tickets sorted by state, with a ceremony dial and inline actions, is
+        one interaction away from being a tracker."</blockquote>
+      <p class="guard">Guardrails, all stated as load-bearing: the ledger is strictly read-only,
+        ceremony is spawn-time only, and every write path is the concierge or a link out to GitHub.
+        It names its own tripwire — "if a future round adds 'just let me close it from the row', this
+        board becomes the thing #73 rejected." Runner-up: #2, because two windows means two potential
+        faces; the rule that checkout <em>replaces</em> rather than joins is what holds it.</p>
+    </div>
+
+    <div class="quote fa">
+      <div class="lbl">Fable · The Quiet Floor</div>
+      <div class="ag">Anti-goal 7 — mirrors the tracker, never becomes one</div>
+      <blockquote>"The Needs-you card's verbs sit one careless build away from tracker verbs:
+        'Approve' is a routed reply that a thread interprets, but a lazy implementation would wire it
+        straight to an issue-state transition, and then the ledger is an orchestrator UI with
+        drag-to-transition a sprint away."</blockquote>
+      <p class="guard">Guardrail drawn into the design: work rows carry exactly three verbs — speak,
+        reply, walk-me-through — all routed through the concierge to a thread; nothing on any surface
+        writes tracker state directly, and anything heavier is the "Open #74 ↗" escape hatch.</p>
+    </div>
+
+    <div class="quote so">
+      <div class="lbl">Sol · Signal Desk (Ledger)</div>
+      <div class="ag">Anti-goal 7 — no new orchestrator runtime</div>
+      <blockquote>"The obligation ledger can look like a bespoke task manager."</blockquote>
+      <p class="guard">Guardrail stated as structural: no lanes, no drag operations, no arbitrary
+        status editing, no process design. Every row links back to and mirrors the tracker, and
+        commands are limited to the explicit decision currently being requested.</p>
+    </div>
+
+    <div class="quote gr">
+      <div class="lbl">Grok · Signal Desk (Tray)</div>
+      <div class="ag">Anti-goal 1 — not a voice + KB chatbot</div>
+      <blockquote>"Elevating the tray and demoting the cast risks reading as 'chat with Mikey plus a
+        todo list.' … Still the nearest miss, because the booth + composer are persistent chrome.
+        Watch that in the pick: if the tray ever becomes optional secondary, this board has failed
+        #1."</blockquote>
+      <p class="guard">Counter offered: work state, spend and salience policy are all visible with
+        the mic closed and the tray empty, so the conversation is never the whole app. This is the
+        only board whose closest call is not #7 — because it is the only one that does not put the
+        work ledger in the middle.</p>
+    </div>
+
+    <div class="quote ca">
+      <div class="lbl">Candidate A · Work Item</div>
+      <div class="ag">No self-check — the requirement postdates it</div>
+      <blockquote>Nothing to quote. It restates the ten anti-goals as screen-checkable tests (that
+        restatement became the brief), but it never names a closest call of its own.</blockquote>
+      <p class="guard">Read plainly: it shares the #7 exposure — it puts the <em>full open ticket
+        set</em> on the board, which is more tracker-shaped than any drawn entry — and it is the only
+        entry whose permanent chrome is a face plus a queue plus a meter, which is the most surface
+        area pointed at #1. Neither is disqualifying; both are undeclared, and every other entry
+        declared something.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FAST ANSWER ============================ -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>If you want to answer fast</h2></div>
+  <p class="sec-note">
+    Six questions. Answer these and the target is decided; everything else is either already
+    unanimous or is a thing the mock will answer better than a board can.
+  </p>
+
+  <div class="fast">
+    <div class="fast-head">
+      <h2 style="font-size:18px">The six that matter</h2>
+      <p class="why" style="font-size:13.5px;color:var(--ink-2);margin:0">
+        In rough order of how much else they decide.
+      </p>
+    </div>
+    <ol class="ask">
+      <li>
+        <span class="q">Is the main window <em>the work</em>, or <em>what broke the silence</em>?</span>
+        <span class="opts">Work ledger in the middle (Settle Line · Quiet Floor · Sol Ledger ·
+          Work Item) versus an attention tray with work in a side column (Grok Tray). Every other
+          row inherits from this. Grok's argument — that a full ticket catalog becomes wallpaper —
+          is the one real challenge to the brief's default, so decide it deliberately.</span>
+      </li>
+      <li>
+        <span class="q">Is there a face in the main window at all?</span>
+        <span class="opts">None, presence is the speak line (Settle Line) · a 38px desk bar (Quiet
+          Floor) · a booth rail lamp (Grok Tray) · an abstract lens, dock only (Sol Ledger) · a
+          260px rail with the biggest avatar yet (Work Item). This is the row where the product's
+          warmth is spent or saved, and it cannot be deferred — it sets the layout.</span>
+      </li>
+      <li>
+        <span class="q">Is the held queue a browsable list, or deliberately not?</span>
+        <span class="opts">A pill that expands and coalesces to one spoken sentence (Settle Line) ·
+          a permanent group with a one-breath drain (Quiet Floor) · a full list with per-item Play /
+          Read / Dismiss (Work Item) · counts only (Sol Ledger) · effectively nowhere (Grok Tray).
+          This is the reason the round exists; it is also where "the correct number is zero"
+          collides with "let me see what's pending."</span>
+      </li>
+      <li>
+        <span class="q">Do the three surfaces share a shape?</span>
+        <span class="opts">Yes, one column cropped three ways (Settle Line) · mostly (Quiet Floor,
+          Work Item) · explicitly no, three jobs three shapes (Sol Ledger, Grok Tray). This is the
+          largest build-cost lever on the page for a one-developer product.</span>
+      </li>
+      <li>
+        <span class="q">Is today's spend visible in chrome, and is TTS broken out from LLM?</span>
+        <span class="opts">Ambient hairlines with no day total in chrome (Settle Line) · a header
+          total plus a call ledger (Quiet Floor) · per-obligation with a rail figure (Sol Ledger) ·
+          a figure with an escalation blip (Grok Tray) · a four-row meter separating synthesis from
+          the three brain tiers (Work Item). Given that ElevenLabs is the cash cost this repo
+          guards, Work Item's split is the only one aimed at the actual risk.</span>
+      </li>
+      <li>
+        <span class="q">Can the dock take a work action, or only a salience action?</span>
+        <span class="opts">Approve the top flagged item in one click (Settle Line) · demote an event
+          class from the valve (Sol Ledger) · play it / later (Work Item) · speak it / brief me
+          (Quiet Floor) · essentially nothing (Grok Tray). This decides whether the dock is worth
+          keeping as a surface at all.</span>
+      </li>
+    </ol>
+    <div class="defer">
+      <strong>Safely deferrable to the mock</strong> — because they are already unanimous, or
+      because a rendered screen answers them better than a static board can:
+      the salience <em>policy</em> table (row 7) and its defaults · escalation and estimate notation
+      (row 9) · the artifact loop (row 12) · rooms and attribution (row 17) · ceremony mutability
+      (row 14) · palette and material (row 15) · copy doctrine (row 16) · mobile detail below the
+      shape question (row 11) · the cut list beyond the shared core (row 18).
+      <br><br>
+      <strong>One item that is deferrable but must not be forgotten:</strong> Candidate A's open
+      question — <em>does mobile Talk absorb live mode?</em> No other entry addresses it, Opus
+      quietly assumes yes by killing CallView as a mode, and it is the only decision here that
+      deletes something already shipped and in use.
+    </div>
+  </div>
+
+  <div class="opinion">
+    <span class="tag">Opinion — mine, not a finding</span>
+    <p>
+      I would take <strong>the Settle Line as the base</strong>: it is the only entry whose material
+      rule teaches the architecture rather than describing it, its bill is the only one priced in
+      days, and it is the only board where the salience surface is the thing you stare at all day
+      instead of a settings screen you visit. Then graft three things. From <strong>Work Item</strong>,
+      the four-row spend meter and the free <em>Read</em> action on held items — Opus's refusal of a
+      day total is the one place its austerity costs real value, and Work Item is the only readout
+      that separates ElevenLabs cash from LLM spend. From <strong>Quiet Floor</strong>, the
+      billed-bold / estimate-italic type rule and the "settles → summary on the ticket" button copy.
+      From <strong>Grok</strong>, take the warning rather than the design: its point that a ticket
+      catalog becomes wallpaper is correct, but the fix is Opus's sort-by-what-it-wants plus a
+      blue-gutter-only alarm, not demoting work to a side column and staring at an empty tray. Keep
+      Opus's pill over Work Item's full queue list — the correct number really is zero — and answer
+      the live-mode question early, because it is the only decision on this page that deletes
+      something you already use.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <span>Round C · pick matrix · five concepts against one locked brief</span>
+  <span>19 rows · 7 settled or deferrable · 6 that decide the rest</span>
+</footer>
+
+</div>
+</body>
+</html>

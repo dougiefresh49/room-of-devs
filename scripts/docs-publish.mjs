@@ -69,14 +69,20 @@ marked.use({
   },
 });
 
-function section(title, mdPath) {
+function section(title, mdPath, open = false) {
   const md = readFileSync(mdPath, "utf8");
   const slug = basename(mdPath, ".md");
-  return `<details class="doc" id="${esc(slug)}" ${title === "STATUS" ? "open" : ""}>
+  return `<details class="doc" id="${esc(slug)}" ${title === "STATUS" || open ? "open" : ""}>
 <summary>${esc(title)}</summary>
 <article>${marked.parse(md)}</article>
 </details>`;
 }
+
+// Root-level active docs that deserve their OWN Postplan draft instead of a
+// collapsed <details> on the main page. On the main page only STATUS opens by
+// default, so a long doc buried there is invisible in practice — which is
+// exactly what happened to the locked design target.
+const OWN_PAGE = new Set(["design-ui-target.md"]);
 
 // docs/active/*.md on the main page; each active/ subfolder (e.g.
 // architecture-concepts/) becomes its OWN Postplan draft — Postplan caps a
@@ -90,7 +96,12 @@ function listActive() {
     a.name.localeCompare(b.name),
   )) {
     if (entry.isFile() && entry.name.endsWith(".md")) {
-      top.push({ title: entry.name.replace(/\.md$/, ""), path: join(activeDir, entry.name) });
+      const title = entry.name.replace(/\.md$/, "");
+      if (OWN_PAGE.has(entry.name)) {
+        subs.push({ name: title, docs: [{ title, path: join(activeDir, entry.name) }] });
+      } else {
+        top.push({ title, path: join(activeDir, entry.name) });
+      }
     } else if (entry.isDirectory()) {
       const docs = readdirSync(join(activeDir, entry.name))
         .filter((f) => f.endsWith(".md"))
@@ -184,7 +195,11 @@ function uploadPage(outFile, draftFile, description) {
 // Sub-pages first so the main page can link to them.
 const subLinks = [];
 for (const sub of subPages) {
-  const body = sub.docs.map((d) => section(`${sub.name}/${d.title}`, d.path)).join("\n");
+  // A one-doc page is that doc — don't make the reader expand an accordion of one.
+  const solo = sub.docs.length === 1;
+  const body = sub.docs
+    .map((d) => section(solo ? d.title : `${sub.name}/${d.title}`, d.path, solo))
+    .join("\n");
   const outFile = join(buildDir, `room-${sub.name}.html`);
   writeFileSync(
     outFile,

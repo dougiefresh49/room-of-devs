@@ -1,0 +1,1683 @@
+<title>The Settle Line — Round C concept board</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0e12;
+    --board: #0d1015;
+    --elev: #121720;
+    --surface: #171d27;
+    --strong: #1d2530;
+    --hover: #222b38;
+    --border: rgba(156, 174, 198, 0.16);
+    --border-strong: rgba(178, 194, 216, 0.28);
+    --text: #eef3f7;
+    --muted: #909ba9;
+    --faint: #7d8899;
+    --accent: #3ecf8e;
+    --working: #f3b247;
+    --flag: #66a9ff;
+    --danger: #f06464;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 120px; }
+
+  /* ---------- page furniture ---------- */
+
+  header.masthead {
+    padding: 64px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  h1 {
+    font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin: 14px 0 0;
+    font-weight: 620;
+  }
+  h1 .dim { color: var(--faint); font-weight: 400; }
+  .thesis {
+    font-size: clamp(18px, 2.4vw, 22px);
+    line-height: 1.45;
+    color: var(--text);
+    max-width: 46em;
+    margin: 22px 0 0;
+    letter-spacing: -0.01em;
+  }
+  .thesis em { color: var(--accent); font-style: normal; }
+  .byline {
+    margin-top: 26px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  section { margin: 0 0 76px; }
+  h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  h2 .num { color: var(--faint); margin-right: 10px; }
+  h3 {
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    font-weight: 580;
+  }
+  h4 {
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+  p { max-width: 44em; color: #cfd8e2; }
+  p.lede { font-size: 17px; color: var(--text); }
+  strong { color: #fff; font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  a { color: var(--flag); }
+
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 900px) { .cols2, .cols3 { grid-template-columns: 1fr; } }
+
+  .caption {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--faint);
+    margin: 12px 0 0;
+    max-width: 34em;
+  }
+  .caption b { color: var(--muted); font-weight: 600; }
+
+  /* ---------- the material rule ---------- */
+
+  .hatch {
+    background-image: repeating-linear-gradient(
+      -45deg, rgba(144,155,169,0.22) 0 1px, transparent 1px 6px);
+  }
+  .legend-cards { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 22px; }
+  .legend-card {
+    width: 268px;
+    padding: 18px 18px 16px;
+    background: var(--surface);
+    border-radius: 10px;
+  }
+  .legend-card.mortal { border: 1px dashed var(--border-strong); }
+  .legend-card.settled { border: 1px solid var(--border-strong); }
+  .legend-swatch { height: 34px; border-radius: 5px; margin-bottom: 14px; }
+  .legend-swatch.mortal { border: 1px dashed var(--muted); }
+  .legend-swatch.settled { border: 1px solid var(--accent); background: rgba(62,207,142,0.10); }
+  .legend-card h5 { margin: 0 0 6px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .legend-card.mortal h5 { color: var(--muted); }
+  .legend-card.settled h5 { color: var(--accent); }
+  .legend-card p { font-size: 13px; margin: 0; color: var(--muted); max-width: none; }
+
+  /* ---------- generic mock chrome ---------- */
+
+  .mock {
+    background: var(--board);
+    border: 1px solid var(--border-strong);
+    border-radius: 11px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+    font-size: 13px;
+  }
+  .titlebar {
+    height: 34px;
+    background: linear-gradient(#1a212c, #151b24);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 7px;
+  }
+  .tl { width: 11px; height: 11px; border-radius: 50%; }
+  .tl.r { background: #ff5f57; } .tl.y { background: #febc2e; } .tl.g { background: #28c840; }
+  .titlebar .t {
+    flex: 1; text-align: center; font-family: var(--mono);
+    font-size: 11px; color: var(--faint); letter-spacing: 0.06em;
+    margin-right: 46px;
+  }
+
+  .panel-body { display: grid; grid-template-columns: 392px 1fr; min-height: 560px; }
+  @media (max-width: 900px) { .panel-body { grid-template-columns: 1fr; } }
+
+  /* ---------- THE COLUMN ---------- */
+
+  .column {
+    background: var(--board);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- the floor (above the speak line) --- */
+  .floor { padding: 14px 14px 12px; background: var(--elev); }
+  .floor.quiet { background: transparent; }
+  .floor-head {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 9px;
+  }
+  .floor-head .who { color: var(--accent); }
+  .floor-line { font-size: 14.5px; line-height: 1.45; color: var(--text); }
+  .floor-line .cite {
+    font-family: var(--mono); font-size: 11px; color: var(--flag);
+    border-bottom: 1px dotted var(--flag); cursor: default;
+  }
+  .floor-meta {
+    margin-top: 10px; display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--faint);
+  }
+  .wave { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+  .wave i { width: 2px; background: var(--accent); border-radius: 1px; display: block; }
+  .mini-btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 7px; background: transparent;
+  }
+
+  /* --- THE SPEAK LINE --- */
+  .speakline {
+    position: relative;
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 14px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: #0f141b;
+    cursor: pointer;
+  }
+  .speakline .rulelabel {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--faint); white-space: nowrap;
+  }
+  .speakline .fill { flex: 1; height: 1px; background: var(--border-strong); }
+  .speakline .qpill {
+    font-family: var(--mono); font-size: 10px; color: var(--working);
+    border: 1px solid rgba(243,178,71,0.4); border-radius: 999px;
+    padding: 1px 8px; white-space: nowrap;
+  }
+  .speakline .qpill.none { color: var(--faint); border-color: var(--border); }
+  .speakline.hot { background: rgba(62,207,142,0.07); border-color: rgba(62,207,142,0.35); }
+  .speakline.hot .rulelabel { color: var(--accent); }
+  .speakline.hot .fill {
+    background: repeating-linear-gradient(90deg, var(--accent) 0 6px, rgba(62,207,142,0.18) 6px 12px);
+  }
+
+  /* --- the ledger --- */
+  .ledger { flex: 1; overflow: hidden; padding: 4px 0 0; }
+  .ledger-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px 6px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 4px 1fr;
+    gap: 0;
+    border-bottom: 1px solid rgba(156,174,198,0.07);
+  }
+  .row .gutter { background: transparent; }
+  .row.flagged .gutter { background: var(--flag); }
+  .row.working .gutter { background: var(--working); }
+  .row.settled .gutter { background: rgba(62,207,142,0.55); }
+  .row .rbody { padding: 9px 14px 9px 10px; }
+  .row.sel { background: var(--surface); }
+  .rtop { display: flex; align-items: baseline; gap: 8px; }
+  .tick {
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+  .roomtag {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+    color: var(--faint); border: 1px solid var(--border);
+    border-radius: 3px; padding: 0 3px;
+  }
+  .title { flex: 1; font-size: 13px; color: var(--text); letter-spacing: -0.01em; }
+  .row.settled .title { color: var(--muted); }
+  .rmeta {
+    margin-top: 4px; display: flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+  }
+  .want {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 1px 6px; border-radius: 3px;
+  }
+  .want.you { color: #0b0e12; background: var(--flag); font-weight: 700; }
+  .want.grind { color: var(--working); border: 1px solid rgba(243,178,71,0.4); }
+  .want.open { color: var(--faint); border: 1px solid var(--border); }
+  .want.done { color: var(--accent); border: 1px solid rgba(62,207,142,0.4); }
+  .want.watch { color: var(--muted); border: 1px solid var(--border); }
+
+  /* ceremony gauge */
+  .gauge { display: inline-flex; align-items: flex-end; gap: 1.5px; height: 9px; }
+  .gauge i { width: 2.5px; background: var(--border-strong); display: block; border-radius: 0.5px; }
+  .gauge i:nth-child(1) { height: 3px; } .gauge i:nth-child(2) { height: 6px; } .gauge i:nth-child(3) { height: 9px; }
+  .gauge.g1 i:nth-child(1) { background: var(--muted); }
+  .gauge.g2 i:nth-child(1), .gauge.g2 i:nth-child(2) { background: var(--muted); }
+  .gauge.g3 i { background: var(--muted); }
+
+  /* spend hairline */
+  .spend { display: inline-flex; align-items: center; gap: 5px; }
+  .spendbar { height: 2px; background: var(--muted); border-radius: 1px; display: block; opacity: 0.65; }
+  .spendbar.est {
+    background: repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 4px);
+  }
+
+  /* the mortal sprig */
+  .sprig {
+    margin: 7px 0 1px 3px;
+    padding: 6px 9px;
+    border-left: 2px dashed rgba(156,174,198,0.35);
+    border-top: 1px dashed rgba(156,174,198,0.14);
+    border-right: 1px dashed rgba(156,174,198,0.14);
+    border-bottom: 1px dashed rgba(156,174,198,0.14);
+    border-radius: 0 6px 6px 0;
+    background: rgba(255,255,255,0.012);
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .sprig .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--working); }
+  .sprig .dot.calm { background: var(--muted); }
+  .settlenote {
+    margin: 6px 0 0 3px; padding: 5px 9px;
+    border-left: 2px solid rgba(62,207,142,0.55);
+    background: rgba(62,207,142,0.05);
+    border-radius: 0 5px 5px 0;
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+  }
+
+  /* --- the log line + tail --- */
+  .logline {
+    display: flex; align-items: center; gap: 10px; padding: 6px 14px;
+    border-top: 1px dashed var(--border); background: #0a0d12;
+  }
+  .logline .rulelabel {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(125,136,153,0.7);
+  }
+  .logline .fill { flex: 1; height: 1px; background: rgba(156,174,198,0.10); }
+  .logtail {
+    padding: 7px 14px 9px; background: #090c10;
+    font-family: var(--mono); font-size: 10px; color: rgba(125,136,153,0.75);
+    line-height: 1.7;
+  }
+
+  /* --- composer --- */
+  .composer {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 11px; border-top: 1px solid var(--border); background: var(--elev);
+  }
+  .ptt {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--border-strong); background: var(--surface);
+    display: grid; place-items: center; color: var(--muted); flex: none;
+  }
+  .ptt.live { background: var(--accent); border-color: var(--accent); color: #08110c; box-shadow: 0 0 0 5px rgba(62,207,142,0.16); }
+  .cinput {
+    flex: 1; height: 32px; border-radius: 7px; background: var(--surface);
+    border: 1px solid var(--border); display: flex; align-items: center;
+    padding: 0 10px; color: var(--faint); font-size: 12.5px;
+  }
+  .clip { color: var(--faint); flex: none; }
+
+  /* --- listening overlay --- */
+  .listening {
+    padding: 16px 14px; background: rgba(62,207,142,0.06);
+    border-top: 1px solid rgba(62,207,142,0.3);
+    border-bottom: 1px solid rgba(62,207,142,0.3);
+  }
+  .listening .lbl {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 9px;
+  }
+  .meter { display: flex; align-items: center; gap: 2px; height: 22px; }
+  .meter i { width: 3px; border-radius: 1.5px; background: var(--accent); opacity: 0.85; display: block; }
+  .dimmed { opacity: 0.28; filter: saturate(0.4); }
+
+  /* ---------- detail pane ---------- */
+  .detail { padding: 18px 22px 22px; background: #0c0f14; overflow: hidden; }
+  .dhead { display: flex; align-items: flex-start; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .dhead .dt { flex: 1; }
+  .dhead h6 { margin: 4px 0 0; font-size: 19px; font-weight: 570; letter-spacing: -0.02em; }
+  .dtabs { display: flex; gap: 2px; margin: 14px 0 16px; }
+  .dtab {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 4px 10px; border-radius: 5px;
+  }
+  .dtab.on { background: var(--surface); color: var(--text); }
+  .block { margin-bottom: 18px; }
+  .kv { display: flex; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--muted); padding: 3px 0; }
+  .kv b { color: var(--faint); font-weight: 500; width: 108px; flex: none; }
+
+  .actbtn {
+    font-size: 12px; padding: 5px 12px; border-radius: 6px;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  }
+  .actbtn.primary { background: var(--accent); border-color: var(--accent); color: #08110c; font-weight: 600; }
+  .actbtn.ghost { background: transparent; color: var(--muted); }
+
+  /* artifact card */
+  .artifact { border: 1px dashed var(--border-strong); border-radius: 9px; overflow: hidden; background: var(--surface); }
+  .artifact.kept { border: 1px solid var(--accent); }
+  .art-head {
+    display: flex; align-items: center; gap: 8px; padding: 8px 11px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+  }
+  .vtabs { display: flex; gap: 3px; margin-left: auto; }
+  .vtab {
+    font-family: var(--mono); font-size: 9.5px; padding: 1px 6px; border-radius: 3px;
+    border: 1px dashed var(--border-strong); color: var(--faint);
+  }
+  .vtab.on { background: var(--strong); color: var(--text); border-style: solid; }
+  .art-canvas { padding: 12px; background: #0a0d12; }
+  .art-foot { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-top: 1px solid var(--border); }
+
+  /* spend ledger */
+  .ledger-line {
+    display: flex; align-items: center; gap: 10px; padding: 6px 0;
+    border-bottom: 1px solid rgba(156,174,198,0.07);
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+  .ledger-line .amt { margin-left: auto; color: var(--text); }
+  .ledger-line.esc { color: var(--working); }
+  .rulechip {
+    font-family: var(--mono); font-size: 9.5px; color: var(--faint);
+    border: 1px solid var(--border); border-radius: 3px; padding: 0 5px;
+  }
+
+  /* ---------- dock ---------- */
+  .dockstrip {
+    width: 330px; border-radius: 13px; overflow: hidden;
+    border: 1px solid var(--border-strong); background: rgba(13,16,21,0.96);
+    box-shadow: 0 18px 46px rgba(0,0,0,0.6);
+  }
+  .dock-face { display: flex; gap: 10px; padding: 11px 12px; align-items: flex-start; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 10px; flex: none;
+    background: linear-gradient(150deg, #2b3a4d, #1a2331);
+    border: 1px solid var(--border-strong);
+    display: grid; place-items: center;
+    font-family: var(--mono); font-size: 14px; color: var(--muted);
+  }
+  .avatar.speaking { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(62,207,142,0.14); color: var(--accent); }
+  .avatar.checkout { border-style: dashed; border-color: var(--flag); color: var(--flag); }
+  .dock-txt { flex: 1; min-width: 0; }
+  .dock-name { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+  .dock-line { font-size: 12.5px; line-height: 1.4; margin-top: 3px; }
+  .dock-bar { display: flex; align-items: center; gap: 6px; padding: 7px 12px 9px; border-top: 1px solid var(--border); }
+  .dbtn {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; color: var(--muted); background: transparent;
+  }
+  .dbtn.hot { border-color: var(--accent); color: var(--accent); background: rgba(62,207,142,0.09); }
+  .dbtn.flag { border-color: var(--flag); color: var(--flag); }
+  .dock-label {
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+    margin-bottom: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .dockgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 30px 34px; }
+  @media (max-width: 900px) { .dockgrid { grid-template-columns: 1fr; } }
+
+  /* ---------- phones ---------- */
+  .phones { display: flex; gap: 30px; flex-wrap: wrap; }
+  .phone {
+    width: 288px; border-radius: 30px; padding: 9px;
+    background: #05070a; border: 1px solid var(--border-strong);
+    box-shadow: 0 22px 56px rgba(0,0,0,0.6);
+  }
+  .phone-screen {
+    border-radius: 23px; overflow: hidden; background: var(--board);
+    height: 578px; display: flex; flex-direction: column;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between; padding: 8px 16px 4px;
+    font-family: var(--mono); font-size: 9.5px; color: var(--faint);
+  }
+  .phone-label {
+    margin-top: 14px; font-family: var(--mono); font-size: 10.5px;
+    color: var(--faint); letter-spacing: 0.08em; text-align: center;
+  }
+
+  /* ---------- policy sheet ---------- */
+  .sheet {
+    width: 100%; max-width: 520px; border-radius: 11px;
+    border: 1px solid var(--border-strong); background: var(--elev); overflow: hidden;
+  }
+  .sheet-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
+  .sheet-head .h { font-size: 15px; font-weight: 580; letter-spacing: -0.01em; }
+  .sheet-head .s { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-top: 4px; }
+  .prow { display: flex; align-items: center; gap: 12px; padding: 9px 16px; border-bottom: 1px solid rgba(156,174,198,0.07); }
+  .pname { flex: 1; font-family: var(--mono); font-size: 11.5px; color: var(--text); }
+  .pname small { display: block; color: var(--faint); font-size: 10px; margin-top: 2px; }
+  .tg { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; flex: none; }
+  .tg span {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 4px 9px; color: var(--faint); border-right: 1px solid var(--border);
+  }
+  .tg span:last-child { border-right: 0; }
+  .tg span.on { background: var(--accent); color: #08110c; font-weight: 700; }
+  .tg span.on.warn { background: var(--working); color: #17120a; }
+  .tg span.on.mute { background: var(--strong); color: var(--muted); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13.5px; }
+  th {
+    text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--faint); font-weight: 600;
+    padding: 11px 14px; border-bottom: 1px solid var(--border-strong); background: var(--elev);
+    vertical-align: bottom;
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid rgba(156,174,198,0.08); vertical-align: top; color: #cfd8e2; }
+  td:first-child { color: #fff; font-weight: 560; width: 21%; }
+  tr:last-child td { border-bottom: 0; }
+  td .no { color: var(--faint); }
+
+  ol.priced { counter-reset: p; list-style: none; padding: 0; max-width: 46em; }
+  ol.priced li {
+    padding: 13px 0 13px 44px; border-bottom: 1px solid rgba(156,174,198,0.08);
+    position: relative; color: #cfd8e2; font-size: 14px;
+  }
+  ol.priced li:before {
+    counter-increment: p; content: counter(p);
+    position: absolute; left: 0; top: 12px;
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+    border: 1px solid var(--border); border-radius: 4px; width: 22px; height: 22px;
+    display: grid; place-items: center;
+  }
+  ol.priced li .price {
+    font-family: var(--mono); font-size: 10.5px; color: var(--accent);
+    display: block; margin-top: 4px;
+  }
+  ol.priced li.free .price { color: var(--faint); }
+
+  ul.cuts { list-style: none; padding: 0; max-width: 44em; }
+  ul.cuts li { padding: 9px 0 9px 26px; position: relative; color: #cfd8e2; border-bottom: 1px solid rgba(156,174,198,0.07); font-size: 14px; }
+  ul.cuts li:before { content: "×"; position: absolute; left: 0; top: 8px; color: var(--danger); font-family: var(--mono); font-size: 16px; }
+  ul.cuts li b { color: #fff; }
+
+  .callout {
+    border-left: 2px solid var(--accent); background: rgba(62,207,142,0.05);
+    padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 24px 0;
+  }
+  .callout p { margin: 0; max-width: none; }
+  .callout.warn { border-color: var(--working); background: rgba(243,178,71,0.05); }
+
+  .anti { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 28px; max-width: 900px; }
+  @media (max-width: 760px) { .anti { grid-template-columns: 1fr; } }
+  .anti div {
+    display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(156,174,198,0.07);
+    font-size: 13px; color: #cfd8e2;
+  }
+  .anti .mark { font-family: var(--mono); font-size: 11px; flex: none; color: var(--accent); width: 40px; }
+  .anti .mark.near { color: var(--working); }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="kicker">Round C · concept board · opus</div>
+  <h1>The Settle&nbsp;Line<br><span class="dim">one column, three crops</span></h1>
+  <p class="thesis">
+    Every surface is <em>the same single column</em> cropped to fit; one horizontal
+    rule across it decides what earns the room's only audio floor; and one material
+    rule — <em>hatched is mortal, solid is settled</em> — makes #73's whole doctrine
+    visible without reading a word.
+  </p>
+  <div class="byline">
+    <span>PRIMARY OBJECT: the ticket (row) · the thread is a sprig hanging off it</span>
+    <span>NEW BACKEND: one policy file, one queue file, one lull timer</span>
+  </div>
+</header>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">00</span>The reading</h2>
+  <h3>This is not a room. It's a watch station.</h3>
+  <p class="lede">
+    The scarce resource in this product is not screen space, agents, or tickets — it is
+    <strong>the owner's attention and the one audio floor</strong>. Everything else is
+    already durable somewhere else (GitHub, the repo, transcripts). So the UI's job is
+    not to <em>hold</em> state; it is to <strong>decide what crosses into you</strong>, and
+    to make that decision inspectable and editable.
+  </p>
+  <p>
+    That gives the whole design its spine: a vertical column where <strong>height means
+    audibility</strong>. Above the line, you hear it. On the line is the policy. Below the
+    line, you can see it if you look. Below the second line it is only written down.
+    The column <em>is</em> the salience surface — not a settings screen you visit, but the
+    thing you stare at all day.
+  </p>
+
+  <div class="cols2" style="margin-top:34px">
+    <div>
+      <h4>Why one column on all three surfaces</h4>
+      <p style="font-size:14px">
+        The brief asks whether the surfaces should even share a shape. My answer is a hard
+        yes, and it is the cheapest good decision on this board: the panel, the dock and
+        the phone render <strong>the same ordered column</strong>, differing only in how much of
+        it is cropped and whether a detail pane sits beside it.
+      </p>
+      <p style="font-size:14px">
+        The dock is not a different app — it is <strong>the top of the column</strong>: the floor,
+        the speak line, and flagged rows only. The phone is the column, full bleed. The panel
+        is the column plus a detail pane. Two JS realms, one mental model, one place for a
+        bug to live.
+      </p>
+    </div>
+    <div>
+      <h4>Why the ticket is the row and the thread is a sprig</h4>
+      <p style="font-size:14px">
+        I accept the brief's mortality argument, and then I go further than accepting it —
+        I <strong>draw</strong> it. The row is the ticket: a monospace number, immortal, the join key
+        for everything. Hanging under it, indented and <strong>hatched</strong>, is the thread
+        currently serving it.
+      </p>
+      <p style="font-size:14px">
+        When the thread settles, the sprig <strong>vanishes</strong> and is replaced by a solid green
+        settle-note with the commit and the conclusion. Nothing about the row moved. A user
+        who has watched that happen twice has internalised the architecture, and no
+        onboarding copy was required.
+      </p>
+    </div>
+  </div>
+
+  <h4 style="margin-top:36px">The one material rule</h4>
+  <div class="legend-cards">
+    <div class="legend-card mortal">
+      <div class="legend-swatch mortal hatch"></div>
+      <h5>Hatched = mortal</h5>
+      <p>Threads, workers, checked-out voices, unkept artifacts, estimated spend. It exists now and it is going to die. Never trust it as a record.</p>
+    </div>
+    <div class="legend-card settled">
+      <div class="legend-swatch settled"></div>
+      <h5>Solid = settled</h5>
+      <p>Tickets, settle-notes, kept artifacts, billed cost. It survived the context window. This is the spine, and you can cite it.</p>
+    </div>
+    <div class="legend-card" style="border:1px solid var(--border); width:268px">
+      <div class="legend-swatch" style="border:1px solid var(--flag); background:rgba(102,169,255,0.10)"></div>
+      <h5 style="color:var(--flag)">Blue gutter = wants you</h5>
+      <p>The only chromatic alarm in the product. Amber means grinding, grey means quiet, green means done. If nothing is blue, you are not needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">01</span>Desktop panel — main window</h2>
+  <h3>State: something is waiting on you</h3>
+  <p>
+    The column at left, a detail pane at right. The detail pane is the <em>only</em> place
+    with density; the column stays skimmable from four feet away. Nothing in the column is
+    draggable and no state is directly editable — the ledger <strong>mirrors</strong> the spine
+    (anti-goal 7) and every state change goes through the concierge or a link out.
+  </p>
+
+  <div class="mock" style="margin-top:24px">
+    <div class="titlebar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i>
+      <div class="t">room-of-devs — the ledger</div></div>
+    <div class="panel-body">
+
+      <!-- COLUMN -->
+      <div class="column">
+        <div class="floor">
+          <div class="floor-head"><span class="who">Mikey</span><span>· spoke 40s ago · flash · 0.4¢</span></div>
+          <div class="floor-line">
+            The dock thread put a plan up on <span class="cite">#74</span> and it won't touch
+            <code style="font-size:11px">lib.rs</code> until you rule on it. Podlink's watcher is quiet.
+          </div>
+          <div class="floor-meta">
+            <button class="mini-btn">replay</button>
+            <button class="mini-btn">why this spoke</button>
+            <span style="margin-left:auto">2 of 2 gates</span>
+          </div>
+        </div>
+
+        <div class="speakline">
+          <span class="rulelabel">speak line</span>
+          <span class="fill"></span>
+          <span class="qpill">3 held for a lull</span>
+        </div>
+
+        <div class="ledger">
+          <div class="ledger-head"><span>the ledger · 6 open</span><span>sorted by what it wants</span></div>
+
+          <div class="row flagged sel">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">RD</span><span class="tick">#74</span>
+                <span class="title">Dock NSPanel steals focus on relaunch</span>
+                <span class="want you">rule on it</span>
+              </div>
+              <div class="rmeta">
+                <span class="gauge g3"><i></i><i></i><i></i></span><span>full</span>
+                <span>·</span><span>plan-review · 6m</span>
+                <span class="spend" style="margin-left:auto"><span class="spendbar" style="width:34px"></span>62¢</span>
+              </div>
+              <div class="sprig hatch">
+                <span class="dot"></span><span>build thread · alive 41m · 3 workers</span>
+                <span style="margin-left:auto">dies on close</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row working">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">RD</span><span class="tick">#81</span>
+                <span class="title">Salience policy — speak / queue / silent</span>
+                <span class="want grind">grinding</span>
+              </div>
+              <div class="rmeta">
+                <span class="gauge g2"><i></i><i></i><i></i></span><span>light</span>
+                <span>·</span><span>verify stage</span>
+                <span class="spend" style="margin-left:auto"><span class="spendbar" style="width:11px"></span>18¢</span>
+              </div>
+              <div class="sprig hatch">
+                <span class="dot"></span><span>build thread · alive 12m · 1 worker</span>
+                <span style="margin-left:auto">2 milestones held</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row flagged">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">RD</span><span class="tick">#79</span>
+                <span class="title">Spine validation experiment</span>
+                <span class="want you">answer a question</span>
+              </div>
+              <div class="rmeta">
+                <span class="gauge g2"><i></i><i></i><i></i></span><span>light</span>
+                <span>·</span><span>needs-feedback · 22m</span>
+                <span class="spend" style="margin-left:auto"><span class="spendbar" style="width:7px"></span>9¢</span>
+              </div>
+              <div class="sprig hatch">
+                <span class="dot calm"></span><span>build thread · parked, waiting on you</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">RD</span><span class="tick">#77</span>
+                <span class="title">Attachments on reply, every surface</span>
+                <span class="want open">no thread</span>
+              </div>
+              <div class="rmeta"><span>open · filed 2d ago by Mikey</span></div>
+            </div>
+          </div>
+
+          <div class="row watch">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">PL</span><span class="tick">#12</span>
+                <span class="title">Release watch — podlink, until 22:00</span>
+                <span class="want watch">watching</span>
+              </div>
+              <div class="rmeta">
+                <span class="gauge g1"><i></i><i></i><i></i></span><span>one-off</span>
+                <span>·</span><span>last poll 4m · ordinary</span>
+                <span class="spend" style="margin-left:auto"><span class="spendbar est" style="width:5px"></span>~3¢/h</span>
+              </div>
+              <div class="sprig hatch">
+                <span class="dot calm"></span><span>watcher thread · 31 silent polls</span>
+                <span style="margin-left:auto">stand down</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row settled">
+            <div class="gutter"></div>
+            <div class="rbody">
+              <div class="rtop">
+                <span class="roomtag">RD</span><span class="tick">#68</span>
+                <span class="title">Karaoke caption drift on long clips</span>
+                <span class="want done">settled</span>
+              </div>
+              <div class="settlenote">
+                settled 14:02 · "drift was clock, not text — switched to audio time"<br>
+                a91f2c1 · notes on ticket · thread discarded
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="logline"><span class="rulelabel">log line</span><span class="fill"></span>
+          <span class="rulelabel" style="letter-spacing:0.06em">41 this hour</span></div>
+        <div class="logtail">
+          14:38 #81 worker finished · 14:37 #74 read lib.rs · 14:37 #74 read dock.rs<br>
+          14:36 PL#12 poll ordinary · 14:35 #81 tsc clean · …
+        </div>
+
+        <div class="composer">
+          <div class="ptt">◉</div>
+          <div class="cinput">Ask Mikey, or say what to do…</div>
+          <div class="clip">◫</div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="detail">
+        <div class="dhead">
+          <div class="dt">
+            <div style="display:flex;gap:9px;align-items:center">
+              <span class="roomtag">RD</span>
+              <span class="tick" style="font-size:13px">#74</span>
+              <span class="want you">rule on it</span>
+              <span class="gauge g3" style="margin-left:4px"><i></i><i></i><i></i></span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">full ceremony</span>
+            </div>
+            <h6>Dock NSPanel steals focus on relaunch</h6>
+          </div>
+          <button class="actbtn ghost">open on GitHub ↗</button>
+        </div>
+
+        <div class="dtabs">
+          <span class="dtab on">plan</span><span class="dtab">activity</span>
+          <span class="dtab">artifacts 2</span><span class="dtab">spend</span>
+        </div>
+
+        <div class="block">
+          <div style="font-size:13.5px;line-height:1.6;color:#cfd8e2">
+            <strong>Proposed:</strong> convert the NSPanel once at startup and never re-convert;
+            relaunch currently re-runs the conversion, which activates. Fix is 4 lines in
+            <code>lib.rs</code> plus a guard flag. Risk: the guard is process-scoped, so a
+            crash-restart re-converts — acceptable.
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button class="actbtn primary">approve · thread resumes</button>
+            <button class="actbtn">have someone walk me through it</button>
+            <button class="actbtn ghost">reply…</button>
+          </div>
+          <div class="caption" style="margin-top:10px">
+            "Walk me through it" is the <b>voice checkout</b> button. It is a per-item action, not
+            global chrome, because a checkout is always <i>for</i> something.
+          </div>
+        </div>
+
+        <div class="block">
+          <h4>Artifact · v3 · unkept</h4>
+          <div class="artifact">
+            <div class="art-head">
+              <span>focus-path.mmd</span>
+              <span style="color:var(--faint)">· from a one-off, no ticket</span>
+              <span class="vtabs"><span class="vtab">v1</span><span class="vtab">v2</span><span class="vtab on">v3</span></span>
+            </div>
+            <div class="art-canvas">
+              <svg viewBox="0 0 380 96" width="100%" height="96" role="img" aria-label="Diagram: relaunch to setRoomMode to convert panel to activation">
+                <g font-family="ui-monospace, monospace" font-size="8.5" fill="#909ba9">
+                  <rect x="4" y="34" width="76" height="26" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="42" y="50" text-anchor="middle" fill="#eef3f7">relaunch</text>
+                  <rect x="102" y="34" width="86" height="26" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="145" y="50" text-anchor="middle" fill="#eef3f7">set_room_mode</text>
+                  <rect x="210" y="8" width="86" height="26" rx="4" fill="#171d27" stroke="#f3b247"/>
+                  <text x="253" y="24" text-anchor="middle" fill="#f3b247">convert()</text>
+                  <rect x="210" y="60" width="86" height="26" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="253" y="76" text-anchor="middle" fill="#eef3f7">show()</text>
+                  <rect x="316" y="8" width="60" height="26" rx="4" fill="#2a2016" stroke="#f3b247"/>
+                  <text x="346" y="24" text-anchor="middle" fill="#f3b247">ACTIVATES</text>
+                  <path d="M80 47h20M188 47l18-24M188 47l18 24M296 21h18" stroke="#4a5666" fill="none" stroke-width="1"/>
+                </g>
+              </svg>
+            </div>
+            <div class="art-foot">
+              <button class="actbtn primary">keep</button>
+              <button class="actbtn ghost">ask about it…</button>
+              <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--faint)">
+                hatched until kept · 3 revisions · 1.1¢</span>
+            </div>
+          </div>
+          <div class="caption">
+            <b>Keep</b> turns the border solid and prints the committed path. That is the entire
+            artifact loop: a file, a version stack, a keep button. No canvas, no ink, no strokes.
+          </div>
+        </div>
+
+        <div class="block">
+          <h4>Spend on this ticket · billed</h4>
+          <div class="ledger-line"><span>thread turns · 214</span><span class="rulechip">flash</span><span class="amt">21¢</span></div>
+          <div class="ledger-line esc">
+            <span>⚡ escalation · plan authoring</span>
+            <span class="rulechip">rule: plan-review → frontier</span>
+            <span class="amt">38¢</span>
+          </div>
+          <div class="ledger-line"><span>speech · 2 gates</span><span class="rulechip">11ty + gemini</span><span class="amt">3¢</span></div>
+          <div class="ledger-line" style="border:0"><span style="color:var(--faint)">estimate to close</span>
+            <span class="spendbar est" style="width:24px"></span><span class="amt" style="color:var(--faint)">~+20¢</span></div>
+          <div class="caption">
+            Solid rows are billed truth from the call log. The hatched row is an estimate.
+            Every escalation names <b>the config rule that fired</b> — never a model's opinion
+            of its own difficulty.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">02</span>The other three states</h2>
+  <h3>Speaking, listening, and resting — same column, three temperatures</h3>
+
+  <div class="cols3" style="margin-top:26px">
+
+    <!-- SPEAKING -->
+    <div>
+      <div class="mock">
+        <div class="titlebar" style="height:26px"><i class="tl r" style="width:8px;height:8px"></i><i class="tl y" style="width:8px;height:8px"></i><i class="tl g" style="width:8px;height:8px"></i></div>
+        <div class="column" style="border-right:0">
+          <div class="floor">
+            <div class="floor-head"><span class="who">Mikey</span><span>· speaking · borrowed opus</span></div>
+            <div class="floor-line">
+              Both threads landed on the same fix but <span class="cite">#74</span> wants a guard flag
+              and <span class="cite">#81</span> doesn't. Your call…
+            </div>
+            <div class="floor-meta">
+              <span class="wave" aria-hidden="true">
+                <i style="height:4px"></i><i style="height:9px"></i><i style="height:14px"></i><i style="height:7px"></i>
+                <i style="height:12px"></i><i style="height:5px"></i><i style="height:10px"></i><i style="height:3px"></i>
+                <i style="height:8px"></i><i style="height:13px"></i><i style="height:6px"></i><i style="height:4px"></i>
+              </span>
+              <button class="mini-btn">skip</button>
+              <span style="margin-left:auto;color:var(--working)">⚡ 4.1¢</span>
+            </div>
+          </div>
+          <div class="speakline hot">
+            <span class="rulelabel">speaking</span><span class="fill"></span>
+            <span class="qpill">2 held</span>
+          </div>
+          <div class="ledger" style="opacity:0.55">
+            <div class="row flagged"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#74</span><span class="title">Dock NSPanel steals focus</span></div>
+              <div class="rmeta"><span>plan-review</span></div></div></div>
+            <div class="row working"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#81</span><span class="title">Salience policy</span></div>
+              <div class="rmeta"><span>verify stage</span></div></div></div>
+          </div>
+          <div class="composer"><div class="ptt">◉</div><div class="cinput">interrupt…</div><div class="clip">◫</div></div>
+        </div>
+      </div>
+      <p class="caption">
+        <b>Concierge speaking.</b> No avatar in the main window — the <b>speak line itself</b> becomes
+        the presence: it lights, its rule turns into a moving dash, and the sentence sits above it.
+        The face lives in the dock, where you glance; the window is where you work. Cost of an
+        escalated turn is printed <i>while it is being spent</i>.
+      </p>
+    </div>
+
+    <!-- MIC -->
+    <div>
+      <div class="mock">
+        <div class="titlebar" style="height:26px"><i class="tl r" style="width:8px;height:8px"></i><i class="tl y" style="width:8px;height:8px"></i><i class="tl g" style="width:8px;height:8px"></i></div>
+        <div class="column" style="border-right:0">
+          <div class="floor dimmed">
+            <div class="floor-head"><span class="who">Mikey</span><span>· listening</span></div>
+            <div class="floor-line">The dock thread put a plan up on #74…</div>
+          </div>
+          <div class="listening">
+            <div class="lbl">◉ holding · mic open</div>
+            <div class="meter" aria-hidden="true">
+              <i style="height:5px"></i><i style="height:11px"></i><i style="height:18px"></i><i style="height:22px"></i>
+              <i style="height:14px"></i><i style="height:8px"></i><i style="height:16px"></i><i style="height:21px"></i>
+              <i style="height:12px"></i><i style="height:6px"></i><i style="height:15px"></i><i style="height:19px"></i>
+              <i style="height:9px"></i><i style="height:4px"></i><i style="height:13px"></i><i style="height:7px"></i>
+            </div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:10px">
+              "approve seventy-four and have the dock thread also test relaunch"
+            </div>
+            <div style="font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:8px">
+              release to send · esc to discard · nothing captured before the press
+            </div>
+          </div>
+          <div class="ledger dimmed">
+            <div class="row flagged"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#74</span><span class="title">Dock NSPanel steals focus</span></div></div></div>
+            <div class="row working"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#81</span><span class="title">Salience policy</span></div></div></div>
+            <div class="row"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#79</span><span class="title">Spine validation</span></div></div></div>
+          </div>
+          <div class="composer" style="background:rgba(62,207,142,0.06)">
+            <div class="ptt live">◉</div>
+            <div class="cinput" style="color:var(--accent);border-color:rgba(62,207,142,0.4)">listening… release to send</div>
+            <div class="clip">◫</div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        <b>Your mic open.</b> Capture only ever starts on a deliberate press (anti-goal 5), and the
+        UI says so in words on the panel itself. The column <b>dims rather than moves</b> — no
+        layout shift, so a held press never re-flows what you were reading. Live transcript is the
+        receipt: you can see exactly what was heard before you release.
+      </p>
+    </div>
+
+    <!-- RESTING -->
+    <div>
+      <div class="mock">
+        <div class="titlebar" style="height:26px"><i class="tl r" style="width:8px;height:8px"></i><i class="tl y" style="width:8px;height:8px"></i><i class="tl g" style="width:8px;height:8px"></i></div>
+        <div class="column" style="border-right:0">
+          <div class="floor quiet">
+            <div class="floor-head"><span style="color:var(--faint)">quiet</span><span>· since 14:02</span></div>
+            <div class="floor-line" style="color:var(--faint);font-size:13px">
+              Nothing has needed you for 36 minutes. Three threads grinding, one watcher.
+            </div>
+          </div>
+          <div class="speakline">
+            <span class="rulelabel">speak line</span><span class="fill"></span>
+            <span class="qpill none">queue empty</span>
+          </div>
+          <div class="ledger">
+            <div class="row working"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#81</span><span class="title">Salience policy</span>
+                <span class="want grind">grinding</span></div>
+              <div class="rmeta"><span class="gauge g2"><i></i><i></i><i></i></span><span>light · verify</span></div>
+            </div></div>
+            <div class="row working"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#83</span><span class="title">Ledger row component</span>
+                <span class="want grind">grinding</span></div>
+              <div class="rmeta"><span class="gauge g2"><i></i><i></i><i></i></span><span>light · build</span></div>
+            </div></div>
+            <div class="row"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="roomtag">PL</span><span class="tick">#12</span>
+                <span class="title">Release watch</span><span class="want watch">watching</span></div>
+              <div class="rmeta"><span>31 silent polls · ordinary</span></div>
+            </div></div>
+            <div class="row settled"><div class="gutter"></div><div class="rbody">
+              <div class="rtop"><span class="tick">#68</span><span class="title">Karaoke caption drift</span>
+                <span class="want done">settled</span></div>
+            </div></div>
+          </div>
+          <div class="logline"><span class="rulelabel">log line</span><span class="fill"></span></div>
+          <div class="logtail">14:38 · 14:37 · 14:36 · 14:35 …</div>
+          <div class="composer"><div class="ptt">◉</div><div class="cinput">Ask Mikey…</div><div class="clip">◫</div></div>
+        </div>
+      </div>
+      <p class="caption">
+        <b>Resting.</b> This is the state the product is optimised for, and it is designed to be
+        <i>pleasant to look at</i>, not empty. No blue in the gutter means you are not needed.
+        The queue pill reads <b>"queue empty"</b> in grey rather than disappearing — an empty
+        salience queue is a positive report, so it gets said out loud in text.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">03</span>The dock — a non-activating NSPanel</h2>
+  <h3>The dock is the top of the column. That's all it ever is.</h3>
+  <p>
+    Because the panel must never steal focus, it contains <strong>no text input and no scroll
+    region</strong> — a text field needs key focus, and key focus is activation. Every control is
+    a single click on a big target. Attachments are exempt here for the same reason: the dock
+    is not a reply surface, so input parity does not apply to it. Reply lives one click away
+    ("open" hands off to the main window, which <em>is</em> allowed to activate).
+  </p>
+
+  <div class="dockgrid" style="margin-top:28px">
+    <div>
+      <div class="dock-label">resting</div>
+      <div class="dockstrip">
+        <div class="dock-face">
+          <div class="avatar">◔</div>
+          <div class="dock-txt">
+            <div class="dock-name">Mikey · quiet 36m</div>
+            <div class="dock-line" style="color:var(--muted)">3 grinding · 1 watching · nothing for you</div>
+          </div>
+        </div>
+        <div class="dock-bar">
+          <button class="dbtn">◉ hold to talk</button>
+          <button class="dbtn">hush 1h</button>
+          <button class="dbtn" style="margin-left:auto">open</button>
+        </div>
+      </div>
+      <p class="caption">At rest the dock is a status pebble. One line, no counts you have to parse.</p>
+    </div>
+
+    <div>
+      <div class="dock-label">something waiting on you</div>
+      <div class="dockstrip" style="border-color:rgba(102,169,255,0.45)">
+        <div class="dock-face">
+          <div class="avatar" style="border-color:var(--flag);color:var(--flag)">◔</div>
+          <div class="dock-txt">
+            <div class="dock-name" style="color:var(--flag)">2 want you</div>
+            <div class="dock-line">
+              <span style="font-family:var(--mono);font-size:11px">#74</span> plan-review ·
+              <span style="font-family:var(--mono);font-size:11px">#79</span> a question
+            </div>
+          </div>
+        </div>
+        <div class="dock-bar">
+          <button class="dbtn flag">approve #74</button>
+          <button class="dbtn">say it again</button>
+          <button class="dbtn" style="margin-left:auto">open</button>
+        </div>
+      </div>
+      <p class="caption">
+        The dock promotes <b>the single most common action</b> for the top flagged row to a one-click
+        button. Approving a plan without focusing a window is the whole reason this surface exists.
+      </p>
+    </div>
+
+    <div>
+      <div class="dock-label">concierge speaking</div>
+      <div class="dockstrip" style="border-color:rgba(62,207,142,0.45)">
+        <div class="dock-face">
+          <div class="avatar speaking">◔</div>
+          <div class="dock-txt">
+            <div class="dock-name" style="color:var(--accent)">Mikey · speaking · ⚡opus 4.1¢</div>
+            <div class="dock-line">Both threads landed on the same fix but #74 wants a guard flag…</div>
+          </div>
+        </div>
+        <div class="dock-bar">
+          <span class="wave" style="margin-right:4px" aria-hidden="true">
+            <i style="height:4px"></i><i style="height:10px"></i><i style="height:14px"></i><i style="height:6px"></i>
+            <i style="height:12px"></i><i style="height:8px"></i><i style="height:3px"></i><i style="height:11px"></i>
+          </span>
+          <button class="dbtn hot">◉ answer</button>
+          <button class="dbtn">skip</button>
+          <button class="dbtn" style="margin-left:auto">open</button>
+        </div>
+      </div>
+      <p class="caption">
+        This is the <b>only</b> avatar in the product at rest. Lipsync stays exactly what it is today:
+        a cosmetic rAF loop mutating an <code>&lt;img&gt;</code> by ref inside one leaf, never a React
+        render, never a layout input (anti-goals 2 and 4).
+      </p>
+    </div>
+
+    <div>
+      <div class="dock-label">a voice is checked out</div>
+      <div class="dockstrip" style="border-color:rgba(102,169,255,0.45)">
+        <div class="dock-face">
+          <div class="avatar checkout hatch">◑</div>
+          <div class="dock-txt">
+            <div class="dock-name" style="color:var(--flag)">Donnie · checked out for #74</div>
+            <div class="dock-line">Walking you through the plan. Settles to the ticket when done.</div>
+          </div>
+        </div>
+        <div class="dock-bar">
+          <button class="dbtn hot">◉ hold to talk</button>
+          <button class="dbtn flag">end &amp; settle</button>
+          <button class="dbtn" style="margin-left:auto">open</button>
+        </div>
+      </div>
+      <p class="caption">
+        The checked-out voice <b>replaces</b> Mikey in the dock rather than joining him — so two faces
+        are never on screen at once even across two windows. Its avatar is <b>hatched</b>, same rule as
+        everywhere: this one is going to die, and it owes you a written summary when it does.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">04</span>Mobile</h2>
+  <h3>The column, full bleed. The detail pane becomes a pushed screen.</h3>
+
+  <div class="phones" style="margin-top:26px">
+
+    <!-- phone 1 -->
+    <div>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:38</span><span>room-of-devs ▾</span><span>▮▮▮</span></div>
+        <div class="floor">
+          <div class="floor-head"><span class="who">Mikey</span><span>· 40s ago</span></div>
+          <div class="floor-line" style="font-size:13.5px">
+            The dock thread put a plan up on <span class="cite">#74</span>. It won't touch lib.rs
+            until you rule.
+          </div>
+          <div class="floor-meta"><button class="mini-btn">replay</button>
+            <span style="margin-left:auto">phone ▾</span></div>
+        </div>
+        <div class="speakline"><span class="rulelabel">speak line</span><span class="fill"></span>
+          <span class="qpill">3 held</span></div>
+        <div class="ledger">
+          <div class="row flagged"><div class="gutter"></div><div class="rbody">
+            <div class="rtop"><span class="tick">#74</span><span class="title">Dock NSPanel steals focus</span></div>
+            <div class="rmeta"><span class="want you">rule on it</span>
+              <span class="gauge g3"><i></i><i></i><i></i></span><span>full</span>
+              <span class="spend" style="margin-left:auto">62¢</span></div>
+            <div class="sprig hatch"><span class="dot"></span><span>thread alive 41m</span></div>
+          </div></div>
+          <div class="row flagged"><div class="gutter"></div><div class="rbody">
+            <div class="rtop"><span class="tick">#79</span><span class="title">Spine validation experiment</span></div>
+            <div class="rmeta"><span class="want you">a question</span>
+              <span class="spend" style="margin-left:auto">9¢</span></div>
+          </div></div>
+          <div class="row working"><div class="gutter"></div><div class="rbody">
+            <div class="rtop"><span class="tick">#81</span><span class="title">Salience policy</span></div>
+            <div class="rmeta"><span class="want grind">grinding</span>
+              <span class="spend" style="margin-left:auto">18¢</span></div>
+          </div></div>
+          <div class="row"><div class="gutter"></div><div class="rbody">
+            <div class="rtop"><span class="roomtag">PL</span><span class="tick">#12</span>
+              <span class="title">Release watch</span></div>
+            <div class="rmeta"><span class="want watch">watching</span></div>
+          </div></div>
+          <div class="row settled"><div class="gutter"></div><div class="rbody">
+            <div class="rtop"><span class="tick">#68</span><span class="title">Karaoke caption drift</span></div>
+            <div class="rmeta"><span class="want done">settled 14:02</span></div>
+          </div></div>
+        </div>
+        <div class="logline"><span class="rulelabel">log line</span><span class="fill"></span>
+          <span class="rulelabel" style="letter-spacing:0.06em">41</span></div>
+        <div class="composer">
+          <div class="ptt">◉</div><div class="cinput">Ask Mikey…</div><div class="clip">◫</div>
+        </div>
+      </div></div>
+      <div class="phone-label">the column · two things want you</div>
+    </div>
+
+    <!-- phone 2 -->
+    <div>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:41</span><span>#74 ▾</span><span>▮▮▮</span></div>
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--flag)">‹ ledger</span>
+            <span class="want you" style="margin-left:auto">rule on it</span>
+          </div>
+          <div style="font-size:16px;font-weight:570;margin-top:8px;letter-spacing:-0.02em">
+            Dock NSPanel steals focus on relaunch</div>
+          <div class="rmeta"><span class="tick">#74</span>
+            <span class="gauge g3"><i></i><i></i><i></i></span><span>full</span>
+            <span>· plan-review</span><span class="spend" style="margin-left:auto">62¢</span></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:12px 14px">
+          <h4 style="margin-bottom:8px">artifact · v3 · unkept</h4>
+          <div class="artifact">
+            <div class="art-head"><span>focus-path.mmd</span>
+              <span class="vtabs"><span class="vtab">v1</span><span class="vtab">v2</span><span class="vtab on">v3</span></span></div>
+            <div class="art-canvas">
+              <svg viewBox="0 0 200 92" width="100%" height="80" role="img" aria-label="Diagram of the relaunch focus path">
+                <g font-family="ui-monospace, monospace" font-size="7" fill="#909ba9">
+                  <rect x="4" y="34" width="52" height="22" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="30" y="48" text-anchor="middle" fill="#eef3f7">relaunch</text>
+                  <rect x="72" y="34" width="56" height="22" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="100" y="48" text-anchor="middle" fill="#eef3f7">room_mode</text>
+                  <rect x="142" y="8" width="52" height="22" rx="4" fill="#2a2016" stroke="#f3b247"/>
+                  <text x="168" y="22" text-anchor="middle" fill="#f3b247">convert</text>
+                  <rect x="142" y="60" width="52" height="22" rx="4" fill="#171d27" stroke="#3a4655"/>
+                  <text x="168" y="74" text-anchor="middle" fill="#eef3f7">show</text>
+                  <path d="M56 45h14M128 45l12-16M128 45l12 16" stroke="#4a5666" fill="none"/>
+                </g>
+              </svg>
+            </div>
+            <div class="art-foot">
+              <button class="actbtn primary" style="font-size:11px">keep</button>
+              <button class="actbtn ghost" style="font-size:11px">ask about it</button>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="actbtn primary" style="font-size:11.5px">approve</button>
+            <button class="actbtn" style="font-size:11.5px">walk me through it</button>
+          </div>
+          <div class="settlenote" style="margin-top:14px">
+            history · v1 asked for a mutex, you said no, v2 dropped it
+          </div>
+        </div>
+        <div class="composer">
+          <div class="ptt">◉</div><div class="cinput">reply to #74…</div><div class="clip">◫</div>
+        </div>
+      </div></div>
+      <div class="phone-label">work item · the artifact loop</div>
+    </div>
+
+    <!-- phone 3 -->
+    <div>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:43</span><span>room-of-devs ▾</span><span>▮▮▮</span></div>
+        <div class="dock-face" style="border-bottom:1px solid var(--border)">
+          <div class="avatar checkout hatch">◑</div>
+          <div class="dock-txt">
+            <div class="dock-name" style="color:var(--flag)">Donnie · checked out · #74</div>
+            <div class="dock-line" style="font-size:12px">Walking the plan. Settles to the ticket.</div>
+          </div>
+        </div>
+        <div class="listening" style="flex:none">
+          <div class="lbl">◉ holding · mic open</div>
+          <div class="meter" aria-hidden="true">
+            <i style="height:6px"></i><i style="height:14px"></i><i style="height:20px"></i><i style="height:11px"></i>
+            <i style="height:18px"></i><i style="height:7px"></i><i style="height:15px"></i><i style="height:22px"></i>
+            <i style="height:9px"></i><i style="height:13px"></i><i style="height:5px"></i><i style="height:17px"></i>
+          </div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:9px">
+            "fine, but drop the mutex and just guard it"
+          </div>
+        </div>
+        <div style="flex:1;padding:12px 14px;overflow:hidden">
+          <h4>this walkthrough so far</h4>
+          <div class="settlenote" style="margin-bottom:7px">you: no mutex — guard flag only</div>
+          <div class="settlenote" style="margin-bottom:7px">you: test relaunch after crash-restart</div>
+          <div class="sprig hatch" style="margin-left:0">
+            <span class="dot"></span><span>2 decisions captured · will be written to #74</span>
+          </div>
+        </div>
+        <div class="dock-bar" style="border-top:1px solid var(--border)">
+          <button class="dbtn flag">end &amp; settle</button>
+          <span style="margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--faint)">7¢ so far</span>
+        </div>
+        <div class="composer">
+          <div class="ptt live">◉</div>
+          <div class="cinput" style="color:var(--accent)">release to send</div>
+          <div class="clip">◫</div>
+        </div>
+      </div></div>
+      <div class="phone-label">mic open · voice checked out</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>
+      <strong>Attachments everywhere you can reply.</strong> The paperclip sits in the composer on
+      every surface that has a composer — panel column, work item, phone. The dock has no composer
+      and therefore no paperclip, which is a consequence of the focus constraint rather than an
+      omission.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">05</span>The salience surface</h2>
+  <h3>You click the line. The line is the setting.</h3>
+  <p>
+    The centre of this round. Today the filter is <code>true</code>. Here it is a small,
+    boring, checked-in table of event classes — and the way you reach it is by clicking the
+    horizontal rule that is already the most-looked-at pixel in the app. The column is the
+    <em>consequence</em> of this table; the table is the only thing that is editable.
+  </p>
+
+  <div class="cols2" style="margin-top:26px;align-items:start">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="h">The speak line</div>
+        <div class="s">room-of-devs · salience.json · checked in, diffable</div>
+      </div>
+      <div class="prow">
+        <div class="pname">blocker<small>a thread cannot proceed</small></div>
+        <div class="tg"><span class="on">speak</span><span>hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">needs-feedback<small>a question for you</small></div>
+        <div class="tg"><span class="on">speak</span><span>hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">plan-review<small>a plan wants a ruling</small></div>
+        <div class="tg"><span class="on">speak</span><span>hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">settled / failed<small>a thread finished</small></div>
+        <div class="tg"><span>speak</span><span class="on warn">hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">milestone<small>stage done, commit landed</small></div>
+        <div class="tg"><span>speak</span><span class="on warn">hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">watcher · ordinary<small>a poll found nothing</small></div>
+        <div class="tg"><span>speak</span><span>hold</span><span class="on mute">log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">watcher · anomaly<small>a poll found something</small></div>
+        <div class="tg"><span class="on">speak</span><span>hold</span><span>log</span></div>
+      </div>
+      <div class="prow">
+        <div class="pname">tool chatter<small>reads, writes, greps</small></div>
+        <div class="tg"><span>speak</span><span>hold</span><span class="on mute">log</span></div>
+      </div>
+      <div class="prow" style="border-bottom:0">
+        <div class="pname">subagent finished<small>a worker under a thread</small></div>
+        <div class="tg"><span>speak</span><span>hold</span><span class="on mute">log</span></div>
+      </div>
+      <div style="padding:11px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+        <button class="actbtn" style="font-size:11.5px">hush 1h</button>
+        <button class="actbtn" style="font-size:11.5px">hold everything</button>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--faint)">
+          a lull = 90s no audio, no press</span>
+      </div>
+    </div>
+
+    <div>
+      <h4>What "hold for a lull" looks like</h4>
+      <div class="sheet" style="max-width:420px">
+        <div class="sheet-head" style="display:flex;align-items:center;gap:10px">
+          <div><div class="h" style="font-size:13px">3 held for a lull</div>
+            <div class="s">next lull in ~40s of quiet</div></div>
+          <button class="actbtn ghost" style="margin-left:auto;font-size:11px">drain now</button>
+        </div>
+        <div class="prow"><div class="pname">#81 verify stage passed<small>milestone · 6m ago</small></div>
+          <button class="mini-btn">drop</button></div>
+        <div class="prow"><div class="pname">#83 ledger row component landed<small>milestone · 11m ago</small></div>
+          <button class="mini-btn">drop</button></div>
+        <div class="prow" style="border-bottom:0"><div class="pname">#68 settled<small>settled · 36m ago</small></div>
+          <button class="mini-btn">drop</button></div>
+      </div>
+      <p class="caption">
+        Held items <b>coalesce</b>: when the lull comes, Mikey speaks one sentence covering all three,
+        not three clips. Three held milestones cost one Gemini call and one synthesis. Dropping is
+        free and silent — the events are still in the log tail.
+      </p>
+
+      <h4 style="margin-top:28px">Why the queue is a pill and not a panel</h4>
+      <p style="font-size:14px">
+        A queue with its own screen invites you to manage it. This one lives as a pill welded to
+        the speak line, because <strong>the correct number is zero</strong> and the correct
+        interaction is usually none. If it grows past ~6 the pill turns amber — that is not a
+        backlog, it is a <em>policy bug</em>, and the fix is one row in the table above.
+      </p>
+      <p style="font-size:14px">
+        <strong>Silence is designed, not absent.</strong> When the queue drains to empty the pill reads
+        "queue empty" in grey and stays. The room reporting that it has nothing to say is a real
+        message, and the only way to trust silence is to be shown that it was chosen.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">06</span>The three dials</h2>
+  <div class="cols3" style="margin-top:22px">
+    <div>
+      <h4>1 · Ceremony per thread</h4>
+      <div style="display:flex;gap:14px;align-items:center;margin:14px 0 12px">
+        <span style="display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)">
+          <span class="gauge g1"><i></i><i></i><i></i></span>one-off</span>
+        <span style="display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)">
+          <span class="gauge g2"><i></i><i></i><i></i></span>light</span>
+        <span style="display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)">
+          <span class="gauge g3"><i></i><i></i><i></i></span>full</span>
+      </div>
+      <p style="font-size:13.5px">
+        A three-bar gauge glyph, 9px tall, on every row that has a thread. It is set once at spawn
+        (a toggle-group in the confirm step) and afterwards it is <strong>read-only</strong> — changing
+        ceremony mid-thread is a different thread, and the UI refuses to pretend otherwise.
+      </p>
+    </div>
+    <div>
+      <h4>2 · Voice attachment</h4>
+      <div style="margin:14px 0 12px">
+        <div class="dockstrip" style="width:100%;box-shadow:none">
+          <div class="dock-face" style="padding:9px 10px">
+            <div class="avatar checkout hatch" style="width:30px;height:30px;font-size:12px">◑</div>
+            <div class="dock-txt"><div class="dock-name" style="color:var(--flag)">Donnie · for #74</div>
+              <div class="dock-line" style="font-size:11.5px;color:var(--muted)">settles when you end it</div></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13.5px">
+        Invisible by default — Mikey is simply who speaks. A checkout is entered from a
+        <strong>work item's</strong> "walk me through it" and appears as a hatched strip that
+        <strong>replaces</strong> the concierge everywhere. There is no roster, no picker, no
+        "who's on the floor". Voices never appear together.
+      </p>
+    </div>
+    <div>
+      <h4>3 · Brain tier per turn</h4>
+      <div style="margin:14px 0 12px;font-family:var(--mono);font-size:10.5px">
+        <div class="ledger-line"><span>command · route</span><span class="rulechip">rules</span><span class="amt">0¢</span></div>
+        <div class="ledger-line"><span>tap-in Q&amp;A</span><span class="rulechip">flash</span><span class="amt">~0.4¢</span></div>
+        <div class="ledger-line esc"><span>plan-review authoring</span><span class="rulechip">frontier</span><span class="amt">~38¢</span></div>
+      </div>
+      <p style="font-size:13.5px">
+        Shown as what it is: <strong>a routing table in settings</strong> mapping turn class → tier,
+        editable as rows. There is deliberately <strong>no "be smarter" control</strong> anywhere near
+        the conversation, because self-assessed escalation is unauditable. Every escalation prints
+        the rule that fired next to its cost.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">07</span>Decisions</h2>
+  <h3>What I chose, what I refused, and what it costs</h3>
+  <div class="tablewrap" style="margin-top:20px">
+    <table>
+      <thead><tr><th>Area</th><th>Chose</th><th>Rejected</th><th>Tradeoff</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Surface shape</td>
+          <td>One vertical column, identical ordering, on all three surfaces; panel adds a detail pane, dock crops to the top</td>
+          <td class="no">Purpose-built shapes per surface (board on desktop, feed on phone)</td>
+          <td>Gives up desktop-specific density and the two-pane overview a wide screen could afford; buys one component tree, one mental model, and a dock that is provably consistent with the window.</td>
+        </tr>
+        <tr>
+          <td>Primary object</td>
+          <td>The ticket, as a row. The thread is a hatched sprig hanging under it that disappears on settle.</td>
+          <td class="no">Session/agent cards; a pure event feed; "the day"</td>
+          <td>A ticketless one-off has no row until it graduates, so quick asks live only in the floor and the log — acceptable, since that is exactly their lifespan.</td>
+        </tr>
+        <tr>
+          <td>Material language</td>
+          <td>Hatched = mortal/provisional, solid = settled/durable. Applied to threads, artifacts, spend estimates, checked-out voices.</td>
+          <td class="no">Color-coding mortality; badges reading "ephemeral"</td>
+          <td>Hatching is subtle at small sizes and needs a legend once; buys a single rule that teaches the architecture instead of nine labels that describe it.</td>
+        </tr>
+        <tr>
+          <td>Salience</td>
+          <td>A horizontal Speak Line that is both the divider and the button; policy is a 9-row table of event classes × speak/hold/log</td>
+          <td class="no">Drag an event class across the line; per-thread mute toggles; a notification-center screen</td>
+          <td>Direct manipulation would be more satisfying and drifts toward anti-goal 7; a table is diffable, checked in, and reviewable by a human at 3am.</td>
+        </tr>
+        <tr>
+          <td>Held queue</td>
+          <td>A pill on the line; held items coalesce into one spoken sentence at the next lull</td>
+          <td class="no">A visible queue list as a primary region</td>
+          <td>You cannot browse what is pending without a click; buys an interface whose correct state is empty and that never invites queue-gardening. Coalescing also cuts synthesis cost N→1.</td>
+        </tr>
+        <tr>
+          <td>Concierge presence</td>
+          <td>Zero avatars in the main window — presence <em>is</em> the speak line. Exactly one avatar in the dock.</td>
+          <td class="no">Persistent avatar chrome in the panel; a summonable orb; an idle-animating face on the phone</td>
+          <td>Loses some of the product's warmth on the biggest screen; buys a work surface that never has a face watching you, and makes "at most two avatars" structurally impossible to violate.</td>
+        </tr>
+        <tr>
+          <td>Second voice</td>
+          <td>Checkout <em>replaces</em> the concierge in the dock and on the phone header</td>
+          <td class="no">Showing both voices side by side during a checkout</td>
+          <td>You momentarily cannot see Mikey's last line while Donnie is out; buys a hard guarantee of one face on screen, across two windows, with no coordination logic.</td>
+        </tr>
+        <tr>
+          <td>Cost readout</td>
+          <td>Ambient hairline per row + explicit chips only for escalations, each naming the config rule that fired; hatched = estimate, solid = billed</td>
+          <td class="no">A global spend meter in chrome; a cost dashboard; per-turn pricing on every message</td>
+          <td>No single "today's burn" number at a glance (it lives in settings); buys attention on the only spend that is ever surprising — the escalations.</td>
+        </tr>
+        <tr>
+          <td>Artifacts</td>
+          <td>A card in the work item with a rendered SVG, a version tab strip, and one <em>Keep</em> button that turns the border solid</td>
+          <td class="no">A gallery, a canvas, side-by-side version diffing, annotations on the image</td>
+          <td>Comparing v2 and v3 means toggling rather than seeing both; buys a loop that is provably a file loop and needs no ink, no strokes, no timing.</td>
+        </tr>
+        <tr>
+          <td>Work-state editing</td>
+          <td>The ledger is strictly read-only. State changes go through the concierge or an "open on GitHub" link.</td>
+          <td class="no">Inline state menus, drag between states, close/assign from the row</td>
+          <td>Two clicks instead of one for a state change; buys total immunity to becoming an orchestrator runtime, and keeps the tracker unambiguously the writer.</td>
+        </tr>
+        <tr>
+          <td>Rooms</td>
+          <td>One merged column with a 2-char monospace room tag; room switcher only filters</td>
+          <td class="no">Tabs or a sidebar per room; separate columns</td>
+          <td>Two busy rooms will make the column noisy; buys correct behaviour for the shared audio floor — which is global — and costs nothing in v1's single room.</td>
+        </tr>
+        <tr>
+          <td>Dock input</td>
+          <td>No text field, no scroll, no attachments; one promoted action button for the top flagged row</td>
+          <td class="no">Quick-reply field in the dock; a mini transcript</td>
+          <td>You cannot type from the dock; buys the non-activating guarantee by construction rather than by careful event handling.</td>
+        </tr>
+        <tr>
+          <td>Mic</td>
+          <td>Press-and-hold, with a live transcript shown as a receipt before release; the column dims, never re-flows</td>
+          <td class="no">Tap-to-toggle recording; a persistent "call" mode as a separate screen</td>
+          <td>Long dictation is uncomfortable to hold; buys an unambiguous privacy boundary and kills the mode-confusion of today's CallView.</td>
+        </tr>
+        <tr>
+          <td>Copy doctrine</td>
+          <td>The concierge speaks in the second person about work, cites ticket numbers inline, and never narrates itself ("I'm looking into that")</td>
+          <td class="no">Persona catchphrases in status text; progress narration as personality</td>
+          <td>Less character in text; buys character concentrated where it is actually free — the voice — and text that stays scannable.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">08</span>Priced inventions</h2>
+  <h3>Three small files and a timer. That is the whole bill.</h3>
+  <ol class="priced">
+    <li>
+      <strong>Salience policy + held queue.</strong> A checked-in <code>salience.json</code>
+      (event class → speak/hold/log) read by the existing queue watcher, plus
+      <code>state/salience_queue.json</code> for held items, surfaced in <code>PanelSnapshot</code>.
+      <span class="price">COST: ~1 day. One new state file, one new snapshot field, one filter in the ingest path. No new process.</span>
+    </li>
+    <li>
+      <strong>Lull detection.</strong> "No playback and no PTT for 90s" — a timer over
+      <code>.now-playing.json</code> and the grant state that already exist. Drains and
+      <em>coalesces</em> the held queue into one Gemini call and one synthesis.
+      <span class="price">COST: ~2 hours. Strictly cheaper than today: N announcements become 1.</span>
+    </li>
+    <li>
+      <strong>Ticket projection into the snapshot.</strong> A poller that turns
+      <code>gh issue list</code> plus machine-readable state labels into the ledger rows, cached to
+      <code>state/spine.json</code>.
+      <span class="price">COST: ~1 day, and it is already the #73 build item ("spine validation experiment"). Not new work, just newly rendered.</span>
+    </li>
+    <li>
+      <strong>Spend log tail.</strong> The interpreter already emits one log line per LLM call; make it
+      JSONL keyed by ticket, tail it into the snapshot for the hairlines and the escalation chips.
+      <span class="price">COST: ~half a day. No new billing integration; ElevenLabs credits already have a fetcher sitting unused.</span>
+    </li>
+    <li class="free">
+      <strong>Artifacts directory.</strong> Watch <code>artifacts/</code> for the mermaid→SVG output
+      this repo's docs-publish path already produces; "keep" is a <code>git mv</code> plus a commit.
+      <span class="price">COST: ~half a day, reusing an existing renderer.</span>
+    </li>
+    <li class="free">
+      <strong>Explicitly NOT invented:</strong> no timing capture, no seek engine, no canvas, no stroke
+      model, no floor/turn machinery, no database, no new orchestrator runtime, no always-on
+      transcription, no per-agent presence protocol.
+      <span class="price">COST: 0. This is the point.</span>
+    </li>
+  </ol>
+  <div class="callout warn">
+    <p>
+      <strong>The honest risk:</strong> the ledger is only as good as the spine's state labels. If
+      <code>needs-feedback</code> stays prose, the blue gutter is a lie. This board therefore
+      <strong>hard-depends</strong> on the spine validation experiment landing first — which the
+      architecture docs already sequence as the first build item. I would rather this dependency be
+      loud than designed around.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">09</span>What today's UI should lose</h2>
+  <ul class="cuts">
+    <li><b>The persona grid</b> (<code>RoomGrid</code>, <code>AgentCard</code> on both platforms). It is the cancelled premise rendered directly. Personas survive as voices and as one dock face.</li>
+    <li><b>Per-session cards as a navigable object.</b> Sessions become the hatched sprig under a ticket, and they are not clickable — there is nothing durable to open.</li>
+    <li><b>CallView as a separate mode.</b> "Live/call" was a mode because narration was all-or-nothing. With a salience policy, a call is just <code>milestone → speak</code> for one thread, expressed as one toggle on the work item. One screen fewer, one state machine fewer.</li>
+    <li><b>The hidden-devs / picker sheet.</b> Rooms are a manifest; who exists is config, not a UI you browse.</li>
+    <li><b>Replay history as a primary surface.</b> It becomes "replay" on the floor and the log tail. Nobody scrolls an audio history; they ask.</li>
+    <li><b>Every state badge except four.</b> wants-you / grinding / watching / settled. If a distinction cannot survive being read from four feet, it belongs in the detail pane.</li>
+  </ul>
+</section>
+
+<!-- ============================================================= -->
+<section>
+  <h2><span class="num">10</span>Anti-goal self-check</h2>
+  <div class="anti">
+    <div><span class="mark">PASS</span><span><b>1 · not a chatbot</b> — the ledger is the app; the conversation is one strip at the top and one composer at the bottom.</span></div>
+    <div><span class="mark">PASS</span><span><b>2 · no multi-voice theater</b> — zero avatars in the window, one in the dock, and checkout <i>replaces</i> rather than adds.</span></div>
+    <div><span class="mark">PASS</span><span><b>3 · no real-time ink</b> — artifacts are files with version tabs; there is no canvas anywhere on this board.</span></div>
+    <div><span class="mark">PASS</span><span><b>4 · no lipsync escalation</b> — lipsync lives only inside the dock avatar leaf, mutated by ref, driving nothing.</span></div>
+    <div><span class="mark">PASS</span><span><b>5 · no always-listening mic</b> — hold-to-talk on all three surfaces, with the "nothing captured before the press" line printed in the UI.</span></div>
+    <div><span class="mark">PASS</span><span><b>6 · no resident brain</b> — the floor line cites ticket numbers, and "why this spoke" points at the salience rule, not a memory.</span></div>
+    <div><span class="mark near">NEAR</span><span><b>7 · no new orchestrator runtime</b> — see below.</span></div>
+    <div><span class="mark">PASS</span><span><b>8 · no client conversation state</b> — every region here is a projection of one snapshot; the column holds selection and scroll, nothing else.</span></div>
+    <div><span class="mark">PASS</span><span><b>9 · no database</b> — three JSON files and a git repo. The ledger's sort order is computable from the snapshot in one pass.</span></div>
+    <div><span class="mark">PASS</span><span><b>10 · no silent capability growth</b> — saving a verb is a named confirm step, and saved verbs appear as files in the room manifest.</span></div>
+  </div>
+
+  <div class="callout warn" style="margin-top:26px">
+    <p>
+      <strong>Closest to violating: #7, "no new orchestrator runtime."</strong> A column of tickets
+      sorted by state, with a ceremony dial and inline actions, is one interaction away from being a
+      tracker. I held the line three ways, and they are all load-bearing: <strong>the ledger is
+      read-only</strong> (no inline state menus, no drag, no close/assign); <strong>ceremony is
+      spawn-time only</strong> and read-only afterwards; and every write path is either the concierge
+      or a link out to GitHub. If a future round adds "just let me close it from the row," this
+      board becomes the thing #73 rejected — so treat that as the tripwire.
+      <br><br>
+      Runner-up: <strong>#2</strong>. Two windows means two potential faces. The rule that keeps it
+      honest is that checkout <em>replaces</em> the concierge everywhere rather than joining it, so
+      the maximum is one face at rest and two only during the transition animation.
+    </p>
+  </div>
+</section>
+
+</div>
