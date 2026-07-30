@@ -69,3 +69,18 @@ incoming work"). Everything else that survived v4/v5 stays.
   data, cut panel).
 
 Postplan group `room-of-devs/round-c-v6`.
+
+## Owner verdict on the v6 board (2026-07-29, round closed)
+
+**"I like it."** Round C play arc is DONE; prototype work is next.
+Corrections/notes carried into the design target:
+
+- **Terminology fix:** in Titanfall, the *tower* is the harvester — the
+  hex-shielded core the board built is NOT one. The LOOK of the core is
+  approved and kept as the spend instrument; stop calling it "THE
+  HARVESTER" (rename in the target — e.g. THE CORE / ENERGY CORE), and
+  the harvester-tower language stays available for the spine.
+- **Not yet shown (fine at concept stage, must exist in the target):**
+  the **tap-in flow** (tap-in.ts style: attach to a running thread and
+  look around), and the **"let me see a diagram" flow** — asking a
+  persona for a diagram/schematic and having it appear as an artifact.

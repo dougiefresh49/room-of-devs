@@ -25,7 +25,17 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > Architecture (#73, docs 04–09) IS settled — only the look and feel is
 > open.
 
-- **Round C v6 — THE RIG PICKED; COHESION PASS AWAITING YOUR REACTION
+- **ROUND C PLAY ARC CLOSED — THE RIG refined board APPROVED
+  (2026-07-29, owner: "I like it")**. Next session: **prototype work**
+  via **[prototype-kickoff-prompt.md](active/prototype-kickoff-prompt.md)**
+  (stage 1: write `design-ui-target.md` — now legitimate, retire the
+  "nothing locked" banner; stage 2: prototype phase 1 after owner
+  sign-off). Closing corrections recorded at the bottom of
+  [design-brief-round-c-v6.md](active/design-brief-round-c-v6.md):
+  the hex core is NOT a harvester (the tower is) — keep the core's
+  look, rename it; and the target must spec the **tap-in flow** and
+  the **"let me see a diagram" artifact flow** (no board showed them).
+- **Round C v6 — THE RIG PICKED; cohesion pass, approved same day
   (2026-07-29)**. Owner on the play arc: *"I like both but really like
   THE RIG the most"* — industrial lane wins; BLACK // GLASS preserved
   for a future theme system (backlogged). Owner supplied real Titanfall
