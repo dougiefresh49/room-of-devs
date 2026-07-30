@@ -1333,10 +1333,11 @@ button,
     rgba(18, 48, 34, 0.94);
 }
 
-/* Board `.dock .dockscr` — salbar + ticker + leds */
+/* Board `.dock .dockscr` — salbar + ticker + leds.
+   Width is budgeted into the NSPanel size (DOCK_SCR_WIDTH in DockView). */
 .dock-scr {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 220px;
+  min-width: 220px;
   padding: 7px 12px;
   display: flex;
   align-items: center;

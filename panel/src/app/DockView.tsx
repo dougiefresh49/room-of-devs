@@ -45,11 +45,14 @@ const PERSONA_OPTIONS = PERSONAS.map((p) => ({
   avatarSrc: personaAvatarSrc(p),
 }));
 
-const DOCK_AVATAR_STEP = 44;
+const DOCK_AVATAR_STEP = 58;
 const DOCK_PADDING = 54;
 const DOCK_EXPAND_WIDTH = 30;
+// Fixed-width salience bar + ticker + lamps row inside the pill; the NSPanel
+// is sized from these constants, so the row must be budgeted here too.
+const DOCK_SCR_WIDTH = 250;
 const DOCK_EXPANDED_WIDTH = 520;
-const DOCK_COMPACT_HEIGHT = 126;
+const DOCK_COMPACT_HEIGHT = 144;
 // Speaker spotlight row (big avatar + always-on actions + bubble) above the pill.
 const DOCK_SPOTLIGHT_HEIGHT = 236;
 const DOCK_SPOTLIGHT_EXPANDED = 300;
@@ -160,7 +163,8 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
       : agents;
 
   const pillCount = Math.max(pillAgents.length, 1);
-  const compactWidth = pillCount * DOCK_AVATAR_STEP + DOCK_PADDING + DOCK_EXPAND_WIDTH;
+  const compactWidth =
+    pillCount * DOCK_AVATAR_STEP + DOCK_SCR_WIDTH + DOCK_PADDING + DOCK_EXPAND_WIDTH;
   const width = spot ? Math.max(compactWidth, DOCK_EXPANDED_WIDTH) : compactWidth;
   const height = !spot
     ? DOCK_COMPACT_HEIGHT
