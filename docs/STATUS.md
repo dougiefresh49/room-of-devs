@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-29 (Round C v6 — THE RIG picked; refined cohesion
-board awaiting your reaction)_
+_Last updated: 2026-07-29 (design target written from THE RIG — awaiting
+owner sign-off before prototype phase 1)_
 
 ## Inbox
 
@@ -16,25 +16,38 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Now
 
-> ⛔ **NOTHING UI-DESIGN IS LOCKED.** There is no `design-ui-target.md`
-> and there deliberately isn't one yet. No concept has been chosen; the
-> former "locked target" now competes as `candidate-a-work-item.md`. Two
-> concept rounds have run (v1 rejected, v2 futurist — owner likes pieces,
-> picked none; v3 reference-seeded boards are out for reaction). Do not
-> skip to a mock or a target.
-> Architecture (#73, docs 04–09) IS settled — only the look and feel is
-> open.
+> ✅ **THE DESIGN TARGET IS LOCKED: THE RIG.**
+> **[active/design-ui-target.md](active/design-ui-target.md)** is the
+> system of record for all UI prototype work — visual system (corner
+> grammar, hex layer, amber/gunmetal tokens), all surfaces incl. the
+> LONG-RANGE PLOT and THE FIELD UNIT (mobile), salience as one
+> daemon-computed number, the tap-in + diagram-artifact flows, the
+> adopted day-1 cuts, and prototype phases P1–P7.
+> Architecture (#73, docs 04–09) remains settled separately.
 
+- **DESIGN TARGET WRITTEN — AWAITING YOUR SIGN-OFF (2026-07-29)**.
+  Stage 1 of [prototype-kickoff-prompt.md](active/prototype-kickoff-prompt.md)
+  is done: `design-ui-target.md` distills the approved v6 RIG board +
+  v5 mobile board + briefs + #73 architecture into one buildable spec.
+  The v6 closing corrections are honored: the hex spend core is renamed
+  **THE CORE** (not "harvester" — the tower is the harvester; the word
+  stays available for the spine), and the two unshown flows are specced
+  (**tap-in** — both ask-the-room via the tap-in.ts assembly and
+  look-into-a-craft; **"let me see a diagram"** — one-off → versioned
+  Mermaid artifact → docked artifact card → summary-pane render).
+  Salience is specced as `AgentViewSchema.salience` (0–100 "% clear") +
+  a top-level threshold, with a v1 heuristic that needs NO tracker join
+  — so the ring/plot light up before #75. Phases: P1 tokens+corner
+  grammar (`packages/ui`, dock reskin) → P2 console → P3 salience+plot
+  (first daemon change) → P4 spine mirror → P5 reply deck+tap-in →
+  P6 mobile → P7 artifacts+verbs. **On your sign-off, P1 starts**
+  (spec-ui-consolidation-round2 steps 1–3 are superseded by P2's
+  re-spec).
 - **ROUND C PLAY ARC CLOSED — THE RIG refined board APPROVED
-  (2026-07-29, owner: "I like it")**. Next session: **prototype work**
-  via **[prototype-kickoff-prompt.md](active/prototype-kickoff-prompt.md)**
-  (stage 1: write `design-ui-target.md` — now legitimate, retire the
-  "nothing locked" banner; stage 2: prototype phase 1 after owner
-  sign-off). Closing corrections recorded at the bottom of
-  [design-brief-round-c-v6.md](active/design-brief-round-c-v6.md):
-  the hex core is NOT a harvester (the tower is) — keep the core's
-  look, rename it; and the target must spec the **tap-in flow** and
-  the **"let me see a diagram" artifact flow** (no board showed them).
+  (2026-07-29, owner: "I like it")**. Closing corrections recorded at
+  the bottom of
+  [design-brief-round-c-v6.md](active/design-brief-round-c-v6.md) and
+  folded into the target above.
 - **Round C v6 — THE RIG PICKED; cohesion pass, approved same day
   (2026-07-29)**. Owner on the play arc: *"I like both but really like
   THE RIG the most"* — industrial lane wins; BLACK // GLASS preserved
@@ -394,15 +407,11 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-1. **Round C — a THIRD concept round, seeded by your visual references.**
-   You liked concepts from the v2 futurist boards but picked none, and
-   want to gather examples from other media (films, games, other apps)
-   to seed the next round. Drop them in the Inbox above — links, stills,
-   or just names — and the next session builds a v3 brief around them.
-   Nothing gets locked before that round. The v1
-   [pick matrix](https://sup7lp3bb68r.postplan.dev) is still useful for
-   its *decision rows* (what questions a design has to answer), even
-   though its aesthetic was rejected.
+1. **Sign off on [design-ui-target.md](active/design-ui-target.md).**
+   The RIG design target is written (see Now). On your OK, prototype
+   phase P1 starts (tokens + corner-grammar primitives in
+   `packages/ui`, dock strip reskin). Corrections welcome — the spec is
+   the cheap place to change things.
 2. **Does mobile Talk absorb live mode?** Carried forward from candidate
    A. Deferrable, but must not be lost — it is the only decision that
    *deletes shipped behavior*, and one board silently assumes "yes".
@@ -420,10 +429,10 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
-0. **Round C** — awaiting your picks from the concept round; then the
-   **React + shadcn mock** of it (one opus/fable lane, published via
-   Postplan), then build steps 0–3. Kickoff prompt is updated and
-   current: [active/round-c-kickoff-prompt.md](active/round-c-kickoff-prompt.md).
+0. **RIG prototype phases P1–P7** per
+   [design-ui-target.md](active/design-ui-target.md) — P1 (tokens +
+   corner grammar) starts on sign-off; P3 is the first daemon change
+   (salience number); P4 the spine mirror; P6 mobile FIELD UNIT.
 1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
    parse STATUS's ordered "Next up" into the tap-in digest (closes the
    last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
