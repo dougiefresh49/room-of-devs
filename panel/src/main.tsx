@@ -9,6 +9,7 @@
  *   6. client.start() LAST
  */
 import "./tailwind-entry.css";
+import "@room/ui/rig.css";
 import "./style.css";
 import { createRoot } from "react-dom/client";
 import type { PanelSnapshot } from "@room/protocol";

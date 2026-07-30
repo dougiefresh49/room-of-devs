@@ -25,4 +25,22 @@
   --color-fg: var(--room-text);
   --color-fg-muted: var(--room-muted);
   --color-fg-faint: var(--room-faint);
+
+  /* RIG palette — utilities for P2; P1 primitives prefer rig.css classes */
+  --color-rig-ink: var(--rig-ink);
+  --color-rig-gun1: var(--rig-gun1);
+  --color-rig-gun2: var(--rig-gun2);
+  --color-rig-gun-edge: var(--rig-gun-edge);
+  --color-rig-steel: var(--rig-steel);
+  --color-rig-steel-dim: var(--rig-steel-dim);
+  --color-rig-amber: var(--rig-amber);
+  --color-rig-amber-hot: var(--rig-amber-hot);
+  --color-rig-amber-dim: var(--rig-amber-dim);
+  --color-rig-amber-ghost: var(--rig-amber-ghost);
+  --color-rig-screen: var(--rig-screen);
+  --color-rig-screen2: var(--rig-screen2);
+  --color-rig-green: var(--rig-green);
+  --color-rig-green-dim: var(--rig-green-dim);
+  --color-rig-red: var(--rig-red);
+  --color-rig-haz: var(--rig-haz);
 }

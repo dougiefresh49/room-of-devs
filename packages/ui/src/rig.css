@@ -1,0 +1,558 @@
+/**
+ * RIG primitives — CSS ported from
+ * docs/active/concepts-round-c-v6/board-rig-refined.html.
+ * Class prefix: rig-. Short token aliases live under .rig so callers
+ * can nest without colliding with --room-* / --state-*.
+ */
+
+.rig {
+  --ink: var(--rig-ink);
+  --gun1: var(--rig-gun1);
+  --gun2: var(--rig-gun2);
+  --gun-edge: var(--rig-gun-edge);
+  --steel: var(--rig-steel);
+  --steel-dim: var(--rig-steel-dim);
+  --amber: var(--rig-amber);
+  --amber-hot: var(--rig-amber-hot);
+  --amber-dim: var(--rig-amber-dim);
+  --amber-ghost: var(--rig-amber-ghost);
+  --screen: var(--rig-screen);
+  --screen2: var(--rig-screen2);
+  --green: var(--rig-green);
+  --green-dim: var(--rig-green-dim);
+  --red: var(--rig-red);
+  --haz: var(--rig-haz);
+  --mono: var(--rig-mono);
+  --stencil: var(--rig-stencil);
+  --cut-l: var(--rig-cut-l);
+  --cut-m: var(--rig-cut-m);
+  --cut-s: var(--rig-cut-s);
+  --hex: var(--rig-hex);
+  --hexdim: var(--rig-hex-dim);
+  --hexfaint: var(--rig-hex-faint);
+  font-family: var(--stencil);
+  color: var(--steel);
+}
+
+/* ── CutFrame — corner grammar (§2.3 / board cohesion pass) ───────────── */
+.rig-cut {
+  display: block;
+  position: relative;
+}
+.rig-cut-inner {
+  /* clip-path: TL intact, BR chamfer — board .chassis/.screenbed polygons */
+  overflow: hidden;
+}
+.rig-cut--l .rig-cut-inner {
+  border-radius: 26px 6px 6px 6px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--rig-cut-l)),
+    calc(100% - var(--rig-cut-l)) 100%,
+    0 100%
+  );
+}
+.rig-cut--m .rig-cut-inner {
+  border-radius: 16px 5px 5px 5px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--rig-cut-m)),
+    calc(100% - var(--rig-cut-m)) 100%,
+    0 100%
+  );
+}
+.rig-cut--s .rig-cut-inner {
+  border-radius: 9px 3px 3px 3px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--rig-cut-s)),
+    calc(100% - var(--rig-cut-s)) 100%,
+    0 100%
+  );
+}
+
+/* ── Chassis — board .chassis ─────────────────────────────────────────── */
+.rig-chassis {
+  position: relative;
+  background: linear-gradient(178deg, var(--rig-gun1), var(--rig-gun2) 55%, #1c2024);
+  border: 1px solid var(--rig-gun-edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+}
+.rig-screw {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9aa2ab, #4c5259 55%, #20242a);
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 2;
+}
+.rig-screw::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 50%;
+  height: 1px;
+  background: #171a1e;
+  transform: rotate(38deg);
+}
+.rig-screw--tl {
+  top: 7px;
+  left: 7px;
+}
+.rig-screw--tr {
+  top: 7px;
+  right: 7px;
+}
+.rig-screw--bl {
+  bottom: 7px;
+  left: 7px;
+}
+/* BR offset clears the chamfer — board .screw.br */
+.rig-screw--br {
+  bottom: 9px;
+  right: 26px;
+}
+
+/* ── Bay — chassis + label strip ──────────────────────────────────────── */
+.rig-bay-body {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 10px;
+}
+.rig-bay-label {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 2px 8px;
+}
+.rig-bay-label-meta {
+  color: var(--rig-amber-dim);
+  letter-spacing: 0.14em;
+}
+
+/* ── ScreenBed — board .screenbed ─────────────────────────────────────── */
+.rig-screenbed {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--rig-screen), var(--rig-screen2));
+  border: 1px solid #000;
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.85),
+    inset 0 0 60px rgba(255, 140, 20, 0.05);
+  color: var(--rig-amber);
+}
+.rig-screenbed--hex {
+  background:
+    var(--rig-hex-faint),
+    linear-gradient(180deg, var(--rig-screen), var(--rig-screen2));
+  background-size: 26px 15px, auto;
+}
+.rig-screenbed-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0 1px,
+    transparent 1px 3px
+  );
+}
+.rig-screenbed-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 56px;
+  top: -60px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(255, 190, 90, 0.05), transparent);
+  animation: rig-sweep 7s linear infinite;
+}
+@keyframes rig-sweep {
+  to {
+    transform: translateY(1300px);
+  }
+}
+.rig-screenbed-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Tag — board .tag ─────────────────────────────────────────────────── */
+.rig-tag {
+  display: inline-block;
+  font-family: var(--rig-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 5px 1px 1px 1px;
+  padding: 2px 7px;
+  border: 1px solid var(--rig-amber-dim);
+  color: var(--rig-amber);
+  background: var(--rig-amber-ghost);
+}
+.rig-tag--red {
+  color: var(--rig-red);
+  border-color: #7a2c22;
+  background: rgba(255, 83, 64, 0.08);
+}
+.rig-tag--green {
+  color: var(--rig-green);
+  border-color: var(--rig-green-dim);
+  background: rgba(143, 232, 110, 0.07);
+}
+.rig-tag--dim {
+  color: var(--rig-steel-dim);
+  border-color: #3a3f45;
+  background: transparent;
+}
+
+/* ── Led — board .led ─────────────────────────────────────────────────── */
+.rig-led {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3a3f45;
+  vertical-align: middle;
+  flex: none;
+}
+.rig-led--amber {
+  background: var(--rig-amber);
+  box-shadow: 0 0 7px rgba(255, 179, 71, 0.9);
+}
+.rig-led--green {
+  background: var(--rig-green);
+  box-shadow: 0 0 6px rgba(143, 232, 110, 0.8);
+}
+.rig-led--red {
+  background: var(--rig-red);
+  box-shadow: 0 0 7px rgba(255, 83, 64, 0.9);
+}
+.rig-led--dim {
+  background: #3a3f45;
+  box-shadow: none;
+}
+.rig-led--pulse {
+  animation: rig-ledpulse 2.2s ease-in-out infinite;
+}
+.rig-led--pulse-hot {
+  animation: rig-ledpulse 0.5s ease-in-out infinite;
+}
+.rig-led--red.rig-led--pulse {
+  animation: rig-ledpulse 1.1s ease-in-out infinite;
+}
+@keyframes rig-ledpulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Keycap — board .optbtn ───────────────────────────────────────────── */
+.rig-keycap {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  font-family: var(--rig-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--rig-amber);
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 179, 71, 0.13),
+    rgba(255, 179, 71, 0.04)
+  );
+  border: 1px solid var(--rig-amber-dim);
+  border-radius: 8px 2px 2px 2px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.rig-keycap-glyph {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px 2px 2px 2px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--rig-amber-hot);
+  background: linear-gradient(180deg, #3a4046, #23272c);
+  border: 1px solid #0e1013;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.rig-keycap-label {
+  color: var(--rig-amber-hot);
+  font-weight: 700;
+  min-width: 0;
+}
+.rig-keycap-hint {
+  color: var(--rig-amber-dim);
+  font-size: 8px;
+  white-space: nowrap;
+}
+.rig-keycap--armed {
+  border-color: var(--rig-amber);
+  filter: drop-shadow(0 0 8px rgba(255, 150, 30, 0.28));
+  animation: rig-needglow 1.8s ease-in-out infinite;
+}
+@keyframes rig-needglow {
+  50% {
+    filter: drop-shadow(0 0 18px rgba(255, 150, 30, 0.5));
+  }
+}
+
+/* ── HexLayer — board .railhex ────────────────────────────────────────── */
+.rig-hex {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-size: 22px 12.7px;
+}
+.rig-hex--bright {
+  background-image: var(--rig-hex);
+  opacity: 0.35;
+  -webkit-mask: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 12%,
+    #000 34%,
+    transparent 46%,
+    transparent 58%,
+    #000 70%,
+    #000 90%,
+    transparent
+  );
+  mask: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 12%,
+    #000 34%,
+    transparent 46%,
+    transparent 58%,
+    #000 70%,
+    #000 90%,
+    transparent
+  );
+  animation: rig-shieldshift 9s ease-in-out infinite alternate;
+}
+.rig-hex--dim {
+  background-image: var(--rig-hex-dim);
+  opacity: 0.6;
+}
+.rig-hex--faint {
+  background-image: var(--rig-hex-faint);
+  opacity: 0.85;
+  background-size: 26px 15px;
+}
+.rig-hex--banded.rig-hex--bright {
+  /* banded mask already on bright */
+}
+@keyframes rig-shieldshift {
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* ── Odometer — board .odo ────────────────────────────────────────────── */
+.rig-odo {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+  font-size: 14px;
+}
+.rig-odo-digit {
+  display: block;
+  width: 1.15ch;
+  height: 1.32em;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--rig-mono);
+  font-weight: 700;
+  font-style: normal;
+  background: linear-gradient(180deg, #181a1d, #0b0c0e 45%, #141619);
+  border: 1px solid #000;
+  border-radius: 2px;
+  color: #e8e5df;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8);
+}
+.rig-odo-digit::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+.rig-odo-digit i {
+  display: block;
+  font-style: normal;
+  line-height: 1.32em;
+  text-align: center;
+}
+.rig-odo-digit--tick i {
+  animation: rig-odoroll 14s steps(10, end) infinite;
+}
+@keyframes rig-odoroll {
+  to {
+    transform: translateY(-13.2em);
+  }
+}
+.rig-odo--amber .rig-odo-digit {
+  color: var(--rig-amber);
+  text-shadow: 0 0 6px rgba(255, 179, 71, 0.5);
+}
+
+/* ── DialGauge — board .dial ──────────────────────────────────────────── */
+.rig-dial {
+  width: 132px;
+}
+.rig-dial svg {
+  width: 100%;
+  display: block;
+}
+.rig-dial-needle {
+  transform-origin: 66px 62px;
+}
+.rig-dial-cap {
+  font-family: var(--rig-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+  margin-top: 3px;
+  line-height: 1.6;
+}
+.rig-dial-cap b {
+  color: var(--rig-amber);
+}
+
+/* ── CrtFace — amber CRT avatar housing ───────────────────────────────── */
+.rig-crt {
+  position: relative;
+  display: block;
+  flex: none;
+  background: linear-gradient(180deg, var(--rig-screen), var(--rig-screen2));
+  border: 1px solid #000;
+  border-radius: 9px 3px 3px 3px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--rig-cut-s)),
+    calc(100% - var(--rig-cut-s)) 100%,
+    0 100%
+  );
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.85),
+    inset 0 0 60px rgba(255, 140, 20, 0.05);
+  overflow: hidden;
+}
+.rig-crt-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.5) hue-rotate(-12deg) saturate(1.5);
+}
+.rig-crt-img > img,
+.rig-crt-img > .avatar,
+.rig-crt > img,
+.rig-crt > .avatar,
+.rig-crt > .avatar-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.5) hue-rotate(-12deg) saturate(1.5);
+  border-radius: 0;
+}
+.rig-crt-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0 1px,
+    transparent 1px 3px
+  );
+}
+.rig-crt-halo {
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(255, 179, 71, 0.35);
+  border-radius: 10px;
+  box-shadow:
+    0 0 18px rgba(255, 140, 20, 0.25),
+    inset 0 0 18px rgba(255, 140, 20, 0.12);
+  pointer-events: none;
+  z-index: 3;
+  animation: rig-facehalo 3.4s ease-in-out infinite;
+}
+@keyframes rig-facehalo {
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 140, 20, 0.4),
+      inset 0 0 24px rgba(255, 140, 20, 0.18);
+  }
+}
+
+/* ── SalienceBar — board .dock .salbar ────────────────────────────────── */
+.rig-salbar {
+  display: flex;
+  gap: 3px;
+  flex: none;
+  align-items: center;
+}
+.rig-salbar-seg {
+  width: 5px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--rig-amber);
+  box-shadow: 0 0 4px rgba(255, 179, 71, 0.5);
+}
+.rig-salbar-seg--dim {
+  background: #3d3325;
+  box-shadow: none;
+}
+.rig-salbar-seg--th {
+  background: var(--rig-red);
+  box-shadow: 0 0 5px rgba(255, 83, 64, 0.7);
+}
+
+/* ── prefers-reduced-motion — kill ambience, keep static states ───────── */
+@media (prefers-reduced-motion: reduce) {
+  .rig-screenbed-sweep,
+  .rig-led--pulse,
+  .rig-led--pulse-hot,
+  .rig-keycap--armed,
+  .rig-hex--bright,
+  .rig-odo-digit--tick i,
+  .rig-crt-halo {
+    animation: none !important;
+  }
+}

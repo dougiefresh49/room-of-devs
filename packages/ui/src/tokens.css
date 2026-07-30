@@ -40,4 +40,43 @@
      need 3:1.) Don't darken this again without re-running the math. */
   --room-faint: #7d8899;
   --room-shadow: rgba(0, 0, 0, 0.35);
+
+  /* ── RIG vocabulary (P1, design-ui-target §2) ──────────────────────────
+     Added alongside the existing --room-* / --state-* set. Values ported
+     from concepts-round-c-v6/board-rig-refined.html :root. Do NOT change
+     the room/state tokens above — that flip lands in P2. */
+  --rig-ink: #0b0d0f;
+  --rig-gun1: #3b4148;
+  --rig-gun2: #23272c;
+  --rig-gun-edge: #12151a;
+  --rig-steel: #c7ccd2;
+  --rig-steel-dim: #7d848c;
+  --rig-amber: #ffb347;
+  --rig-amber-hot: #ffd894;
+  --rig-amber-dim: #8a5c20;
+  --rig-amber-ghost: rgba(255, 179, 71, 0.08);
+  --rig-screen: #160c02;
+  --rig-screen2: #0f0801;
+  --rig-green: #8fe86e;
+  --rig-green-dim: #3d6b2c;
+  --rig-red: #ff5340;
+  --rig-haz: #d9a021;
+
+  /* Corner grammar — board --cut-l/m/s */
+  --rig-cut-l: 20px;
+  --rig-cut-m: 12px;
+  --rig-cut-s: 7px;
+
+  /* Hex tiles — board --hex / --hexdim / --hexfaint (stroke opacities .5/.13/.045) */
+  --rig-hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='13.86'%3E%3Cg fill='none' stroke='%23ffb347' stroke-opacity='.5' stroke-width='1'%3E%3Cpath d='M0 6.93 4 0h8l4 6.93-4 6.93H4Z'/%3E%3Cpath d='M12 0l4-6.93h8L28 0l-4 6.93h-8Z'/%3E%3Cpath d='M12 13.86l4-6.93h8l4 6.93-4 6.93h-8Z'/%3E%3C/g%3E%3C/svg%3E");
+  --rig-hex-dim: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='13.86'%3E%3Cg fill='none' stroke='%23ffb347' stroke-opacity='.13' stroke-width='1'%3E%3Cpath d='M0 6.93 4 0h8l4 6.93-4 6.93H4Z'/%3E%3Cpath d='M12 0l4-6.93h8L28 0l-4 6.93h-8Z'/%3E%3Cpath d='M12 13.86l4-6.93h8l4 6.93-4 6.93h-8Z'/%3E%3C/g%3E%3C/svg%3E");
+  --rig-hex-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='13.86'%3E%3Cg fill='none' stroke='%23ffb347' stroke-opacity='.045' stroke-width='1'%3E%3Cpath d='M0 6.93 4 0h8l4 6.93-4 6.93H4Z'/%3E%3Cpath d='M12 0l4-6.93h8L28 0l-4 6.93h-8Z'/%3E%3Cpath d='M12 13.86l4-6.93h8l4 6.93-4 6.93h-8Z'/%3E%3C/g%3E%3C/svg%3E");
+
+  /* Type — board --mono / --stencil */
+  --rig-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --rig-stencil: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+
+  /* Glow bases — board hot glow + standard amber glow */
+  --rig-glow-hot: rgba(255, 150, 30, 1);
+  --rig-glow-amber: rgba(255, 179, 71, 1);
 }

@@ -6,12 +6,15 @@
  *  - lib: cn(), initials()
  *  - primitives: vendored shadcn-style wrappers over Radix
  *  - components: domain leaf components (props + callbacks only)
+ *  - rig: industrial console primitives (CutFrame, Chassis, instruments)
  *  - markdown: sanitized renderer + stripMarkdown
  *
  * Hard rule: nothing in this package touches fetch/WS/Tauri/audio.
  */
 export { cn } from "./lib/cn.js";
 export { initials } from "./lib/initials.js";
+
+export * from "./rig/index.js";
 
 export * from "./primitives/button.js";
 export * from "./primitives/dialog.js";

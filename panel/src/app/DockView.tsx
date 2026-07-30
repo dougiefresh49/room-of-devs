@@ -7,7 +7,15 @@
  */
 import { useLayoutEffect } from "react";
 import type { AgentView, NowPlaying, PanelSnapshot } from "@room/protocol";
-import { LiveBadge, SummaryText, stripMarkdown, FailedCountBadge } from "@room/ui";
+import {
+  CrtFace,
+  FailedCountBadge,
+  Led,
+  LiveBadge,
+  SalienceBar,
+  stripMarkdown,
+  SummaryText,
+} from "@room/ui";
 import { isPhoneRoutedFrame, nowPlayingKey } from "@room/room-client";
 import { client } from "../client.js";
 import { platform } from "../platform/tauri.js";
@@ -46,12 +54,49 @@ const DOCK_COMPACT_HEIGHT = 126;
 const DOCK_SPOTLIGHT_HEIGHT = 236;
 const DOCK_SPOTLIGHT_EXPANDED = 300;
 
+/** Local salience threshold notch (segment index ≈ 35% of 16). */
+const DOCK_SALIENCE_SEGMENTS = 16;
+const DOCK_SALIENCE_THRESHOLD_PCT = 35;
+
 const stateLabels: Record<AgentView["state"], string> = {
   working: "working",
   hand_raised: "hand raised",
   speaking: "speaking",
   idle: "idle",
 };
+
+/** Per-state "clear" contribution — lower = closer to needing you. */
+const CLEAR_BY_STATE: Record<AgentView["state"], number> = {
+  hand_raised: 20,
+  speaking: 55,
+  working: 70,
+  idle: 100,
+};
+
+// P3: replace with snapshot.salience
+function dockSalienceClear(agents: AgentView[]): number {
+  if (!agents.length) return 100;
+  let min = 100;
+  for (const a of agents) {
+    const v = CLEAR_BY_STATE[a.state] ?? 100;
+    if (v < min) min = v;
+  }
+  return min;
+}
+
+function dockTickerText(agents: AgentView[]): string {
+  if (!agents.length) return "ROOM · NO AGENTS";
+  return agents
+    .map((a) => {
+      const name = (a.label ?? a.name).toUpperCase();
+      const state = stateLabels[a.state].toUpperCase();
+      const preview = a.queuedPreview?.trim();
+      return preview
+        ? `${name} · ${state} · ${preview}`
+        : `${name} · ${state}`;
+    })
+    .join("  ◆  ");
+}
 
 interface Spotlight {
   agent?: AgentView;
@@ -133,6 +178,15 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
     void platform.enterDockLayout(width, height);
   }, [width, height]);
 
+  const clearPct = dockSalienceClear(agents);
+  const litSegs = Math.round(DOCK_SALIENCE_SEGMENTS * clearPct / 100);
+  const thSeg = Math.round(DOCK_SALIENCE_SEGMENTS * DOCK_SALIENCE_THRESHOLD_PCT / 100);
+  const ticker = dockTickerText(agents);
+  const anyRaised = agents.some((a) => a.state === "hand_raised");
+  const anyWorking = agents.some((a) => a.state === "working");
+  const allSettled =
+    agents.length > 0 && agents.every((a) => a.state === "idle");
+
   return (
     <main
       className={`dock-shell drag-region${connected ? "" : " disconnected"}`}
@@ -186,6 +240,34 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
           ) : (
             <span className="dock-empty">No agents</span>
           )}
+        </div>
+        <div className="dock-scr no-drag">
+          {/* P3: replace with snapshot.salience */}
+          <SalienceBar
+            segments={DOCK_SALIENCE_SEGMENTS}
+            lit={litSegs}
+            threshold={thSeg}
+          />
+          <div className="dock-tick" title={ticker}>
+            <span className="dock-tick-marquee">{ticker}</span>
+            <span className="dock-tick-static">{ticker}</span>
+          </div>
+          <div className="dock-dled" aria-label="Room status lamps">
+            <Led
+              tone={anyRaised ? "red" : "dim"}
+              pulse={anyRaised}
+              title={anyRaised ? "hand raised" : "no raised hands"}
+            />
+            <Led
+              tone={anyWorking ? "amber" : "dim"}
+              pulse={anyWorking}
+              title={anyWorking ? "working" : "none working"}
+            />
+            <Led
+              tone={allSettled ? "green" : "dim"}
+              title={allSettled ? "all idle" : "not all idle"}
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -249,11 +331,13 @@ function DockAgent({
         {...ptt.gesture}
       >
         <span className="dock-ring">
-          <AvatarImg
-            agent={agent}
-            imgClassName="avatar dock-avatar"
-            fallbackClassName="avatar-fallback dock-fallback"
-          />
+          <CrtFace size={52} scanlines>
+            <AvatarImg
+              agent={agent}
+              imgClassName="avatar dock-avatar"
+              fallbackClassName="avatar-fallback dock-fallback"
+            />
+          </CrtFace>
         </span>
         {agent.raisedCount > 0 ? (
           <span
@@ -351,11 +435,13 @@ function DockSpotlight({
           className={`spotlight-ring${onStage ? " on-stage" : ""}${loading ? " loading" : ""}`}
           data-character={(agent.character ?? "default").toLowerCase()}
         >
-          <AvatarImg
-            agent={agent}
-            imgClassName="avatar spotlight-avatar"
-            fallbackClassName="avatar-fallback spotlight-fallback"
-          />
+          <CrtFace size={58} halo={onStage} scanlines>
+            <AvatarImg
+              agent={agent}
+              imgClassName="avatar spotlight-avatar"
+              fallbackClassName="avatar-fallback spotlight-fallback"
+            />
+          </CrtFace>
         </span>
         <LiveBadge live={agent.live} />
       </div>
