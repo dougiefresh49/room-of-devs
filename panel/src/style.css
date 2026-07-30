@@ -1367,10 +1367,15 @@ button,
 }
 
 .dock-tick-marquee {
-  position: absolute;
+  display: inline-block;
+  /* Seamless marquee: text enters from the right edge, exits left, loops.
+     padding-left 100% (of the container) makes -100% of the span's own
+     width a full off-screen travel regardless of text length. */
+  padding-left: 100%;
   white-space: nowrap;
   font-family: var(--rig-mono);
   font-size: 10px;
+  line-height: 16px;
   letter-spacing: 0.08em;
   color: var(--rig-amber);
   animation: dock-ticker 22s linear infinite;
@@ -1389,7 +1394,7 @@ button,
 
 @keyframes dock-ticker {
   0% {
-    transform: translateX(4%);
+    transform: translateX(0);
   }
   100% {
     transform: translateX(-100%);
