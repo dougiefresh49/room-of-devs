@@ -38,6 +38,28 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
   daemon fix rode along) but the approach is retired; say the word if
   you'd rather revert the panel to pre-RIG (`git revert 97ab295
   6e0e13e` + redeploy).
+- **THE RIG STANDALONE PROTOTYPE v1 — LIVE (2026-07-30)** per
+  [spec-rig-prototype.md](active/spec-rig-prototype.md). Run it:
+  `pnpm --filter @room/prototype dev` → http://localhost:5180 (control
+  deck: button bottom-right or backtick). A fully siloed Vite+React
+  app over mock data — zero imports of room-client/protocol/panel/
+  daemon, zero network. Everything the live app can't show is here:
+  the energized SPINE rail with docked plan cards (live/queued/
+  settled), thread nodes with open-node innards (live tail, spend
+  strip, diff), salience ring with **draggable threshold**, THE CORE
+  (hex month fraction, two dials, odometer), reply deck with
+  held-question keycaps (armed = Mikey's rec), verb rack (watcher verb
+  GATED #75), turn chip, crew manifest, watch chip, Mikey/Donnie
+  faceplate with checkout, LONG-RANGE PLOT with hard-cut zoom ladder,
+  and 18 control-deck scenario triggers (spawn, arrival, held
+  question, answer, speak via speechSynthesis, checkout/return, live
+  clip, settle, lull, mic open, tap-in, diagram artifact with
+  keep/discard, spend burn, time ×10, reset). `mock/types.ts` is the
+  wishlist of invented fields for the eventual wire work. Built by a
+  grok-4.5-high lane against the spec; codex drove every trigger in
+  the browser (24 screenshots): all pass after one fix (KEEP THAT now
+  settles the one-off — dies on delivery). Round 2: the mobile FIELD
+  UNIT screens at `/field`.
 - **RIG P2 "the console" SHIPPED & DEPLOYED (2026-07-30)** per
   [spec-rig-p2.md](shipped/spec-rig-p2.md). The panel main window is now
   the RIG console over the existing snapshot — no daemon-surface or
