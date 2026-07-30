@@ -2,3 +2,4 @@ packages:
   - tts-server
   - panel
   - packages/*
+  - prototype
