@@ -1,0 +1,9 @@
+{
+  "leonardo": { "excited": "determined", "confused": "concerned" },
+  "raphael": { "excited": "fired-up", "confused": "annoyed" },
+  "donatello": { "excited": "eureka", "confused": "puzzled" },
+  "michelangelo": { "excited": "stoked", "confused": "perplexed" },
+  "splinter": {},
+  "shredder": { "excited": "triumphant-menace", "confused": "suspicious" },
+  "karai": { "excited": "smug-delight", "confused": "skeptical" }
+}
