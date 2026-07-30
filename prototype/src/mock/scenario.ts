@@ -437,13 +437,30 @@ export function diagramArtifact() {
 }
 
 export function keepArtifact(artifactId: string) {
-  setRoom((s) => ({
-    ...s,
-    rev: s.rev + 1,
-    artifacts: s.artifacts.map((a) =>
-      a.id === artifactId ? { ...a, status: "kept" as const } : a,
-    ),
-  }));
+  setRoom((s) => {
+    const craftId = s.artifacts.find((a) => a.id === artifactId)?.craftId;
+    return {
+      ...s,
+      rev: s.rev + 1,
+      artifacts: s.artifacts.map((a) =>
+        a.id === artifactId ? { ...a, status: "kept" as const } : a,
+      ),
+      // One-off is mortal either way: keep = artifact graduates to the
+      // spine, then the craft dies on delivery (pilot back on the manifest).
+      crafts: s.crafts.map((c) =>
+        c.id === craftId
+          ? {
+              ...c,
+              state: "settled" as const,
+              open: false,
+              salience: 100,
+              task: "diagram kept → attached to spine · died on delivery",
+              tail: [{ kind: "ok" as const, text: "artifact graduated · craft scrapped" }],
+            }
+          : c,
+      ),
+    };
+  });
 }
 
 export function discardArtifact(artifactId: string) {
