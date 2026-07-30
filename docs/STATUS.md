@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-29 (Round C concept round v5 — mobile boards
-awaiting your reaction)_
+_Last updated: 2026-07-29 (Round C v6 — THE RIG picked; refined cohesion
+board awaiting your reaction)_
 
 ## Inbox
 
@@ -25,8 +25,33 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > Architecture (#73, docs 04–09) IS settled — only the look and feel is
 > open.
 
-- **Round C CONCEPT ROUND v5 — MOBILE, 2 boards, AWAITING YOUR REACTION
-  (2026-07-29)**. Owner on v4: *"looks awesome, I'm really liking both
+- **Round C v6 — THE RIG PICKED; COHESION PASS AWAITING YOUR REACTION
+  (2026-07-29)**. Owner on the play arc: *"I like both but really like
+  THE RIG the most"* — industrial lane wins; BLACK // GLASS preserved
+  for a future theme system (backlogged). Owner supplied real Titanfall
+  refs (`concepts-round-c-v6/refs-titanfall/` — Briggs faceplate corner
+  clips, Archer scope chamfers, harvester hex shell, energy tower,
+  map-callout key, frontier starmap); notes captured in
+  **[design-brief-round-c-v6.md](active/design-brief-round-c-v6.md)**:
+  spine must read as one machine (holo cards docked/projected, not "a
+  grey bay and cards next to it"), asymmetric corner grammar, hex
+  texture layer, harvester concept, radar plot confirmed keep.
+  - **[THE RIG — refined](https://ib8n7y2c05z4.postplan.dev)** (group
+    `room-of-devs/round-c-v6`): spine is now an energy tower (beam
+    core, hex shields, docking track) with plans clamped on via dock
+    bosses + projection stems — light for live work, metal for
+    settled; one corner grammar (big radius top-left + chamfer
+    bottom-right, echoed at 3 scales); hexes as texture only; the
+    harvester became the spend instrument (lit shell fraction = month's
+    draw, core pulse = current burn); map-callout leader lines; one
+    "FUTURE: 10,000-FT VIEW" annotation (not built).
+  - Backlogged (ideas-backlog.md, owner's call — not day 1): the
+    **10,000-ft starmap view** (spine as origin, tickets as ships,
+    phases as planets, destination name TBD) and **theme switching**
+    (round-C boards all committed as resurrection material).
+  - Round-C docs checkpoint committed: `e4f6e56`.
+- **Round C CONCEPT ROUND v5 — MOBILE, 2 boards, owner verdict: both
+  liked, RIG preferred (2026-07-29)**. Owner on v4: *"looks awesome, I'm really liking both
   lanes"* — no corrections, both aesthetics locked-in-play.
   **[design-brief-round-c-v5.md](active/design-brief-round-c-v5.md)**
   reframes mobile: NOT a shrunk desktop — the phone's ranked jobs are
