@@ -1,5 +1,13 @@
 # UI Consolidation Round 2 — promote and replace
 
+> **SUPERSEDED (steps 1–3), 2026-07-30:** the RIG P2 console
+> ([spec-rig-p2.md](spec-rig-p2.md), per
+> [design-ui-target.md](design-ui-target.md) §9/P2) re-specs the
+> promote-and-replace motion against THE RIG and carries this doc's two
+> input-parity requirements (desktop typed chat, attachments where you
+> can reply). Step 0 (shadcn CLI wiring) and the riding-along command
+> seam remain unclaimed backlog.
+
 Status: **awaiting owner go-ahead** (owner leaning yes, 2026-07-24).
 Source: deep-module audit run with the `codebase-design` skill
 (mattpocock/skills), 2026-07-24. Supersedes the strawman in

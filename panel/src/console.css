@@ -70,14 +70,15 @@
   flex: 1;
   min-height: 0;
   align-items: stretch;
+  /* Cap the rig at big-board widths so node rows don't stretch to absurd
+     line lengths on a maximized window. */
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
-@media (max-width: 980px) {
-  .console-grid {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-}
+/* Stacked-mode overrides live at the BOTTOM of this file — they must come
+   after the base .console-col/.console-threads rules to win the cascade. */
 
 .console-col {
   display: flex;
@@ -822,4 +823,28 @@
   text-transform: uppercase;
   padding: 20px 8px;
   text-align: center;
+}
+
+/* ── Stacked mode (narrow window) ─────────────────────────────────────────
+   Must stay LAST: equal-specificity base rules above would otherwise win.
+   Columns become content-sized, so the flex:1/basis-0 children collapse to
+   zero height unless they revert to natural sizing — the whole grid scrolls
+   instead of each column. */
+@media (max-width: 980px) {
+  .console-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .console-col {
+    min-height: auto;
+  }
+  .console-col-scroll {
+    overflow-y: visible;
+  }
+  .console-threads {
+    flex: none;
+    min-height: auto;
+    overflow-y: visible;
+  }
 }

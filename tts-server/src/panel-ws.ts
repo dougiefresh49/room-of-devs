@@ -42,6 +42,7 @@ import {
   listCharacterNames,
   focusTerminal,
   killTeam,
+  handleReplyAction,
   dispatch,
   onNotice,
   runScript,
@@ -653,6 +654,21 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   if (msg.type === "focus_terminal") {
     if (!focusTerminal(msg.sessionId)) {
       sendError(ws, "stale_tmux", msg.sessionId, "tmux session is gone");
+    }
+    return;
+  }
+
+  if (msg.type === "reply") {
+    // Desktop typed chat (RIG P2): same synchronous inject path mobile-http
+    // uses — dispatch() has no reply case, so without this the command would
+    // no-op and still ack ok.
+    const result = handleReplyAction(msg);
+    if (!result) {
+      sendError(ws, "bad_message", msg.sessionId);
+    } else if (result.status === "not_in_team") {
+      sendError(ws, "not_team", msg.sessionId);
+    } else if (result.status !== "ok") {
+      sendError(ws, "stale_tmux", msg.sessionId, `reply ${result.status}`);
     }
     return;
   }

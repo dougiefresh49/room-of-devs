@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-30 (target signed off; RIG prototype P1 — the
-metal shop — SHIPPED & deployed)_
+_Last updated: 2026-07-30 (RIG prototype P2 — the console — SHIPPED &
+deployed; P1 shipped same day)_
 
 ## Inbox
 
@@ -25,8 +25,44 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > adopted day-1 cuts, and prototype phases P1–P7.
 > Architecture (#73, docs 04–09) remains settled separately.
 
+- **RIG P2 "the console" SHIPPED & DEPLOYED (2026-07-30)** per
+  [spec-rig-p2.md](shipped/spec-rig-p2.md). The panel main window is now
+  the RIG console over the existing snapshot — no daemon-surface or
+  protocol changes. Landed: the **desktop-only token flip** (`--room-*`/
+  `--state-*` re-pointed at the RIG ramp in panel/style.css `:root`;
+  mobile untouched until P6; working=amber, needs-you=red,
+  speaking=amber-hot, idle=steel-dim, accent=green), **faceplate** (176px
+  CRT hero = current speaker else Mikey, talk lamp + waveform, live
+  Dial-2 voice chips, transcript screen replacing the summary aside,
+  dark "SECOND VOICE // BAY EMPTY" Donnie bay), **thread nodes**
+  replacing the AgentCard grid (58px CRT face, callsign + rename,
+  S-#### · TMUX ✓, task line, state tags incl. needs-you glow + HOLDING
+  timer, grant button, full ActionCluster, PTT spread preserved),
+  **open node** (one at a time: `/thread` history via a new Tauri
+  `thread_history` command fetching mobile-http with the token, live
+  activity line; no fake spend/diff panels), **reply deck** — the two
+  input-parity requirements shipped: **desktop typed chat** (composer →
+  existing `reply` command; found + fixed the daemon gap where panel-ws
+  acked replies without injecting) and **attachments** (paste/drag →
+  saved under `~/.cursor/tts/attachments/` via new `save_attachment`
+  command → path injected in the reply text) + PTT bar (cold/hot) +
+  grant chip, **crew manifest** (lit = persona piloting), **watch-order
+  chips** (from `live.on`, click = stand down), static ceremony/turn
+  dial chips. Replaced style.css buckets deleted (~520 lines); round-2
+  consolidation steps 1–3 formally superseded (doc archived).
+  Implementation by grok-4.5-high (worktree lane); main session fixed
+  the panel-ws reply wiring and a stacked-layout collapse (narrow
+  window clipped the node grid — CSS cascade order). Verified:
+  typecheck + fixtures green; codex computer-use round: 8/9 first pass
+  (fake-session harness, typed-chat inject proven end-to-end into a
+  tmux `cat` sink), layout fix re-verified at 700×700. Day-1 cuts held:
+  no plot, no spine rail, no salience ring, no held-question keycaps.
+  Known cosmetic debt: avatar art's green background shows through the
+  mild CRT grade on the 176px hero (art cleanup already in backlog);
+  wide-window layout capped at 1500px but still airy — P3/P4 fill the
+  middle with the rail + instruments.
 - **RIG P1 "the metal shop" SHIPPED & DEPLOYED (2026-07-30)** per
-  [spec-rig-p1.md](active/spec-rig-p1.md). Landed: the `--rig-*` token
+  [spec-rig-p1.md](shipped/spec-rig-p1.md). Landed: the `--rig-*` token
   vocabulary in `@room/ui` tokens.css (palette/cuts/hex tiles/type/glows
   — added alongside, no existing values changed, so mobile + main window
   untouched), 12 RIG primitives in `packages/ui/src/rig/` (CutFrame,
@@ -400,7 +436,9 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
   concepts built twice, transport controls ×4, style.css is 2,465 lines
   and the top churn file. Plan = promote-and-replace (PlayerControls →
   AgentCard → PickerFlow, deleting each style.css bucket on adoption):
-  [active/spec-ui-consolidation-round2.md](active/spec-ui-consolidation-round2.md).
+  [archive/spec-ui-consolidation-round2.md](archive/spec-ui-consolidation-round2.md)
+  (steps 1–3 superseded by RIG P2, 2026-07-30; step 0 + command seam
+  remain unclaimed backlog).
   Owner leaning yes ("I think number 1"); confirm before lanes launch.
   Prior concerns doc:
   [active/ui-architecture-concerns-2026-07-24.md](active/ui-architecture-concerns-2026-07-24.md).
@@ -431,10 +469,15 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-1. **Glance at the reskinned dock strip** (toggle dock mode) — first
-   RIG surface is live on your Mac. Also: a better word than "craft"
-   for the session cards, if one ever comes to you — it's marked
-   provisional in the target and cheap to rename until P3.
+1. **Open the main window — the RIG console is live.** Try: open a
+   node (thread history), type a reply to a tmux session from the
+   desktop, paste an image into the composer. The console is
+   deliberately airy at full screen until P3/P4 add the rail +
+   instruments; judgment calls to bless or veto: hero face = current
+   speaker (falls back to Mikey), Donnie bay as a dark empty plate,
+   attachments delivered as `[attached file: <path>]` lines in the
+   inject. Also still open: a better word than "craft" — cheap to
+   rename until P3.
 2. **Does mobile Talk absorb live mode?** Carried forward from candidate
    A. Deferrable, but must not be lost — it is the only decision that
    *deletes shipped behavior*, and one board silently assumes "yes".
@@ -452,12 +495,12 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
-0. **RIG prototype phases P2–P7** per
-   [design-ui-target.md](active/design-ui-target.md) — P1 shipped;
-   next is **P2 the console** (panel main window in RIG language over
-   the existing snapshot, supersedes consolidation steps 1–3); P3 is
-   the first daemon change (salience number); P4 the spine mirror;
-   P6 mobile FIELD UNIT.
+0. **RIG prototype phases P3–P7** per
+   [design-ui-target.md](active/design-ui-target.md) — P1+P2 shipped;
+   next is **P3 salience + instruments** (first daemon change:
+   `salience`/`salienceThreshold` per target §6 + fixtures; salience
+   ring, LED bars fed by the real number, dock notch, LONG-RANGE
+   PLOT); P4 the spine mirror; P6 mobile FIELD UNIT.
 1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
    parse STATUS's ordered "Next up" into the tap-in digest (closes the
    last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
@@ -481,6 +524,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-07-30 | **RIG P2 "the console" shipped** — panel main window is the RIG console (token flip desktop-only, faceplate + Donnie bay, thread nodes + open-node history, crew manifest, watch chips); input parity landed: desktop typed chat (incl. the panel-ws inject fix) + attachments; ~520 lines of legacy style.css deleted |
 | 2026-07-30 | **THE RIG: design target locked + P1 "metal shop" shipped** — design-ui-target.md signed off; --rig-* tokens, 12 RIG primitives + gallery in @room/ui, dock strip reskinned (salience LED bar, ticker, lamps); verified via gallery + codex dock screenshots |
 | 2026-07-28 | **Spine validated + Round C concept round** — `state/*`+`gear/*` labels live on the tracker, free `tap-in.ts` harness, 11 questions graded twice (0 wrong answers after deterministic roll-up, <4¢ total); design brief locked and 4 blind concept boards + pick matrix published |
 | 2026-07-28 | **#73 architecture concepts** — target layering picked (docs 00–07 in active/architecture-concepts/); docs-publish renders Mermaid → SVG; dock-runaway regression filed as #74 |
