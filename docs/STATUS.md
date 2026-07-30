@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-29 (design target written from THE RIG — awaiting
-owner sign-off before prototype phase 1)_
+_Last updated: 2026-07-30 (target signed off; RIG prototype P1 — the
+metal shop — SHIPPED & deployed)_
 
 ## Inbox
 
@@ -25,7 +25,31 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > adopted day-1 cuts, and prototype phases P1–P7.
 > Architecture (#73, docs 04–09) remains settled separately.
 
-- **DESIGN TARGET WRITTEN — AWAITING YOUR SIGN-OFF (2026-07-29)**.
+- **RIG P1 "the metal shop" SHIPPED & DEPLOYED (2026-07-30)** per
+  [spec-rig-p1.md](active/spec-rig-p1.md). Landed: the `--rig-*` token
+  vocabulary in `@room/ui` tokens.css (palette/cuts/hex tiles/type/glows
+  — added alongside, no existing values changed, so mobile + main window
+  untouched), 12 RIG primitives in `packages/ui/src/rig/` (CutFrame,
+  Chassis, Bay, ScreenBed, Tag, Led, Keycap, HexLayer, Odometer,
+  DialGauge, CrtFace, SalienceBar), a dev-only gallery
+  (`pnpm --filter @room/ui dev`, port 5179), and the **dock strip
+  reskinned** — gunmetal plate with the corner grammar, CRT-housed
+  avatars, interim client-side salience LED bar with red threshold
+  notch, scrolling amber ticker, three status lamps. Implementation by
+  grok-4.5-high (worktree lane); main session caught + fixed two
+  regressions: the NSPanel width math didn't budget the new instrument
+  row (would have clipped it — step 44→58, height 126→144,
+  DOCK_SCR_WIDTH added) and the ticker marquee was invisible most of
+  its cycle (seamless-marquee rewrite). Verified: typecheck +
+  check-fixtures green, gallery inspected (all primitives + corner
+  grammar), codex screenshot-proofed the dock (no clipping; ticker
+  motion shown in two timed captures; main window confirmed un-tinted).
+  **Owner sign-off on the target recorded 2026-07-30** ("looks good…
+  go ahead"), with the craft-naming correction folded in: a card/blip =
+  the SESSION working a task, never the task; "craft" marked
+  provisional. **Next: P2 — the console** (panel main window over the
+  existing snapshot).
+- **DESIGN TARGET WRITTEN — signed off 2026-07-30 (2026-07-29)**.
   Stage 1 of [prototype-kickoff-prompt.md](active/prototype-kickoff-prompt.md)
   is done: `design-ui-target.md` distills the approved v6 RIG board +
   v5 mobile board + briefs + #73 architecture into one buildable spec.
@@ -407,11 +431,10 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-1. **Sign off on [design-ui-target.md](active/design-ui-target.md).**
-   The RIG design target is written (see Now). On your OK, prototype
-   phase P1 starts (tokens + corner-grammar primitives in
-   `packages/ui`, dock strip reskin). Corrections welcome — the spec is
-   the cheap place to change things.
+1. **Glance at the reskinned dock strip** (toggle dock mode) — first
+   RIG surface is live on your Mac. Also: a better word than "craft"
+   for the session cards, if one ever comes to you — it's marked
+   provisional in the target and cheap to rename until P3.
 2. **Does mobile Talk absorb live mode?** Carried forward from candidate
    A. Deferrable, but must not be lost — it is the only decision that
    *deletes shipped behavior*, and one board silently assumes "yes".
@@ -429,10 +452,12 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
-0. **RIG prototype phases P1–P7** per
-   [design-ui-target.md](active/design-ui-target.md) — P1 (tokens +
-   corner grammar) starts on sign-off; P3 is the first daemon change
-   (salience number); P4 the spine mirror; P6 mobile FIELD UNIT.
+0. **RIG prototype phases P2–P7** per
+   [design-ui-target.md](active/design-ui-target.md) — P1 shipped;
+   next is **P2 the console** (panel main window in RIG language over
+   the existing snapshot, supersedes consolidation steps 1–3); P3 is
+   the first daemon change (salience number); P4 the spine mirror;
+   P6 mobile FIELD UNIT.
 1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
    parse STATUS's ordered "Next up" into the tap-in digest (closes the
    last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
@@ -456,6 +481,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-07-30 | **THE RIG: design target locked + P1 "metal shop" shipped** — design-ui-target.md signed off; --rig-* tokens, 12 RIG primitives + gallery in @room/ui, dock strip reskinned (salience LED bar, ticker, lamps); verified via gallery + codex dock screenshots |
 | 2026-07-28 | **Spine validated + Round C concept round** — `state/*`+`gear/*` labels live on the tracker, free `tap-in.ts` harness, 11 questions graded twice (0 wrong answers after deterministic roll-up, <4¢ total); design brief locked and 4 blind concept boards + pick matrix published |
 | 2026-07-28 | **#73 architecture concepts** — target layering picked (docs 00–07 in active/architecture-concepts/); docs-publish renders Mermaid → SVG; dock-runaway regression filed as #74 |
 | 2026-07-27 | **Round A — audit criticals & quick wins** (#58–#61): perimeter closed (loopback+Tailscale bind, token rotation/no-log, skip-permissions opt-in, spawn-dir allowlist, minimal spawn env, tmux exact-match + pane guard), deploy safety (characters.json survives deploys, recorded repo-root, frozen-lockfile installs, scripts dir-sync), reliability (API timeouts+retry, failedCount badge, 64KB picker read → 0.98s→0.024s, atomic queue writes, periodic retention), hook-layer security (ingest session-id validation, .env allowlist, secrets/text out of argv, log hygiene, retention guard) |
