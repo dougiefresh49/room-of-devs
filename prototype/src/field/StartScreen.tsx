@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { toggleVerb } from "../mock/scenario";
 import { useRoom } from "../mock/store";
@@ -6,6 +7,15 @@ export function StartScreen() {
   const room = useRoom();
   const tap = room.tapIn;
   const spawning = room.crafts.find((c) => c.state === "spawning");
+  // Keep the launched craft's row visible after it materializes — the birth
+  // shouldn't vanish from under the thumb 1.6s after spawn.
+  const spawnedRef = useRef<string | null>(null);
+  if (spawning) spawnedRef.current = spawning.id;
+  const launched =
+    !spawning && spawnedRef.current
+      ? (room.crafts.find((c) => c.id === spawnedRef.current) ?? null)
+      : null;
+  const birth = spawning ?? launched;
 
   let exchange: { you?: string; mikey?: string; typing?: boolean } = {};
   if (tap) {
@@ -63,9 +73,9 @@ export function StartScreen() {
       <div className="watchchip" style={{ marginTop: 10 }}>
         {tap ? (
           <>INTERPRETER: {tap.interpreter}</>
-        ) : spawning ? (
+        ) : birth ? (
           <>
-            NEW WORK → FILE {spawning.ticket} → SPAWN · FLASH $0.002 · LOGGED
+            NEW WORK → FILE {birth.ticket} → SPAWN · FLASH $0.002 · LOGGED
           </>
         ) : (
           <span style={{ color: "var(--steel-dim)" }}>
@@ -74,20 +84,24 @@ export function StartScreen() {
         )}
       </div>
 
-      {spawning ? (
+      {birth ? (
         <div className="trows">
-          <div className="trow spawning">
+          <div className={`trow${spawning ? " spawning" : ""}`}>
             <div className="tface">
               <div className="face-crt">
-                <AvatarFace persona={spawning.persona} size={40} />
+                <AvatarFace persona={birth.persona} size={40} />
               </div>
             </div>
             <div className="tmid">
-              <span className="callsign">{spawning.callsign}</span>
-              <span className="tid">{spawning.ticket}</span>
-              <div className="ttask">{spawning.task}</div>
+              <span className="callsign">{birth.callsign}</span>
+              <span className="tid">{birth.ticket}</span>
+              <div className="ttask">{birth.task}</div>
             </div>
-            <span className="tag">LAUNCHING</span>
+            {spawning ? (
+              <span className="tag">LAUNCHING</span>
+            ) : (
+              <span className="tag">{birth.state.toUpperCase()}</span>
+            )}
           </div>
         </div>
       ) : (

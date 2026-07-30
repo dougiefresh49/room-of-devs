@@ -56,9 +56,10 @@ function DuckPtt() {
 export function ListenScreen() {
   const room = useRoom();
   const speaking = room.speakingPersona != null;
-  const persona = room.donnieCheckout
-    ? "donnie"
-    : (room.speakingPersona ?? "mikey");
+  // Whoever is actually speaking owns the face; the checkout swap only
+  // applies while idle (Donnie speaking sets speakingPersona anyway).
+  const persona =
+    room.speakingPersona ?? (room.donnieCheckout ? "donnie" : "mikey");
   const faceMode = speaking
     ? "speaking"
     : room.mood === "the-lull"
@@ -80,7 +81,7 @@ export function ListenScreen() {
       <div className="fwho">
         <span className="who">{persona === "donnie" ? "DONNIE" : "MIKEY"}</span>
         <span className="role">
-          {room.donnieCheckout
+          {persona === "donnie" && room.donnieCheckout
             ? `CHECKED OUT · ${room.donnieCheckout.purpose} · ${room.donnieCheckout.elapsed}`
             : "CONCIERGE · ON VOICE"}
         </span>

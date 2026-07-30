@@ -14,15 +14,21 @@ function fmtHold(sec: number): string {
 
 export function AnswerScreen() {
   const room = useRoom();
-  const hq = room.heldQuestion;
   const focus =
-    room.crafts.find((c) => c.id === hq?.craftId) ??
-    room.crafts.find((c) => c.state === "needs-you") ??
     room.crafts.find((c) => c.id === room.focusCraftId) ??
+    room.crafts.find((c) => c.id === room.heldQuestion?.craftId) ??
+    room.crafts.find((c) => c.state === "needs-you") ??
     room.crafts.find((c) => c.state !== "empty") ??
     null;
+  // Only surface the held question when it belongs to the focused craft —
+  // tapping another row must not show someone else's keycaps.
+  const hq =
+    room.heldQuestion && room.heldQuestion.craftId === focus?.id
+      ? room.heldQuestion
+      : null;
 
   const holding = focus?.state === "needs-you";
+  const tailLines = focus ? focus.tail.slice(-2) : [];
 
   return (
     <div className="screen-body">
@@ -128,6 +134,22 @@ export function AnswerScreen() {
           INJECT ⏎
         </button>
       </div>
+
+      {tailLines.length > 0 ? (
+        <div className="vt" style={{ padding: "6px 2px 0" }}>
+          {tailLines.map((t, i) => (
+            <div className="row" key={`${t.text.slice(0, 16)}-${i}`}>
+              <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
+              <span
+                className="say"
+                style={{ color: "var(--amber-dim)", opacity: 0.8 }}
+              >
+                {t.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {room.grantArmed ? (
         <div className="grantchip">

@@ -20,7 +20,9 @@ export function FieldDock() {
       <div className="mface">
         <div className="face-crt">
           <AvatarFace
-            persona={room.donnieCheckout ? "donnie" : "mikey"}
+            persona={
+              room.speakingPersona ?? (room.donnieCheckout ? "donnie" : "mikey")
+            }
             mode={
               room.speakingPersona
                 ? "speaking"

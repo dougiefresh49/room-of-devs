@@ -32,7 +32,9 @@ export function FieldView() {
     } else if (
       p.speaking == null &&
       speakingNow != null &&
-      !(screenRef.current === "answer" && heldNow != null)
+      !(screenRef.current === "answer" && heldNow != null) &&
+      // A tap-in answer speaks 700ms after the jump to START — stay there.
+      !(screenRef.current === "start" && tapNow != null)
     ) {
       setScreen("listen");
     } else if (p.tapIn == null && tapNow != null) {
