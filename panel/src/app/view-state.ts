@@ -35,6 +35,8 @@ export interface ViewState {
   toast: ToastState | null;
   /** Polite live-region text (see announce()). Empty when nothing to say. */
   announcement: string;
+  /** Open thread node session id (one at a time); null = none open. */
+  openNodeId: string | null;
 }
 
 const CAPTIONS_STORAGE_KEY = "roomDockCaptions";
@@ -57,6 +59,7 @@ let state: ViewState = {
   dockHoverSessionId: null,
   toast: null,
   announcement: "",
+  openNodeId: null,
 };
 
 const listeners = new Set<() => void>();
@@ -242,6 +245,15 @@ export function dismissSummary(key: string): void {
   setState({ dockSummaryDismissedKey: key, dockSummaryExpanded: false });
 }
 
+/** Toggle the open thread node (one max). Clicking the open node closes it. */
+export function setOpenNode(sessionId: string | null): void {
+  setState({ openNodeId: sessionId });
+}
+
+export function toggleOpenNode(sessionId: string): void {
+  setState({ openNodeId: state.openNodeId === sessionId ? null : sessionId });
+}
+
 // ── Rename ────────────────────────────────────────────────────────────
 
 export function startRename(sessionId: string): void {
@@ -281,6 +293,10 @@ export function pruneViewState(liveSessionIds: ReadonlySet<string>): void {
   let dirty = false;
   if (state.renamingSessionId && !liveSessionIds.has(state.renamingSessionId)) {
     patch.renamingSessionId = null;
+    dirty = true;
+  }
+  if (state.openNodeId && !liveSessionIds.has(state.openNodeId)) {
+    patch.openNodeId = null;
     dirty = true;
   }
   if (dirty) setState(patch);

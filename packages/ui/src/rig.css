@@ -222,6 +222,49 @@
   border-color: #3a3f45;
   background: transparent;
 }
+.rig-tag--hot {
+  color: var(--rig-amber-hot);
+  border-color: var(--rig-amber);
+  background: rgba(255, 216, 148, 0.1);
+  text-shadow: 0 0 6px rgba(255, 179, 71, 0.45);
+}
+
+/* ── Waveform — board .wave / .wave.flat (faceplate) ───────────────────── */
+.rig-wave {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  height: 16px;
+}
+.rig-wave i {
+  display: block;
+  width: 2px;
+  height: 3px;
+  background: var(--rig-amber);
+  box-shadow: 0 0 5px rgba(255, 179, 71, 0.6);
+  transform-origin: center bottom;
+  animation: rig-wv 860ms ease-in-out infinite;
+}
+@keyframes rig-wv {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(4.6);
+  }
+}
+.rig-wave--flat i {
+  animation: none;
+  height: 2px;
+  opacity: 0.35;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rig-wave i {
+    animation: none;
+  }
+}
 
 /* ── Led — board .led ─────────────────────────────────────────────────── */
 .rig-led {

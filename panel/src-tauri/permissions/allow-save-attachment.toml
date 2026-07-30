@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-save-attachment"
+description = "Enables the save_attachment command."
+commands.allow = ["save_attachment"]

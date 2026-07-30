@@ -12,7 +12,7 @@ import {
   currentMonitor,
   getCurrentWindow,
 } from "@tauri-apps/api/window";
-import type { PlatformAdapter, RoomMode, SnapCorner, WindowRole } from "./types.js";
+import type { PlatformAdapter, RoomMode, SnapCorner, ThreadItem, WindowRole } from "./types.js";
 
 interface WsConfig {
   token: string;
@@ -203,5 +203,41 @@ export const platform: PlatformAdapter = {
 
   isVisible(): boolean {
     return document.visibilityState === "visible";
+  },
+
+  async threadHistory(sessionId: string): Promise<ThreadItem[]> {
+    try {
+      const raw = await invoke<string>("thread_history", { sessionId });
+      const parsed: unknown = JSON.parse(raw);
+      const items =
+        parsed && typeof parsed === "object"
+          ? (parsed as { items?: unknown }).items
+          : null;
+      if (!Array.isArray(items)) return [];
+      const out: ThreadItem[] = [];
+      for (const item of items) {
+        if (!item || typeof item !== "object") continue;
+        const e = item as Record<string, unknown>;
+        const role = e.role === "user" || e.role === "agent" ? e.role : null;
+        if (!role) continue;
+        out.push({
+          role,
+          text: typeof e.text === "string" ? e.text : "",
+          at: typeof e.at === "string" ? e.at : null,
+          final: e.final === true,
+        });
+      }
+      return out;
+    } catch (err) {
+      console.error("thread_history failed:", err);
+      return [];
+    }
+  },
+
+  async saveAttachment(name: string, bytes: Uint8Array): Promise<string> {
+    return invoke<string>("save_attachment", {
+      name,
+      bytes: Array.from(bytes),
+    });
   },
 };

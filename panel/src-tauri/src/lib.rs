@@ -27,6 +27,93 @@ fn ws_token() -> Result<WsConfig, String> {
     Ok(WsConfig { token, port })
 }
 
+/// GET /thread/<sessionId> via mobile-http (token-gated). Returns raw JSON body.
+#[tauri::command]
+fn thread_history(session_id: String) -> Result<String, String> {
+    if !session_id
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-')
+        || session_id.len() < 8
+        || session_id.len() > 64
+    {
+        return Err("invalid sessionId".into());
+    }
+    let home = dirs::home_dir().ok_or("no home directory")?;
+    let tts = home.join(".cursor").join("tts");
+    let token = std::fs::read_to_string(tts.join("mobile_token"))
+        .map(|s| s.trim().to_string())
+        .map_err(|e| format!("mobile_token: {e}"))?;
+    let port = std::fs::read_to_string(tts.join("config.json"))
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v.get("mobile_port").and_then(|p| p.as_u64()))
+        .unwrap_or(4785) as u16;
+    let url = format!(
+        "http://127.0.0.1:{port}/thread/{session_id}?limit=40&t={}",
+        urlencoding_lite(&token)
+    );
+    let body = ureq::get(&url)
+        .timeout(std::time::Duration::from_secs(8))
+        .call()
+        .map_err(|e| format!("thread_history request failed: {e}"))?
+        .into_string()
+        .map_err(|e| format!("thread_history read failed: {e}"))?;
+    Ok(body)
+}
+
+/// Write an attachment under ~/.cursor/tts/attachments/. Returns absolute path.
+#[tauri::command]
+fn save_attachment(name: String, bytes: Vec<u8>) -> Result<String, String> {
+    const MAX_BYTES: usize = 10 * 1024 * 1024;
+    if bytes.len() > MAX_BYTES {
+        return Err("attachment exceeds 10 MB".into());
+    }
+    let home = dirs::home_dir().ok_or("no home directory")?;
+    let dir = home.join(".cursor").join("tts").join("attachments");
+    std::fs::create_dir_all(&dir).map_err(|e| format!("mkdir attachments: {e}"))?;
+    let safe = sanitize_filename(&name);
+    let epoch = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let path = dir.join(format!("{epoch}-{safe}"));
+    std::fs::write(&path, &bytes).map_err(|e| format!("write attachment: {e}"))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
+fn sanitize_filename(name: &str) -> String {
+    let base = name.rsplit(['/', '\\']).next().unwrap_or(name);
+    let cleaned: String = base
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    if cleaned.is_empty() || cleaned == "." || cleaned == ".." {
+        "file.bin".into()
+    } else {
+        cleaned.chars().take(120).collect()
+    }
+}
+
+/// Minimal query-string encode for the mobile token (hex-ish, but be safe).
+fn urlencoding_lite(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char);
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
 // ── Room mode (floating room window vs dock NSPanel) ────────────────────
 //
 // Rust is the mode authority: window visibility IS the mode, transitions
@@ -178,7 +265,12 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_nspanel::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![ws_token, set_room_mode])
+        .invoke_handler(tauri::generate_handler![
+            ws_token,
+            set_room_mode,
+            thread_history,
+            save_attachment
+        ])
         .manage(ModeState(Mutex::new(RoomMode::Floating)))
         .setup(|app| {
             // Floating room is primary at launch: normal app presence

@@ -1,0 +1,825 @@
+/**
+ * Console CSS — RIG main window. Board classes cited in comments
+ * (faceplate, tnode, replydeck, crew, watchchip, pttbar).
+ */
+.console {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  overflow: hidden;
+  border: 1px solid var(--rig-gun-edge);
+  border-radius: 16px 5px 5px 5px;
+  background:
+    linear-gradient(178deg, var(--rig-gun1), var(--rig-gun2) 55%, #1c2024);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.45);
+  font-family: var(--rig-stencil);
+  color: var(--rig-steel);
+}
+
+.console-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+  flex: none;
+}
+
+.console-strip-title {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--rig-steel);
+}
+
+.console-strip-title span {
+  color: var(--rig-amber);
+}
+
+.console-strip .header-actions {
+  margin-left: auto;
+}
+
+.console-offline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid #7a2c22;
+  border-radius: 8px 2px 2px 2px;
+  background: rgba(255, 83, 64, 0.08);
+  font-family: var(--rig-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rig-red);
+  flex: none;
+}
+
+.console-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(200px, 240px);
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+@media (max-width: 980px) {
+  .console-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+.console-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.console-col-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 132, 140, 0.4) transparent;
+}
+
+/* ── Faceplate — board .faceplate ─────────────────────────────────────── */
+.console-faceplate {
+  padding: 12px;
+  flex: none;
+}
+
+.console-fp-label {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  color: #9aa2ab;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.console-fp-screen {
+  padding: 14px 14px 10px;
+}
+
+.console-fp-face {
+  margin: 0 auto;
+}
+
+.console-fp-face .avatar,
+.console-fp-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.console-fp-face .avatar-fallback {
+  display: none;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--rig-amber-dim);
+  background: var(--rig-screen2);
+}
+
+.console-fp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 2px;
+  gap: 8px;
+}
+
+.console-fp-who {
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  font-weight: 800;
+  color: var(--rig-amber-hot);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+}
+
+.console-fp-role {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--rig-amber-dim);
+  text-align: right;
+}
+
+.console-fp-wavebar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 9px;
+  padding: 7px 9px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 179, 71, 0.2);
+}
+
+.console-fp-dial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.console-fp-dial-chip {
+  cursor: pointer;
+  font-family: var(--rig-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 7px;
+  border-radius: 5px 1px 1px 1px;
+  border: 1px solid var(--rig-amber-dim);
+  color: var(--rig-amber);
+  background: var(--rig-amber-ghost);
+}
+
+.console-fp-dial-chip:hover {
+  border-color: var(--rig-amber);
+}
+
+.console-transcript {
+  flex: 1;
+  min-height: 72px;
+  max-height: 160px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.console-transcript-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  font-family: var(--rig-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--rig-amber);
+  padding: 8px;
+}
+
+.console-transcript-empty {
+  color: var(--rig-steel-dim);
+  font-family: var(--rig-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 10px;
+}
+
+.console-transcript-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 0;
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+}
+
+/* ── Donnie bay — board .donbay ───────────────────────────────────────── */
+.console-donbay {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  flex: none;
+  opacity: 0.72;
+}
+
+.console-donbay-info {
+  font-family: var(--rig-mono);
+  font-size: 9.5px;
+  line-height: 1.8;
+  letter-spacing: 0.08em;
+  color: var(--rig-amber-dim);
+  text-transform: uppercase;
+}
+
+.console-donbay-info b {
+  color: var(--rig-steel-dim);
+  font-weight: 700;
+}
+
+/* ── Thread nodes — board .tnode ──────────────────────────────────────── */
+.console-threads {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px;
+  scrollbar-width: thin;
+}
+
+.console-tnode-wrap {
+  position: relative;
+}
+
+.console-tnode-wrap.needy {
+  filter: drop-shadow(0 0 8px rgba(255, 150, 30, 0.28));
+  animation: console-needglow 1.8s ease-in-out infinite;
+}
+
+@keyframes console-needglow {
+  50% {
+    filter: drop-shadow(0 0 18px rgba(255, 150, 30, 0.5));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-tnode-wrap.needy {
+    animation: none;
+  }
+}
+
+.console-tnode {
+  border: 1px solid #15181c;
+  border-radius: 13px 4px 4px 4px;
+  overflow: hidden;
+  background: linear-gradient(178deg, #2e3339, #1c2025 60%, #161a1e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.console-tnode.needsyou {
+  border-color: var(--rig-amber);
+}
+
+.console-tnode.settled {
+  opacity: 0.72;
+}
+
+.console-tnode.disconnected {
+  opacity: 0.55;
+}
+
+.console-tnode-summary {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.console-tnode-face .avatar,
+.console-tnode-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.console-tnode-face .avatar-fallback {
+  display: none;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rig-amber-dim);
+  background: var(--rig-screen2);
+}
+
+.console-tnode-mid {
+  min-width: 0;
+}
+
+.console-tnode-row1 {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.console-callsign {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rig-steel);
+}
+
+.console-callsign.muted {
+  opacity: 0.55;
+}
+
+.console-tid {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  color: var(--rig-steel-dim);
+  letter-spacing: 0.12em;
+}
+
+.console-ttask {
+  font-family: var(--rig-mono);
+  font-size: 10.5px;
+  color: var(--rig-amber);
+  letter-spacing: 0.03em;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-tstat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.console-laststamp {
+  font-family: var(--rig-mono);
+  font-size: 8.5px;
+  color: var(--rig-steel-dim);
+  letter-spacing: 0.1em;
+}
+
+.console-tnode-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.console-expand {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--rig-amber-dim);
+  padding: 0 10px 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.console-expand:hover {
+  color: var(--rig-amber);
+}
+
+.console-innards {
+  border-top: 1px solid #101317;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.console-term {
+  padding: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: var(--rig-mono);
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.console-term-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.console-term-ln {
+  color: var(--rig-amber);
+  margin-bottom: 2px;
+}
+
+.console-term-ln.user {
+  color: #e8e5df;
+}
+
+.console-term-ln .role {
+  color: var(--rig-amber-dim);
+  margin-right: 6px;
+}
+
+.console-term-live {
+  color: var(--rig-amber-hot);
+  margin-top: 4px;
+}
+
+.console-term-live.typing::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 11px;
+  margin-left: 4px;
+  background: var(--rig-amber);
+  vertical-align: -2px;
+  animation: console-curs 1s steps(1, end) infinite;
+  box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
+}
+
+@keyframes console-curs {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-term-live.typing::after {
+    animation: none;
+  }
+}
+
+.console-tnode-grant {
+  margin: 0 10px 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.console-tnode .card-actions {
+  margin: 0 10px 10px;
+  opacity: 0.9;
+  transform: none;
+}
+
+/* Keep firewall class .card-actions — usePttGrant checks it. */
+.console-tnode .card-actions.actions-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.console-tnode .card-actions.actions-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.console-name-input {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rig-amber-hot);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--rig-amber-dim);
+  border-radius: 4px;
+  padding: 2px 6px;
+  width: 100%;
+  max-width: 160px;
+}
+
+/* ── Reply deck — board .replydeck / .composer / .pttbar ──────────────── */
+.console-reply {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.console-reply-bound {
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+}
+
+.console-composer-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.console-composer-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.console-composer-field textarea {
+  width: 100%;
+  min-height: 36px;
+  max-height: 112px;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--rig-amber);
+  font-family: var(--rig-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 8px;
+}
+
+.console-composer-field textarea::placeholder {
+  color: var(--rig-steel-dim);
+  opacity: 0.7;
+}
+
+.console-attach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.console-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--rig-amber);
+  border: 1px dashed var(--rig-amber-dim);
+  background: var(--rig-amber-ghost);
+  border-radius: 5px 1px 1px 1px;
+  padding: 3px 7px;
+}
+
+.console-attach-chip button {
+  border: none;
+  background: transparent;
+  color: var(--rig-steel-dim);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.console-pttbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px 4px 4px 4px;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  border: 1px solid #0e1013;
+  cursor: pointer;
+  user-select: none;
+}
+
+.console-pttbar:focus-visible {
+  outline: 2px solid var(--rig-amber);
+  outline-offset: 2px;
+}
+
+.console-pttbar.hot {
+  border-color: #5c1f16;
+  background: linear-gradient(180deg, #3a2320, #1d1512);
+}
+
+.console-ptt-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex: none;
+  position: relative;
+  background: linear-gradient(180deg, #3a4048, #1e2227);
+  border: 1px solid #0a0c0e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.console-ptt-btn::after {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: #3a3f45;
+}
+
+.console-pttbar.hot .console-ptt-btn::after {
+  background: var(--rig-red);
+  box-shadow: 0 0 14px rgba(255, 83, 64, 0.9);
+  animation: console-ledpulse 0.5s infinite;
+}
+
+@keyframes console-ledpulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-pttbar.hot .console-ptt-btn::after {
+    animation: none;
+  }
+}
+
+.console-ptt-lbl {
+  font-family: var(--rig-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+  line-height: 1.7;
+}
+
+.console-ptt-lbl b {
+  color: var(--rig-steel);
+}
+
+.console-pttbar.hot .console-ptt-lbl b {
+  color: var(--rig-red);
+}
+
+.console-grantchip {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 8px 2px 2px 2px;
+  border: 1px solid var(--rig-green-dim);
+  background: rgba(143, 232, 110, 0.08);
+  font-family: var(--rig-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rig-green);
+}
+
+.console-grantchip .gl {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rig-green);
+  box-shadow: 0 0 8px rgba(143, 232, 110, 0.9);
+  flex: none;
+}
+
+/* ── Side rack: crew / watch / dials ──────────────────────────────────── */
+.console-side-bay {
+  padding: 8px;
+}
+
+.console-crew {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.console-crewplate {
+  padding: 6px;
+  text-align: center;
+}
+
+.console-crewplate.off {
+  opacity: 0.55;
+}
+
+.console-crewplate.off .console-cname {
+  color: #565c63;
+}
+
+.console-crew-face {
+  margin: 0 auto;
+}
+
+.console-crew-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: sepia(0.5) hue-rotate(-12deg) saturate(1.45);
+}
+
+.console-crewplate.off .console-crew-face img {
+  filter: grayscale(1) brightness(0.45);
+}
+
+.console-cname {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rig-amber-hot);
+  margin-top: 5px;
+}
+
+.console-crole {
+  font-family: var(--rig-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  color: var(--rig-amber-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.console-cstat {
+  margin-top: 5px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  align-items: center;
+  font-family: var(--rig-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+}
+
+.console-watchchip {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 8px 2px 2px 2px;
+  border: 1px dashed var(--rig-amber-dim);
+  background: var(--rig-amber-ghost);
+  font-family: var(--rig-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rig-amber);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.console-watchchip:hover {
+  border-color: var(--rig-amber);
+}
+
+.console-watch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.console-dial-static {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.console-empty {
+  font-family: var(--rig-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--rig-steel-dim);
+  text-transform: uppercase;
+  padding: 20px 8px;
+  text-align: center;
+}

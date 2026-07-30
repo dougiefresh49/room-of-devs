@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-thread-history"
+description = "Enables the thread_history command."
+commands.allow = ["thread_history"]

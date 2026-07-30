@@ -5,6 +5,25 @@
    flows from --room-accent. */
 :root {
   color-scheme: dark;
+  /* P2 desktop-only token flip — RIG ramp. tokens.css values stay for
+     mobile until P6; this file loads after tailwind-entry so panel wins. */
+  --room-bg: var(--rig-ink);
+  --room-bg-elevated: #101216;
+  --room-surface: var(--rig-gun2);
+  --room-surface-strong: var(--rig-gun1);
+  --room-surface-hover: #2b3036;
+  --room-border: var(--rig-gun-edge);
+  --room-border-strong: #1a1e24;
+  --room-text: var(--rig-steel);
+  --room-muted: var(--rig-steel-dim);
+  --room-faint: #6a7178;
+  --room-accent: var(--rig-green);
+  --room-danger: var(--rig-red);
+  --room-interactive: var(--rig-amber);
+  --state-working: var(--rig-amber);
+  --state-hand-raised: var(--rig-red);
+  --state-speaking: var(--rig-amber-hot);
+  --state-idle: var(--rig-steel-dim);
   --bg: var(--room-bg);
   --bg-elevated: var(--room-bg-elevated);
   --surface: var(--room-surface);
@@ -15,11 +34,11 @@
   --text: var(--room-text);
   --muted: var(--room-muted);
   --faint: var(--room-faint);
-  --amber: var(--state-working);
-  --blue: var(--room-interactive);
-  --green: var(--room-accent);
-  --grey: var(--state-idle);
-  --red: var(--room-danger);
+  --amber: var(--rig-amber);
+  --blue: var(--rig-amber);
+  --green: var(--rig-green);
+  --grey: var(--rig-steel-dim);
+  --red: var(--rig-red);
   --shadow: var(--room-shadow);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   font-size: 12px;
@@ -76,7 +95,7 @@ body {
   border-radius: 12px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34px),
-    radial-gradient(circle at 18% 0%, rgba(102, 169, 255, 0.08), transparent 120px), var(--bg);
+    radial-gradient(circle at 18% 0%, rgba(255, 179, 71, 0.06), transparent 120px), var(--bg);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
@@ -176,327 +195,9 @@ button,
   height: 13px;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(154px, 100%), 1fr));
-  grid-auto-rows: minmax(96px, auto);
-  align-content: start;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 1px 1px 3px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(144, 155, 169, 0.42) transparent;
-  container-type: inline-size;
-  container-name: room-cards;
-}
-
-.room-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  gap: 8px;
-}
-
-.room-body .cards {
-  min-width: 0;
-}
-
-.room-summary-pane {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 190px;
-  width: 190px;
-  min-height: 0;
-  padding: 8px 9px;
-  border: 1px solid rgba(178, 194, 216, 0.16);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28px), rgba(14, 18, 26, 0.92);
-  overflow: hidden;
-}
-
-.room-summary-pane.ended {
-  opacity: 0.62;
-}
-
-.room-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.room-summary-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.room-summary-dismiss {
-  width: 20px;
-  height: 18px;
-  border-radius: 5px;
-  flex: 0 0 auto;
-}
-
-.room-summary-dismiss svg {
-  width: 11px;
-  height: 11px;
-}
-
-.room-summary-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  color: #d5dde7;
-  font-size: 11.5px;
-  line-height: 1.45;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(144, 155, 169, 0.42) transparent;
-}
-
-.room-summary-body p {
-  margin: 0 0 0.55em;
-}
-
-.room-summary-body p:last-child,
-.room-summary-body ul:last-child,
-.room-summary-body ol:last-child,
-.room-summary-body blockquote:last-child,
-.room-summary-body pre:last-child {
-  margin-bottom: 0;
-}
-
-.room-summary-empty {
-  margin: auto 0;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: center;
-}
-
-.room-summary-body .md-heading {
-  margin: 0.7em 0 0.35em;
-  color: var(--text);
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.room-summary-body .md-heading:first-child {
-  margin-top: 0;
-}
-
-.room-summary-body .md-h1 {
-  font-size: 13px;
-}
-.room-summary-body .md-h2 {
-  font-size: 12.5px;
-}
-.room-summary-body .md-h3 {
-  font-size: 12px;
-}
-
-.room-summary-body ul,
-.room-summary-body ol {
-  margin: 0 0 0.55em;
-  padding-left: 1.15em;
-}
-
-.room-summary-body li {
-  margin: 0.15em 0;
-}
-
-.room-summary-body code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.92em;
-}
-
-.cards::-webkit-scrollbar {
-  width: 7px;
-}
-
-.cards::-webkit-scrollbar-thumb {
-  background: rgba(144, 155, 169, 0.32);
-  border-radius: 999px;
-}
-
-.cards.disconnected .card {
-  opacity: 0.48;
-  filter: grayscale(0.65);
-  /* The greying used to be the ONLY signal while every action stayed live
-     (audit U-1). Actions now carry a real `disabled`; the card surface
-     itself stops advertising itself as clickable. */
-  cursor: default;
-}
-
-/* Offline reason, stated where the actions are — not hidden in a tooltip
-   on an 8px dot. */
-.room-offline-banner {
-  flex: 0 0 auto;
-  padding: 5px 9px;
-  border: 1px solid rgba(240, 100, 100, 0.5);
-  border-radius: 6px;
-  background: rgba(240, 100, 100, 0.12);
-  color: #ffc9c9;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-align: center;
-}
-
 /* The shared GrantButton (@room/ui) inside a room card: same affordance as
    mobile, sized for the panel's denser grid. Colors/shape come from the
    component's tokens — this only tightens the metrics. */
-.card-grant-btn {
-  margin-top: 8px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.card {
-  --state: var(--grey);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  min-height: 96px;
-  padding: 9px;
-  /* overflow stays visible so the card grows to fit its content: when a card
-     is SPEAKING/spotlight the avatar enlarges and the stage action row
-     (pause/stop/replay) is added, which pushed the card past the grid row's
-     base height. `overflow: hidden` here clipped that row at the card edge;
-     the grid auto-row (minmax(96px, auto)) already sizes to content, so the
-     card just needs to not clip. The rounded background is clipped by
-     border-radius regardless, and the ::before accent bar is corner-rounded
-     below to keep the rounded-corner look. */
-  overflow: visible;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%), var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow:
-    0 8px 22px var(--shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    box-shadow 140ms ease,
-    opacity 140ms ease,
-    transform 140ms ease;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: var(--state);
-  border-radius: 8px 0 0 8px;
-  opacity: 0.78;
-}
-
-.card:hover {
-  background-color: var(--surface-hover);
-  border-color: color-mix(in srgb, var(--state) 58%, var(--border-strong));
-  box-shadow:
-    0 11px 26px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(255, 255, 255, 0.025),
-    inset 0 1px 0 rgba(255, 255, 255, 0.075);
-  transform: translateY(-1px);
-}
-
-.card.stale {
-  opacity: 0.34;
-  border-color: rgba(240, 100, 100, 0.62);
-}
-
-.card-main {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 8px;
-}
-
-.avatar-wrap {
-  position: relative;
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
-  transform-origin: 50% 50%;
-  transition:
-    transform 180ms ease-out,
-    width 220ms ease,
-    height 220ms ease,
-    flex-basis 220ms ease;
-}
-
-.card.speaking-grow .avatar-wrap {
-  width: 64px;
-  height: 64px;
-  flex-basis: 64px;
-}
-
-.card.speaking-grow .avatar,
-.card.speaking-grow .avatar-fallback {
-  width: 64px;
-  height: 64px;
-}
-
-@container room-cards (min-width: 320px) {
-  .card.speaking-grow {
-    grid-column: span 2;
-  }
-}
-
-.avatar-wrap::after {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border: 1px solid color-mix(in srgb, var(--state) 48%, transparent);
-  border-radius: 50%;
-  opacity: 0.58;
-  pointer-events: none;
-}
-
-.avatar-wrap.grant-loading::before {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0%,
-    color-mix(in srgb, var(--room-accent) 15%, transparent) 8%,
-    color-mix(in srgb, var(--room-accent) 90%, transparent) 22%,
-    transparent 38%
-  );
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 2.5px),
-    #000 calc(100% - 2px)
-  );
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
-  animation: grant-sweep 1.2s linear infinite;
-  pointer-events: none;
-  z-index: 3;
-}
-
 .avatar {
   display: block;
   width: 42px;
@@ -519,96 +220,6 @@ button,
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
-}
-
-.card-body {
-  min-width: 0;
-  flex: 1;
-}
-
-.name {
-  max-width: 100%;
-  overflow: hidden;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.name.muted {
-  color: var(--muted);
-  text-decoration: line-through;
-}
-
-.name-input {
-  width: 100%;
-  height: 18px;
-  min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--state) 58%, var(--border-strong));
-  border-radius: 5px;
-  background: rgba(13, 16, 21, 0.82);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  outline: 0;
-  padding: 1px 5px;
-}
-
-.badge {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 5px;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.badge .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--state);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--state) 60%, transparent);
-}
-
-.badge .label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.state-working {
-  --state: var(--state-working);
-}
-
-.state-hand_raised {
-  --state: var(--state-hand-raised);
-}
-
-.state-speaking {
-  --state: var(--state-speaking);
-}
-
-.state-idle {
-  --state: var(--state-idle);
-}
-
-.state-hand_raised .dot {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-.state-speaking .dot {
-  animation: pulse 1.4s ease-in-out infinite;
 }
 
 .failed-badge {
@@ -637,28 +248,6 @@ button,
   box-shadow: 0 0 8px color-mix(in srgb, var(--room-danger) 60%, transparent);
 }
 
-.chips {
-  display: flex;
-  min-height: 15px;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-/* Waiting-message preview under a raised hand (Phase 3 island; the panel
-   never rendered queuedPreview before — deliberate baseline addition). */
-.queued-preview {
-  overflow: hidden;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 10px;
-  font-style: italic;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
 .chip {
   min-width: 15px;
   padding: 2px 5px;
@@ -670,22 +259,6 @@ button,
   font-weight: 700;
   line-height: 1;
   text-align: center;
-}
-
-.chip.raised {
-  background: rgba(102, 169, 255, 0.14);
-  color: #b8d7ff;
-}
-
-.chip.superseded {
-  background: rgba(243, 178, 71, 0.13);
-  color: #f6cf8b;
-}
-
-.chip.phone {
-  border-color: color-mix(in srgb, var(--room-accent) 20%, transparent);
-  background: color-mix(in srgb, var(--room-accent) 12%, transparent);
-  color: color-mix(in srgb, var(--room-accent) 55%, var(--room-text));
 }
 
 /* Daemon live-mode indicator (owner decision #3: indicator only). */
@@ -739,12 +312,6 @@ button,
 
 .card-actions.actions-5 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.card:hover .card-actions,
-.card:focus-within .card-actions {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .icon-btn {
@@ -814,47 +381,6 @@ button,
   background: rgba(240, 100, 100, 0.15);
   border-color: rgba(240, 100, 100, 0.72);
   color: #ffb4b4;
-}
-
-.empty {
-  grid-column: 1 / -1;
-  align-self: center;
-  padding: 24px 0;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.card.state-speaking {
-  border-color: color-mix(in srgb, var(--room-accent) 74%, transparent);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.42),
-    0 0 14px color-mix(in srgb, var(--room-accent) 26%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.075);
-  animation: speak-pulse 1.4s ease-in-out infinite;
-}
-
-.card.state-speaking .avatar-wrap::after {
-  animation: ring-pulse 1.4s ease-in-out infinite;
-}
-
-/* Joystick triage focus — brighter than state rings */
-.card.triage-focus {
-  border-color: rgba(255, 255, 255, 0.92);
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.85),
-    0 0 18px rgba(255, 255, 255, 0.35),
-    0 8px 22px var(--shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.card.triage-focus::before {
-  background: #fff;
-  opacity: 1;
-  width: 3px;
 }
 
 #app.dock-mode {

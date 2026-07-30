@@ -177,10 +177,22 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Enables the save_attachment command.",
+          "type": "string",
+          "const": "allow-save-attachment",
+          "markdownDescription": "Enables the save_attachment command."
+        },
+        {
           "description": "Allows invoking the set_room_mode command (floating/dock window swap)",
           "type": "string",
           "const": "allow-set-room-mode",
           "markdownDescription": "Allows invoking the set_room_mode command (floating/dock window swap)"
+        },
+        {
+          "description": "Enables the thread_history command.",
+          "type": "string",
+          "const": "allow-thread-history",
+          "markdownDescription": "Enables the thread_history command."
         },
         {
           "description": "Enables the ws_token command.",

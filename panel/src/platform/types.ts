@@ -11,6 +11,14 @@ export type WindowRole = "main" | "dock";
 
 export type RoomMode = "floating" | "dock";
 
+/** One message from GET /thread/<sessionId> (mobile-http transcript). */
+export interface ThreadItem {
+  role: "user" | "agent";
+  text: string;
+  at: string | null;
+  final?: boolean;
+}
+
 export interface PlatformAdapter {
   /** This webview's realm — drives the App tree + native-chrome variant. */
   windowRole(): WindowRole;
@@ -33,4 +41,8 @@ export interface PlatformAdapter {
   enterDockLayout(width: number, height: number): Promise<void>;
   /** True when this window is currently visible (snap/mode guards). */
   isVisible(): boolean;
+  /** Fetch transcript turns via Tauri → mobile-http GET /thread. */
+  threadHistory(sessionId: string): Promise<ThreadItem[]>;
+  /** Persist an attachment under ~/.cursor/tts/attachments/; returns abs path. */
+  saveAttachment(name: string, bytes: Uint8Array): Promise<string>;
 }

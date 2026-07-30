@@ -14,6 +14,7 @@ import {
   SalienceBar,
   ScreenBed,
   Tag,
+  Waveform,
 } from "../src/rig/index.js";
 import type { CrtFaceSize } from "../src/rig/index.js";
 import mikey from "./assets/mikey-idle.png";
@@ -117,11 +118,23 @@ function Gallery() {
       </Section>
 
       <Section title="Tag tones">
-        {(["amber", "red", "green", "dim"] as const).map((tone) => (
+        {(["amber", "red", "green", "dim", "hot"] as const).map((tone) => (
           <Card key={tone} label={tone}>
             <Tag tone={tone}>{tone.toUpperCase()}</Tag>
           </Card>
         ))}
+      </Section>
+
+      <Section title="Waveform">
+        <Card label="active">
+          <Waveform active />
+        </Card>
+        <Card label="idle / flat">
+          <Waveform active={false} />
+        </Card>
+        <Card label="6 bars active">
+          <Waveform active bars={6} />
+        </Card>
       </Section>
 
       <Section title="Led tones / pulses">

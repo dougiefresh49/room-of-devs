@@ -7,6 +7,7 @@ export { Chassis, type ChassisProps } from "./Chassis.js";
 export { Bay, type BayProps } from "./Bay.js";
 export { ScreenBed, type ScreenBedProps } from "./ScreenBed.js";
 export { Tag, type TagProps, type TagTone } from "./Tag.js";
+export { Waveform, type WaveformProps } from "./Waveform.js";
 export { Led, type LedProps, type LedTone } from "./Led.js";
 export { Keycap, type KeycapProps } from "./Keycap.js";
 export { HexLayer, type HexLayerProps, type HexIntensity } from "./HexLayer.js";

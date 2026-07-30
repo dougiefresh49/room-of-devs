@@ -8,9 +8,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { WindowRole } from "../platform/types.js";
 import { client } from "../client.js";
 import { getGrantMarkVersion, subscribeGrantMarks } from "./grant-guard.js";
+import { ConsoleView } from "./console/ConsoleView.js";
 import { DockView } from "./DockView.js";
 import { PickerView } from "./PickerView.js";
-import { RoomView } from "./RoomView.js";
 import { SettingsView } from "./SettingsView.js";
 import { getServerData, subscribeServerData } from "./server-data.js";
 import { getUiState, subscribeUiState } from "./ui-state.js";
@@ -83,7 +83,7 @@ export function App({ role }: { role: WindowRole }) {
 
   return (
     <>
-      <RoomView
+      <ConsoleView
         snapshot={snapshot}
         connected={room.connected}
         staleSessions={serverData.staleSessions}
