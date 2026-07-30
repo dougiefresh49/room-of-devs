@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-30 (RIG prototype P2 — the console — SHIPPED &
-deployed; P1 shipped same day)_
+_Last updated: 2026-07-30 (RIG prototype round 2 — THE FIELD UNIT five
+mobile screens at /field — SHIPPED; v1 console+plot same day)_
 
 ## Inbox
 
@@ -58,8 +58,34 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
   wishlist of invented fields for the eventual wire work. Built by a
   grok-4.5-high lane against the spec; codex drove every trigger in
   the browser (24 screenshots): all pass after one fix (KEEP THAT now
-  settles the one-off — dies on delivery). Round 2: the mobile FIELD
-  UNIT screens at `/field`.
+  settles the one-off — dies on delivery).
+- **FIELD UNIT PROTOTYPE (round 2) — SHIPPED (2026-07-30)** per the
+  kickoff ([shipped/prototype-kickoff-field-unit.md](shipped/prototype-kickoff-field-unit.md))
+  + target §5/§8 + the v5 mobile board CSS. Same silo, same mock store:
+  **http://localhost:5180/field** renders a machined phone frame with
+  the five screens — **GLANCE** (salience strip w/ threshold notch,
+  arm's-length polar plot lit from mock salience, thread rows; tap a
+  row/blip → ANSWER), **ANSWER** (44pt held keycaps w/ armed glow,
+  text inject w/ visible tail echo, grant chip), **LISTEN** (158px
+  lipsync face — Donnie swaps in on checkout, routed chip flips the
+  speaker gate + AUD LED, queued-for-lull dim line, watch chip, free
+  STOP + replay-last), **START** (tap-in exchange, interpreter chip,
+  spawning row that persists as WORKING after materializing, verb rack
+  as tap rows w/ GATED #75), **GAUGES** (two spend dials + odometer +
+  three read-only knobs, walk-to-the-rig handoff chip). Day-1 cuts
+  honored: the PTT pill on every screen never fakes a hot mic — press
+  shows an amber "VOICE LIVES AT THE RIG" handoff for 2.4s (red only
+  mirrors the room's real MIC OPEN). Auto-jump: held question → ANSWER,
+  speech → LISTEN, tap-in → START (and stays there through the spoken
+  answer). Control deck works on /field; all 18 triggers play out on
+  the phone. New mock wishlist fields: `audio.route` (speaker gate) +
+  `queuedForLull`. Built by grok-4.5-high against a written spec; codex
+  drove two browser rounds (18 checks + 6-item re-verify, ~30
+  screenshots) — 5 bugs found and fixed (answer focus, inject echo,
+  tap-in nav, spawn-row vanish, speaking-face precedence). Known
+  cosmetic notes for the owner's pass: phone-scale mono type is
+  board-faithful but small; task lines ellipsize aggressively on
+  322px.
 - **RIG P2 "the console" SHIPPED & DEPLOYED (2026-07-30)** per
   [spec-rig-p2.md](shipped/spec-rig-p2.md). The panel main window is now
   the RIG console over the existing snapshot — no daemon-surface or
