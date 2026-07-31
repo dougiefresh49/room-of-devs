@@ -144,16 +144,31 @@ export function ListenScreen() {
           <span className="sq" />
         </button>
         <DuckPtt />
+        <button
+          type="button"
+          className="replaykey"
+          aria-label="Replay last clip (free)"
+          title="REPLAY LAST · FREE"
+          onClick={() => replayLastMikey()}
+        >
+          <svg
+            viewBox="0 0 20 20"
+            width="20"
+            height="20"
+            aria-hidden
+            style={{ transform: "scaleX(-1)" }}
+          >
+            <path
+              d="M14.5 6.5 A6 6 0 1 0 16 10"
+              stroke="var(--amber)"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
+          </svg>
+        </button>
       </div>
-
-      <button
-        type="button"
-        className="routechip dim"
-        style={{ marginTop: 8 }}
-        onClick={() => replayLastMikey()}
-      >
-        REPLAY LAST · FREE
-      </button>
     </div>
   );
 }
