@@ -30,7 +30,7 @@ export function FieldDock() {
                   ? "stoked"
                   : "idle"
             }
-            size={40}
+            size={52}
           />
         </div>
       </div>
