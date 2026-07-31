@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@room/ui";
+import { CrtFace } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import {
   injectReply,
@@ -13,17 +15,21 @@ import { PttPill } from "./PttPill";
 function TransportKeys() {
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         className="stopkey"
         aria-label="Stop playback"
         title="STOP"
         onClick={() => stopPlayback()}
       >
         <span className="sq" />
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         className="replaykey"
         aria-label="Replay last clip (free)"
         title="REPLAY LAST · FREE"
@@ -45,7 +51,7 @@ function TransportKeys() {
           />
           <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
         </svg>
-      </button>
+      </Button>
     </>
   );
 }
@@ -81,7 +87,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
       <div className="fdock-row">
         {showChip ? (
           <div className="mface">
-            <div className="face-crt">
+            <CrtFace size={52} scanlines>
               <AvatarFace
                 persona={
                   room.speakingPersona ??
@@ -96,7 +102,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
                 }
                 size={52}
               />
-            </div>
+            </CrtFace>
           </div>
         ) : null}
 
@@ -109,8 +115,10 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
             role="group"
             aria-label="Send words to the room"
           >
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               className="chatkey"
               aria-label="Type a reply"
               title="TYPE IT"
@@ -126,7 +134,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </Button>
             <span className="tgdiv" aria-hidden />
             <PttPill compact={!listen} icon={listen} />
           </div>
@@ -136,8 +144,10 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
       <div className={`composer-slot${typing ? " open" : ""}`}>
         <div className="composer-slide">
           <div className="composer">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               className="closekey"
               aria-label="Close composer"
               title="CLOSE"
@@ -148,7 +158,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
               }}
             >
               ✕
-            </button>
+            </Button>
             <input
               ref={inputRef}
               className="field"
@@ -171,8 +181,10 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
                 }
               }}
             />
-            <button
+            <Button
               type="button"
+              variant="default"
+              size="icon"
               className="sendkey"
               aria-label="Inject reply"
               title="INJECT"
@@ -189,7 +201,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

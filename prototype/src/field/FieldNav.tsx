@@ -1,3 +1,5 @@
+import { Led } from "@room/ui/rig";
+
 export type FieldScreen = "glance" | "answer" | "listen" | "start" | "gauges";
 
 const TABS: { id: FieldScreen; label: string }[] = [
@@ -32,10 +34,10 @@ export function FieldNav({
         >
           {t.label}
           {t.id === "answer" && answerBadge ? (
-            <span className="dot red" aria-hidden />
+            <Led tone="red" className="fnav-dot" />
           ) : null}
           {t.id === "listen" && listenBadge ? (
-            <span className="dot amber" aria-hidden />
+            <Led tone="amber" className="fnav-dot" />
           ) : null}
         </button>
       ))}

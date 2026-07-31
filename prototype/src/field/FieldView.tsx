@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Led } from "@room/ui/rig";
 import { focusCraftForAnswer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import "../styles/field.css";
@@ -88,11 +89,12 @@ export function FieldView() {
               <span>ROOM // FIELD LINK</span>
               <span className="spacer" />
               <span title="SSE link — RoomClient connected to the daemon">
-                <span className="led grn" /> SSE
+                <Led tone="green" /> SSE
               </span>
               <span title="AUD — lit when this phone holds the speaker gate (audio plays here, Mac speakers cold)">
-                <span
-                  className={`led${room.audio.route === "phone" ? " on" : ""}`}
+                <Led
+                  tone={room.audio.route === "phone" ? "amber" : "dim"}
+                  pulse={room.audio.route === "phone"}
                 />{" "}
                 AUD
               </span>

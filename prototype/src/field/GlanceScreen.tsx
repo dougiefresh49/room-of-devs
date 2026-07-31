@@ -1,4 +1,6 @@
+import { CutFrame, SalienceBar, Tag, type TagTone } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import type { Craft } from "../mock/types";
 import { useRoom } from "../mock/store";
 import { FieldPlot } from "./FieldPlot";
@@ -7,12 +9,12 @@ export interface GlanceScreenProps {
   onSelectCraft: (craftId: string) => void;
 }
 
-function stateTag(c: Craft): { label: string; cls: string } {
-  if (c.state === "needs-you") return { label: "NEEDS YOU", cls: "tag red" };
-  if (c.state === "settled") return { label: "SETTLED", cls: "tag grn" };
-  if (c.state === "spawning") return { label: "LAUNCHING", cls: "tag" };
-  if (c.watched) return { label: "WATCHED", cls: "tag" };
-  return { label: "WORKING", cls: "tag dim" };
+function stateTag(c: Craft): { label: string; tone: TagTone } {
+  if (c.state === "needs-you") return { label: "NEEDS YOU", tone: "red" };
+  if (c.state === "settled") return { label: "SETTLED", tone: "green" };
+  if (c.state === "spawning") return { label: "LAUNCHING", tone: "amber" };
+  if (c.watched) return { label: "WATCHED", tone: "amber" };
+  return { label: "WORKING", tone: "dim" };
 }
 
 function rowClass(c: Craft): string {
@@ -36,18 +38,7 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
     <div className="screen-body">
       <div className="salstrip">
         <span className="pct">{clearPct}% CLR</span>
-        <div className="salbar" aria-hidden>
-          {Array.from({ length: 13 }, (_, i) => {
-            const isTh = i === thrSeg;
-            const isDim = i >= lit && !isTh;
-            return (
-              <i
-                key={i}
-                className={isTh ? "th" : isDim ? "dim" : undefined}
-              />
-            );
-          })}
-        </div>
+        <SalienceBar lit={lit} threshold={thrSeg} segments={13} />
         <span className="cap">
           SALIENCE
           <br />
@@ -63,12 +54,16 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
         </span>
       </div>
 
-      <div
-        className="plotbay-f fcard"
-        style={{ marginTop: 10, position: "relative", padding: 4 }}
+      <CutFrame
+        scale="m"
+        className="plotbay-f"
+        style={{ marginTop: 10, position: "relative" }}
+        innerClassName="fcard"
       >
-        <FieldPlot onSelectCraft={onSelectCraft} />
-      </div>
+        <div style={{ padding: 4 }}>
+          <FieldPlot onSelectCraft={onSelectCraft} />
+        </div>
+      </CutFrame>
 
       <div className="trows">
         {crafts.map((c) => {
@@ -82,16 +77,16 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
               style={{ width: "100%", textAlign: "left" }}
             >
               <div className="tface">
-                <div className="face-crt">
+                <FieldCrtFace size={40} scanlines>
                   <AvatarFace persona={c.persona} size={40} />
-                </div>
+                </FieldCrtFace>
               </div>
               <div className="tmid">
                 <span className="callsign">{c.callsign}</span>
                 <span className="tid">{c.ticket}</span>
                 <div className="ttask">{c.task}</div>
               </div>
-              <span className={tag.cls}>{tag.label}</span>
+              <Tag tone={tag.tone}>{tag.label}</Tag>
             </button>
           );
         })}

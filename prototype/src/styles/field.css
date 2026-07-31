@@ -53,14 +53,16 @@
   position: relative;
 }
 .field-root .fnav button.active { color: var(--amber); text-shadow: 0 0 8px rgba(255,179,71,.5); }
-.field-root .fnav button .dot {
+.field-root .fnav button .fnav-dot {
   position: absolute;
   top: 2px; right: 4px;
-  width: 5px; height: 5px; border-radius: 50%;
+  width: 5px; height: 5px;
 }
-.field-root .fnav button .dot.red { background: var(--red); box-shadow: 0 0 6px rgba(255,83,64,.8); }
-.field-root .fnav button .dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(255,179,71,.8); }
-.field-root .face-crt { filter: sepia(.5) hue-rotate(-12deg) saturate(1.4); }
+/* CrtFace wells — fill wrapper (FieldCrtFace) so non-library sizes (40/148) fit */
+.field-root .field-crt-fill.rig-crt {
+  width: 100% !important;
+  height: 100% !important;
+}
 .field-root .pttpill.handoff {
   border-color: #6a5220;
   background: linear-gradient(180deg, #3a3220, #1d1912);
@@ -75,14 +77,10 @@
   border-color: var(--amber-dim);
   animation: field-matz 1.4s ease-in-out infinite;
 }
-.field-root .routechip.dim { color: var(--steel-dim); border-color: #3a3f45; }
-.field-root .routechip { cursor: pointer; }
-.field-root .optbtn { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; }
 .field-root .vswitch { cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit; }
 .field-root .trow { cursor: pointer; }
 .field-root .stopkey { cursor: pointer; border: 1px solid #5c1f16; color: inherit; font: inherit; }
 .field-root .composer .field { color: var(--amber); }
-.field-root .dial.burning svg { filter: drop-shadow(0 0 8px rgba(255,179,71,.55)); }
 .field-root.mood-mic-open .fscr .inner > *:not(.fdock):not(.introw) { opacity: .55; }
 .field-root.mood-mic-open .fdock, .field-root.mood-mic-open .pttpill { opacity: 1; }
 .field-root.mood-the-lull .trow { border-color: rgba(143,232,110,.25); }
@@ -114,36 +112,7 @@
    Avatar frames use AvatarFace (real PNGs), not board data-URI flip-books. */
 .field-root .dotmx{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--amber)}
 .field-root .dotmx .ghost, .field-root .dotmx.ghost{opacity:.32}
-.field-root .odo{display:inline-flex;gap:2px;vertical-align:middle}
-.field-root .odo b{display:block;width:1.15ch;height:1.32em;overflow:hidden;position:relative;
-  font-family:var(--mono);font-weight:700;font-style:normal;
-  background:linear-gradient(180deg,#181a1d,#0b0c0e 45%,#141619);
-  border:1px solid #000;border-radius:2px;color:#e8e5df;
-  box-shadow:inset 0 2px 3px rgba(0,0,0,.8)}
-.field-root .odo b::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.7)}
-.field-root .odo b i{display:block;font-style:normal;line-height:1.32em;text-align:center}
-.field-root .odo b.tick i{animation: field-odoroll 14s steps(10,end) infinite}
-@keyframes field-odoroll{to{transform:translateY(-13.2em)}}
-.field-root .odo.amberodo b{color:var(--amber);text-shadow:0 0 6px rgba(255,179,71,.5)}
-.field-root .wave{display:flex;gap:2px;align-items:center;height:16px}
-.field-root .wave i{width:2px;height:3px;background:var(--amber);box-shadow:0 0 5px rgba(255,179,71,.6);animation: field-wv 860ms ease-in-out infinite}
-@keyframes field-wv{0%,100%{transform:scaleY(1)}50%{transform:scaleY(4.6)}}
-.field-root .wave i:nth-child(2){animation-delay:90ms}
-.field-root .wave i:nth-child(3){animation-delay:200ms}
-.field-root .wave i:nth-child(4){animation-delay:60ms}
-.field-root .wave i:nth-child(5){animation-delay:300ms}
-.field-root .wave i:nth-child(6){animation-delay:150ms}
-.field-root .wave i:nth-child(7){animation-delay:340ms}
-.field-root .wave i:nth-child(8){animation-delay:20ms}
-.field-root .wave i:nth-child(9){animation-delay:250ms}
-.field-root .wave i:nth-child(10){animation-delay:120ms}
-.field-root .wave i:nth-child(11){animation-delay:380ms}
-.field-root .wave i:nth-child(12){animation-delay:180ms}
-.field-root .wave.flat i{animation:none;height:2px;opacity:.35;box-shadow:none}
-.field-root .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3a3f45;vertical-align:middle}
-.field-root .led.on{background:var(--amber);box-shadow:0 0 7px rgba(255,179,71,.9);animation: field-ledpulse 2.2s ease-in-out infinite}
-.field-root .led.grn{background:var(--green);box-shadow:0 0 6px rgba(143,232,110,.8);animation:none}
-.field-root .led.red{background:var(--red);box-shadow:0 0 7px rgba(255,83,64,.9);animation: field-ledpulse 1.1s ease-in-out infinite}
+/* odo / wave / led → @room/ui/rig (Odometer, Waveform, Led) — bespoke copies deleted */
 @keyframes field-ledpulse{50%{opacity:.45}}
 .field-root .fone{width:322px;flex:none;padding:11px;border-radius:44px;position:relative;
   background:linear-gradient(172deg,#454b53,#24282d 60%,#1a1d21);
@@ -164,13 +133,9 @@
 .field-root .fstat .spacer{flex:1}
 .field-root .fstat .sseg{font-size:10px}
 /* thumb-reach arc — honesty overlay */
-/* compact salience strip */
+/* compact salience strip — bar is rig SalienceBar */
 .field-root .salstrip{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,179,71,.2);
   border-radius:5px;background:rgba(0,0,0,.4)}
-.field-root .salstrip .salbar{display:flex;gap:3px;flex:none}
-.field-root .salstrip .salbar i{width:5px;height:14px;border-radius:1px;background:var(--amber);box-shadow:0 0 4px rgba(255,179,71,.5)}
-.field-root .salstrip .salbar i.dim{background:#3d3325;box-shadow:none}
-.field-root .salstrip .salbar i.th{background:var(--red);box-shadow:0 0 5px rgba(255,83,64,.7)}
 .field-root .salstrip .pct{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber);text-shadow:0 0 10px rgba(255,179,71,.6)}
 .field-root .salstrip .cap{font-family:var(--mono);font-size:7.5px;letter-spacing:.16em;color:var(--amber-dim);text-transform:uppercase;line-height:1.5}
 /* plot svg animations (from v4) */
@@ -193,25 +158,20 @@
   padding:6px 8px 6px 6px;border-radius:7px;border:1px solid #15181c;
   background:linear-gradient(178deg,#31363c,#22262b);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 12px rgba(0,0,0,.4)}
-.field-root .trow .tface{width:40px;height:40px;border-radius:5px;overflow:hidden;position:relative;flex:none;
-  background:var(--screen);border:1px solid rgba(255,179,71,.3);box-shadow:inset 0 0 10px rgba(0,0,0,.7)}
-.field-root .trow .tface .face{width:40px;filter:sepia(.5) hue-rotate(-12deg) saturate(1.4)}
-.field-root .trow .tface::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px)}
+.field-root .trow .tface{width:40px;height:40px;overflow:hidden;position:relative;flex:none}
 .field-root .trow .tmid{min-width:0}
 .field-root .trow .callsign{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
 .field-root .trow .tid{font-family:var(--mono);font-size:7.5px;color:var(--steel-dim);letter-spacing:.1em;margin-left:6px}
 .field-root .trow .ttask{font-family:var(--mono);font-size:8.5px;color:var(--amber);letter-spacing:.02em;margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.field-root .trow .tag{font-size:7.5px;padding:2px 5px}
+.field-root .trow .rig-tag{font-size:7.5px;padding:2px 5px}
+.field-root .field-tag-sm{font-size:7.5px}
 .field-root .trow.needsyou{border-color:var(--amber);animation: field-needglow 1.8s ease-in-out infinite}
 @keyframes field-needglow{50%{box-shadow:0 0 24px rgba(255,150,30,.35),inset 0 1px 0 rgba(255,255,255,.07)}}
 .field-root .trow.settled{opacity:.66}
 /* bottom dock: mikey chip + PTT pill — the always-there thumb row */
 .field-root .fdock{margin-top:auto;display:flex;gap:10px;align-items:center;padding-top:12px}
-.field-root .fdock .mface{width:52px;height:52px;border-radius:8px;overflow:hidden;flex:none;position:relative;
-  background:var(--screen);border:1px solid rgba(255,179,71,.35);box-shadow:0 0 14px rgba(255,140,20,.18),inset 0 0 10px rgba(0,0,0,.7)}
-.field-root .fdock .mface .face{width:52px;filter:sepia(.5) hue-rotate(-12deg) saturate(1.5)}
+.field-root .fdock .mface{width:52px;height:52px;overflow:hidden;flex:none;position:relative}
 .field-root .pttpill{flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:26px;
   background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid #0e1013;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 12px rgba(0,0,0,.5)}
@@ -224,17 +184,13 @@
 .field-root .pttpill.hot{border-color:#5c1f16;background:linear-gradient(180deg,#3a2320,#1d1512)}
 .field-root .pttpill.hot .btn::after{background:var(--red);box-shadow:0 0 12px rgba(255,83,64,.9);animation: field-ledpulse .5s infinite}
 .field-root .pttpill.hot .lbl b{color:var(--red)}
-/* held-question option keys — v4's keycaps, sized for thumbs */
-.field-root .optbtn{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;
-  text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--amber);
-  text-transform:uppercase;background:linear-gradient(180deg,rgba(255,179,71,.13),rgba(255,179,71,.04));
-  border:1px solid var(--amber-dim);border-radius:6px;padding:13px 12px;margin-top:8px;cursor:pointer}
-.field-root .optbtn .keycap{width:28px;height:28px;border-radius:4px;display:grid;place-items:center;font-weight:700;font-size:12px;
-  color:var(--amber-hot);background:linear-gradient(180deg,#3a4046,#23272c);border:1px solid #0e1013;
-  box-shadow:0 2px 4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.1)}
-.field-root .optbtn b{color:var(--amber-hot)}
-.field-root .optbtn .odim{color:var(--amber-dim);font-size:7.5px;white-space:nowrap}
-.field-root .optbtn.armed{border-color:var(--amber);box-shadow:0 0 16px rgba(255,150,30,.28);animation: field-needglow 1.8s ease-in-out infinite}
+/* held-question option keys — rig Keycap, sized for thumbs */
+.field-root .field-opt.rig-keycap{
+  grid-template-columns:32px minmax(0,1fr) auto;font-size:10px;letter-spacing:.04em;
+  padding:13px 12px;margin-top:7px;cursor:pointer}
+.field-root .field-opt.field-opt-first{margin-top:10px}
+.field-root .field-opt .rig-keycap-glyph{width:28px;height:28px;font-size:12px}
+.field-root .field-opt .rig-keycap-hint{font-size:7.5px}
 /* composer: one screen-bed pill, submit key embedded at the right end */
 .field-root .composer{display:flex;gap:8px;align-items:center;margin-top:10px;padding:5px 5px 5px 12px;
   border-radius:6px;border:1px solid rgba(255,179,71,.3);background:var(--screen);
@@ -250,8 +206,7 @@
 .field-root .grantchip{display:flex;gap:9px;align-items:center;margin-top:9px;padding:7px 10px;border-radius:4px;
   border:1px dashed var(--green-dim);background:rgba(143,232,110,.06);font-family:var(--mono);font-size:8px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--green);line-height:1.7}
-.field-root .grantchip .gl{width:8px;height:8px;border-radius:50%;background:var(--green);
-  box-shadow:0 0 7px rgba(143,232,110,.8);flex:none}
+.field-root .grantchip .rig-led{flex:none;width:8px;height:8px}
 /* voice transcript (v4) */
 .field-root .vt{padding:10px 11px;font-family:var(--mono);font-size:9.5px;line-height:1.75;letter-spacing:.02em}
 .field-root .vt .row{display:flex;gap:7px}
@@ -263,25 +218,8 @@
 .field-root .watchchip{display:flex;gap:9px;align-items:center;margin-top:9px;padding:7px 10px;border-radius:4px;
   border:1px dashed var(--amber-dim);background:var(--amber-ghost);font-family:var(--mono);font-size:8px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--amber);line-height:1.6}
-.field-root .watchchip .eye{width:9px;height:9px;border-radius:50%;background:var(--amber);animation: field-ledpulse 1.4s infinite;
-  box-shadow:0 0 8px rgba(255,179,71,.9);flex:none}
-/* big faceplate on the listening screen */
-.field-root .ffaceplate{padding:14px 14px 10px;border-radius:8px}
-.field-root .ffaceplate .facewrap{width:158px;margin:0 auto;position:relative;filter:sepia(.5) hue-rotate(-12deg) saturate(1.5) brightness(1.02)}
-.field-root .ffaceplate .facewrap::after{content:"";position:absolute;inset:-8px;border:1px solid rgba(255,179,71,.35);border-radius:10px;
-  box-shadow:0 0 18px rgba(255,140,20,.25),inset 0 0 18px rgba(255,140,20,.12);pointer-events:none;
-  animation: field-facehalo 3.4s ease-in-out infinite}
-@keyframes field-facehalo{50%{box-shadow:0 0 30px rgba(255,140,20,.4),inset 0 0 24px rgba(255,140,20,.18)}}
-.field-root .ffaceplate .face{width:158px}
-.field-root .fwho{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:10px;padding:0 2px}
-.field-root .fwho .who{flex:none;font-size:14px;letter-spacing:.2em;font-weight:800;color:var(--amber-hot);text-shadow:0 0 10px rgba(255,179,71,.5)}
-.field-root .fwho .role{min-width:0;font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--amber-dim);text-align:right;line-height:1.6}
-.field-root .fwavebar{display:flex;gap:10px;align-items:center;margin-top:9px;padding:7px 9px;border-radius:5px;
-  background:rgba(0,0,0,.4);border:1px solid rgba(255,179,71,.2)}
-.field-root .fwavebar .talklamp{width:11px;height:11px;border-radius:50%;background:var(--amber);
-  box-shadow:0 0 10px rgba(255,179,71,.95);animation: field-ledpulse .9s ease-in-out infinite;flex:none}
+.field-root .watchchip .watch-eye{width:9px;height:9px;flex:none}
 /* interrupt row — big thumb targets */
-.field-root .introw{display:flex;gap:8px;margin-top:10px}
 .field-root .replaykey{flex:none;width:46px;display:grid;place-items:center;padding:0;border-radius:8px;cursor:pointer;
   background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid rgba(255,179,71,.3);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
@@ -291,11 +229,6 @@
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
 .field-root .stopkey .sq{width:18px;height:18px;background:var(--red);box-shadow:0 0 10px rgba(255,83,64,.8);border-radius:2px}
 .field-root .stopkey .sl{font-family:var(--mono);font-size:7px;letter-spacing:.16em;color:var(--red);text-transform:uppercase}
-/* routed chip */
-.field-root .routechip{display:flex;gap:9px;align-items:center;margin-top:10px;padding:8px 10px;border-radius:4px;
-  border:1px solid rgba(255,179,71,.25);background:rgba(0,0,0,.35);font-family:var(--mono);font-size:8px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--amber);line-height:1.7}
-.field-root .routechip b{color:var(--amber-hot)}
 /* verb rack rows — speakable one-liners on the phone */
 .field-root .vrack{display:flex;flex-direction:column;gap:7px;margin-top:8px}
 .field-root .vswitch{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;
@@ -312,13 +245,7 @@
 .field-root .vswitch.on .vname{color:var(--amber)}
 .field-root .vswitch .vparams{font-family:var(--mono);font-size:7.5px;letter-spacing:.05em;color:var(--steel-dim);
   text-transform:uppercase;margin-top:2px}
-/* spend dials, knobs (v4, tightened) */
-.field-root .gaugerow{display:flex;gap:10px;justify-content:center}
-.field-root .dial{width:122px}
-.field-root .dial svg{width:100%;display:block}
-.field-root .dial .cap2{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--steel-dim);
-  text-transform:uppercase;margin-top:3px;line-height:1.6;text-align:center}
-.field-root .dial .cap2 b{color:var(--amber)}
+/* knobs (GAUGES read-only dials) */
 .field-root .spendfoot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding:8px 11px;
   font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber-dim)}
 .field-root .spendfoot b{color:var(--amber)}
@@ -338,7 +265,6 @@
 .field-root .knob .khome b{color:var(--amber-dim)}
 
 .field-root button.pttpill,
-.field-root button.routechip,
 .field-root button.trow,
 .field-root button.vswitch {
   appearance: none;
@@ -392,27 +318,14 @@
   margin-bottom:-1px;position:relative;z-index:2;
   box-shadow:0 0 14px rgba(255,140,20,.22),inset 0 0 10px rgba(0,0,0,.7)}
 .field-root .fdock.typing .composer{border-top-left-radius:0}
-/* ── LISTEN: audio route as an explicit switch ── */
-.field-root .routechip .spacer{flex:1}
-.field-root .routeswitch{width:100%;text-align:left;color:inherit;cursor:pointer}
-.field-root .routeswitch .rlabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.field-root .routeswitch .gatewd{font-size:7.5px;color:var(--steel-dim);letter-spacing:.1em;flex:none}
-.field-root .rswitch{flex:none;display:inline-block;width:38px;height:20px;border-radius:11px;position:relative;
-  background:linear-gradient(180deg,#14171b,#22262b);border:1px solid #0b0d10;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
-.field-root .rswitch i{position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#5a626b,#31363c);transition:left 160ms ease}
-.field-root .rswitch.on i{left:19px;
-  background:radial-gradient(circle at 35% 30%,var(--amber-hot),var(--amber));
-  box-shadow:0 0 8px rgba(255,179,71,.7)}
+/* ── LISTEN: audio route as ToggleGroup (.devtog) ── */
 
 /* ── GAUGES: per-provider guard board ── */
 .field-root .gboard-cap{font-size:8px;letter-spacing:.2em;margin:0 2px 8px}
 .field-root .gboard{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.field-root .gtile{padding:8px 9px 9px;border-radius:5px;background:rgba(0,0,0,.35);
+.field-root .gtile{padding:8px 9px 9px;background:rgba(0,0,0,.35);
   border:1px solid rgba(255,179,71,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.field-root .gtile.hot{border-color:rgba(255,83,64,.55)}
-.field-root .gtile:first-child{grid-column:1 / -1}
+.field-root .gtile-wrap:first-child{grid-column:1 / -1}
 .field-root .gtile .gname{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--amber);
   text-transform:uppercase;margin-bottom:5px}
 .field-root .gbar + .gbar{margin-top:6px}
@@ -449,19 +362,23 @@
    ROUND 3
    1) one control height everywhere      2) grouped talk capsule
    3) LISTEN head: 1/3 stack | 2/3 face  4) segmented device toggle
-   The chamfered card grammar lives in styles/shape.css (shared with
-   the desktop console).
+   Inner cards take chamfer from @room/ui/rig CutFrame; this file keeps
+   the phone shell + a few interactive/scroll housings that can't wrap.
    ══════════════════════════════════════════════════════════════ */
 .field-root {
   /* every key/pill in a bottom row is exactly this tall */
   --fkey-h: 42px;
 }
 
-/* generic field card — same chassis shape as the console's housings */
+/* generic field card fill — chamfer from CutFrame (rig) */
 .field-root .fcard {
   border: 1px solid rgba(255, 179, 71, 0.18);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.field-root .plotbay-f .fcard {
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 /* ── the talk group: chat | hold-to-talk as ONE segmented control ── */
@@ -558,6 +475,14 @@
   border: 1px solid rgba(255, 179, 71, 0.18);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  height: 100%;
+}
+.field-root .lcol-wrap,
+.field-root .lface-wrap {
+  min-height: 0;
+}
+.field-root .lface-wrap {
+  width: 162px;
 }
 .field-root .lcol .lname {
   font-size: 13px;
@@ -585,16 +510,12 @@
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 179, 71, 0.2);
 }
-.field-root .lcol .lwave .talklamp {
+.field-root .lcol .lwave .talklamp-led {
   width: 9px;
   height: 9px;
-  border-radius: 50%;
   flex: none;
-  background: var(--amber);
-  box-shadow: 0 0 9px rgba(255, 179, 71, 0.9);
-  animation: field-ledpulse 0.9s ease-in-out infinite;
 }
-.field-root .lcol .lwave .wave {
+.field-root .lcol .lwave .lwave-bars {
   flex: 1;
   min-width: 0;
   height: 14px;
@@ -620,9 +541,6 @@
   box-shadow:
     0 0 18px rgba(255, 140, 20, 0.18),
     inset 0 0 18px rgba(0, 0, 0, 0.7);
-}
-.field-root .lface .face-crt {
-  filter: sepia(0.5) hue-rotate(-12deg) saturate(1.5) brightness(1.02);
 }
 .field-root .lface img {
   width: 100% !important;
@@ -674,22 +592,28 @@
 .field-root .devtog .dseg + .dseg {
   border-left: 1px solid #0b0d10;
 }
-.field-root .devtog .dseg.on {
+.field-root .devtog .dseg.on,
+.field-root .devtog .dseg[data-state="on"] {
   color: var(--amber-hot);
   background: linear-gradient(180deg, rgba(255, 179, 71, 0.22), rgba(255, 179, 71, 0.06));
   box-shadow: inset 0 0 10px rgba(255, 150, 30, 0.25);
 }
-.field-root .devtog .dseg.on svg {
+.field-root .devtog .dseg.on svg,
+.field-root .devtog .dseg[data-state="on"] svg {
   filter: drop-shadow(0 0 5px rgba(255, 179, 71, 0.6));
 }
 
-/* ── GAUGES: two-arc spend dials above the guard board ── */
+/* ── GAUGES: SessionDial (DialGauge + blue session arc) ── */
 .field-root .gauges-body{overflow-y:auto;min-height:0}
 .field-root .gboard-cap b{color:var(--amber)}
 .field-root .gboard-cap i{color:#5fd0ff;font-style:normal}
 .field-root .fdialrow{display:flex;gap:8px;justify-content:center;margin-bottom:2px}
-.field-root .fdial{width:132px;max-width:50%}
-.field-root .fdial svg{width:100%;display:block}
-.field-root .fdial-cap{font-family:var(--mono);font-size:7.5px;letter-spacing:.11em;color:var(--steel-dim);
-  text-transform:uppercase;margin-top:1px;line-height:1.55;text-align:center}
-.field-root .fdial-cap b{color:var(--amber)}
+.field-root .fdial{width:132px;max-width:50%;position:relative}
+.field-root .fdial .session-dial-arc{
+  position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:1}
+.field-root .fdial .rig-dial{width:100%;position:relative;z-index:0}
+.field-root .fdial .rig-dial-cap{font-size:7.5px;letter-spacing:.11em;margin-top:1px;line-height:1.55;text-align:center}
+.field-root .spendfoot-wrap{margin-top:9px}
+.field-root .spendfoot-wrap .spendfoot{margin-top:0}
+.field-root .gtile-wrap{display:block}
+.field-root .gtile-wrap.hot .gtile{border-color:rgba(255,83,64,.55)}

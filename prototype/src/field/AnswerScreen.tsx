@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
+import { Keycap, Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { FieldCard } from "../rig-ext/FieldCard";
+import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { answer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -40,22 +43,22 @@ export function AnswerScreen() {
         <span>◂ ROOM</span>
         <span className="spacer" />
         {holding && focus ? (
-          <span className="tag red" style={{ fontSize: "7.5px" }}>
+          <Tag tone="red" className="field-tag-sm">
             NEEDS YOU · HELD {fmtHold(focus.holdSeconds)}
-          </span>
+          </Tag>
         ) : (
-          <span className="tag dim" style={{ fontSize: "7.5px" }}>
+          <Tag tone="dim" className="field-tag-sm">
             ALL QUIET
-          </span>
+          </Tag>
         )}
       </div>
 
       {focus ? (
         <div className={`trow${focus.state === "needs-you" ? " needsyou" : ""}`}>
           <div className="tface">
-            <div className="face-crt">
+            <FieldCrtFace size={40} scanlines>
               <AvatarFace persona={focus.persona} size={40} />
-            </div>
+            </FieldCrtFace>
           </div>
           <div className="tmid">
             <span className="callsign">{focus.callsign}</span>
@@ -65,17 +68,14 @@ export function AnswerScreen() {
             </span>
             <div className="ttask">{focus.task}</div>
           </div>
-          <span className={`tag${holding ? " red" : " dim"}`}>
+          <Tag tone={holding ? "red" : "dim"}>
             {holding ? "HELD" : focus.state.toUpperCase()}
-          </span>
+          </Tag>
         </div>
       ) : null}
 
       {hq ? (
-        <div
-          className="vt fcard"
-          style={{ marginTop: 10, padding: 10 }}
-        >
+        <FieldCard className="vt" style={{ marginTop: 10, padding: 10 }}>
           <div className="row">
             <span className="who">
               {focus?.callsign.slice(0, 3).toUpperCase() ?? "???"}
@@ -88,24 +88,20 @@ export function AnswerScreen() {
               /thread/{focus?.ticket ?? "—"} · full history above ▴
             </span>
           </div>
-        </div>
+        </FieldCard>
       ) : null}
 
       {hq
         ? hq.options.map((opt, i) => (
-            <button
-              type="button"
+            <Keycap
               key={opt.id}
-              className={`optbtn${opt.armed ? " armed" : ""}`}
-              style={{ marginTop: i === 0 ? 10 : 7 }}
-              onClick={() => answer(opt.id)}
-            >
-              <span className="keycap">{i + 1}</span>
-              <span>
-                <b>{opt.label}</b> — {opt.detail}
-              </span>
-              <span className="odim">SAY “{opt.speakHint}”</span>
-            </button>
+              glyph={String(i + 1)}
+              label={`${opt.label} — ${opt.detail}`}
+              hint={`SAY “${opt.speakHint}”`}
+              armed={opt.armed}
+              onPress={() => answer(opt.id)}
+              className={i === 0 ? "field-opt field-opt-first" : "field-opt"}
+            />
           ))
         : null}
 
@@ -131,7 +127,7 @@ export function AnswerScreen() {
 
       {room.grantArmed ? (
         <div className="grantchip">
-          <span className="gl" />
+          <Led tone="green" />
           SPEAKER GRANT ARMED · THIS PHONE · {room.grantCountdown}s LEFT
         </div>
       ) : null}

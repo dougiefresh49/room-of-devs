@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@room/ui";
+import { CutFrame, Led, Waveform } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { setAudioRoute } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -84,44 +87,46 @@ export function ListenScreen() {
   return (
     <div className="screen-body">
       <div className="lhead">
-        <div className="lcol">
+        <CutFrame scale="s" className="lcol-wrap" innerClassName="lcol">
           <div className="lname">{persona === "donnie" ? "DONNIE" : "MIKEY"}</div>
           <div className="lsub">// {checkout ? "CHECKED OUT" : "ON VOICE"}</div>
 
           <div className="lwave">
-            <span
-              className="talklamp"
-              style={speaking ? undefined : { opacity: 0.25, animation: "none" }}
+            <Led
+              tone={speaking ? "amber" : "dim"}
+              pulse={speaking}
+              pulseSpeed="hot"
+              className="talklamp-led"
             />
-            <div className={`wave${speaking ? "" : " flat"}`} aria-hidden>
-              {Array.from({ length: 9 }, (_, i) => (
-                <i key={i} />
-              ))}
-            </div>
+            <Waveform active={speaking} bars={9} className="lwave-bars" />
           </div>
 
-          <div className="devtog" role="group" aria-label="Audio route">
-            <button
-              type="button"
-              className={`dseg${phoneRoute ? " on" : ""}`}
-              aria-pressed={phoneRoute}
+          <ToggleGroup
+            type="single"
+            value={phoneRoute ? "phone" : "mac"}
+            onValueChange={(v) => {
+              if (v === "phone" || v === "mac") setAudioRoute(v);
+            }}
+            className="devtog"
+            aria-label="Audio route"
+          >
+            <ToggleGroupItem
+              value="phone"
+              className="dseg"
               aria-label="Play on this phone"
               title="AUDIO → THIS PHONE"
-              onClick={() => setAudioRoute("phone")}
             >
               <PhoneGlyph />
-            </button>
-            <button
-              type="button"
-              className={`dseg${phoneRoute ? "" : " on"}`}
-              aria-pressed={!phoneRoute}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="mac"
+              className="dseg"
               aria-label="Play on Mac speakers"
               title="AUDIO → MAC SPEAKERS"
-              onClick={() => setAudioRoute("mac")}
             >
               <MacGlyph />
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
 
           <div className="lgate">
             {phoneRoute ? (
@@ -132,17 +137,17 @@ export function ListenScreen() {
               <>GATE OPEN</>
             )}
           </div>
-        </div>
+        </CutFrame>
 
-        <div className="lface">
-          <div className="face-crt">
+        <CutFrame scale="s" className="lface-wrap" innerClassName="lface">
+          <FieldCrtFace size={148} halo scanlines>
             <AvatarFace persona={persona} mode={faceMode} size={148} />
-          </div>
-        </div>
+          </FieldCrtFace>
+        </CutFrame>
       </div>
 
       <div className="lplan">
-        <span className={`led${speaking ? " on" : ""}`} />
+        <Led tone={speaking ? "amber" : "dim"} pulse={speaking} />
         {checkout ? (
           <span>
             <b>{checkout.purpose}</b> · {checkout.elapsed}
@@ -173,7 +178,7 @@ export function ListenScreen() {
 
       {watched ? (
         <div className="watchchip">
-          <span className="eye" />
+          <Led tone="amber" pulse className="watch-eye" />
           WATCH ORDER · {watched.ticket}
           {room.liveClip ? ` · ${room.liveClip}` : ""} · SAY &quot;STAND DOWN&quot; TO
           CANCEL

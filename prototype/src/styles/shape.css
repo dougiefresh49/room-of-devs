@@ -13,6 +13,10 @@
    Gotcha: clip-path swallows outer box-shadows. Anything that needs an
    outer glow on a cut card uses filter: drop-shadow() instead (the
    filter applies to the already-clipped silhouette).
+
+   Field cards (`.fcard`, `.lcol`, `.lface`, `.gtile`, `.trow`, …) now
+   take their chamfer from @room/ui/rig CutFrame — those corner rules
+   were deleted here to avoid duplicating rig.css.
    ============================================================ */
 
 /* ---- console housings -------------------------------------- */
@@ -109,9 +113,9 @@
   border-radius: 14px 4px 4px 4px;
 }
 
-/* ---- FIELD UNIT: the phone is milled in the same shop -------
-   Device shell + screen take the large cut; the cards inside take the
-   small one. Pills (PTT / talk group) and chips stay round on purpose —
+/* ---- FIELD UNIT: phone shell + screen still milled here -------
+   Device shell + screen take the large cut. Inner cards use CutFrame
+   (rig). Pills (PTT / talk group) and chips stay round on purpose —
    the chamfer marks *housings*, not controls.                    */
 .field-root .fone {
   border-radius: 40px 14px 14px 14px;
@@ -120,21 +124,14 @@
   border-radius: 32px 11px 11px 11px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
 }
-.field-root .fcard,
-.field-root .ffaceplate,
-.field-root .field-thread,
+/* Interactive rows + scroll threads keep a local chamfer — CutFrame around a
+   <button class=trow> or a flex:1 scroller fights layout; listed as bespoke. */
 .field-root .trow,
-.field-root .gtile,
+.field-root .field-thread,
 .field-root .salstrip,
-.field-root .composer,
-.field-root .lcol,
-.field-root .lface {
+.field-root .composer {
   border-radius: 12px 3px 3px 3px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
-}
-.field-root .plotbay-f {
-  border-radius: 16px 4px 4px 4px;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
 }
 /* clipped cards can't cast outer glow — move those to drop-shadow */
 .field-root .trow.needsyou {

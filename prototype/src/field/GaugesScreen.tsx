@@ -1,10 +1,7 @@
+import { SessionDial } from "../rig-ext/SessionDial";
 import type { GuardWindow } from "../mock/types";
 import { useRoom } from "../mock/store";
-import { SpendDial } from "./SpendDial";
-
-function odoDigits(n: number): string[] {
-  return String(Math.max(0, Math.floor(n))).padStart(5, "0").split("");
-}
+import { CutFrame, Odometer } from "@room/ui/rig";
 
 /** One window's fill bar. Red once it's inside the last 15% of its cap. */
 function GuardBar({ w }: { w: GuardWindow }) {
@@ -27,7 +24,6 @@ function GuardBar({ w }: { w: GuardWindow }) {
 export function GaugesScreen() {
   const room = useRoom();
   const { spend, turnChip } = room;
-  const digits = odoDigits(spend.voiceCharsToday);
   const burning = spend.burning;
 
   // Dials go to the ONLY two providers with a session reset — the blue arc
@@ -51,7 +47,7 @@ export function GaugesScreen() {
 
       <div className="fdialrow">
         {claude && claudeLong ? (
-          <SpendDial
+          <SessionDial
             fraction={claudeLong.fraction}
             sessionFraction={claude.sessionFraction}
             caption={
@@ -65,7 +61,7 @@ export function GaugesScreen() {
           />
         ) : null}
         {codex && codexLong ? (
-          <SpendDial
+          <SessionDial
             fraction={codexLong.fraction}
             sessionFraction={codex.sessionFraction}
             caption={
@@ -86,17 +82,19 @@ export function GaugesScreen() {
 
       <div className="gboard">
         {boardGuards.map((g) => (
-          <div
+          <CutFrame
             key={g.id}
-            className={`gtile${
-              g.windows.some((w) => w.fraction >= 0.85) ? " hot" : ""
-            }`}
+            scale="s"
+            className={
+              g.windows.some((w) => w.fraction >= 0.85) ? "gtile-wrap hot" : "gtile-wrap"
+            }
+            innerClassName="gtile"
           >
             <div className="gname">{g.label}</div>
             {g.windows.map((w) => (
               <GuardBar key={w.window} w={w} />
             ))}
-          </div>
+          </CutFrame>
         ))}
       </div>
 
@@ -108,30 +106,14 @@ export function GaugesScreen() {
         BILLING-CYCLE DATA TBD
       </div>
 
-      <div
-        className="spendfoot fcard"
-      >
+      <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">
         <span>VOICE CHARS TODAY</span>
-        <span className="odo amberodo">
-          {digits.map((d, i) => (
-            <b
-              key={i}
-              className={
-                burning && i === digits.length - 1 ? "tick" : undefined
-              }
-            >
-              {burning && i === digits.length - 1 ? (
-                <i>
-                  0<br />1<br />2<br />3<br />4<br />5<br />6<br />7<br />8<br />
-                  9<br />0
-                </i>
-              ) : (
-                <i>{d}</i>
-              )}
-            </b>
-          ))}
-        </span>
-      </div>
+        <Odometer
+          value={spend.voiceCharsToday}
+          digits={5}
+          rolling={burning}
+        />
+      </CutFrame>
 
       <div
         className="dotmx ghost"

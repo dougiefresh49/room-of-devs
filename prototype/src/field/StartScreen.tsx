@@ -1,5 +1,8 @@
 import { useRef } from "react";
+import { Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { FieldCard } from "../rig-ext/FieldCard";
+import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { toggleVerb } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -32,7 +35,7 @@ export function StartScreen() {
 
   return (
     <div className="screen-body">
-      <div className="vt fcard" style={{ padding: 10 }}>
+      <FieldCard className="vt" style={{ padding: 10 }}>
         {exchange.you ? (
           <div className="row">
             <span className="who">YOU</span>
@@ -60,7 +63,7 @@ export function StartScreen() {
             </span>
           </div>
         ) : null}
-      </div>
+      </FieldCard>
 
       <div className="watchchip" style={{ marginTop: 10 }}>
         {tap ? (
@@ -80,9 +83,9 @@ export function StartScreen() {
         <div className="trows">
           <div className={`trow${spawning ? " spawning" : ""}`}>
             <div className="tface">
-              <div className="face-crt">
+              <FieldCrtFace size={40} scanlines>
                 <AvatarFace persona={birth.persona} size={40} />
-              </div>
+              </FieldCrtFace>
             </div>
             <div className="tmid">
               <span className="callsign">{birth.callsign}</span>
@@ -90,9 +93,9 @@ export function StartScreen() {
               <div className="ttask">{birth.task}</div>
             </div>
             {spawning ? (
-              <span className="tag">LAUNCHING</span>
+              <Tag>LAUNCHING</Tag>
             ) : (
-              <span className="tag">{birth.state.toUpperCase()}</span>
+              <Tag>{birth.state.toUpperCase()}</Tag>
             )}
           </div>
         </div>
@@ -114,9 +117,9 @@ export function StartScreen() {
               <div className="vparams">{v.params}</div>
             </span>
             {v.gatedIssue != null ? (
-              <span className="tag red">GATED #{v.gatedIssue}</span>
+              <Tag tone="red">GATED #{v.gatedIssue}</Tag>
             ) : (
-              <span className={`led${v.on ? " on" : ""}`} />
+              <Led tone={v.on ? "amber" : "dim"} pulse={v.on} />
             )}
           </button>
         ))}
