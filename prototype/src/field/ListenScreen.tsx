@@ -143,7 +143,6 @@ export function ListenScreen() {
         >
           <span className="sq" />
         </button>
-        <DuckPtt />
         <button
           type="button"
           className="replaykey"
@@ -168,6 +167,7 @@ export function ListenScreen() {
             <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
           </svg>
         </button>
+        <DuckPtt />
       </div>
     </div>
   );
