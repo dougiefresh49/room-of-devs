@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import {
   replayLastMikey,
@@ -30,23 +30,11 @@ function DuckPtt() {
       <span className="btn" />
       <span className="lbl">
         {hot ? (
-          <>
-            <b>MIC HOT — ROOM OPEN</b>
-            <br />
-            DESKTOP TRIGGER
-          </>
+          <b>MIC HOT — ROOM OPEN</b>
         ) : handoff ? (
-          <>
-            <b>VOICE LIVES AT THE RIG</b>
-            <br />
-            WALK TO THE RIG — OR TYPE IT
-          </>
+          <b>VOICE LIVES AT THE RIG</b>
         ) : (
-          <>
-            <b>HOLD = DUCK + TALK BACK</b>
-            <br />
-            V1: STOP + SPEAK AFTER · FREE
-          </>
+          <b>HOLD TO TALK</b>
         )}
       </span>
     </button>
@@ -67,7 +55,12 @@ export function ListenScreen() {
       : "idle";
   const phoneRoute = room.audio.route === "phone";
   const watched = room.crafts.find((c) => c.watched);
-  const rows = room.transcript.slice(-3);
+  const rows = room.transcript.slice(-8);
+  const threadRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [room.transcript.length]);
 
   return (
     <div className="screen-body">
@@ -114,16 +107,7 @@ export function ListenScreen() {
         )}
       </button>
 
-      <div
-        className="vt"
-        style={{
-          marginTop: 10,
-          padding: 10,
-          border: "1px solid rgba(255,179,71,.18)",
-          borderRadius: 6,
-          background: "rgba(0,0,0,.35)",
-        }}
-      >
+      <div className="vt field-thread" ref={threadRef}>
         {rows.map((r, i) => (
           <div className="row" key={`${r.who}-${i}-${r.text.slice(0, 12)}`}>
             <span className="who">{r.who === "YOU" ? "YOU" : r.who.slice(0, 3)}</span>
@@ -149,10 +133,15 @@ export function ListenScreen() {
         </div>
       ) : null}
 
-      <div className="introw" style={{ marginTop: "auto" }}>
-        <button type="button" className="stopkey" onClick={() => stopPlayback()}>
+      <div className="introw">
+        <button
+          type="button"
+          className="stopkey"
+          aria-label="Stop playback"
+          title="STOP"
+          onClick={() => stopPlayback()}
+        >
           <span className="sq" />
-          <span className="sl">STOP</span>
         </button>
         <DuckPtt />
       </div>
@@ -163,7 +152,7 @@ export function ListenScreen() {
         style={{ marginTop: 8 }}
         onClick={() => replayLastMikey()}
       >
-        REPLAY LAST · FREE — SAVED MP3, NO SYNTHESIS
+        REPLAY LAST · FREE
       </button>
     </div>
   );

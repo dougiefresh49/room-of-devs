@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import {
   answer,
@@ -29,6 +30,11 @@ export function AnswerScreen() {
 
   const holding = focus?.state === "needs-you";
   const tailLines = focus ? focus.tail.slice(-2) : [];
+  const threadRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [room.transcript.length, focus?.tail.length]);
 
   return (
     <div className="screen-body">
@@ -113,19 +119,31 @@ export function AnswerScreen() {
           ))
         : null}
 
-      {tailLines.length > 0 ? (
-        <div className="vt" style={{ padding: "8px 2px 0" }}>
-          {tailLines.map((t, i) => (
-            <div className="row" key={`${t.text.slice(0, 16)}-${i}`}>
-              <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
-              <span
-                className="say"
-                style={{ color: "var(--amber-dim)", opacity: 0.8 }}
-              >
-                {t.text}
-              </span>
-            </div>
-          ))}
+      <div className="vt field-thread" ref={threadRef}>
+        {room.transcript.map((r, i) => (
+          <div className="row" key={`${r.who}-${i}-${r.text.slice(0, 12)}`}>
+            <span className="who">{r.who === "YOU" ? "YOU" : r.who.slice(0, 3)}</span>
+            <span className={`say${r.you ? " you" : ""}`}>{r.text}</span>
+          </div>
+        ))}
+        {tailLines.map((t, i) => (
+          <div className="row" key={`t-${t.text.slice(0, 16)}-${i}`}>
+            <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
+            <span
+              className="say"
+              style={{ color: "var(--amber-dim)", opacity: 0.8 }}
+            >
+              {t.text}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {room.grantArmed ? (
+        <div className="grantchip banner">
+          <span className="gl" />
+          SPEAKER GRANT ARMED · THIS PHONE · {room.grantCountdown}s LEFT — DAEMON&apos;S
+          CLAIM MARKER STAYS THE BILLING AUTHORITY
         </div>
       ) : null}
 
@@ -149,17 +167,18 @@ export function AnswerScreen() {
           title="INJECT"
           onClick={() => injectReply(room.composerText)}
         >
-          ⏎
+          <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden>
+            <path
+              d="M2.5 8h9.5M8.5 4l4 4-4 4"
+              stroke="#181206"
+              strokeWidth="2.1"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
       </div>
-
-      {room.grantArmed ? (
-        <div className="grantchip">
-          <span className="gl" />
-          SPEAKER GRANT ARMED · THIS PHONE · {room.grantCountdown}s LEFT — DAEMON&apos;S
-          CLAIM MARKER STAYS THE BILLING AUTHORITY
-        </div>
-      ) : null}
     </div>
   );
 }

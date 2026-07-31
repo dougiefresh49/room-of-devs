@@ -87,10 +87,10 @@ export function FieldView() {
             <div className="fstat">
               <span>ROOM // FIELD LINK</span>
               <span className="spacer" />
-              <span>
+              <span title="SSE link — RoomClient connected to the daemon">
                 <span className="led grn" /> SSE
               </span>
-              <span>
+              <span title="AUD — lit when this phone holds the speaker gate (audio plays here, Mac speakers cold)">
                 <span
                   className={`led${room.audio.route === "phone" ? " on" : ""}`}
                 />{" "}
