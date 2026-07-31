@@ -478,9 +478,9 @@
   width: 100%;
   display: block;
 }
-.rig-dial-needle {
-  transform-origin: 66px 62px;
-}
+/* Needle pivot lives in the SVG transform attribute (rotate(deg 66 62)).
+   Do NOT add a CSS transform-origin here — it stacks on the baked-in pivot
+   and swings the needle around (132,124), off the dial face entirely. */
 .rig-dial-cap {
   font-family: var(--rig-mono);
   font-size: 8.5px;
