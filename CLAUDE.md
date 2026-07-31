@@ -185,7 +185,10 @@ docs/reference/testing-live-mode.md.
 - If computer use is helpful for completing or verifying work, shell out to
   gpt-5.6 with Codex (see the `codex-computer-use` skill). One-shot
   claude-in-chrome checks are fine; multi-step interactive MCP ping-pong
-  from the main session is not.
+  from the main session is not. (Owner 2026-07-31: ChatGPT desktop app
+  restarted, codex screenshots should work again; if they don't, the
+  chrome-devtools CDP screenshot pass is an acceptable fallback — the
+  claude-in-chrome extension times out on the prototype's animations.)
 
 ## Session token hygiene
 
@@ -249,6 +252,14 @@ trivial/mechanical work (composer-2.5 is usually the better pick anyway).
 
 How to apply:
 
+- **Budget posture (owner call 2026-07-31): go ham with every model
+  EXCEPT Fable.** Fable weekly usage is the one scarce resource — it is
+  the main-session driver and burns fast (43% of a week on one prototype
+  arc). Opus and Sonnet are mostly free game — inexpensive and very
+  capable; use them liberally as subagents. gpt-5.6 has a TON of headroom
+  with multiple resets — lean on codex hard (including Sol for deep
+  work). Throttle any provider only when `ai-usage` shows it actually
+  approaching capacity, not preemptively.
 - Defaults, not limits — standing permission to escalate: if a cheaper
   model's output doesn't meet the bar, redo it with a smarter model without
   asking. Judge the output, not the price tag.

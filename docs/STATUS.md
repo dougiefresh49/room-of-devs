@@ -561,6 +561,19 @@ permission prompt that fires on first panel PTT recording, self-serve.)
    because their data doesn't exist). Lock flows/interactions there,
    then work backwards to the daemon/wire changes and the shared
    mobile/desktop component refactor.
+0.5. **Prototype follow-ups (owner, 2026-07-31):**
+   - **ALL-PROJECTS VIEW — not yet prototyped.** How the room handles
+     multiple projects at once (e.g. this repo + comic reader + podlink):
+     switching between them, whether the crew/spine is per-project or
+     global, where the switcher lives on desktop vs FIELD. Needs a
+     concept pass before any wire work.
+   - **Helix orb (console CORE hex ball) looks rough after the r4
+     recharge-glow change** — owner: "not so great, leave a note to come
+     back to it." Revisit the shading/glow treatment; the encodings
+     (hexes = aggregate draw, ball = 7-day timer) stay.
+   - Panel rebuild will pick up the shared DialGauge needle fix
+     (8dba2a2) whenever the panel is next rebuilt — no urgency, the
+     dock dial was the only live consumer.
 1. **Spine follow-ups** (all cheap, all optional, none gating Round C):
    parse STATUS's ordered "Next up" into the tap-in digest (closes the
    last roll-up gap); build the one-`state/*`-per-issue lint (#75 filed
