@@ -1,5 +1,6 @@
 import type { GuardWindow } from "../mock/types";
 import { useRoom } from "../mock/store";
+import { SpendDial } from "./SpendDial";
 
 function odoDigits(n: number): string[] {
   return String(Math.max(0, Math.floor(n))).padStart(5, "0").split("");
@@ -29,9 +30,48 @@ export function GaugesScreen() {
   const digits = odoDigits(spend.voiceCharsToday);
   const burning = spend.burning;
 
+  // Dials for the two providers that bill per call — the money ones.
+  const el = spend.guards.find((g) => g.id === "elevenlabs");
+  const gem = spend.guards.find((g) => g.id === "gemini");
+
   return (
-    <div className="screen-body">
-      <div className="dotmx ghost gboard-cap">GUARD BOARD · BY PROVIDER</div>
+    <div className="screen-body gauges-body">
+      <div className="dotmx ghost gboard-cap">
+        SPEND DIALS · <b>AMBER</b>=WINDOW · <i>BLUE</i>=SESSION
+      </div>
+
+      <div className="fdialrow">
+        {el ? (
+          <SpendDial
+            fraction={el.windows[0].fraction}
+            sessionFraction={el.sessionFraction}
+            caption={
+              <>
+                ELEVENLABS · MONTH
+                <br />
+                <b>{el.windows[0].readout}</b>
+              </>
+            }
+          />
+        ) : null}
+        {gem ? (
+          <SpendDial
+            fraction={gem.windows[0].fraction}
+            sessionFraction={gem.sessionFraction}
+            caption={
+              <>
+                GEMINI · TODAY
+                <br />
+                <b>{gem.windows[0].readout}</b>
+              </>
+            }
+          />
+        ) : null}
+      </div>
+
+      <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
+        GUARD BOARD · BY PROVIDER
+      </div>
 
       <div className="gboard">
         {spend.guards.map((g) => (

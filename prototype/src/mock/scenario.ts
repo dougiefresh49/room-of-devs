@@ -508,6 +508,7 @@ export function spendBurn() {
           if (g.id === "elevenlabs") {
             return {
               ...g,
+              sessionFraction: Math.min(1, g.sessionFraction + 0.035),
               windows: [
                 {
                   window: "MONTH",
@@ -520,6 +521,7 @@ export function spendBurn() {
           if (g.id === "gemini") {
             return {
               ...g,
+              sessionFraction: Math.min(1, g.sessionFraction + 0.02),
               windows: [
                 {
                   window: "TODAY",
@@ -569,6 +571,16 @@ export function timeTimes10() {
     salience: {
       ...s.salience,
       clearPct: Math.min(100, s.salience.clearPct + 2),
+    },
+    // The 7-day window drains with the clock — the CORE's energy ball shrinks.
+    spend: {
+      ...s.spend,
+      windowResetFraction: Math.max(0, s.spend.windowResetFraction - 0.12),
+      windowResetLabel: `${Math.max(
+        0,
+        Math.round(Math.max(0, s.spend.windowResetFraction - 0.12) * 7 * 10) /
+          10,
+      ).toFixed(1)}D`,
     },
     donnieCheckout: s.donnieCheckout
       ? {

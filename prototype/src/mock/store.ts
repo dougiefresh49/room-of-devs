@@ -49,6 +49,19 @@ export function worstGuard(
   return worst;
 }
 
+/**
+ * TOTAL draw across everything we meter — the plain mean of every guard
+ * window's utilization. Defensible because each window is already normalized
+ * to its own cap, so "half the hexes lit" reads as "the room is running at
+ * about half of what it's allowed", regardless of which provider is hot.
+ */
+export function aggregateDraw(spend: SpendState): number {
+  const windows = spend.guards.flatMap((g) => g.windows);
+  if (windows.length === 0) return spend.monthFraction;
+  const sum = windows.reduce((a, w) => a + w.fraction, 0);
+  return Math.min(1, Math.max(0, sum / windows.length));
+}
+
 export function resetRoom() {
   state = makeFixtures();
   emit();

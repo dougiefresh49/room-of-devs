@@ -1,12 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
-import {
-  replayLastMikey,
-  stopPlayback,
-  toggleAudioRoute,
-} from "../mock/scenario";
+import { toggleAudioRoute } from "../mock/scenario";
 import { useRoom } from "../mock/store";
-import { PttPill } from "./PttPill";
 
 export function ListenScreen() {
   const room = useRoom();
@@ -103,43 +98,6 @@ export function ListenScreen() {
           CANCEL
         </div>
       ) : null}
-
-      <div className="introw">
-        <button
-          type="button"
-          className="stopkey"
-          aria-label="Stop playback"
-          title="STOP"
-          onClick={() => stopPlayback()}
-        >
-          <span className="sq" />
-        </button>
-        <button
-          type="button"
-          className="replaykey"
-          aria-label="Replay last clip (free)"
-          title="REPLAY LAST · FREE"
-          onClick={() => replayLastMikey()}
-        >
-          <svg
-            viewBox="0 0 20 20"
-            width="20"
-            height="20"
-            aria-hidden
-            style={{ transform: "scaleX(-1)" }}
-          >
-            <path
-              d="M14.5 6.5 A6 6 0 1 0 16 10"
-              stroke="var(--amber)"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-            />
-            <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
-          </svg>
-        </button>
-        <PttPill style={{ flex: 1 }} />
-      </div>
     </div>
   );
 }

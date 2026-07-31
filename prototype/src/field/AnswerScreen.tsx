@@ -1,12 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
-import {
-  answer,
-  injectReply,
-  setComposer,
-} from "../mock/scenario";
+import { answer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
-import { PttPill } from "./PttPill";
 
 function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -37,13 +32,7 @@ export function AnswerScreen() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [room.transcript.length, focus?.tail.length]);
 
-  // Composer is hidden until the chat key is tapped; opening focuses the input
-  // immediately so typing can start without a second tap.
-  const [typing, setTyping] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (typing) inputRef.current?.focus();
-  }, [typing]);
+  // Talk row + composer live in FieldDock now — one dock for every screen.
 
   return (
     <div className="screen-body">
@@ -152,91 +141,6 @@ export function AnswerScreen() {
           SPEAKER GRANT ARMED · THIS PHONE · {room.grantCountdown}s LEFT
         </div>
       ) : null}
-
-      {/* Default: hold-to-talk + chat key. Tapping chat slides the composer up
-          from the bottom and hides this row until it collapses again. */}
-      <div className={`talkrow${typing ? " gone" : ""}`} aria-hidden={typing}>
-        <PttPill compact style={{ flex: 1 }} />
-        <button
-          type="button"
-          className="chatkey"
-          aria-label="Type a reply"
-          title="TYPE IT"
-          tabIndex={typing ? -1 : 0}
-          onClick={() => setTyping(true)}
-        >
-          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
-            <path
-              d="M3 5.5A1.5 1.5 0 0 1 4.5 4h11A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5H8l-4 3v-3H4.5A1.5 1.5 0 0 1 3 12.5z"
-              fill="none"
-              stroke="var(--amber)"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div className={`composer-slot${typing ? " open" : ""}`}>
-        <div className="composer-slide">
-          <div className="composer">
-            <button
-              type="button"
-              className="closekey"
-              aria-label="Close composer"
-              title="CLOSE"
-              tabIndex={typing ? 0 : -1}
-              onClick={() => {
-                setComposer("");
-                setTyping(false);
-              }}
-            >
-              ✕
-            </button>
-            <input
-              ref={inputRef}
-              className="field"
-              value={room.composerText}
-              placeholder="type it — lands as a tmux inject"
-              tabIndex={typing ? 0 : -1}
-              onChange={(e) => setComposer(e.target.value)}
-              onBlur={() => {
-                if (!room.composerText.trim()) setTyping(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setComposer("");
-                  setTyping(false);
-                }
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  injectReply(room.composerText);
-                }
-              }}
-            />
-            <button
-              type="button"
-              className="sendkey"
-              aria-label="Inject reply"
-              title="INJECT"
-              tabIndex={typing ? 0 : -1}
-              onClick={() => injectReply(room.composerText)}
-            >
-              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden>
-                <path
-                  d="M8 13.5V3.5M4 7.5l4-4 4 4"
-                  stroke="#181206"
-                  strokeWidth="2.1"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -114,7 +114,9 @@ export function FieldView() {
             {screen === "start" ? <StartScreen /> : null}
             {screen === "gauges" ? <GaugesScreen /> : null}
 
-            {screen !== "listen" ? <FieldDock /> : null}
+            {/* One dock everywhere: "text or speak it". LISTEN adds the
+                transport keys and drops the chip (big faceplate above). */}
+            <FieldDock listen={screen === "listen"} />
           </div>
         </div>
       </div>

@@ -352,32 +352,52 @@
 .field-root .pttpill.compact .btn::after{inset:5px}
 .field-root .pttpill.compact .lbl{font-size:7.5px;letter-spacing:.14em}
 
-/* ── ANSWER: hold-to-talk + chat key row, and the slide-up composer ── */
-.field-root .talkrow{display:flex;gap:8px;align-items:center;margin-top:10px;
-  transition:opacity 200ms ease,max-height 200ms ease,margin-top 200ms ease;
-  max-height:60px;overflow:hidden}
-.field-root .talkrow.gone{opacity:0;max-height:0;margin-top:0;pointer-events:none}
+/* ── THE COMMON DOCK: talk row + chat key + slide-up composer ──
+   One dock on every screen. Collapsed it is [face][chat][HOLD TO TALK];
+   tapping chat swaps the keys for a composer that slides up with the face
+   chip docked to its top-left corner (Titanfall comms-card look). */
+.field-root .fdock{margin-top:auto;display:block;padding-top:12px}
+.field-root .fdock-row{display:flex;gap:10px;align-items:center}
+.field-root .fdock-keys{flex:1;display:flex;gap:8px;align-items:center;min-width:0;
+  transition:opacity 180ms ease,max-height 200ms ease}
+.field-root .fdock.typing .fdock-keys{opacity:0;max-height:0;overflow:hidden;pointer-events:none}
 .field-root .chatkey{flex:none;width:40px;height:34px;display:grid;place-items:center;padding:0;cursor:pointer;
   border-radius:8px;background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid rgba(255,179,71,.3);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
 .field-root .chatkey svg{filter:drop-shadow(0 0 5px rgba(255,179,71,.45))}
+/* mic key — the icon-sized PTT used where the row is tight (LISTEN) */
+.field-root .pttpill.iconpill{flex:1;justify-content:center;gap:0;padding:0;height:40px;border-radius:8px;
+  color:var(--steel)}
+.field-root .pttpill.iconpill.hot{color:var(--red)}
+.field-root .pttpill.iconpill.handoff{color:var(--haz)}
+.field-root .pttpill.iconpill svg{filter:drop-shadow(0 0 5px rgba(255,179,71,.35))}
+/* every key in the dock row is one height — a tidy thumb strip */
+.field-root .fdock-keys .stopkey,
+.field-root .fdock-keys .replaykey{width:44px;height:40px}
+.field-root .fdock-keys .chatkey{height:40px}
+/* the slide-up composer */
 .field-root .composer-slot{display:grid;grid-template-rows:0fr;
   transition:grid-template-rows 200ms ease}
 .field-root .composer-slot.open{grid-template-rows:1fr}
 .field-root .composer-slot > .composer-slide{min-height:0;overflow:hidden;
   transform:translateY(14px);opacity:0;transition:transform 200ms ease,opacity 200ms ease}
 .field-root .composer-slot.open > .composer-slide{transform:none;opacity:1}
-.field-root .composer-slot .composer{margin-top:10px}
+.field-root .composer-slot .composer{margin-top:0}
 .field-root .closekey{flex:none;width:22px;height:22px;display:grid;place-items:center;padding:0;cursor:pointer;
   margin-left:-6px;border-radius:4px;background:transparent;border:1px solid rgba(255,179,71,.25);
   font-family:var(--mono);font-size:10px;line-height:1;color:var(--amber-dim)}
-
+/* comms card: the face chip welds itself onto the composer's top-left corner */
+.field-root .fdock.typing .fdock-row{margin-bottom:0}
+.field-root .fdock.typing .mface{border-radius:8px 8px 0 0;border-bottom-color:transparent;
+  margin-bottom:-1px;position:relative;z-index:2;
+  box-shadow:0 0 14px rgba(255,140,20,.22),inset 0 0 10px rgba(0,0,0,.7)}
+.field-root .fdock.typing .composer{border-top-left-radius:0}
 /* ── LISTEN: audio route as an explicit switch ── */
 .field-root .routechip .spacer{flex:1}
-.field-root .routeswitch{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
-.field-root .routeswitch .rlabel{flex:none}
+.field-root .routeswitch{width:100%;text-align:left;color:inherit;cursor:pointer}
+.field-root .routeswitch .rlabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .field-root .routeswitch .gatewd{font-size:7.5px;color:var(--steel-dim);letter-spacing:.1em;flex:none}
-.field-root .rswitch{flex:none;width:38px;height:20px;border-radius:11px;position:relative;
+.field-root .rswitch{flex:none;display:inline-block;width:38px;height:20px;border-radius:11px;position:relative;
   background:linear-gradient(180deg,#14171b,#22262b);border:1px solid #0b0d10;
   box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
 .field-root .rswitch i{position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;
@@ -424,3 +444,14 @@
 @keyframes field-cursorblink {
   50% { opacity: 0; }
 }
+
+/* ── GAUGES: two-arc spend dials above the guard board ── */
+.field-root .gauges-body{overflow-y:auto;min-height:0}
+.field-root .gboard-cap b{color:var(--amber)}
+.field-root .gboard-cap i{color:#5fd0ff;font-style:normal}
+.field-root .fdialrow{display:flex;gap:8px;justify-content:center;margin-bottom:2px}
+.field-root .fdial{width:132px;max-width:50%}
+.field-root .fdial svg{width:100%;display:block}
+.field-root .fdial-cap{font-family:var(--mono);font-size:7.5px;letter-spacing:.11em;color:var(--steel-dim);
+  text-transform:uppercase;margin-top:1px;line-height:1.55;text-align:center}
+.field-root .fdial-cap b{color:var(--amber)}

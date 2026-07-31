@@ -128,6 +128,11 @@ export interface ProviderGuard {
   id: "claude" | "codex" | "cursor" | "elevenlabs" | "gemini";
   label: string;
   windows: GuardWindow[];
+  /**
+   * THIS SESSION's share of the same cap, 0–1 — the thin outer arc on the
+   * dials. Resets to 0 every session while the window meter keeps climbing.
+   */
+  sessionFraction: number;
 }
 
 export interface SpendState {
@@ -140,6 +145,13 @@ export interface SpendState {
   voiceCharsToday: number;
   /** CORE pulse while burning. */
   burning: boolean;
+  /**
+   * How much of the 7-day guard window is still ahead of us, 1 → 0. Drives the
+   * CORE's inner energy ball: full and bright at 1, small and dim near reset.
+   */
+  windowResetFraction: number;
+  /** Human readout for the same, e.g. "4D 09H TO RESET". */
+  windowResetLabel: string;
   /** Per-provider guard board — the tiles on GAUGES and the CORE's worst-guard read. */
   guards: ProviderGuard[];
 }

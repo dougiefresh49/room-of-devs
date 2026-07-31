@@ -1,12 +1,14 @@
 import { DialGauge, Odometer } from "@room/ui/rig";
-import { useRoom, worstGuard } from "../mock/store";
+import { aggregateDraw, useRoom, worstGuard } from "../mock/store";
 
 export function TheCore() {
   const { spend } = useRoom();
-  // The hex shell reads the tightest guard anywhere, not a month average —
-  // the month is only the right window for Cursor and ElevenLabs.
+  // Hex shell = TOTAL draw: the mean of every guard window we meter, so the
+  // shell fills as the room as a whole gets expensive, not as one provider does.
+  const pct = Math.round(aggregateDraw(spend) * 100);
+  // Energy ball = how much of the 7-day window is still ahead of us.
+  const left = Math.min(1, Math.max(0, spend.windowResetFraction));
   const worst = worstGuard(spend);
-  const pct = Math.round((worst?.fraction ?? spend.monthFraction) * 100);
 
   return (
     <div className="chassis gaugebox">
@@ -17,7 +19,10 @@ export function TheCore() {
       <div className="screenbed" style={{ padding: "12px 6px 10px" }}>
         <div
           className={`harvester${spend.burning ? " burning" : ""}`}
-          style={{ ["--hv-pct" as string]: `${pct}%` }}
+          style={{
+            ["--hv-pct" as string]: `${pct}%`,
+            ["--hv-glow" as string]: left,
+          }}
         >
           <div className="hv-bezel" />
           <div className="hv-core" />
@@ -25,11 +30,17 @@ export function TheCore() {
           <div className="hv-shell lit" />
         </div>
         <div className="hv-cap">
+          LIT HEXES = TOTAL DRAW <b>{pct}%</b> · BALL = <b>
+            {spend.windowResetLabel}
+          </b> LEFT IN THE 7-DAY WINDOW
+          <br />
           TIGHTEST GUARD:{" "}
           <b>
-            {worst ? `${worst.label} ${worst.window} · ${pct}%` : `${pct}%`}
+            {worst
+              ? `${worst.label} ${worst.window} · ${Math.round(worst.fraction * 100)}%`
+              : "—"}
           </b>{" "}
-          · FLARE = SPEAKING NOW
+          · FLARE = SPEAKING
         </div>
         <div className="gaugerow">
           <DialGauge
