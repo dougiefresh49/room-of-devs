@@ -6,24 +6,28 @@ import type { ReactNode } from "react";
  *  · main amber arc + needle = the GUARD WINDOW meter (the one that keeps
  *    climbing until the window resets)
  *  · thin blue arc, riding outside it = THIS SESSION's share of the same cap
- *    (zeroed every session)
+ *    (zeroed every session). Only providers that HAVE a session reset —
+ *    Claude and Codex — pass one; everyone else passes null and the dial
+ *    draws no blue arc at all, because there is nothing to reset.
  *
  * Prototype-local on purpose: the shared @room/ui DialGauge is the live app's
  * single-arc dial and this silo must not touch packages/.
  */
 export function SpendDial({
   fraction,
-  sessionFraction,
+  sessionFraction = null,
   redlineFrom = 0.85,
   caption,
 }: {
   fraction: number;
-  sessionFraction: number;
+  /** null = this provider has no session reset — no blue arc is drawn. */
+  sessionFraction?: number | null;
   redlineFrom?: number;
   caption?: ReactNode;
 }) {
   const f = Math.min(1, Math.max(0, fraction));
-  const sf = Math.min(1, Math.max(0, sessionFraction));
+  const sf =
+    sessionFraction == null ? null : Math.min(1, Math.max(0, sessionFraction));
   const filled = Math.round(f * 100);
   const needleDeg = -90 + f * 180;
   const redLen = Math.round((1 - redlineFrom) * 100);
@@ -36,18 +40,22 @@ export function SpendDial({
   return (
     <div className="fdial">
       <svg viewBox="0 0 132 80" aria-hidden>
-        {/* session track + arc (outside) */}
-        <path d={SESS} fill="none" stroke="#16242e" strokeWidth="4" />
-        <path
-          d={SESS}
-          fill="none"
-          stroke="#5fd0ff"
-          strokeWidth="4"
-          strokeLinecap="round"
-          pathLength="100"
-          strokeDasharray={`${Math.round(sf * 100)} 100`}
-          style={{ filter: "drop-shadow(0 0 4px rgba(95,208,255,.7))" }}
-        />
+        {/* session track + arc (outside) — only where a session resets */}
+        {sf != null ? (
+          <>
+            <path d={SESS} fill="none" stroke="#16242e" strokeWidth="4" />
+            <path
+              d={SESS}
+              fill="none"
+              stroke="#5fd0ff"
+              strokeWidth="4"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray={`${Math.round(sf * 100)} 100`}
+              style={{ filter: "drop-shadow(0 0 4px rgba(95,208,255,.7))" }}
+            />
+          </>
+        ) : null}
         {/* window track */}
         <path
           d={MAIN}

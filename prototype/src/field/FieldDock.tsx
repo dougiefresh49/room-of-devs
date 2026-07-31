@@ -53,7 +53,9 @@ function TransportKeys() {
 /**
  * The one place you talk to the room: "text or speak it", on every screen.
  *
- * Collapsed — avatar chip · chat key · HOLD TO TALK pill.
+ * Collapsed — avatar chip · [ chat | HOLD TO TALK ] as ONE capsule: both
+ *             segments do the same job (get words into the room), so they
+ *             read as one segmented control, not two loose buttons.
  * Expanded  — the keys give way to a composer that slides up from the bottom,
  *             with the face chip docked to its top-left corner (comms card).
  *
@@ -100,29 +102,34 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
 
         <div className="fdock-keys" aria-hidden={typing}>
           {listen ? <TransportKeys /> : null}
-          <button
-            type="button"
-            className="chatkey"
-            aria-label="Type a reply"
-            title="TYPE IT"
-            tabIndex={typing ? -1 : 0}
-            onClick={() => setTyping(true)}
+          {/* Type it OR say it — one segmented control, because it is one
+              decision: how do these words reach the room? */}
+          <div
+            className="talkgroup"
+            role="group"
+            aria-label="Send words to the room"
           >
-            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
-              <path
-                d="M3 5.5A1.5 1.5 0 0 1 4.5 4h11A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5H8l-4 3v-3H4.5A1.5 1.5 0 0 1 3 12.5z"
-                fill="none"
-                stroke="var(--amber)"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <PttPill
-            compact={!listen}
-            icon={listen}
-            style={listen ? undefined : { flex: 1 }}
-          />
+            <button
+              type="button"
+              className="chatkey"
+              aria-label="Type a reply"
+              title="TYPE IT"
+              tabIndex={typing ? -1 : 0}
+              onClick={() => setTyping(true)}
+            >
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
+                <path
+                  d="M3 5.5A1.5 1.5 0 0 1 4.5 4h11A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5H8l-4 3v-3H4.5A1.5 1.5 0 0 1 3 12.5z"
+                  fill="none"
+                  stroke="var(--amber)"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <span className="tgdiv" aria-hidden />
+            <PttPill compact={!listen} icon={listen} />
+          </div>
         </div>
       </div>
 

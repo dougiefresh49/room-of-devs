@@ -30,39 +30,50 @@ export function GaugesScreen() {
   const digits = odoDigits(spend.voiceCharsToday);
   const burning = spend.burning;
 
-  // Dials for the two providers that bill per call — the money ones.
-  const el = spend.guards.find((g) => g.id === "elevenlabs");
-  const gem = spend.guards.find((g) => g.id === "gemini");
+  // Dials go to the ONLY two providers with a session reset — the blue arc
+  // has no meaning anywhere else. Main amber arc = the long window that keeps
+  // climbing (Fable 7D / 7D); blue = this session's share, which zeroes.
+  const claude = spend.guards.find((g) => g.id === "claude");
+  const codex = spend.guards.find((g) => g.id === "codex");
+  const sessionIds = new Set(["claude", "codex"]);
+  const boardGuards = spend.guards.filter((g) => !sessionIds.has(g.id));
+
+  const longWindow = (g: typeof claude) =>
+    g ? (g.windows[g.windows.length - 1] ?? g.windows[0]) : undefined;
+  const claudeLong = longWindow(claude);
+  const codexLong = longWindow(codex);
 
   return (
     <div className="screen-body gauges-body">
       <div className="dotmx ghost gboard-cap">
-        SPEND DIALS · <b>AMBER</b>=WINDOW · <i>BLUE</i>=SESSION
+        SESSION RESETS · <b>AMBER</b>=WINDOW · <i>BLUE</i>=SESSION
       </div>
 
       <div className="fdialrow">
-        {el ? (
+        {claude && claudeLong ? (
           <SpendDial
-            fraction={el.windows[0].fraction}
-            sessionFraction={el.sessionFraction}
+            fraction={claudeLong.fraction}
+            sessionFraction={claude.sessionFraction}
             caption={
               <>
-                ELEVENLABS · MONTH
+                CLAUDE · FABLE 7D
                 <br />
-                <b>{el.windows[0].readout}</b>
+                <b>{claudeLong.readout}</b> · 5H{" "}
+                {Math.round((claude.sessionFraction ?? 0) * 100)}%
               </>
             }
           />
         ) : null}
-        {gem ? (
+        {codex && codexLong ? (
           <SpendDial
-            fraction={gem.windows[0].fraction}
-            sessionFraction={gem.sessionFraction}
+            fraction={codexLong.fraction}
+            sessionFraction={codex.sessionFraction}
             caption={
               <>
-                GEMINI · TODAY
+                CODEX · 7D
                 <br />
-                <b>{gem.windows[0].readout}</b>
+                <b>{codexLong.readout}</b> · SESS{" "}
+                {Math.round((codex.sessionFraction ?? 0) * 100)}%
               </>
             }
           />
@@ -70,11 +81,11 @@ export function GaugesScreen() {
       </div>
 
       <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
-        GUARD BOARD · BY PROVIDER
+        GUARD BOARD · ROLLING WINDOWS · NO SESSION RESET
       </div>
 
       <div className="gboard">
-        {spend.guards.map((g) => (
+        {boardGuards.map((g) => (
           <div
             key={g.id}
             className={`gtile${
@@ -90,12 +101,15 @@ export function GaugesScreen() {
       </div>
 
       <div
-        className="spendfoot"
-        style={{
-          border: "1px solid rgba(255,179,71,.15)",
-          borderRadius: 5,
-          background: "rgba(0,0,0,.3)",
-        }}
+        className="dotmx ghost gboard-cap"
+        style={{ marginTop: 8, marginBottom: 0, fontSize: 7 }}
+      >
+        GEMINI END-STOP IS OUR OWN <b>GOAL</b>, NOT A PROVIDER CAP · REAL
+        BILLING-CYCLE DATA TBD
+      </div>
+
+      <div
+        className="spendfoot fcard"
       >
         <span>VOICE CHARS TODAY</span>
         <span className="odo amberodo">

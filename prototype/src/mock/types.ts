@@ -112,11 +112,17 @@ export interface Artifact {
 
 /**
  * One provider guard window. Each provider only has the windows its billing
- * actually exposes — Claude has a 5-hour bucket AND a 7-day Fable bucket,
- * Cursor and ElevenLabs only have a month. Wishlist wire fields.
+ * actually exposes:
+ *   · CLAUDE      5H session bucket (resets) + FABLE 7D window
+ *   · CODEX       session bucket (resets)    + 7D window
+ *   · CURSOR      30-day rolling window, no session reset
+ *   · ELEVENLABS  30-day billing cycle, $ used / $ cap, no session reset
+ *   · GEMINI      no windows at all — a month-to-date spend tracker whose
+ *                 end-stop is an arbitrary GOAL, not a provider cap
+ * Wishlist wire fields.
  */
 export interface GuardWindow {
-  /** Short window label, e.g. "5H", "7D", "MONTH", "TODAY". */
+  /** Short window label, e.g. "5H SESSION", "FABLE 7D", "30D", "MONTH". */
   window: string;
   /** Utilization 0–1 against this window's cap. */
   fraction: number;
@@ -129,19 +135,24 @@ export interface ProviderGuard {
   label: string;
   windows: GuardWindow[];
   /**
-   * THIS SESSION's share of the same cap, 0–1 — the thin outer arc on the
-   * dials. Resets to 0 every session while the window meter keeps climbing.
+   * THIS SESSION's share of the same cap, 0–1 — the thin blue outer arc on
+   * the dials. Resets to 0 every session while the window meter keeps
+   * climbing. `null` for providers that have NO session reset at all
+   * (Cursor, ElevenLabs, Gemini) — those never draw a blue arc.
    */
-  sessionFraction: number;
+  sessionFraction: number | null;
 }
 
 export interface SpendState {
   /** Month draw fraction 0–1 (legacy CORE hex shell input; console uses worstGuard). */
   monthFraction: number;
+  /** ElevenLabs 30-day billing cycle: $ used against the $ cap. */
   elevenlabsUsd: number;
   elevenlabsCap: number;
-  geminiCalls: number;
-  geminiRedline: number;
+  /** Gemini month-to-date spend. No window resets — just a running tracker. */
+  geminiUsd: number;
+  /** Self-imposed spend GOAL used as the dial's end-stop (not a real cap). */
+  geminiGoalUsd: number;
   voiceCharsToday: number;
   /** CORE pulse while burning. */
   burning: boolean;

@@ -4,6 +4,8 @@
 
 @import "@room/ui/tokens.css";
 @import "@room/ui/rig.css";
+/* machined corner grammar shared by the console AND the field unit */
+@import "./shape.css";
 
 :root {
   --ink: var(--rig-ink);
@@ -624,32 +626,8 @@ footer{margin-top:70px;text-align:center;font-family:var(--mono);font-size:9px;l
 /* ---- hex motif: inline SVG tiles (bright + dim), texture never layout ---- */
 
 
-/* ---- corner grammar: one big radius (TL) + one chamfer cut (BR),
-        echoed at three scales so the whole board is milled in one shop ---- */
-.chassis,.bay,.tnode,.plan .bpcard{
-  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--cut-m)),calc(100% - var(--cut-m)) 100%,0 100%)}
-.chassis{border-radius:16px 5px 5px 5px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -2px 4px rgba(0,0,0,.5);
-  filter:drop-shadow(0 12px 26px rgba(0,0,0,.5))}
-.bay{border-radius:16px 5px 5px 5px}
-.mainwin,.plotbay,.cutpanel,.faceplate,.phone,.bay.spinebay{
-  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--cut-l)),calc(100% - var(--cut-l)) 100%,0 100%);
-  border-radius:26px 6px 6px 6px}
-.phone{border-radius:30px 12px 12px 12px}
-.faceplate{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -3px 6px rgba(0,0,0,.6);
-  filter:drop-shadow(0 10px 22px rgba(0,0,0,.5))}
-.screw.br{bottom:9px;right:26px}
-.tnode{border-radius:13px 4px 4px 4px}
-.plan .bpcard{border-radius:12px 4px 4px 4px}
-.screenbed{border-radius:9px 3px 3px 3px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--cut-s)),calc(100% - var(--cut-s)) 100%,0 100%)}
-.phone .pscr{border-radius:20px 6px 6px 6px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
-.tag{border-radius:5px 1px 1px 1px}
-.optbtn,.vswitch,.watchchip,.grantchip,.composer .field,.legendstrip{border-radius:8px 2px 2px 2px}
-.optbtn .keycap,.sendkey{border-radius:6px 2px 2px 2px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
-.pttbar,.donbay{border-radius:14px 4px 4px 4px}
+/* ---- corner grammar now lives in styles/shape.css (shared with the
+        field unit) — imported at the top of this file ---- */
 
 /* clip-path swallows outer box-shadows: glow moves to drop-shadow on unclipped parents */
 .plan.active .bpcard{animation:none}

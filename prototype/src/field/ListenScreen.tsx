@@ -1,8 +1,64 @@
 import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
-import { toggleAudioRoute } from "../mock/scenario";
+import { setAudioRoute } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
+/** House-style glyphs for the audio-route segments (no emoji). */
+function PhoneGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden>
+      <rect
+        x="5.5"
+        y="2"
+        width="9"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M8.6 4.4h2.8"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <circle cx="10" cy="15.4" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+function MacGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden>
+      <rect
+        x="3.2"
+        y="4"
+        width="13.6"
+        height="9"
+        rx="1.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M1.6 15.6h16.8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * LISTEN — the "who is talking, where does it come out" screen.
+ *
+ * Round 3 layout: a 1/3 · 2/3 head — left column stacks name, duty line,
+ * the synth light bar and a compact phone|mac route toggle; the face owns
+ * the right two thirds. The walk-plan line sits under both. That buys back
+ * the vertical space the old square faceplate + text row + route strip ate.
+ */
 export function ListenScreen() {
   const room = useRoom();
   const speaking = room.speakingPersona != null;
@@ -16,6 +72,7 @@ export function ListenScreen() {
       ? "stoked"
       : "idle";
   const phoneRoute = room.audio.route === "phone";
+  const checkout = persona === "donnie" ? room.donnieCheckout : null;
   const watched = room.crafts.find((c) => c.watched);
   const rows = room.transcript.slice(-8);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -26,52 +83,76 @@ export function ListenScreen() {
 
   return (
     <div className="screen-body">
-      <div className="ffaceplate">
-        <div className="facewrap">
+      <div className="lhead">
+        <div className="lcol">
+          <div className="lname">{persona === "donnie" ? "DONNIE" : "MIKEY"}</div>
+          <div className="lsub">// {checkout ? "CHECKED OUT" : "ON VOICE"}</div>
+
+          <div className="lwave">
+            <span
+              className="talklamp"
+              style={speaking ? undefined : { opacity: 0.25, animation: "none" }}
+            />
+            <div className={`wave${speaking ? "" : " flat"}`} aria-hidden>
+              {Array.from({ length: 9 }, (_, i) => (
+                <i key={i} />
+              ))}
+            </div>
+          </div>
+
+          <div className="devtog" role="group" aria-label="Audio route">
+            <button
+              type="button"
+              className={`dseg${phoneRoute ? " on" : ""}`}
+              aria-pressed={phoneRoute}
+              aria-label="Play on this phone"
+              title="AUDIO → THIS PHONE"
+              onClick={() => setAudioRoute("phone")}
+            >
+              <PhoneGlyph />
+            </button>
+            <button
+              type="button"
+              className={`dseg${phoneRoute ? "" : " on"}`}
+              aria-pressed={!phoneRoute}
+              aria-label="Play on Mac speakers"
+              title="AUDIO → MAC SPEAKERS"
+              onClick={() => setAudioRoute("mac")}
+            >
+              <MacGlyph />
+            </button>
+          </div>
+
+          <div className="lgate">
+            {phoneRoute ? (
+              <>
+                GATE <b>HELD</b>
+              </>
+            ) : (
+              <>GATE OPEN</>
+            )}
+          </div>
+        </div>
+
+        <div className="lface">
           <div className="face-crt">
-            <AvatarFace persona={persona} mode={faceMode} size={158} />
+            <AvatarFace persona={persona} mode={faceMode} size={148} />
           </div>
         </div>
       </div>
-      <div className="fwho">
-        <span className="who">{persona === "donnie" ? "DONNIE" : "MIKEY"}</span>
-        <span className="role">
-          {persona === "donnie" && room.donnieCheckout
-            ? `CHECKED OUT · ${room.donnieCheckout.purpose} · ${room.donnieCheckout.elapsed}`
-            : "CONCIERGE · ON VOICE"}
-        </span>
-      </div>
 
-      <div className="fwavebar">
-        <span
-          className="talklamp"
-          style={speaking ? undefined : { opacity: 0.25, animation: "none" }}
-        />
-        <div className={`wave${speaking ? "" : " flat"}`} aria-hidden>
-          {Array.from({ length: 12 }, (_, i) => (
-            <i key={i} />
-          ))}
-        </div>
+      <div className="lplan">
+        <span className={`led${speaking ? " on" : ""}`} />
+        {checkout ? (
+          <span>
+            <b>{checkout.purpose}</b> · {checkout.elapsed}
+          </span>
+        ) : (
+          <span>
+            CONCIERGE · <b>ROOM VOICE</b> · {room.audio.gateCountdown}
+          </span>
+        )}
       </div>
-
-      <button
-        type="button"
-        className={`routechip routeswitch${phoneRoute ? "" : " dim"}`}
-        role="switch"
-        aria-checked={phoneRoute}
-        aria-label="Audio route"
-        onClick={() => toggleAudioRoute()}
-      >
-        <span className={`led${phoneRoute ? " on" : ""}`} />
-        <span className="rlabel">
-          AUDIO → <b>{phoneRoute ? "THIS PHONE" : "MAC SPEAKERS"}</b>
-        </span>
-        <span className="spacer" />
-        <span className="gatewd">{phoneRoute ? "GATE HELD" : "GATE OPEN"}</span>
-        <span className={`rswitch${phoneRoute ? " on" : ""}`} aria-hidden>
-          <i />
-        </span>
-      </button>
 
       <div className="vt field-thread" ref={threadRef}>
         {rows.map((r, i) => (

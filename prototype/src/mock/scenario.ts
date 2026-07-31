@@ -492,7 +492,7 @@ export function spendBurn() {
       s.spend.elevenlabsCap,
       +(s.spend.elevenlabsUsd + 0.35).toFixed(2),
     );
-    const gemCalls = s.spend.geminiCalls + 3;
+    const gemUsd = +(s.spend.geminiUsd + 0.02).toFixed(2);
     return {
       ...s,
       rev: s.rev + 1,
@@ -501,17 +501,17 @@ export function spendBurn() {
         burning: true,
         monthFraction: Math.min(1, s.spend.monthFraction + 0.04),
         elevenlabsUsd: elUsd,
-        geminiCalls: gemCalls,
+        geminiUsd: gemUsd,
         voiceCharsToday: s.spend.voiceCharsToday + 420,
-        // The two guards a synthesis burn actually moves.
+        // The two guards a synthesis burn actually moves. Neither has a
+        // session reset, so neither grows a blue arc.
         guards: s.spend.guards.map((g) => {
           if (g.id === "elevenlabs") {
             return {
               ...g,
-              sessionFraction: Math.min(1, g.sessionFraction + 0.035),
               windows: [
                 {
-                  window: "MONTH",
+                  window: "30D",
                   fraction: elUsd / s.spend.elevenlabsCap,
                   readout: `$${elUsd.toFixed(2)} / $${s.spend.elevenlabsCap}`,
                 },
@@ -521,12 +521,11 @@ export function spendBurn() {
           if (g.id === "gemini") {
             return {
               ...g,
-              sessionFraction: Math.min(1, g.sessionFraction + 0.02),
               windows: [
                 {
-                  window: "TODAY",
-                  fraction: gemCalls / s.spend.geminiRedline,
-                  readout: `${gemCalls} / ${s.spend.geminiRedline} CALLS`,
+                  window: "MONTH",
+                  fraction: gemUsd / s.spend.geminiGoalUsd,
+                  readout: `$${gemUsd.toFixed(2)} / GOAL $${s.spend.geminiGoalUsd}`,
                 },
               ],
             };
@@ -639,8 +638,13 @@ export function setComposer(text: string) {
 
 /** Flip speaker-gate route between phone and Mac. */
 export function toggleAudioRoute() {
+  setAudioRoute(getRoom().audio.route === "phone" ? "mac" : "phone");
+}
+
+/** Pick a speaker explicitly — the segmented phone|mac toggle on LISTEN. */
+export function setAudioRoute(next: "phone" | "mac") {
   const s = getRoom();
-  const next = s.audio.route === "phone" ? "mac" : "phone";
+  if (s.audio.route === next) return;
   patchRoom({
     audio: {
       ...s.audio,

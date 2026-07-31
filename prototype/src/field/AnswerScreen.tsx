@@ -73,14 +73,8 @@ export function AnswerScreen() {
 
       {hq ? (
         <div
-          className="vt"
-          style={{
-            marginTop: 10,
-            padding: 10,
-            border: "1px solid rgba(255,179,71,.18)",
-            borderRadius: 6,
-            background: "rgba(0,0,0,.35)",
-          }}
+          className="vt fcard"
+          style={{ marginTop: 10, padding: 10 }}
         >
           <div className="row">
             <span className="who">

@@ -77,48 +77,61 @@ export function makeFixtures(): RoomState {
       monthFraction: 0.41,
       elevenlabsUsd: 4.1,
       elevenlabsCap: 10,
-      geminiCalls: 37,
-      geminiRedline: 160,
+      geminiUsd: 1.84,
+      geminiGoalUsd: 5,
       voiceCharsToday: 12480,
       burning: false,
       windowResetFraction: 0.62,
       windowResetLabel: "4D 09H",
+      // Semantics are per-provider and NOT interchangeable — see GuardWindow.
+      // sessionFraction (blue arc) exists only where a session actually resets.
       guards: [
         {
           id: "claude",
           label: "CLAUDE",
-          sessionFraction: 0.11,
+          // 5H session bucket resets; the Fable 7D window keeps climbing.
+          sessionFraction: 0.28,
           windows: [
-            { window: "5H", fraction: 0.28, readout: "28%" },
+            { window: "5H SESSION", fraction: 0.28, readout: "28%" },
             { window: "FABLE 7D", fraction: 0.42, readout: "42%" },
           ],
         },
         {
           id: "codex",
           label: "CODEX",
-          sessionFraction: 0.04,
-          windows: [{ window: "7D", fraction: 0.19, readout: "19%" }],
+          sessionFraction: 0.22,
+          windows: [
+            { window: "SESSION", fraction: 0.22, readout: "22%" },
+            { window: "7D", fraction: 0.19, readout: "19%" },
+          ],
         },
         {
           id: "cursor",
           label: "CURSOR",
-          sessionFraction: 0.02,
-          windows: [{ window: "MONTH", fraction: 0.34, readout: "34%" }],
+          // 30-day rolling timer window. No session reset → no blue arc.
+          sessionFraction: null,
+          windows: [
+            { window: "30D ROLLING", fraction: 0.34, readout: "34% · 11D LEFT" },
+          ],
         },
         {
           id: "elevenlabs",
           label: "ELEVENLABS",
-          sessionFraction: 0.24,
-          windows: [
-            { window: "MONTH", fraction: 0.41, readout: "$4.10 / $10" },
-          ],
+          // 30-day billing cycle, $ used / $ cap. No session reset.
+          sessionFraction: null,
+          windows: [{ window: "30D", fraction: 0.41, readout: "$4.10 / $10" }],
         },
         {
           id: "gemini",
           label: "GEMINI",
-          sessionFraction: 0.13,
+          // No provider windows at all — month-to-date spend vs OUR goal.
+          sessionFraction: null,
           windows: [
-            { window: "TODAY", fraction: 37 / 160, readout: "37 / 160 CALLS" },
+            {
+              window: "MONTH",
+              fraction: 1.84 / 5,
+              readout: "$1.84 / GOAL $5",
+            },
           ],
         },
       ],

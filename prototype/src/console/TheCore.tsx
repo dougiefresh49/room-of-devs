@@ -40,14 +40,14 @@ export function TheCore() {
               ? `${worst.label} ${worst.window} · ${Math.round(worst.fraction * 100)}%`
               : "—"}
           </b>{" "}
-          · FLARE = SPEAKING
+          · FLARE = SPEAKING · GEMINI DIAL RUNS TO OUR SPEND GOAL, NOT A CAP
         </div>
         <div className="gaugerow">
           <DialGauge
             fraction={spend.elevenlabsUsd / spend.elevenlabsCap}
             caption={
               <>
-                ELEVENLABS · MONTH
+                ELEVENLABS · 30D CYCLE
                 <br />
                 <b>
                   ${spend.elevenlabsUsd.toFixed(2)} / ${spend.elevenlabsCap} CAP
@@ -56,14 +56,14 @@ export function TheCore() {
             }
           />
           <DialGauge
-            fraction={spend.geminiCalls / spend.geminiRedline}
+            fraction={spend.geminiUsd / spend.geminiGoalUsd}
             redlineFrom={0.85}
             caption={
               <>
-                GEMINI · TODAY
+                GEMINI · MONTH TO DATE
                 <br />
                 <b>
-                  {spend.geminiCalls} CALLS · REDLINE {spend.geminiRedline}
+                  ${spend.geminiUsd.toFixed(2)} / GOAL ${spend.geminiGoalUsd}
                 </b>
               </>
             }

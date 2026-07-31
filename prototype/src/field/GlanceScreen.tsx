@@ -63,7 +63,10 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
         </span>
       </div>
 
-      <div style={{ marginTop: 10, position: "relative" }}>
+      <div
+        className="plotbay-f fcard"
+        style={{ marginTop: 10, position: "relative", padding: 4 }}
+      >
         <FieldPlot onSelectCraft={onSelectCraft} />
       </div>
 

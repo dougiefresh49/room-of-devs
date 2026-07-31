@@ -32,15 +32,7 @@ export function StartScreen() {
 
   return (
     <div className="screen-body">
-      <div
-        className="vt"
-        style={{
-          padding: 10,
-          border: "1px solid rgba(255,179,71,.18)",
-          borderRadius: 6,
-          background: "rgba(0,0,0,.35)",
-        }}
-      >
+      <div className="vt fcard" style={{ padding: 10 }}>
         {exchange.you ? (
           <div className="row">
             <span className="who">YOU</span>
