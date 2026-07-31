@@ -2,6 +2,7 @@ import { SessionDial } from "../rig-ext/SessionDial";
 import type { GuardWindow } from "../mock/types";
 import { useRoom } from "../mock/store";
 import { CutFrame, Odometer } from "@room/ui/rig";
+import { Popover, PopoverContent, PopoverTrigger } from "@room/ui";
 
 /** One window's fill bar. Red once it's inside the last 15% of its cap. */
 function GuardBar({ w }: { w: GuardWindow }) {
@@ -41,8 +42,19 @@ export function GaugesScreen() {
 
   return (
     <div className="screen-body gauges-body">
-      <div className="dotmx ghost gboard-cap">
-        SESSION RESETS · <b>AMBER</b>=WINDOW · <i>BLUE</i>=SESSION
+      <div className="dotmx ghost gboard-cap gauge-cap-info">
+        <span>SPEND DIALS</span>
+        <Popover>
+          <PopoverTrigger className="gauge-info-trigger" aria-label="About spend dials">
+            ⓘ
+          </PopoverTrigger>
+          <PopoverContent className="gauge-info-popover" align="start" sideOffset={6}>
+            <p><b>AMBER ARC</b> — the provider&apos;s window meter, keeps climbing until its cycle resets.</p>
+            <p><b>BLUE ARC</b> — this session&apos;s usage; resets each session. Only Claude and Codex have sessions.</p>
+            <p><b>CURSOR / ELEVENLABS</b> — 30-day rolling cycles.</p>
+            <p><b>GEMINI</b> — month-to-date spend against OUR OWN goal, not a provider cap. Real billing-cycle data TBD.</p>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="fdialrow">
@@ -77,7 +89,7 @@ export function GaugesScreen() {
       </div>
 
       <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
-        GUARD BOARD · ROLLING WINDOWS · NO SESSION RESET
+        GUARD BOARD
       </div>
 
       <div className="gboard">
@@ -96,14 +108,6 @@ export function GaugesScreen() {
             ))}
           </CutFrame>
         ))}
-      </div>
-
-      <div
-        className="dotmx ghost gboard-cap"
-        style={{ marginTop: 8, marginBottom: 0, fontSize: 7 }}
-      >
-        GEMINI END-STOP IS OUR OWN <b>GOAL</b>, NOT A PROVIDER CAP · REAL
-        BILLING-CYCLE DATA TBD
       </div>
 
       <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">

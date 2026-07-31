@@ -35,6 +35,8 @@ export function StartScreen() {
 
   return (
     <div className="screen-body">
+      <div className="dotmx ghost start-purpose">START — KICK OFF NEW WORK</div>
+
       <FieldCard className="vt" style={{ padding: 10 }}>
         {exchange.you ? (
           <div className="row">
@@ -74,7 +76,7 @@ export function StartScreen() {
           </>
         ) : (
           <span style={{ color: "var(--steel-dim)" }}>
-            INTERPRETER COLD · NEW WORK FILES A TICKET → SPAWN
+            SAY IT OR TYPE IT — MIKEY FILES THE TICKET AND SPAWNS A DEV
           </span>
         )}
       </div>
@@ -100,10 +102,14 @@ export function StartScreen() {
           </div>
         </div>
       ) : (
-        <div className="empty-line">BIRTH SLOT OPEN · SPEAK NEW WORK</div>
+        <div className="empty-line">READY FOR NEW WORK</div>
       )}
 
-      <div className="vrack" style={{ marginTop: "auto" }}>
+      <div className="dotmx ghost standing-orders-cap">
+        STANDING ORDERS · TAP TO TOGGLE
+      </div>
+
+      <div className="vrack">
         {room.verbs.map((v) => (
           <button
             type="button"
