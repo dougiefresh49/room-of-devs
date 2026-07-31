@@ -487,21 +487,53 @@ export function discardArtifact(artifactId: string) {
 
 /** SPEND BURN — CORE pulse + odometer + dial creep. */
 export function spendBurn() {
-  setRoom((s) => ({
-    ...s,
-    rev: s.rev + 1,
-    spend: {
-      ...s.spend,
-      burning: true,
-      monthFraction: Math.min(1, s.spend.monthFraction + 0.04),
-      elevenlabsUsd: Math.min(
-        s.spend.elevenlabsCap,
-        +(s.spend.elevenlabsUsd + 0.35).toFixed(2),
-      ),
-      geminiCalls: s.spend.geminiCalls + 3,
-      voiceCharsToday: s.spend.voiceCharsToday + 420,
-    },
-  }));
+  setRoom((s) => {
+    const elUsd = Math.min(
+      s.spend.elevenlabsCap,
+      +(s.spend.elevenlabsUsd + 0.35).toFixed(2),
+    );
+    const gemCalls = s.spend.geminiCalls + 3;
+    return {
+      ...s,
+      rev: s.rev + 1,
+      spend: {
+        ...s.spend,
+        burning: true,
+        monthFraction: Math.min(1, s.spend.monthFraction + 0.04),
+        elevenlabsUsd: elUsd,
+        geminiCalls: gemCalls,
+        voiceCharsToday: s.spend.voiceCharsToday + 420,
+        // The two guards a synthesis burn actually moves.
+        guards: s.spend.guards.map((g) => {
+          if (g.id === "elevenlabs") {
+            return {
+              ...g,
+              windows: [
+                {
+                  window: "MONTH",
+                  fraction: elUsd / s.spend.elevenlabsCap,
+                  readout: `$${elUsd.toFixed(2)} / $${s.spend.elevenlabsCap}`,
+                },
+              ],
+            };
+          }
+          if (g.id === "gemini") {
+            return {
+              ...g,
+              windows: [
+                {
+                  window: "TODAY",
+                  fraction: gemCalls / s.spend.geminiRedline,
+                  readout: `${gemCalls} / ${s.spend.geminiRedline} CALLS`,
+                },
+              ],
+            };
+          }
+          return g;
+        }),
+      },
+    };
+  });
   window.setTimeout(() => {
     patchRoom({ spend: { ...getRoom().spend, burning: false } });
   }, 2200);

@@ -1,9 +1,12 @@
 import { DialGauge, Odometer } from "@room/ui/rig";
-import { useRoom } from "../mock/store";
+import { useRoom, worstGuard } from "../mock/store";
 
 export function TheCore() {
   const { spend } = useRoom();
-  const pct = Math.round(spend.monthFraction * 100);
+  // The hex shell reads the tightest guard anywhere, not a month average —
+  // the month is only the right window for Cursor and ElevenLabs.
+  const worst = worstGuard(spend);
+  const pct = Math.round((worst?.fraction ?? spend.monthFraction) * 100);
 
   return (
     <div className="chassis gaugebox">
@@ -22,7 +25,11 @@ export function TheCore() {
           <div className="hv-shell lit" />
         </div>
         <div className="hv-cap">
-          HEX CELLS = MONTH CAP · <b>LIT = {pct}% DRAWN</b> · CORE FLARE = BURNING NOW
+          TIGHTEST GUARD:{" "}
+          <b>
+            {worst ? `${worst.label} ${worst.window} · ${pct}%` : `${pct}%`}
+          </b>{" "}
+          · FLARE = SPEAKING NOW
         </div>
         <div className="gaugerow">
           <DialGauge

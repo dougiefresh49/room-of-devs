@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import {
   replayLastMikey,
@@ -6,40 +6,7 @@ import {
   toggleAudioRoute,
 } from "../mock/scenario";
 import { useRoom } from "../mock/store";
-
-function DuckPtt() {
-  const room = useRoom();
-  const [handoff, setHandoff] = useState(false);
-  useEffect(() => {
-    if (!handoff) return;
-    const t = window.setTimeout(() => setHandoff(false), 2400);
-    return () => window.clearTimeout(t);
-  }, [handoff]);
-  const hot = room.micHot;
-  const cls = hot ? "pttpill hot" : handoff ? "pttpill handoff" : "pttpill";
-  return (
-    <button
-      type="button"
-      className={cls}
-      style={{ flex: 1 }}
-      onPointerDown={() => {
-        if (hot) return;
-        setHandoff(true);
-      }}
-    >
-      <span className="btn" />
-      <span className="lbl">
-        {hot ? (
-          <b>MIC HOT — ROOM OPEN</b>
-        ) : handoff ? (
-          <b>VOICE LIVES AT THE RIG</b>
-        ) : (
-          <b>HOLD TO TALK</b>
-        )}
-      </span>
-    </button>
-  );
-}
+import { PttPill } from "./PttPill";
 
 export function ListenScreen() {
   const room = useRoom();
@@ -94,17 +61,21 @@ export function ListenScreen() {
 
       <button
         type="button"
-        className={`routechip${phoneRoute ? "" : " dim"}`}
+        className={`routechip routeswitch${phoneRoute ? "" : " dim"}`}
+        role="switch"
+        aria-checked={phoneRoute}
+        aria-label="Audio route"
         onClick={() => toggleAudioRoute()}
       >
         <span className={`led${phoneRoute ? " on" : ""}`} />
-        {phoneRoute ? (
-          <>
-            AUDIO → <b>THIS PHONE</b> · SPEAKER GATE HELD · MAC SPEAKERS COLD
-          </>
-        ) : (
-          <>AUDIO → MAC SPEAKERS · THIS PHONE COLD</>
-        )}
+        <span className="rlabel">
+          AUDIO → <b>{phoneRoute ? "THIS PHONE" : "MAC SPEAKERS"}</b>
+        </span>
+        <span className="spacer" />
+        <span className="gatewd">{phoneRoute ? "GATE HELD" : "GATE OPEN"}</span>
+        <span className={`rswitch${phoneRoute ? " on" : ""}`} aria-hidden>
+          <i />
+        </span>
       </button>
 
       <div className="vt field-thread" ref={threadRef}>
@@ -167,7 +138,7 @@ export function ListenScreen() {
             <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
           </svg>
         </button>
-        <DuckPtt />
+        <PttPill style={{ flex: 1 }} />
       </div>
     </div>
   );

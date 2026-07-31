@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { makeFixtures } from "./fixtures";
-import type { RoomState } from "./types";
+import type { RoomState, SpendState } from "./types";
 
 let state: RoomState = makeFixtures();
 const listeners = new Set<() => void>();
@@ -29,6 +29,24 @@ export function subscribe(listener: () => void): () => void {
 
 export function useRoom(): RoomState {
   return useSyncExternalStore(subscribe, getRoom, getRoom);
+}
+
+/**
+ * The single tightest guard across every provider window — what the CORE
+ * shows at a glance. Returns null only if there are no guards at all.
+ */
+export function worstGuard(
+  spend: SpendState,
+): { label: string; window: string; fraction: number } | null {
+  let worst: { label: string; window: string; fraction: number } | null = null;
+  for (const g of spend.guards) {
+    for (const w of g.windows) {
+      if (!worst || w.fraction > worst.fraction) {
+        worst = { label: g.label, window: w.window, fraction: w.fraction };
+      }
+    }
+  }
+  return worst;
 }
 
 export function resetRoom() {

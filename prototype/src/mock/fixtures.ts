@@ -81,6 +81,40 @@ export function makeFixtures(): RoomState {
       geminiRedline: 160,
       voiceCharsToday: 12480,
       burning: false,
+      guards: [
+        {
+          id: "claude",
+          label: "CLAUDE",
+          windows: [
+            { window: "5H", fraction: 0.28, readout: "28%" },
+            { window: "FABLE 7D", fraction: 0.42, readout: "42%" },
+          ],
+        },
+        {
+          id: "codex",
+          label: "CODEX",
+          windows: [{ window: "7D", fraction: 0.19, readout: "19%" }],
+        },
+        {
+          id: "cursor",
+          label: "CURSOR",
+          windows: [{ window: "MONTH", fraction: 0.34, readout: "34%" }],
+        },
+        {
+          id: "elevenlabs",
+          label: "ELEVENLABS",
+          windows: [
+            { window: "MONTH", fraction: 0.41, readout: "$4.10 / $10" },
+          ],
+        },
+        {
+          id: "gemini",
+          label: "GEMINI",
+          windows: [
+            { window: "TODAY", fraction: 37 / 160, readout: "37 / 160 CALLS" },
+          ],
+        },
+      ],
     },
     plans: [
       {

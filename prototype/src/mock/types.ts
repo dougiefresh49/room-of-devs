@@ -110,8 +110,28 @@ export interface Artifact {
   svg: string;
 }
 
+/**
+ * One provider guard window. Each provider only has the windows its billing
+ * actually exposes — Claude has a 5-hour bucket AND a 7-day Fable bucket,
+ * Cursor and ElevenLabs only have a month. Wishlist wire fields.
+ */
+export interface GuardWindow {
+  /** Short window label, e.g. "5H", "7D", "MONTH", "TODAY". */
+  window: string;
+  /** Utilization 0–1 against this window's cap. */
+  fraction: number;
+  /** Human readout under the bar, e.g. "42%" or "$4.10 / $10". */
+  readout: string;
+}
+
+export interface ProviderGuard {
+  id: "claude" | "codex" | "cursor" | "elevenlabs" | "gemini";
+  label: string;
+  windows: GuardWindow[];
+}
+
 export interface SpendState {
-  /** Month draw fraction 0–1 for CORE hex shell. */
+  /** Month draw fraction 0–1 (legacy CORE hex shell input; console uses worstGuard). */
   monthFraction: number;
   elevenlabsUsd: number;
   elevenlabsCap: number;
@@ -120,6 +140,8 @@ export interface SpendState {
   voiceCharsToday: number;
   /** CORE pulse while burning. */
   burning: boolean;
+  /** Per-provider guard board — the tiles on GAUGES and the CORE's worst-guard read. */
+  guards: ProviderGuard[];
 }
 
 export interface SalienceState {
