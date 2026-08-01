@@ -286,11 +286,15 @@ How to apply:
   2026-07-29 — Opus-via-Cursor burned 57% of the monthly Cursor quota;
   Anthropic Fable is back, so Fable/Opus go through the Agent tool only,
   cursor-agent is composer/grok only until the owner re-opens this).
-  Original note kept for when it does: the Cursor plan
-  can run `claude-fable-5-*`, `claude-opus-5-*`, `gpt-5.6-sol-*` (all
-  1M-context, tiered low→max, thinking variants). Cursor usage has been
-  far under its allotment, so when Anthropic Fable/Opus budget runs low,
-  delegate via e.g. `agent --worktree -p --force --model
+  Mechanism (owner, 2026-08-01): Cursor meters two pools — only
+  composer/grok draw from the generous "First-party models" quota;
+  every other model (`claude-*`, `gpt-*`) bills the much smaller "API"
+  pool (78% used as of 2026-08-01; a single fable lane moved it ~20
+  points). Check `ai-usage`'s Cursor `api` metric — not `models` —
+  before any frontier-via-cursor lane. Original note kept for when the
+  route re-opens: the Cursor plan can run `claude-fable-5-*`,
+  `claude-opus-5-*`, `gpt-5.6-sol-*` (all 1M-context, tiered low→max,
+  thinking variants) via e.g. `agent --worktree -p --force --model
   claude-fable-5-thinking-high "..."` instead of the Agent tool. Caveats:
   Fable via Cursor is flagged **NO ZDR** (no zero-data-retention — fine
   for this repo, think twice for sensitive code), and `-fast` variants
