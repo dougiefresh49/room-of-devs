@@ -562,11 +562,24 @@ permission prompt that fires on first panel PTT recording, self-serve.)
    then work backwards to the daemon/wire changes and the shared
    mobile/desktop component refactor.
 0.5. **Prototype follow-ups (owner, 2026-07-31):**
-   - **ALL-PROJECTS VIEW — not yet prototyped.** How the room handles
-     multiple projects at once (e.g. this repo + comic reader + podlink):
-     switching between them, whether the crew/spine is per-project or
-     global, where the switcher lives on desktop vs FIELD. Needs a
-     concept pass before any wire work.
+   - **Round D concept boards AWAITING OWNER PICK** (2026-07-31). Brief:
+     [active/design-brief-round-d.md](active/design-brief-round-d.md) —
+     three problems: (A) all-projects view + new-project ceremony/one-off
+     flow, (B) component library playground with shadcn provenance,
+     (C) visual architecture map. Four blind lanes in
+     `active/concepts-round-d/` (fable / opus / grok / sol —
+     interactive originals; open locally in a browser). Static copies on
+     postplan under "round-d-concepts": fable
+     <https://7mtek2r3azb7.postplan.dev>, opus
+     <https://nhslyse2w90h.postplan.dev>, grok
+     <https://g4fgo9kgteki.postplan.dev>, sol
+     <https://dfq2ekqbocme.postplan.dev>. Supporting audit:
+     [reference/shadcn-audit.md](reference/shadcn-audit.md) (8 vendored
+     shadcn primitives, 3 dead; top pulls: tabs, sonner wire-in, command,
+     select, slider; no components.json — CLI never wired). Next: owner
+     picks winner(s) → synthesis → build spec.
+   - ~~ALL-PROJECTS VIEW — not yet prototyped~~ → folded into Round D
+     problem A above.
    - **Helix orb (console CORE hex ball) looks rough after the r4
      recharge-glow change** — owner: "not so great, leave a note to come
      back to it." Revisit the shading/glow treatment; the encodings
