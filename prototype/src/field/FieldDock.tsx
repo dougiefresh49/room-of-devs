@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@room/ui";
 import { CrtFace } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { PartNo } from "../map/PartNo";
 import {
   injectReply,
   replayLastMikey,
@@ -84,6 +85,7 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
 
   return (
     <div className={`fdock${typing ? " typing" : ""}`}>
+      <PartNo partNo="F-06" />
       <div className="fdock-row">
         {showChip ? (
           <div className="mface">

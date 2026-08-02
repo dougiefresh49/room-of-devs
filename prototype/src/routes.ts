@@ -1,6 +1,7 @@
 export type Route = "console" | "field" | "crib" | "map";
 
 export { CribView } from "./crib/CribView";
+export { MapView } from "./map/MapView";
 
 export function currentRoute(): Route {
   if (typeof window === "undefined") return "console";

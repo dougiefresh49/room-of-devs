@@ -1,11 +1,13 @@
 import { CrtFace } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 
 export function CrewManifest() {
   const { crew, speakingPersona } = useRoom();
   return (
     <div className="crew">
+      <PartNo partNo="S-12" />
       {crew.map((m) => (
         <div key={m.id} className={`crewplate chassis${m.piloting ? "" : " off"}`}>
           <div className="cscr screenbed">

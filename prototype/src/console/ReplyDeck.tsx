@@ -1,4 +1,5 @@
 import { Keycap, Waveform } from "@room/ui/rig";
+import { PartNo } from "../map/PartNo";
 import { answer, micClose, micOpen, setComposer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -11,6 +12,7 @@ export function ReplyDeck() {
 
   return (
     <div className="replydeck">
+      <PartNo partNo="S-08" />
       <div className="chassis rcard">
         <span className="screw tl" />
         <span className="screw tr" />

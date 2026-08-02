@@ -1,9 +1,11 @@
+import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 
 export function TurnChip() {
   const { turnChip, tapIn } = useRoom();
   return (
     <div className="watchchip" style={{ borderColor: "#3a3f45", color: "var(--steel-dim)" }}>
+      <PartNo partNo="S-11" />
       <span
         className="eye"
         style={{ background: "var(--steel-dim)", boxShadow: "none", animation: "none" }}

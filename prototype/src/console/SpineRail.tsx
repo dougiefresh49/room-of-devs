@@ -1,4 +1,5 @@
 import { HexLayer } from "@room/ui/rig";
+import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 import { PlanCard } from "./PlanCard";
 import { ThreadNode } from "./ThreadNode";
@@ -16,6 +17,7 @@ export function SpineRail() {
 
   return (
     <div className="bay spinebay">
+      <PartNo partNo="S-03" />
       <div className="baylabel">
         <span>THE SPINE // ENERGIZED RAIL — PLANS DOCK TO IT, MORTAL THREADS FLY THEM</span>
         <span>PLANS 0004–0008</span>

@@ -1,4 +1,5 @@
 import { Led, Odometer } from "@room/ui/rig";
+import { PartNo } from "../map/PartNo";
 import type { Plan } from "../mock/types";
 
 function Schematic({ kind }: { kind: Plan["schematic"] }) {
@@ -42,6 +43,7 @@ export function PlanCard({ plan }: { plan: Plan }) {
 
   return (
     <div className={`node plan ${dockClass}`}>
+      <PartNo partNo="S-04" />
       <div className="bpcard">
         <div className="pl-id">
           PLAN {plan.id} //{" "}

@@ -1,3 +1,4 @@
+import { PartNo } from "../map/PartNo";
 import { toggleVerb } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -5,6 +6,7 @@ export function VerbRack() {
   const { verbs } = useRoom();
   return (
     <div className="chassis rcard">
+      <PartNo partNo="S-10" />
       <div className="sc-head">
         <span className="stn">VERB RACK</span>
         <span className="tag">NAMING IS CONSENT</span>

@@ -770,6 +770,13 @@ export function oneOffSettles() {
 }
 
 export function openRoute(route: "/crib" | "/map") {
+  if (route === "/map") {
+    const consoleKeycap = document.querySelector<HTMLButtonElement>(".schematic-keycap");
+    if (consoleKeycap) {
+      consoleKeycap.click();
+      return;
+    }
+  }
   window.location.assign(route);
 }
 

@@ -6,28 +6,11 @@ import { ControlDeck } from "./deck/ControlDeck";
 import { FieldView } from "./field/FieldView";
 import { HangarView, useFleetKeyboard } from "./hangar/HangarView";
 import { LongRangePlot } from "./plot/LongRangePlot";
-import { CribView, currentRoute } from "./routes";
+import { CribView, MapView, currentRoute } from "./routes";
 
 const route = currentRoute();
 
-function RoutePlaceholder({ label, phase }: { label: string; phase: string }) {
-  return (
-    <div className="proto-app">
-      <div className="haz" style={{ marginBottom: 18 }} />
-      <div className="chassis mainwin route-placeholder">
-        <span className="stn">{label}</span>
-        <span className="tag">PLACEHOLDER · {phase}</span>
-      </div>
-      <ControlDeck />
-    </div>
-  );
-}
-
 export function App() {
-  const room = useRoom();
-  const fleet = useFleet();
-  useFleetKeyboard(route === "console");
-
   if (route === "field") {
     return (
       <>
@@ -45,8 +28,16 @@ export function App() {
     );
   }
   if (route === "map") {
-    return <RoutePlaceholder label="SERVICE SCHEMATIC" phase="ROUND D · PHASE 4" />;
+    return <MapView />;
   }
+
+  return <ConsoleApp />;
+}
+
+function ConsoleApp() {
+  const room = useRoom();
+  const fleet = useFleet();
+  useFleetKeyboard(true);
 
   const moodClass =
     room.mood === "mic-open"

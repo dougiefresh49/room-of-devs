@@ -4,6 +4,7 @@ import { Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCard } from "../rig-ext/FieldCard";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
+import { PartNo } from "../map/PartNo";
 import { toggleVerb } from "../mock/scenario";
 import { openCommission, strikeCommission, useFleet, useRoom } from "../mock/store";
 import { manifestFromDraft, manifestPath } from "../hangar/commission/ManifestPreview";
@@ -49,6 +50,7 @@ export function StartScreen() {
 
   return (
     <div className="screen-body">
+      <PartNo partNo="F-04" />
       <div className="dotmx ghost start-purpose">START — KICK OFF NEW WORK</div>
 
       <FieldCard className="vt" style={{ padding: 10 }}>

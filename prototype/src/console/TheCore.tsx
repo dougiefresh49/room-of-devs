@@ -1,4 +1,5 @@
 import { DialGauge, Odometer } from "@room/ui/rig";
+import { PartNo } from "../map/PartNo";
 import { aggregateDraw, useRoom, worstGuard } from "../mock/store";
 
 export function TheCore() {
@@ -12,6 +13,7 @@ export function TheCore() {
 
   return (
     <div className="chassis gaugebox">
+      <PartNo partNo="S-07" />
       <div className="cap">
         <span>THE CORE</span>
         <b>ENERGY / SPEND GUARD</b>

@@ -1,5 +1,6 @@
 import { CrtFace, Led, SalienceBar } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { PartNo } from "../map/PartNo";
 import { useFleet } from "../mock/store";
 import { roomShortLabel } from "../hangar/BerthTabs";
 
@@ -18,6 +19,7 @@ export function DockMiniBar() {
 
   return (
     <div className="chassis dock proto-dock">
+      <PartNo partNo="S-13" />
       <div className="facewrap">
         <CrtFace size={52} scanlines>
           <AvatarFace persona="mikey" mode={mikeySpeaking ? "speaking" : "idle"} size={52} />

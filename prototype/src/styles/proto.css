@@ -8,6 +8,7 @@
 @import "./shape.css";
 @import "./hangar.css";
 @import "./crib.css";
+@import "./map.css";
 
 :root {
   --ink: var(--rig-ink);

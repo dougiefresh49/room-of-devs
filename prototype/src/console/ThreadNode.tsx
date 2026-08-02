@@ -1,5 +1,6 @@
 import { CrtFace, Keycap } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
+import { PartNo } from "../map/PartNo";
 import {
   answer,
   discardArtifact,
@@ -51,6 +52,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
 
   return (
     <div className={wrapClass}>
+      <PartNo partNo="S-05" />
       <details
         className={nodeClass}
         open={craft.open}

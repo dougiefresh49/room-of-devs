@@ -3,6 +3,7 @@ import { Keycap, Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCard } from "../rig-ext/FieldCard";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
+import { PartNo } from "../map/PartNo";
 import { answer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -39,6 +40,7 @@ export function AnswerScreen() {
 
   return (
     <div className="screen-body">
+      <PartNo partNo="F-02" />
       <div className="fstat" style={{ borderBottom: "none", marginBottom: 4, paddingBottom: 0 }}>
         <span>◂ ROOM</span>
         <span className="spacer" />

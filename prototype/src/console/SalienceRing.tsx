@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { setThreshold } from "../mock/scenario";
+import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 
 /** Salience ring with draggable red threshold tab. */
@@ -30,6 +31,7 @@ export function SalienceRing() {
 
   return (
     <div className="chassis gaugebox">
+      <PartNo partNo="S-06" />
       <span className="screw tl" />
       <span className="screw tr" />
       <div className="cap">

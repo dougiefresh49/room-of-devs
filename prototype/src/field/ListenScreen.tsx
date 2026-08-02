@@ -3,6 +3,7 @@ import { ToggleGroup, ToggleGroupItem } from "@room/ui";
 import { CutFrame, Led, Waveform } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
+import { PartNo } from "../map/PartNo";
 import { setAudioRoute } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
@@ -86,6 +87,7 @@ export function ListenScreen() {
 
   return (
     <div className="screen-body">
+      <PartNo partNo="F-03" />
       <div className="lhead">
         <CutFrame scale="s" className="lcol-wrap" innerClassName="lcol">
           <div className="lname">{persona === "donnie" ? "DONNIE" : "MIKEY"}</div>

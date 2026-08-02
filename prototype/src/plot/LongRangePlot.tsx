@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { setThreshold, setView } from "../mock/scenario";
+import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 
 function polar(cx: number, cy: number, salience: number, angleDeg: number) {
@@ -33,6 +34,7 @@ export function LongRangePlot() {
 
   return (
     <div className="plotwrap">
+      <PartNo partNo="S-14" />
       <div className="chassis plotbay">
         <span className="screw tl" />
         <span className="screw tr" />

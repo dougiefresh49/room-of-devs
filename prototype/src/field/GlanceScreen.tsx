@@ -5,6 +5,7 @@ import type { Craft } from "../mock/types";
 import { coupleRoom } from "../mock/scenario";
 import { useFleet, useRoom } from "../mock/store";
 import { roomShortLabel } from "../hangar/BerthTabs";
+import { PartNo } from "../map/PartNo";
 import { FieldPlot } from "./FieldPlot";
 
 export interface GlanceScreenProps {
@@ -39,6 +40,7 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
 
   return (
     <div className="screen-body">
+      <PartNo partNo="F-01" />
       <nav className="field-room-pills" aria-label="Fleet rooms">
         {fleet.rooms
           .filter((berth) => berth.berth != null)
