@@ -1,4 +1,4 @@
-import type { RoomState } from "./types";
+import type { FleetState, RoomBerth, RoomId, RoomState } from "./types";
 
 const ARTIFACT_SVG = `<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg">
   <rect width="280" height="140" fill="#0f0801"/>
@@ -14,7 +14,7 @@ const ARTIFACT_SVG = `<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/s
 </svg>`;
 
 /** Rich room fixture — 2 plans live/queued, 3 settled, 5 crafts, spend, watch, artifact. */
-export function makeFixtures(): RoomState {
+function makeRichFixtures(roomId: RoomId): RoomState {
   return {
     view: "console",
     mood: "normal",
@@ -190,6 +190,7 @@ export function makeFixtures(): RoomState {
     ],
     crafts: [
       {
+        roomId,
         id: "c-0451",
         ticket: "T-0451",
         persona: "raph",
@@ -225,6 +226,7 @@ export function makeFixtures(): RoomState {
         },
       },
       {
+        roomId,
         id: "c-0452",
         ticket: "T-0452",
         persona: "leo",
@@ -261,6 +263,7 @@ export function makeFixtures(): RoomState {
         },
       },
       {
+        roomId,
         id: "c-0449",
         ticket: "T-0449",
         persona: "splinter",
@@ -283,6 +286,7 @@ export function makeFixtures(): RoomState {
         diff: null,
       },
       {
+        roomId,
         id: "c-0447",
         ticket: "T-0447",
         persona: "shredder",
@@ -308,6 +312,7 @@ export function makeFixtures(): RoomState {
         diff: null,
       },
       {
+        roomId,
         id: "c-empty",
         ticket: "T-————",
         persona: "karai",
@@ -386,5 +391,331 @@ export function makeFixtures(): RoomState {
       { id: "shredder", callsign: "SHREDDER", role: "SETTLED", piloting: false },
       { id: "karai", callsign: "KARAI", role: "STANDBY", piloting: false },
     ],
+  };
+}
+
+function fixtureCraft(room: RoomState, index: number) {
+  const craft = room.crafts[index];
+  if (!craft) throw new Error(`Missing fixture craft at index ${index}`);
+  return craft;
+}
+
+function makePodlinkFixtures(roomId: RoomId): RoomState {
+  const rich = makeRichFixtures(roomId);
+  const craft = {
+    ...fixtureCraft(rich, 0),
+    roomId,
+    id: "pod-w-2",
+    ticket: "W-2",
+    persona: "raph" as const,
+    callsign: "RAPH",
+    task: "release watch · 5xx anomaly baseline",
+    salience: 64,
+    planId: "0031",
+    lastStamp: "WATCH ACTIVE · 02:18",
+    watched: true,
+    open: false,
+    tokens: 940,
+    spendUsd: 0.01,
+    turns: 2,
+    plotAngle: 205,
+    tail: [{ kind: "info" as const, text: "watching release telemetry · baseline stable" }],
+    diff: null,
+  };
+  return {
+    ...rich,
+    focusCraftId: craft.id,
+    plans: [
+      {
+        id: "0031",
+        name: "Release Watch",
+        dock: "live",
+        steps: ["done", "live", "todo"],
+        stepLabel: "STEP 2/3 · WATCH RELEASE",
+        gearTag: "DIAL 1 · GEAR: LIGHT",
+        status: "WATCHING PROD",
+        schematic: "active",
+      },
+      {
+        id: "0030",
+        name: "Feed Envelope",
+        dock: "settled",
+        steps: [],
+        stepLabel: "",
+        gearTag: "",
+        status: "ARCHIVED · SHIPPED 07-27",
+        schematic: "plain",
+      },
+    ],
+    crafts: [craft],
+    heldQuestion: null,
+    salience: {
+      clearPct: 64,
+      threshold: 35,
+      contributors: [{ label: "RAPH · RELEASE WATCH ACTIVE", delta: -12 }],
+    },
+    artifacts: [],
+    donnieCheckout: null,
+    transcript: [
+      { who: "MIKEY", text: "Podlink is on release watch. Raph has the only craft out." },
+    ],
+    crew: rich.crew.map((member) => ({
+      ...member,
+      piloting: member.id === "raph",
+      role: member.id === "raph" ? "WATCHER W-2" : member.id === "mikey" ? "CONCIERGE" : "STANDBY",
+    })),
+    queuedForLull: [],
+    dockTicker: "RAPH · RELEASE WATCH ACTIVE · BASELINE STABLE",
+  };
+}
+
+function makeComicReaderFixtures(roomId: RoomId): RoomState {
+  const rich = makeRichFixtures(roomId);
+  const craft = {
+    ...fixtureCraft(rich, 1),
+    roomId,
+    id: "comic-t-0912",
+    ticket: "T-0912",
+    persona: "leo" as const,
+    callsign: "LEO",
+    task: "reader turn final · panel crop parity",
+    salience: 74,
+    planId: "0007",
+    lastStamp: "LAST EVENT 01:04 AGO",
+    tokens: 1680,
+    spendUsd: 0.02,
+    turns: 3,
+    plotAngle: 315,
+    tail: [{ kind: "typing" as const, text: "finishing panel crop parity…" }],
+    diff: null,
+  };
+  return {
+    ...rich,
+    focusCraftId: craft.id,
+    plans: [
+      {
+        id: "0007",
+        name: "Reader Crop Parity",
+        dock: "live",
+        steps: ["done", "done", "live"],
+        stepLabel: "STEP 3/3 · TURN FINAL",
+        gearTag: "DIAL 1 · GEAR: LIGHT",
+        status: "TURN FINAL",
+        schematic: "active",
+      },
+    ],
+    crafts: [craft],
+    heldQuestion: null,
+    salience: {
+      clearPct: 74,
+      threshold: 35,
+      contributors: [{ label: "LEO · TURN FINAL", delta: -6 }],
+    },
+    artifacts: [],
+    donnieCheckout: null,
+    transcript: [
+      { who: "MIKEY", text: "Comic Reader has one craft finishing the crop-parity turn." },
+    ],
+    crew: rich.crew.map((member) => ({
+      ...member,
+      piloting: member.id === "leo",
+      role: member.id === "leo" ? "CRAFT T-0912" : member.id === "mikey" ? "CONCIERGE" : "STANDBY",
+    })),
+    queuedForLull: ["leo turn final"],
+    dockTicker: "LEO · TURN FINAL · QUEUED FOR THE LULL",
+  };
+}
+
+function makeScratchFixtures(roomId: RoomId): RoomState {
+  const rich = makeRichFixtures(roomId);
+  const craft = {
+    ...fixtureCraft(rich, 0),
+    roomId,
+    id: "scratch-exif",
+    ticket: "T-1OFF",
+    persona: "donnie" as const,
+    callsign: "DONNIE",
+    task: "exif sweep — photo library",
+    state: "working" as const,
+    salience: 88,
+    planId: null,
+    lastStamp: "RUNNING 04:12",
+    watched: false,
+    open: false,
+    tmux: false,
+    tokens: 410,
+    spendUsd: 0.01,
+    turns: 1,
+    oneOff: true,
+    plotAngle: 175,
+    tail: [{ kind: "info" as const, text: "one-off sweep · dies on delivery" }],
+    diff: null,
+  };
+  return {
+    ...rich,
+    focusCraftId: craft.id,
+    plans: [],
+    crafts: [craft],
+    heldQuestion: null,
+    salience: {
+      clearPct: 88,
+      threshold: 35,
+      contributors: [{ label: "DONNIE · ONE-OFF RUNNING", delta: 0 }],
+    },
+    artifacts: [],
+    donnieCheckout: null,
+    transcript: [{ who: "MIKEY", text: "One-off EXIF sweep running from room-of-devs." }],
+    crew: rich.crew.map((member) => ({
+      ...member,
+      piloting: false,
+      role: member.id === "mikey" ? "NARRATOR" : "STANDBY",
+    })),
+    queuedForLull: [],
+    dockTicker: "ONE-OFF · DIES ON DELIVERY",
+  };
+}
+
+/** One full RoomState fixture for the requested room. */
+export function makeFixtures(roomId: RoomId): RoomState {
+  if (roomId === "podlink") return makePodlinkFixtures(roomId);
+  if (roomId === "comic-reader") return makeComicReaderFixtures(roomId);
+  if (roomId === "scratch-exif") return makeScratchFixtures(roomId);
+  return makeRichFixtures(roomId);
+}
+
+export const SCRATCH_ROOM_ID = "scratch-exif";
+
+export function makeFleetFixtures(): {
+  fleet: FleetState;
+  rooms: Record<RoomId, RoomState>;
+} {
+  const roomIds = ["room-of-devs", "podlink", "comic-reader", SCRATCH_ROOM_ID] as const;
+  const rooms = Object.fromEntries(
+    roomIds.map((roomId) => [roomId, makeFixtures(roomId)]),
+  ) as Record<RoomId, RoomState>;
+  const berths: RoomBerth[] = [
+    {
+      id: "room-of-devs",
+      manifest: {
+        room: "room-of-devs",
+        name: "room-of-devs",
+        repo: "dougiefresh49/cursor-read-aloud",
+        ceremony: "full",
+        spine: { tracker: "github", repo: "dougiefresh49/cursor-read-aloud" },
+        cast: { lead: "mikey", checkout: ["donnie", "leo", "raph", "splinter", "shredder", "karai"] },
+        gearDefault: "full",
+        brainTable: "std",
+        connectors: ["gh-issues", "tmux", "vercel", "sentry"],
+      },
+      berth: 1,
+      parentRoomId: null,
+      salience: { clearPct: 58, worstCraftId: "c-0449" },
+      counts: { working: 2, needsYou: 1, settled: 1, watchers: 1 },
+      docked: { live: 1, queued: 1, settled: 3 },
+      ticker: "DONNIE HOLDING QUESTION · T-0449 · 06:41",
+    },
+    {
+      id: "podlink",
+      manifest: {
+        room: "podlink",
+        name: "podlink",
+        repo: "dougiefresh49/podlink",
+        ceremony: "full",
+        spine: { tracker: "github", repo: "dougiefresh49/podlink" },
+        cast: { lead: "raph", checkout: ["mikey"] },
+        gearDefault: "light",
+        brainTable: "lean",
+        connectors: ["gh-issues", "vercel", "sentry"],
+      },
+      berth: 2,
+      parentRoomId: null,
+      salience: { clearPct: 64, worstCraftId: "pod-w-2" },
+      counts: { working: 1, needsYou: 0, settled: 0, watchers: 1 },
+      docked: { live: 1, queued: 0, settled: 1 },
+      ticker: "W-2 RELEASE WATCH · BASELINE STABLE",
+    },
+    {
+      id: "comic-reader",
+      manifest: {
+        room: "comic-reader",
+        name: "comic-reader",
+        repo: "dougiefresh49/comic-reader",
+        ceremony: "full",
+        spine: { tracker: "github", repo: "dougiefresh49/comic-reader" },
+        cast: { lead: "leo", checkout: ["mikey"] },
+        gearDefault: "light",
+        brainTable: "std",
+        connectors: ["gh-issues", "tmux"],
+      },
+      berth: 3,
+      parentRoomId: null,
+      salience: { clearPct: 74, worstCraftId: "comic-t-0912" },
+      counts: { working: 1, needsYou: 0, settled: 0, watchers: 0 },
+      docked: { live: 1, queued: 0, settled: 0 },
+      ticker: "T-0912 TURN FINAL · QUEUED FOR THE LULL",
+    },
+    {
+      id: SCRATCH_ROOM_ID,
+      manifest: {
+        room: SCRATCH_ROOM_ID,
+        name: "exif sweep — photo library",
+        repo: "",
+        ceremony: "one-off",
+        spine: null,
+        cast: { lead: "mikey", checkout: ["donnie"] },
+        gearDefault: "bare",
+        brainTable: "lean",
+        connectors: [],
+      },
+      berth: null,
+      parentRoomId: "room-of-devs",
+      salience: { clearPct: 88, worstCraftId: "scratch-exif" },
+      counts: { working: 1, needsYou: 0, settled: 0, watchers: 0 },
+      docked: { live: 0, queued: 0, settled: 0 },
+      ticker: "MIKEY NARRATES · RUNNING 04:12 · DIES ON DELIVERY",
+    },
+  ];
+  return {
+    rooms,
+    fleet: {
+      zoom: "hangar",
+      activeRoomId: "room-of-devs",
+      rooms: berths,
+      traffic: [
+        {
+          roomId: "room-of-devs",
+          craftId: "c-0449",
+          label: "T-0449 · SPLINTER HOLDING A QUESTION · HELD 06:41",
+          salience: 18,
+          belowGate: true,
+          floorState: "has",
+        },
+        {
+          roomId: "podlink",
+          craftId: "pod-w-2",
+          label: "W-2 RELEASE WATCH · BASELINE STABLE",
+          salience: 64,
+          belowGate: false,
+          floorState: "queued",
+        },
+        {
+          roomId: "comic-reader",
+          craftId: "comic-t-0912",
+          label: "T-0912 · TURN FINAL · QUEUED FOR THE LULL",
+          salience: 74,
+          belowGate: false,
+          floorState: "lull",
+        },
+      ],
+      audioFloor: {
+        roomId: "room-of-devs",
+        persona: "mikey",
+        elapsed: "00:18",
+        route: "phone",
+        queue: [{ roomId: "podlink", reason: "release watch update" }],
+      },
+      threshold: 35,
+      commission: null,
+    },
   };
 }

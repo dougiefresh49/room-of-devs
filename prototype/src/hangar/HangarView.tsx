@@ -1,0 +1,119 @@
+import { CutFrame, Tag } from "@room/ui/rig";
+import { useEffect } from "react";
+import { coupleRoom, setView } from "../mock/scenario";
+import { getFleet, getRoom, useFleet } from "../mock/store";
+import { BerthCard } from "./BerthCard";
+import { BerthTabs } from "./BerthTabs";
+import { FloorBus } from "./FloorBus";
+import { RoomSwitcherPalette } from "./RoomSwitcherPalette";
+import { TrafficStrip } from "./TrafficStrip";
+
+function isEditable(target: EventTarget | null) {
+  const element = target as HTMLElement | null;
+  return Boolean(
+    element &&
+      (element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.isContentEditable),
+  );
+}
+
+export function useFleetKeyboard(enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (isEditable(event.target)) return;
+      if (event.metaKey && /^\d$/.test(event.key)) {
+        event.preventDefault();
+        if (event.key === "0") {
+          setView("hangar");
+          return;
+        }
+        const berthNumber = Number(event.key);
+        const berth = getFleet().rooms.find((room) => room.berth === berthNumber);
+        if (berth) coupleRoom(berth.id);
+        return;
+      }
+      if (event.key !== "Escape") return;
+      if (document.querySelector("[data-slot='dialog-content']")) return;
+      const fleet = getFleet();
+      if (fleet.zoom === "hangar") return;
+      event.preventDefault();
+      const room = getRoom();
+      if (room.view === "node") setView("console");
+      else if (room.view === "console") setView("plot");
+      else setView("hangar");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [enabled]);
+}
+
+export function HangarView() {
+  const fleet = useFleet();
+  const numbered = fleet.rooms
+    .filter((room) => room.berth != null)
+    .sort((a, b) => (a.berth ?? 0) - (b.berth ?? 0));
+  const scratch = fleet.rooms.filter((room) => room.berth == null);
+
+  return (
+    <>
+      <CutFrame
+        scale="l"
+        glow="0 14px 32px rgba(0,0,0,.58)"
+        className="hangar-frame"
+        innerClassName="hangar-shell"
+      >
+        <span className="screw tl" />
+        <span className="screw tr" />
+        <span className="screw bl" />
+        <span className="screw br" />
+        <header className="hangar-header">
+          <div className="hangar-title">
+            <span>{"THE HANGAR // ALL ROOMS"}</span>
+            <Tag>
+              {numbered.length} BERTHS ·{" "}
+              {scratch.length ? `${scratch.length} SCRATCH` : "SCRATCH COLD"}
+            </Tag>
+          </div>
+          <nav className="hangar-ladder" aria-label="Zoom ladder">
+            <b>HANGAR</b>
+            <span>▸</span>
+            <span>PLOT</span>
+            <span>▸</span>
+            <span>RAIL</span>
+            <span>▸</span>
+            <span>NODE</span>
+            <Tag tone="dim">ESC ▸ CLIMBS ONE RUNG</Tag>
+            <Tag tone="dim">⌘K ▸ SWITCH ROOM</Tag>
+          </nav>
+          <BerthTabs compact />
+        </header>
+
+        <TrafficStrip fleet={fleet} />
+
+        <div className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}>
+          <FloorBus audioFloor={fleet.audioFloor} rooms={numbered} />
+          {numbered.map((berth) => (
+            <BerthCard
+              key={berth.id}
+              berth={berth}
+              audioFloor={fleet.audioFloor}
+              threshold={fleet.threshold}
+              onCouple={() => coupleRoom(berth.id)}
+            />
+          ))}
+          {scratch.map((berth) => (
+            <BerthCard
+              key={berth.id}
+              berth={berth}
+              audioFloor={fleet.audioFloor}
+              threshold={fleet.threshold}
+            />
+          ))}
+          <BerthCard berth={null} audioFloor={fleet.audioFloor} threshold={fleet.threshold} />
+        </div>
+      </CutFrame>
+      <RoomSwitcherPalette />
+    </>
+  );
+}

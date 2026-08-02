@@ -10,6 +10,12 @@ export type PersonaId =
   | "shredder"
   | "karai";
 
+export type RoomId = string;
+export type Ceremony = "full" | "one-off";
+export type GearDefault = "bare" | "light" | "full";
+export type BrainTable = "lean" | "std" | "deep";
+export type FloorState = "has" | "queued" | "lull";
+
 /** Craft lifecycle — board thread-node states. */
 export type CraftState =
   | "working"
@@ -54,6 +60,8 @@ export interface DiffStub {
 }
 
 export interface Craft {
+  /** Fleet seam attribution: the room this mortal craft belongs to. */
+  roomId: RoomId;
   id: string;
   ticket: string;
   persona: PersonaId;
@@ -229,4 +237,78 @@ export interface RoomState {
   audio: { route: "phone" | "mac"; gateCountdown: string };
   /** Turn-final digests parked for the lull — LISTEN's dim queue line. Wishlist wire field. */
   queuedForLull: string[];
+}
+
+/** The file a commission writes: rooms/<name>/manifest.json. */
+export interface RoomManifest {
+  room: RoomId;
+  name: string;
+  repo: string;
+  ceremony: Ceremony;
+  /** null ⇒ scratch room; nothing durable is written. */
+  spine: { tracker: "github"; repo: string } | null;
+  cast: { lead: PersonaId; checkout: PersonaId[] };
+  gearDefault: GearDefault;   // dial 1 — home: PLAN CARD
+  brainTable: BrainTable;     // dial 3 — home: TURN CHIP
+  connectors: string[];       // "gh-issues" | "tmux" | "vercel" | "sentry"
+}
+
+/** One berth on the hangar floor — manifest + the rollups a plate reads. */
+export interface RoomBerth {
+  id: RoomId;
+  manifest: RoomManifest;
+  /** null = scratch berth: dashed, un-numbered, dissolves on settle. */
+  berth: number | null;
+  /** Scratch spawned from inside a room — "FROM R-DEVS". */
+  parentRoomId: RoomId | null;
+  salience: { clearPct: number; worstCraftId: string | null };
+  counts: { working: number; needsYou: number; settled: number; watchers: number };
+  /** Spine glyph blocks. Scratch berths report zeroes and render none. */
+  docked: { live: number; queued: number; settled: number };
+  ticker: string;
+}
+
+/** One row of the ONE shared salience queue, room-attributed, worst-first. */
+export interface TrafficRow {
+  roomId: RoomId;
+  craftId: string | null;
+  label: string;
+  salience: number;
+  /** Below the single fleet-wide speak gate — Mikey may raise it unprompted. */
+  belowGate: boolean;
+  floorState: FloorState;
+}
+
+/** Exactly one holder or null — the global audio floor made explicit. */
+export interface AudioFloor {
+  roomId: RoomId | null;
+  persona: PersonaId | null;
+  elapsed: string;
+  route: "phone" | "mac";
+  queue: { roomId: RoomId; reason: string }[];
+}
+
+export interface CommissionDraft {
+  berth: number | null;
+  name: string;
+  repo: string;
+  ceremony: Ceremony;
+  gearDefault: GearDefault;
+  lead: PersonaId;
+  checkout: PersonaId[];
+  brainTable: BrainTable;
+  connectors: Record<string, boolean>;
+  /** "voice" ⇒ prefilled by Mikey; drives the receipt line. */
+  source: "rig" | "voice";
+}
+
+export interface FleetState {
+  zoom: "hangar" | "room";
+  activeRoomId: RoomId;
+  rooms: RoomBerth[];
+  traffic: TrafficRow[];
+  audioFloor: AudioFloor;
+  /** ONE gate, fleet-wide. Mirrors salience.threshold; not per-room. */
+  threshold: number;
+  commission: CommissionDraft | null;
 }

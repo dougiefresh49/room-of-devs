@@ -1,7 +1,7 @@
 import { speak as mockSpeak, stopSpeaking } from "../audio/mock";
-import { makeFixtures } from "./fixtures";
-import { getRoom, patchRoom, setRoom } from "./store";
-import type { Craft, PersonaId, RoomState } from "./types";
+import { makeFixtures, makeFleetFixtures, SCRATCH_ROOM_ID } from "./fixtures";
+import { getFleet, getRoom, patchFleet, patchRoom, resetRoom, setAppState, setRoom } from "./store";
+import type { Craft, PersonaId, RoomId, RoomState } from "./types";
 
 function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -9,11 +9,7 @@ function fmtHold(sec: number): string {
   return `HOLDING ${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function mapCraft(
-  crafts: Craft[],
-  id: string,
-  fn: (c: Craft) => Craft,
-): Craft[] {
+function mapCraft(crafts: Craft[], id: string, fn: (c: Craft) => Craft): Craft[] {
   return crafts.map((c) => (c.id === id ? fn(c) : c));
 }
 
@@ -28,6 +24,7 @@ function speakMikey(line: string) {
 export function spawnCraft() {
   const id = `c-spawn-${Date.now()}`;
   const birth: Craft = {
+    roomId: getFleet().activeRoomId,
     id,
     ticket: "T-0453",
     persona: "karai",
@@ -101,9 +98,7 @@ export function handRaise(craftId = "c-0451") {
     const clearPct = Math.min(
       40,
       Math.round(
-        crafts
-          .filter((c) => c.state !== "empty")
-          .reduce((a, c) => a + c.salience, 0) /
+        crafts.filter((c) => c.state !== "empty").reduce((a, c) => a + c.salience, 0) /
           Math.max(1, crafts.filter((c) => c.state !== "empty").length),
       ),
     );
@@ -179,9 +174,7 @@ export function answer(optionId: string, speakIt = false) {
   if (!hq) return;
   const opt = hq.options.find((o) => o.id === optionId);
   if (!opt) return;
-  const line = speakIt
-    ? `Speaking it — ${opt.speakHint}. Resolved.`
-    : `Got it — ${opt.label}.`;
+  const line = speakIt ? `Speaking it — ${opt.speakHint}. Resolved.` : `Got it — ${opt.label}.`;
   setRoom((prev) => ({
     ...prev,
     rev: prev.rev + 1,
@@ -194,10 +187,7 @@ export function answer(optionId: string, speakIt = false) {
       salience: Math.max(55, c.salience),
       holdSeconds: 0,
       lastStamp: "LAST EVENT 00:00 AGO",
-      tail: [
-        ...c.tail,
-        { kind: "ok" as const, text: `answered · ${opt.label}` },
-      ],
+      tail: [...c.tail, { kind: "ok" as const, text: `answered · ${opt.label}` }],
     })),
     transcript: [
       ...prev.transcript,
@@ -210,8 +200,7 @@ export function answer(optionId: string, speakIt = false) {
 
 /** SPEAK — Mikey canned line. */
 export function speak() {
-  const line =
-    "Cowabunga — Raph's still on the watch order. I'll ping you at the next real step.";
+  const line = "Cowabunga — Raph's still on the watch order. I'll ping you at the next real step.";
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
@@ -226,10 +215,9 @@ export function donnieCheckout() {
     donnieCheckout: { purpose: "WALK PLAN 0007-B", elapsed: "00:00" },
     speakingPersona: "donnie",
   });
-  void mockSpeak(
-    "Checking out. I'll walk the held plan with you.",
-    "donnie",
-  ).finally(() => patchRoom({ speakingPersona: null }));
+  void mockSpeak("Checking out. I'll walk the held plan with you.", "donnie").finally(() =>
+    patchRoom({ speakingPersona: null }),
+  );
 }
 
 /** Thanks Donnie — return. */
@@ -302,15 +290,10 @@ export function settleCraft(craftId = "c-0452") {
         open: false,
         watched: false,
         lastStamp: "WAITING FOR LULL",
-        tail: [
-          ...c.tail,
-          { kind: "ok" as const, text: "conclusions → spine · craft scrapped" },
-        ],
+        tail: [...c.tail, { kind: "ok" as const, text: "conclusions → spine · craft scrapped" }],
       })),
       crew: s.crew.map((m) =>
-        m.id === craft.persona
-          ? { ...m, piloting: false, role: "STANDBY" }
-          : m,
+        m.id === craft.persona ? { ...m, piloting: false, role: "STANDBY" } : m,
       ),
       dockTicker: `${craft.callsign} SETTLED · CONCLUSIONS ON SPINE`,
     };
@@ -345,9 +328,7 @@ export function theLull() {
             lastStamp: "WAITING FOR LULL",
           },
     ),
-    crew: s.crew.map((m) =>
-      m.id === "mikey" ? m : { ...m, piloting: false, role: "STANDBY" },
-    ),
+    crew: s.crew.map((m) => (m.id === "mikey" ? m : { ...m, piloting: false, role: "STANDBY" })),
     transcript: [
       ...s.transcript,
       {
@@ -382,8 +363,7 @@ export function tapInQa() {
     turnChip: { model: "FLASH", costUsd: 0.002 },
   }));
   window.setTimeout(() => {
-    const answer =
-      "Threshold is mock-only in the prototype — daemon config hook is the next wire.";
+    const answer = "Threshold is mock-only in the prototype — daemon config hook is the next wire.";
     setRoom((s) => ({
       ...s,
       rev: s.rev + 1,
@@ -401,12 +381,14 @@ export function tapInQa() {
 /** DIAGRAM ARTIFACT — one-off craft → card → canned SVG. */
 export function diagramArtifact() {
   const id = `c-oneoff-${Date.now()}`;
-  const svg = makeFixtures().artifacts[0]?.svg ?? "";
+  const roomId = getFleet().activeRoomId;
+  const svg = makeFixtures(roomId).artifacts[0]?.svg ?? "";
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
     crafts: [
       {
+        roomId,
         id,
         ticket: "T-1OFF",
         persona: "donnie",
@@ -479,19 +461,14 @@ export function discardArtifact(artifactId: string) {
     artifacts: s.artifacts.map((a) =>
       a.id === artifactId ? { ...a, status: "discarded" as const } : a,
     ),
-    crafts: s.crafts.filter(
-      (c) => c.id !== s.artifacts.find((a) => a.id === artifactId)?.craftId,
-    ),
+    crafts: s.crafts.filter((c) => c.id !== s.artifacts.find((a) => a.id === artifactId)?.craftId),
   }));
 }
 
 /** SPEND BURN — CORE pulse + odometer + dial creep. */
 export function spendBurn() {
   setRoom((s) => {
-    const elUsd = Math.min(
-      s.spend.elevenlabsCap,
-      +(s.spend.elevenlabsUsd + 0.35).toFixed(2),
-    );
+    const elUsd = Math.min(s.spend.elevenlabsCap, +(s.spend.elevenlabsUsd + 0.35).toFixed(2));
     const gemUsd = +(s.spend.geminiUsd + 0.02).toFixed(2);
     return {
       ...s,
@@ -577,8 +554,7 @@ export function timeTimes10() {
       windowResetFraction: Math.max(0, s.spend.windowResetFraction - 0.12),
       windowResetLabel: `${Math.max(
         0,
-        Math.round(Math.max(0, s.spend.windowResetFraction - 0.12) * 7 * 10) /
-          10,
+        Math.round(Math.max(0, s.spend.windowResetFraction - 0.12) * 7 * 10) / 10,
       ).toFixed(1)}D`,
     },
     donnieCheckout: s.donnieCheckout
@@ -593,15 +569,197 @@ export function timeTimes10() {
 /** RESET. */
 export function reset() {
   stopSpeaking();
-  setRoom(makeFixtures());
+  resetRoom();
 }
 
-export function setView(view: RoomState["view"], focusCraftId?: string | null) {
-  patchRoom({
-    view,
-    focusCraftId:
-      focusCraftId === undefined ? getRoom().focusCraftId : focusCraftId,
+export function setView(view: RoomState["view"] | "hangar", focusCraftId?: string | null) {
+  if (view === "hangar") {
+    patchFleet({ zoom: "hangar" });
+    return;
+  }
+  setAppState((app) => {
+    const roomId = app.fleet.activeRoomId;
+    const room = app.rooms[roomId];
+    if (!room) return app;
+    return {
+      fleet: { ...app.fleet, zoom: "room" },
+      rooms: {
+        ...app.rooms,
+        [roomId]: {
+          ...room,
+          rev: room.rev + 1,
+          view,
+          focusCraftId: focusCraftId === undefined ? room.focusCraftId : focusCraftId,
+        },
+      },
+    };
   });
+}
+
+/** Couple a berth: hard cut from the hangar to that room's rail. */
+export function coupleRoom(roomId: RoomId) {
+  setAppState((app) => {
+    const room = app.rooms[roomId];
+    if (!room) return app;
+    return {
+      fleet: { ...app.fleet, activeRoomId: roomId, zoom: "room" },
+      rooms: {
+        ...app.rooms,
+        [roomId]: { ...room, view: "console", rev: room.rev + 1 },
+      },
+    };
+  });
+}
+
+/** Podlink watcher crosses the one fleet-wide gate while another room is coupled. */
+export function crossRoomArrival() {
+  setAppState((app) => {
+    const roomId = "podlink";
+    const room = app.rooms[roomId];
+    if (!room) return app;
+    const crafts = room.crafts.map((craft) =>
+      craft.id === "pod-w-2"
+        ? {
+            ...craft,
+            state: "needs-you" as const,
+            salience: 12,
+            holdSeconds: 1,
+            lastStamp: "ANOMALY LOGGED · 00:01",
+            open: true,
+          }
+        : craft,
+    );
+    const traffic = app.fleet.traffic
+      .map((row) =>
+        row.roomId === roomId
+          ? {
+              ...row,
+              label: "W-2 RELEASE WATCH · ANOMALY LOGGED — 5XX 3× BASELINE",
+              salience: 12,
+              belowGate: true,
+            }
+          : row,
+      )
+      .sort((a, b) => a.salience - b.salience);
+    return {
+      fleet: {
+        ...app.fleet,
+        rooms: app.fleet.rooms.map((berth) =>
+          berth.id === roomId
+            ? {
+                ...berth,
+                salience: { clearPct: 12, worstCraftId: "pod-w-2" },
+                counts: { ...berth.counts, working: 0, needsYou: 1 },
+                ticker: "WATCHER LOGGED AN ANOMALY · QUEUED FOR THE FLOOR",
+              }
+            : berth,
+        ),
+        traffic,
+      },
+      rooms: {
+        ...app.rooms,
+        [roomId]: {
+          ...room,
+          rev: room.rev + 1,
+          mood: "arrival",
+          focusCraftId: "pod-w-2",
+          crafts,
+          salience: {
+            ...room.salience,
+            clearPct: 12,
+            contributors: [{ label: "W-2 · 5XX 3× BASELINE", delta: -52 }],
+          },
+          dockTicker: "WATCHER LOGGED AN ANOMALY · QUEUED FOR THE FLOOR",
+          dockLedRed: true,
+        },
+      },
+    };
+  });
+}
+
+/** Move the one global audio floor from room-of-devs to podlink. */
+export function floorHandoff() {
+  setAppState((app) => ({
+    ...app,
+    fleet: {
+      ...app.fleet,
+      audioFloor: {
+        roomId: "podlink",
+        persona: "mikey",
+        elapsed: "00:00",
+        route: app.fleet.audioFloor.route,
+        queue: [{ roomId: "room-of-devs", reason: "held question waits" }],
+      },
+      traffic: app.fleet.traffic.map((row) => ({
+        ...row,
+        floorState:
+          row.roomId === "podlink" ? "has" : row.roomId === "room-of-devs" ? "queued" : "lull",
+      })),
+    },
+  }));
+}
+
+const SPAWNED_SCRATCH_ROOM_ID = "scratch-repo-sweep";
+
+export function oneOffSpawn() {
+  const initial = makeFleetFixtures();
+  const scratchBerth = initial.fleet.rooms.find((room) => room.id === SCRATCH_ROOM_ID);
+  const scratchRoom = initial.rooms[SCRATCH_ROOM_ID];
+  if (!scratchBerth || !scratchRoom) return;
+  const spawnedBerth = {
+    ...scratchBerth,
+    id: SPAWNED_SCRATCH_ROOM_ID,
+    manifest: {
+      ...scratchBerth.manifest,
+      room: SPAWNED_SCRATCH_ROOM_ID,
+      name: "repo sweep — orphan branches",
+    },
+    ticker: "MIKEY NARRATES · RUNNING 00:01 · DIES ON DELIVERY",
+  };
+  const spawnedRoom = {
+    ...scratchRoom,
+    focusCraftId: SPAWNED_SCRATCH_ROOM_ID,
+    crafts: scratchRoom.crafts.map((craft) => ({
+      ...craft,
+      roomId: SPAWNED_SCRATCH_ROOM_ID,
+      id: SPAWNED_SCRATCH_ROOM_ID,
+      task: "repo sweep — orphan branches",
+      lastStamp: "RUNNING 00:01",
+    })),
+    dockTicker: "ONE-OFF · ORPHAN BRANCH SWEEP · DIES ON DELIVERY",
+  };
+  setAppState((app) => ({
+    fleet: {
+      ...app.fleet,
+      rooms: [
+        ...app.fleet.rooms.filter((room) => room.id !== SPAWNED_SCRATCH_ROOM_ID),
+        spawnedBerth,
+      ],
+    },
+    rooms: { ...app.rooms, [SPAWNED_SCRATCH_ROOM_ID]: spawnedRoom },
+  }));
+}
+
+export function oneOffSettles() {
+  setAppState((app) => {
+    const settledId = app.rooms[SPAWNED_SCRATCH_ROOM_ID]
+      ? SPAWNED_SCRATCH_ROOM_ID
+      : SCRATCH_ROOM_ID;
+    const rooms = { ...app.rooms };
+    delete rooms[settledId];
+    return {
+      fleet: {
+        ...app.fleet,
+        rooms: app.fleet.rooms.filter((room) => room.id !== settledId),
+        traffic: app.fleet.traffic.filter((row) => row.roomId !== settledId),
+      },
+      rooms,
+    };
+  });
+}
+
+export function openRoute(route: "/crib" | "/map") {
+  window.location.assign(route);
 }
 
 export function setThreshold(threshold: number) {
@@ -626,9 +784,7 @@ export function toggleVerb(verbId: string) {
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
-    verbs: s.verbs.map((v) =>
-      v.id === verbId && v.gatedIssue == null ? { ...v, on: !v.on } : v,
-    ),
+    verbs: s.verbs.map((v) => (v.id === verbId && v.gatedIssue == null ? { ...v, on: !v.on } : v)),
   }));
 }
 
@@ -675,17 +831,11 @@ export function injectReply(text: string) {
       ...s,
       rev: s.rev + 1,
       composerText: "",
-      transcript: [
-        ...s.transcript,
-        { who: "YOU" as const, text: trimmed, you: true },
-      ],
+      transcript: [...s.transcript, { who: "YOU" as const, text: trimmed, you: true }],
       crafts: craftId
         ? mapCraft(s.crafts, craftId, (c) => ({
             ...c,
-            tail: [
-              ...c.tail,
-              { kind: "cmd" as const, text: `inject · ${trimmed}` },
-            ],
+            tail: [...c.tail, { kind: "cmd" as const, text: `inject · ${trimmed}` }],
           }))
         : s.crafts,
     };
@@ -721,6 +871,26 @@ export type ScenarioTrigger = {
 };
 
 export const TRIGGERS: ScenarioTrigger[] = [
+  { id: "open-hangar", label: "OPEN HANGAR", run: () => setView("hangar") },
+  {
+    id: "couple-podlink",
+    label: "COUPLE ROOM ▸ PODLINK",
+    run: () => coupleRoom("podlink"),
+  },
+  {
+    id: "cross-room-arrival",
+    label: "CROSS-ROOM ARRIVAL",
+    run: crossRoomArrival,
+  },
+  { id: "floor-handoff", label: "FLOOR HANDOFF", run: floorHandoff },
+  { id: "one-off-spawn", label: "ONE-OFF SPAWN", run: oneOffSpawn },
+  { id: "one-off-settles", label: "ONE-OFF SETTLES", run: oneOffSettles },
+  { id: "open-crib", label: "OPEN CRIB", run: () => openRoute("/crib") },
+  {
+    id: "open-schematic",
+    label: "OPEN SCHEMATIC",
+    run: () => openRoute("/map"),
+  },
   { id: "spawn", label: "SPAWN CRAFT", run: spawnCraft },
   { id: "hand", label: "HAND RAISE (ARRIVAL)", run: () => handRaise() },
   { id: "held", label: "HELD QUESTION", run: () => heldQuestion() },

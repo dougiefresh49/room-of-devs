@@ -1,8 +1,13 @@
 import { useSyncExternalStore } from "react";
-import { makeFixtures } from "./fixtures";
-import type { RoomState, SpendState } from "./types";
+import { makeFleetFixtures } from "./fixtures";
+import type { FleetState, RoomId, RoomState, SpendState } from "./types";
 
-let state: RoomState = makeFixtures();
+export interface AppState {
+  fleet: FleetState;
+  rooms: Record<RoomId, RoomState>;
+}
+
+let state: AppState = makeFleetFixtures();
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -10,11 +15,24 @@ function emit() {
 }
 
 export function getRoom(): RoomState {
+  const room = state.rooms[state.fleet.activeRoomId];
+  if (!room) throw new Error(`Active room not found: ${state.fleet.activeRoomId}`);
+  return room;
+}
+
+export function getFleet(): FleetState {
+  return state.fleet;
+}
+
+export function getAppState(): AppState {
   return state;
 }
 
 export function setRoom(next: RoomState | ((prev: RoomState) => RoomState)) {
-  state = typeof next === "function" ? next(state) : next;
+  const roomId = state.fleet.activeRoomId;
+  const current = getRoom();
+  const room = typeof next === "function" ? next(current) : next;
+  state = { ...state, rooms: { ...state.rooms, [roomId]: room } };
   emit();
 }
 
@@ -29,6 +47,25 @@ export function subscribe(listener: () => void): () => void {
 
 export function useRoom(): RoomState {
   return useSyncExternalStore(subscribe, getRoom, getRoom);
+}
+
+export function setFleet(next: FleetState | ((prev: FleetState) => FleetState)) {
+  const fleet = typeof next === "function" ? next(state.fleet) : next;
+  state = { ...state, fleet };
+  emit();
+}
+
+export function patchFleet(partial: Partial<FleetState>) {
+  setFleet((fleet) => ({ ...fleet, ...partial }));
+}
+
+export function setAppState(next: AppState | ((prev: AppState) => AppState)) {
+  state = typeof next === "function" ? next(state) : next;
+  emit();
+}
+
+export function useFleet(): FleetState {
+  return useSyncExternalStore(subscribe, getFleet, getFleet);
 }
 
 /**
@@ -63,6 +100,6 @@ export function aggregateDraw(spend: SpendState): number {
 }
 
 export function resetRoom() {
-  state = makeFixtures();
+  state = makeFleetFixtures();
   emit();
 }

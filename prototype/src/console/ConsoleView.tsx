@@ -11,6 +11,7 @@ import { TurnChip } from "./TurnChip";
 import { VerbRack } from "./VerbRack";
 import { WatchChips } from "./WatchChips";
 import { useRoom } from "../mock/store";
+import { BerthTabs } from "../hangar/BerthTabs";
 
 export function ConsoleView() {
   const room = useRoom();
@@ -24,6 +25,7 @@ export function ConsoleView() {
         <div className="titlebar">
           <span className="stn">ROOM CONSOLE // NODE</span>
           <span className="tag">ZOOM 3 · HARD CUT</span>
+          <BerthTabs compact />
           <span className="spacer" />
           <span className="sseg" style={{ fontSize: 11 }}>
             {craft?.ticket ?? "—"}
@@ -46,6 +48,7 @@ export function ConsoleView() {
         <div className="titlebar">
           <span className="stn">ROOM CONSOLE // MAIN</span>
           <span className="tag">SNAPSHOT REV {room.rev}</span>
+          <BerthTabs compact />
           <span className="spacer" />
           <div className="lamps">
             <span>

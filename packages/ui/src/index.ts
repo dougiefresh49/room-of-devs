@@ -18,6 +18,7 @@ export * from "./rig/index.js";
 
 export * from "./primitives/button.js";
 export * from "./primitives/dialog.js";
+export * from "./primitives/command.js";
 export * from "./primitives/sheet.js";
 export * from "./primitives/popover.js";
 export * from "./primitives/dropdown-menu.js";
