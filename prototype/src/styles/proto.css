@@ -7,6 +7,7 @@
 /* machined corner grammar shared by the console AND the field unit */
 @import "./shape.css";
 @import "./hangar.css";
+@import "./crib.css";
 
 :root {
   --ink: var(--rig-ink);

@@ -6,7 +6,7 @@ import { ControlDeck } from "./deck/ControlDeck";
 import { FieldView } from "./field/FieldView";
 import { HangarView, useFleetKeyboard } from "./hangar/HangarView";
 import { LongRangePlot } from "./plot/LongRangePlot";
-import { currentRoute } from "./routes";
+import { CribView, currentRoute } from "./routes";
 
 const route = currentRoute();
 
@@ -37,7 +37,12 @@ export function App() {
     );
   }
   if (route === "crib") {
-    return <RoutePlaceholder label="THE TOOL CRIB" phase="ROUND D · PHASE 3" />;
+    return (
+      <>
+        <CribView />
+        <ControlDeck />
+      </>
+    );
   }
   if (route === "map") {
     return <RoutePlaceholder label="SERVICE SCHEMATIC" phase="ROUND D · PHASE 4" />;
