@@ -19,6 +19,40 @@ data for problem B).
 
 ---
 
+## TL;DR (the whole spec in 60 seconds)
+
+Three new prototype surfaces, all fable's designs with a handful of opus
+grafts (grok/sol contributed nothing that beat fable):
+
+- **THE HANGAR** — the all-projects view, added as a fourth rung on the
+  zoom ladder (HANGAR ↔ PLOT ↔ RAIL ↔ NODE). Rooms are berths in a grid,
+  each with a mini spine, crew, and salience; a traffic strip shows the
+  shared cross-room queue; one audio-floor bus shows who's speaking.
+  New projects start at a **commissioning bay**: name + repo, ceremony
+  choice (full room vs one-off), three dials — and the form's preview
+  pane IS the manifest file being written (opus graft), with each dial
+  printing what it costs in real units (opus graft).
+- **THE TOOL CRIB** (`/crib`) — the component library: every RIG
+  primitive, shadcn primitive, and domain component on a spec plate with
+  live states, a provenance stamp (RADIX / CVA / LIB / FULLY CUSTOM), a
+  stock lamp (used-widely / one-consumer / dead), a dead-stock bin
+  naming what hand-rolls each dead part, and a work-orders drawer with
+  the audit's top-5 adoptions. Replaces the old port-5179 gallery.
+- **THE SERVICE SCHEMATIC** (`/map`) — the architecture map as a cutaway
+  plate, not a text doc: surfaces ↔ machine layers ↔ wire-field terminal
+  strip; select anything and unrelated parts dim. Every console/field
+  housing gets a stencilled part number; **shift-click any housing to
+  open the map with that part selected** (opus graft, the round's best
+  idea).
+
+Build = 4 phases for delegated lanes: (1) fleet data seam + hangar,
+(2) commissioning bay + phone variants, (3) tool crib (parallel),
+(4) schematic + deep links. Along the way the build adopts the three
+dead vendored shadcn primitives (dialog, tooltip, sonner) plus `command`
+— closing the audit's top findings.
+
+---
+
 ## 0. Synthesis decisions
 
 The rule applied throughout: **a coherent fable-flavored whole beats a
