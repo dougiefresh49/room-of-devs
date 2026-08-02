@@ -774,3 +774,582 @@
     transition: none;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ROUND D · PHASE 2 — COMMISSIONING BAY
+   Motion contract: caret + the user-turned knob marker only.
+   ══════════════════════════════════════════════════════════════ */
+.commission-entry-key {
+  flex: none;
+}
+
+.commission-bay-frame {
+  display: block;
+  min-width: 0;
+}
+
+.commission-bay {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--gun-edge);
+  background:
+    linear-gradient(rgba(255, 179, 71, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 179, 71, 0.025) 1px, transparent 1px),
+    linear-gradient(178deg, #30353b, #1c2024 62%, #171a1e);
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.58);
+}
+
+.commission-bay-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 1px 3px 14px;
+}
+
+.commission-bay-head > div:first-child {
+  margin-right: auto;
+}
+
+.commission-bay-kicker {
+  display: block;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+}
+
+.commission-bay h2 {
+  margin: 3px 0 0;
+  color: var(--steel);
+  font-size: 14px;
+  letter-spacing: 0.2em;
+}
+
+.commission-bay h2::after {
+  display: none;
+}
+
+.commission-bay-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.84fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.commission-bench .rig-chassis,
+.commission-voice-path .rig-chassis {
+  position: relative;
+  border: 1px solid var(--gun-edge);
+  background: linear-gradient(178deg, var(--gun1), var(--gun2) 58%, #1b1f23);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.commission-bench-body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 17px 18px 18px;
+}
+
+.commission-fields {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.85fr) minmax(220px, 1.15fr);
+  gap: 12px;
+}
+
+.commission-fields label,
+.commission-fieldset legend {
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.23em;
+  text-transform: uppercase;
+}
+
+.commission-fields label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.commission-fields input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid #000;
+  border-radius: 9px 3px 3px 3px;
+  outline: none;
+  background: linear-gradient(180deg, var(--screen), var(--screen2));
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.78);
+  color: var(--amber-hot);
+  caret-color: var(--amber);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.commission-fields input:focus-visible {
+  border-color: var(--amber-dim);
+  outline: 1px solid var(--amber-dim);
+  outline-offset: 2px;
+}
+
+.commission-fieldset {
+  min-width: 0;
+  border: 0;
+}
+
+.commission-fieldset legend {
+  margin-bottom: 6px;
+}
+
+.commission-ceremony-fork {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.commission-ceremony-card {
+  position: relative;
+  display: flex;
+  height: auto;
+  min-height: 94px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 34px 12px 13px;
+  border: 1px solid #33383f;
+  border-radius: 12px 4px 4px 4px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  outline: none;
+  background: linear-gradient(180deg, rgba(20, 23, 27, 0.78), rgba(16, 18, 21, 0.78));
+  color: var(--steel-dim);
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+}
+
+.commission-ceremony-card:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.commission-ceremony-card[data-state="on"] {
+  border-color: var(--amber-dim);
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.1), rgba(255, 179, 71, 0.025));
+  color: var(--steel);
+}
+
+.commission-ceremony-lamp {
+  position: absolute;
+  top: 12px;
+  right: 13px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #1c2024;
+}
+
+.commission-ceremony-card[data-state="on"] .commission-ceremony-lamp {
+  background: radial-gradient(circle at 35% 30%, var(--amber-hot), var(--amber) 60%, #7a4d12);
+  box-shadow: 0 0 7px rgba(255, 150, 30, 0.65);
+}
+
+.commission-ceremony-title {
+  color: inherit;
+  font-family: var(--stencil);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.commission-ceremony-detail {
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.055em;
+  line-height: 1.65;
+}
+
+.commission-dial-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.commission-dial {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid #2c3138;
+  border-radius: 12px 4px 4px 4px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  background: rgba(16, 19, 22, 0.72);
+}
+
+.commission-knob {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border: 1px solid var(--gun-edge);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #505861, #2a2e34 60%, #1d2126);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.12),
+    inset 0 -4px 7px rgba(0, 0, 0, 0.62),
+    0 4px 9px rgba(0, 0, 0, 0.48);
+}
+
+.commission-knob span {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--amber-hot);
+  box-shadow: 0 0 6px rgba(255, 179, 71, 0.68);
+  transform: translateX(-50%) rotate(-46deg);
+  transform-origin: 50% 22px;
+  transition: transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.commission-knob[data-position="1"] span {
+  transform: translateX(-50%) rotate(0deg);
+}
+
+.commission-knob[data-position="2"] span {
+  transform: translateX(-50%) rotate(46deg);
+}
+
+.commission-detents {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.commission-detent {
+  display: grid;
+  height: 27px;
+  min-width: 0;
+  place-items: center;
+  padding: 0 3px;
+  border: 1px solid #33383f;
+  border-radius: 5px 1px 1px 1px;
+  outline: none;
+  background: #1d2125;
+  color: var(--steel-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 6.5px;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.commission-detent[data-state="on"] {
+  border-color: var(--amber-dim);
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+}
+
+.commission-detent:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.commission-dial-label {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.commission-dial-label b {
+  color: var(--amber);
+  font-size: 7.5px;
+}
+
+.commission-consequence {
+  width: 100%;
+  min-height: 46px;
+  padding-top: 7px;
+  border-top: 1px dashed #343a40;
+  color: #9dc4ff;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.07em;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.commission-consequence b {
+  color: var(--amber-hot);
+}
+
+.commission-connectors > div {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.commission-connectors label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #3a3f45;
+  border-radius: 5px 1px 1px 1px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--steel-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.12em;
+}
+
+.commission-connectors input {
+  width: 11px;
+  height: 11px;
+  accent-color: var(--amber);
+}
+
+.commission-connectors label:has(input:checked) {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+
+.commission-strike-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.commission-strike-row > span {
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.13em;
+}
+
+.commission-output-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commission-voice-path .rig-chassis {
+  padding: 13px 14px;
+}
+
+.commission-voice-path header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  color: var(--steel);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+}
+
+.commission-voice-line {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.commission-voice-line b {
+  color: var(--steel-dim);
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+}
+
+.commission-voice-line span {
+  color: var(--amber);
+}
+
+.commission-voice-line.is-you span {
+  color: var(--steel);
+}
+
+.commission-interpreter-receipt {
+  margin-top: 9px;
+  padding: 6px 8px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 5px 1px 1px 1px;
+  background: var(--amber-ghost);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  line-height: 1.55;
+}
+
+.commission-manifest .rig-screenbed {
+  border: 1px solid #000;
+  background: linear-gradient(180deg, var(--screen), var(--screen2));
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.86),
+    inset 0 0 60px rgba(255, 140, 20, 0.045);
+}
+
+.commission-manifest .rig-screenbed-body {
+  padding: 13px 14px;
+}
+
+.commission-manifest-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(255, 179, 71, 0.22);
+}
+
+.commission-manifest-head > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+}
+
+.commission-manifest-head b {
+  overflow-wrap: anywhere;
+  color: var(--amber-hot);
+  font-size: 9px;
+  letter-spacing: 0.035em;
+}
+
+.commission-manifest pre {
+  margin: 9px 0 0;
+  overflow: auto;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.commission-bind-key {
+  display: flex;
+  gap: 7px;
+  flex-direction: column;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 179, 71, 0.22);
+  color: #9dc4ff;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+}
+
+.commission-bind-key b {
+  color: var(--amber);
+}
+
+.commission-design-note {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+  margin-top: 10px;
+  padding: 8px 9px;
+  border: 1px solid #40507a;
+  border-left: 3px solid #9dc4ff;
+  border-radius: 8px 2px 2px 2px;
+  background: rgba(102, 169, 255, 0.05);
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  line-height: 1.55;
+}
+
+.commission-design-note b {
+  color: #9dc4ff;
+  letter-spacing: 0.17em;
+}
+
+/* Sonner is already vendored. The receipt is a hard-cut instrument, not motion. */
+[data-sonner-toaster].toaster {
+  --normal-bg: #1a1e22;
+  --normal-border: #4a3520;
+  --normal-text: var(--steel);
+  font-family: var(--mono);
+}
+
+[data-sonner-toast] {
+  border: 1px solid var(--amber-dim) !important;
+  border-radius: 10px 3px 3px 3px !important;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+  background: linear-gradient(178deg, #30353b, #1b1f23) !important;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.58));
+  color: var(--amber-hot) !important;
+  font-family: var(--mono) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.08em !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (max-width: 1180px) {
+  .commission-bay-grid {
+    grid-template-columns: 1fr;
+  }
+  .commission-output-stack {
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .commission-fields,
+  .commission-ceremony-fork,
+  .commission-dial-row,
+  .commission-output-stack {
+    grid-template-columns: 1fr;
+  }
+  .commission-bay {
+    padding: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commission-knob span {
+    transition: none;
+  }
+  [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
+}

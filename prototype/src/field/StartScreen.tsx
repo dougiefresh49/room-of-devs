@@ -1,13 +1,17 @@
+import { Toaster, toast } from "@room/ui";
 import { useRef } from "react";
 import { Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCard } from "../rig-ext/FieldCard";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { toggleVerb } from "../mock/scenario";
-import { useRoom } from "../mock/store";
+import { openCommission, strikeCommission, useFleet, useRoom } from "../mock/store";
+import { manifestFromDraft, manifestPath } from "../hangar/commission/ManifestPreview";
 
 export function StartScreen() {
   const room = useRoom();
+  const fleet = useFleet();
+  const commission = fleet.commission;
   const tap = room.tapIn;
   const spawning = room.crafts.find((c) => c.state === "spawning");
   // Keep the launched craft's row visible after it materializes — the birth
@@ -19,6 +23,16 @@ export function StartScreen() {
       ? (room.crafts.find((c) => c.id === spawnedRef.current) ?? null)
       : null;
   const birth = spawning ?? launched;
+
+  const strikeVoiceDraft = () => {
+    const receipt = strikeCommission();
+    if (!receipt) return;
+    if (receipt.ceremony === "full") {
+      toast("MANIFEST CHECKED IN · MIKEY ANNOUNCES THE BERTH AT THE LULL");
+    } else {
+      toast("SCRATCH BERTH STRUCK · NOTHING DURABLE WRITTEN · DIES ON DELIVERY");
+    }
+  };
 
   let exchange: { you?: string; mikey?: string; typing?: boolean } = {};
   if (tap) {
@@ -81,6 +95,32 @@ export function StartScreen() {
         )}
       </div>
 
+      {commission ? (
+        <FieldCard className="field-commission-draft">
+          <div className="field-commission-draft-head">
+            <span>VOICE COMMISSION · READ-ONLY OUT HERE</span>
+            <Tag tone="hot">SOURCE · {commission.source.toUpperCase()}</Tag>
+          </div>
+          <b className="field-commission-path">{manifestPath(commission)}</b>
+          <pre>{JSON.stringify(manifestFromDraft(commission), null, 2)}</pre>
+          <div className="field-commission-confirm">
+            <button type="button" onClick={strikeVoiceDraft}>
+              SAY “STRIKE IT”
+            </button>
+            <a href="/">ADJUST DIALS AT THE RIG</a>
+          </div>
+        </FieldCard>
+      ) : (
+        <button
+          type="button"
+          className="field-commission-voice"
+          onClick={() => openCommission("voice")}
+        >
+          <b>COMMISSION ▸ VOICE</b>
+          <span>MIKEY PREFILLS THE MANIFEST · DIALS LOCK AT THE RIG</span>
+        </button>
+      )}
+
       {birth ? (
         <div className="trows">
           <div className={`trow${spawning ? " spawning" : ""}`}>
@@ -130,6 +170,7 @@ export function StartScreen() {
           </button>
         ))}
       </div>
+      <Toaster position="top-center" closeButton />
     </div>
   );
 }

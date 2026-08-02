@@ -1,9 +1,11 @@
-import { CutFrame, Tag } from "@room/ui/rig";
+import { Toaster } from "@room/ui";
+import { CutFrame, Keycap, Tag } from "@room/ui/rig";
 import { useEffect } from "react";
 import { coupleRoom, setView } from "../mock/scenario";
-import { getFleet, getRoom, useFleet } from "../mock/store";
+import { getFleet, getRoom, openCommission, useFleet } from "../mock/store";
 import { BerthCard } from "./BerthCard";
 import { BerthTabs } from "./BerthTabs";
+import { CommissioningBay } from "./commission/CommissioningBay";
 import { FloorBus } from "./FloorBus";
 import { RoomSwitcherPalette } from "./RoomSwitcherPalette";
 import { TrafficStrip } from "./TrafficStrip";
@@ -75,6 +77,12 @@ export function HangarView() {
               {scratch.length ? `${scratch.length} SCRATCH` : "SCRATCH COLD"}
             </Tag>
           </div>
+          <Keycap
+            glyph="+"
+            label="COMMISSION A ROOM"
+            className="commission-entry-key"
+            onPress={() => openCommission("rig")}
+          />
           <nav className="hangar-ladder" aria-label="Zoom ladder">
             <b>HANGAR</b>
             <span>▸</span>
@@ -89,30 +97,36 @@ export function HangarView() {
           <BerthTabs compact />
         </header>
 
-        <TrafficStrip fleet={fleet} />
-
-        <div className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}>
-          <FloorBus audioFloor={fleet.audioFloor} rooms={numbered} />
-          {numbered.map((berth) => (
-            <BerthCard
-              key={berth.id}
-              berth={berth}
-              audioFloor={fleet.audioFloor}
-              threshold={fleet.threshold}
-              onCouple={() => coupleRoom(berth.id)}
-            />
-          ))}
-          {scratch.map((berth) => (
-            <BerthCard
-              key={berth.id}
-              berth={berth}
-              audioFloor={fleet.audioFloor}
-              threshold={fleet.threshold}
-            />
-          ))}
-          <BerthCard berth={null} audioFloor={fleet.audioFloor} threshold={fleet.threshold} />
-        </div>
+        {fleet.commission ? (
+          <CommissioningBay />
+        ) : (
+          <>
+            <TrafficStrip fleet={fleet} />
+            <div className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}>
+              <FloorBus audioFloor={fleet.audioFloor} rooms={numbered} />
+              {numbered.map((berth) => (
+                <BerthCard
+                  key={berth.id}
+                  berth={berth}
+                  audioFloor={fleet.audioFloor}
+                  threshold={fleet.threshold}
+                  onCouple={() => coupleRoom(berth.id)}
+                />
+              ))}
+              {scratch.map((berth) => (
+                <BerthCard
+                  key={berth.id}
+                  berth={berth}
+                  audioFloor={fleet.audioFloor}
+                  threshold={fleet.threshold}
+                />
+              ))}
+              <BerthCard berth={null} audioFloor={fleet.audioFloor} threshold={fleet.threshold} />
+            </div>
+          </>
+        )}
       </CutFrame>
+      <Toaster position="top-right" closeButton />
       <RoomSwitcherPalette />
     </>
   );

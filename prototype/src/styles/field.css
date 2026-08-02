@@ -638,3 +638,242 @@
 .gauge-info-popover p{margin:0}
 .gauge-info-popover p + p{margin-top:6px}
 .gauge-info-popover b{color:var(--amber);font-weight:700}
+
+/* ══════════════════════════════════════════════════════════════
+   ROUND D · PHASE 2 — FIELD FLEET + VOICE COMMISSION VARIANTS
+   Static attribution only; no new ambient motion.
+   ══════════════════════════════════════════════════════════════ */
+.field-root .field-room-pills {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.field-root .field-room-pills button {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-direction: column;
+  padding: 6px 3px 5px;
+  border: 1px solid #3a3f45;
+  border-radius: 8px 2px 2px 2px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--steel-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 6.8px;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.field-root .field-room-pills button b {
+  color: var(--amber-dim);
+  font-size: 7.5px;
+}
+
+.field-root .field-room-pills button.is-active,
+.field-root .field-room-pills button:focus-visible {
+  border-color: var(--amber-dim);
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+}
+
+.field-root .field-room-pills button i {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 5px rgba(255, 83, 64, 0.72);
+}
+
+.field-root .field-cross-room-wrap {
+  margin-top: 9px;
+}
+
+.field-root .field-cross-room {
+  padding: 9px 10px;
+  border: 1px dashed rgba(255, 179, 71, 0.24);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.field-root .field-cross-room-head {
+  margin-bottom: 5px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.16em;
+}
+
+.field-root .field-cross-room-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+  border-top: 1px dashed rgba(255, 179, 71, 0.12);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  line-height: 1.35;
+}
+
+.field-root .field-cross-room-row:first-of-type {
+  border-top: 0;
+}
+
+.field-root .field-cross-room-row > span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-root .field-cross-room-row > b {
+  color: var(--steel-dim);
+  font-size: 6.5px;
+  letter-spacing: 0.09em;
+  white-space: nowrap;
+}
+
+.field-root .field-cross-room-row > b.is-red {
+  color: var(--red);
+}
+
+.field-root .field-commission-voice {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 9px 3px 3px 3px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+  outline: none;
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.1), rgba(255, 179, 71, 0.025));
+  color: var(--amber);
+  cursor: pointer;
+  font-family: var(--mono);
+  text-align: left;
+}
+
+.field-root .field-commission-voice:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.field-root .field-commission-voice b {
+  color: var(--amber-hot);
+  font-size: 8.5px;
+  letter-spacing: 0.17em;
+}
+
+.field-root .field-commission-voice span {
+  color: var(--steel-dim);
+  font-size: 6.8px;
+  letter-spacing: 0.1em;
+}
+
+.field-root .field-commission-draft {
+  margin-top: 9px;
+}
+
+.field-root .field-commission-draft .fcard {
+  padding: 9px 10px;
+  border-color: rgba(255, 179, 71, 0.3);
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.field-root .field-commission-draft-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 6.8px;
+  letter-spacing: 0.13em;
+}
+
+.field-root .field-commission-path {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--amber-hot);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  font-weight: 400;
+}
+
+.field-root .field-commission-draft pre {
+  max-height: 112px;
+  margin: 7px 0 0;
+  overflow: auto;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 179, 71, 0.16);
+  border-radius: 7px 2px 2px 2px;
+  background: linear-gradient(180deg, var(--screen), var(--screen2));
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 6.8px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.field-root .field-commission-confirm {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.field-root .field-commission-confirm button,
+.field-root .field-commission-confirm a {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+  padding: 4px 6px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 6px 2px 2px 2px;
+  outline: none;
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 6.7px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-decoration: none;
+}
+
+.field-root .field-commission-confirm a {
+  border-color: #3a3f45;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--steel-dim);
+}
+
+.field-root .field-commission-confirm button:focus-visible,
+.field-root .field-commission-confirm a:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-root .field-room-pills *,
+  .field-root .field-cross-room *,
+  .field-root .field-commission-draft *,
+  .field-root .field-commission-voice {
+    animation: none !important;
+    transition: none !important;
+  }
+}

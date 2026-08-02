@@ -1,6 +1,17 @@
+import { toast } from "@room/ui";
 import { speak as mockSpeak, stopSpeaking } from "../audio/mock";
 import { makeFixtures, makeFleetFixtures, SCRATCH_ROOM_ID } from "./fixtures";
-import { getFleet, getRoom, patchFleet, patchRoom, resetRoom, setAppState, setRoom } from "./store";
+import {
+  getFleet,
+  getRoom,
+  openCommission,
+  patchFleet,
+  patchRoom,
+  resetRoom,
+  setAppState,
+  setRoom,
+  strikeCommission,
+} from "./store";
 import type { Craft, PersonaId, RoomId, RoomState } from "./types";
 
 function fmtHold(sec: number): string {
@@ -913,6 +924,24 @@ export const TRIGGERS: ScenarioTrigger[] = [
   { id: "burn", label: "SPEND BURN", run: spendBurn },
   { id: "time", label: "TIME ×10", run: timeTimes10 },
   { id: "reset", label: "RESET", danger: true, run: reset },
+  {
+    id: "commission-voice",
+    label: "COMMISSION ▸ VOICE",
+    run: () => openCommission("voice"),
+  },
+  {
+    id: "strike-berth",
+    label: "STRIKE BERTH",
+    run: () => {
+      const receipt = strikeCommission();
+      if (!receipt) return;
+      if (receipt.ceremony === "full") {
+        toast("MANIFEST CHECKED IN · MIKEY ANNOUNCES THE BERTH AT THE LULL");
+      } else {
+        toast("SCRATCH BERTH STRUCK · NOTHING DURABLE WRITTEN · DIES ON DELIVERY");
+      }
+    },
+  },
 ];
 
 /** Persona → speechSynthesis voice preference hint. */
