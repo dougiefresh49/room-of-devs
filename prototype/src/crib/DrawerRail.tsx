@@ -15,7 +15,8 @@ export function DrawerRail({
     <Tabs
       value={drawer}
       onValueChange={(v) => onDrawerChange(v as DrawerTab)}
-      orientation="vertical"
+      orientation="horizontal"
+      activationMode="automatic"
       className="crib-rail-tabs"
     >
       <TabsList className="crib-rail-list" aria-label="Crib drawers">

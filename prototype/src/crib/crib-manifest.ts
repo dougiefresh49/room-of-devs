@@ -44,34 +44,13 @@ export const adoptionCaveat = "Vendor the Radix behavior, drop shadcn's palette,
 
 export const deadStockBin: DeadStockEntry[] = [
   {
-    "id": "dead-dialog",
-    "name": "dialog",
+    "id": "dead-dom-007",
+    "name": "TransportBar",
     "provenance": {
-      "kind": "radix",
-      "base": "DIALOG"
+      "kind": "custom"
     },
-    "handRolledBy": "prototype/src/deck/ControlDeck.tsx — role=\"dialog\" + manual keydown listener (pre–Round D); now also adopted in ControlDeck via @room/ui Dialog.",
-    "verdict": "ADOPT"
-  },
-  {
-    "id": "dead-toast",
-    "name": "toast",
-    "provenance": {
-      "kind": "lib",
-      "base": "SONNER"
-    },
-    "handRolledBy": "panel/src/app/App.tsx:114 + packages/mobile/src/components/Toast.tsx + two view-state timers.",
-    "verdict": "ADOPT — HIGHEST PAYOFF IN THE AUDIT"
-  },
-  {
-    "id": "dead-tooltip",
-    "name": "tooltip",
-    "provenance": {
-      "kind": "radix",
-      "base": "TOOLTIP"
-    },
-    "handRolledBy": "dozens of native title=\"\" attributes across all four surfaces.",
-    "verdict": "ADOPT FOR A11Y, OR SCRAP THE DEP — NO THIRD OPTION"
+    "handRolledBy": "panel/src/app/ActionCluster.tsx and mobile transport icon-button clusters.",
+    "verdict": "SCRAP UNTIL A REAL SHARED CONSUMER REPLACES THOSE CLUSTERS"
   }
 ];
 
@@ -168,10 +147,12 @@ export const instruments: Instrument[] = [
     "consumers": [
       "panel/src/app/console/ThreadNode.tsx",
       "prototype/src/crib/CribView.tsx",
+      "prototype/src/crib/SpecPlate.tsx",
       "prototype/src/field/GaugesScreen.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/field/ListenScreen.tsx",
       "prototype/src/hangar/HangarView.tsx",
+      "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/rig-ext/FieldCard.tsx"
     ],
     "surfaces": [
@@ -211,7 +192,9 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/crib/CribView.tsx",
-      "prototype/src/hangar/BerthCard.tsx"
+      "prototype/src/hangar/BerthCard.tsx",
+      "prototype/src/hangar/commission/CommissioningBay.tsx",
+      "prototype/src/hangar/commission/VoicePath.tsx"
     ],
     "surfaces": [
       "console",
@@ -284,7 +267,9 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/InstrumentCard.tsx",
-      "prototype/src/hangar/TrafficStrip.tsx"
+      "prototype/src/crib/SpecPlate.tsx",
+      "prototype/src/hangar/TrafficStrip.tsx",
+      "prototype/src/hangar/commission/ManifestPreview.tsx"
     ],
     "surfaces": [
       "console",
@@ -326,13 +311,17 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ThreadNode.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/DeadStockBin.tsx",
+      "prototype/src/crib/SpecPlate.tsx",
       "prototype/src/crib/crib-chrome.tsx",
       "prototype/src/field/AnswerScreen.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/field/StartScreen.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/HangarView.tsx",
-      "prototype/src/hangar/TrafficStrip.tsx"
+      "prototype/src/hangar/TrafficStrip.tsx",
+      "prototype/src/hangar/commission/CommissioningBay.tsx",
+      "prototype/src/hangar/commission/ManifestPreview.tsx",
+      "prototype/src/hangar/commission/VoicePath.tsx"
     ],
     "surfaces": [
       "console",
@@ -417,6 +406,7 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "spinner",
     "verdict": "No spinner exists today; Led/Waveform carry busy state. Skip.",
     "consumers": [
+      "panel/src/app/DockView.tsx",
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/WatchChips.tsx",
@@ -474,7 +464,9 @@ export const instruments: Instrument[] = [
       "prototype/src/console/ReplyDeck.tsx",
       "prototype/src/console/ThreadNode.tsx",
       "prototype/src/field/AnswerScreen.tsx",
-      "prototype/src/hangar/BerthCard.tsx"
+      "prototype/src/hangar/BerthCard.tsx",
+      "prototype/src/hangar/HangarView.tsx",
+      "prototype/src/hangar/commission/CommissioningBay.tsx"
     ],
     "surfaces": [
       "console",
@@ -621,6 +613,7 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "avatar",
     "verdict": "Avatars are lipsync-driven img refs that must never re-render through React. avatar would fight the stage engine. Do not adopt.",
     "consumers": [
+      "panel/src/app/DockView.tsx",
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ThreadNode.tsx",
@@ -666,13 +659,15 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "progress",
     "verdict": "Overlaps rig/SalienceBar.tsx; segmented amber look would be lost. Skip.",
     "consumers": [
+      "panel/src/app/DockView.tsx",
       "prototype/src/console/DockMiniBar.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/hangar/BerthCard.tsx"
     ],
     "surfaces": [
       "console",
-      "field"
+      "field",
+      "panel"
     ]
   },
   {
@@ -740,8 +735,13 @@ export const instruments: Instrument[] = [
     ],
     "registryEquivalent": "dialog",
     "verdict": "Vendored, dead in audit — exactly what ControlDeck.tsx hand-rolls with role=dialog and a manual keydown listener. Round D adopted Radix dialog in the prototype.",
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/deck/ControlDeck.tsx",
+      "prototype/src/hangar/RoomSwitcherPalette.tsx"
+    ],
+    "surfaces": [
+      "console"
+    ]
   },
   {
     "id": "SHD-003",
@@ -771,8 +771,13 @@ export const instruments: Instrument[] = [
     ],
     "registryEquivalent": "command",
     "verdict": "Control deck IS a command palette hand-built from a backtick keydown listener; command covers it with fuzzy filtering.",
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/deck/ControlDeck.tsx",
+      "prototype/src/hangar/RoomSwitcherPalette.tsx"
+    ],
+    "surfaces": [
+      "console"
+    ]
   },
   {
     "id": "SHD-004",
@@ -824,10 +829,12 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
+      "panel/src/app/ActionCluster.tsx",
       "prototype/src/field/GaugesScreen.tsx"
     ],
     "surfaces": [
-      "field"
+      "field",
+      "panel"
     ]
   },
   {
@@ -887,9 +894,12 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "prototype/src/field/ListenScreen.tsx"
+      "prototype/src/field/ListenScreen.tsx",
+      "prototype/src/hangar/commission/CeremonyFork.tsx",
+      "prototype/src/hangar/commission/DialRow.tsx"
     ],
     "surfaces": [
+      "console",
       "field"
     ]
   },
@@ -947,8 +957,16 @@ export const instruments: Instrument[] = [
     ],
     "registryEquivalent": "sonner",
     "verdict": "Vendored, dead — highest effort-to-payoff in the audit; panel and mobile still hand-roll toast timers.",
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/field/StartScreen.tsx",
+      "prototype/src/hangar/HangarView.tsx",
+      "prototype/src/hangar/commission/CommissioningBay.tsx",
+      "prototype/src/mock/scenario.ts"
+    ],
+    "surfaces": [
+      "console",
+      "field"
+    ]
   },
   {
     "id": "DOM-001",
@@ -1035,10 +1053,12 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "badge",
     "verdict": "Fully custom. Skip.",
     "consumers": [
-      "packages/mobile/src/components/AgentCard.tsx"
+      "packages/mobile/src/components/AgentCard.tsx",
+      "panel/src/app/DockView.tsx"
     ],
     "surfaces": [
-      "mobile"
+      "mobile",
+      "panel"
     ]
   },
   {
@@ -1064,6 +1084,7 @@ export const instruments: Instrument[] = [
     "verdict": "Fully custom. Skip.",
     "consumers": [
       "packages/mobile/src/components/Header.tsx",
+      "panel/src/app/DockView.tsx",
       "panel/src/app/console/ConsoleView.tsx"
     ],
     "surfaces": [
@@ -1188,6 +1209,7 @@ export const instruments: Instrument[] = [
     ],
     "consumers": [
       "packages/mobile/src/components/ThreadBubble.tsx",
+      "panel/src/app/DockView.tsx",
       "panel/src/app/console/Faceplate.tsx"
     ],
     "surfaces": [
@@ -1249,10 +1271,12 @@ export const instruments: Instrument[] = [
     ],
     "verdict": "Hand-drawn SVGs — Lucide reserved for vendored primitives.",
     "consumers": [
-      "packages/mobile/src/components/ThreadBubble.tsx"
+      "packages/mobile/src/components/ThreadBubble.tsx",
+      "panel/src/app/ActionCluster.tsx"
     ],
     "surfaces": [
-      "mobile"
+      "mobile",
+      "panel"
     ]
   },
   {
@@ -1274,8 +1298,13 @@ export const instruments: Instrument[] = [
         "note": "card body"
       }
     ],
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/StartScreen.tsx"
+    ],
+    "surfaces": [
+      "field"
+    ]
   },
   {
     "id": "EXT-002",
@@ -1296,8 +1325,15 @@ export const instruments: Instrument[] = [
         "note": "field CRT scale"
       }
     ],
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/GlanceScreen.tsx",
+      "prototype/src/field/ListenScreen.tsx",
+      "prototype/src/field/StartScreen.tsx"
+    ],
+    "surfaces": [
+      "field"
+    ]
   },
   {
     "id": "EXT-003",
@@ -1329,8 +1365,12 @@ export const instruments: Instrument[] = [
         "note": "red arc threshold"
       }
     ],
-    "consumers": [],
-    "surfaces": []
+    "consumers": [
+      "prototype/src/field/GaugesScreen.tsx"
+    ],
+    "surfaces": [
+      "field"
+    ]
   }
 ];
 

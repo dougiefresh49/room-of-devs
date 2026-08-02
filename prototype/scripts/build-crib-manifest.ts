@@ -3,7 +3,7 @@
  * Run: pnpm exec tsx prototype/scripts/build-crib-manifest.ts
  */
 import { execSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -539,31 +539,40 @@ const INSTRUMENTS: InstrumentSeed[] = [
   },
 ];
 
-const DEAD_STOCK_BIN = [
-  {
-    id: "dead-dialog",
-    name: "dialog",
-    provenance: { kind: "radix" as const, base: "DIALOG" },
-    handRolledBy:
-      'prototype/src/deck/ControlDeck.tsx — role="dialog" + manual keydown listener (pre–Round D); now also adopted in ControlDeck via @room/ui Dialog.',
+const DEAD_STOCK_NOTES: Record<string, { handRolledBy: string; verdict: string }> = {
+  dialog: {
+    handRolledBy: 'prototype/src/deck/ControlDeck.tsx — role="dialog" + manual keydown listener.',
     verdict: "ADOPT",
   },
-  {
-    id: "dead-toast",
-    name: "toast",
-    provenance: { kind: "lib" as const, base: "SONNER" },
-    handRolledBy:
-      "panel/src/app/App.tsx:114 + packages/mobile/src/components/Toast.tsx + two view-state timers.",
+  command: {
+    handRolledBy: "prototype/src/deck/ControlDeck.tsx — backtick listener + manually filtered button list.",
+    verdict: "ADOPT",
+  },
+  toast: {
+    handRolledBy: "panel/src/app/App.tsx + packages/mobile/src/components/Toast.tsx + view-state timers.",
     verdict: "ADOPT — HIGHEST PAYOFF IN THE AUDIT",
   },
-  {
-    id: "dead-tooltip",
-    name: "tooltip",
-    provenance: { kind: "radix" as const, base: "TOOLTIP" },
-    handRolledBy: 'dozens of native title="" attributes across all four surfaces.',
-    verdict: "ADOPT FOR A11Y, OR SCRAP THE DEP — NO THIRD OPTION",
+  tooltip: {
+    handRolledBy: 'native title="" attributes across all four surfaces.',
+    verdict: "ADOPT FOR A11Y, OR SCRAP THE DEP",
   },
-];
+  TransportBar: {
+    handRolledBy: "panel/src/app/ActionCluster.tsx and mobile transport icon-button clusters.",
+    verdict: "SCRAP UNTIL A REAL SHARED CONSUMER REPLACES THOSE CLUSTERS",
+  },
+  FieldCard: {
+    handRolledBy: "field screens using raw chassis/view-terminal wrappers.",
+    verdict: "ADOPT IN FIELD OR SCRAP THE EXTENSION",
+  },
+  FieldCrtFace: {
+    handRolledBy: "field screens sizing CrtFace wells directly.",
+    verdict: "ADOPT IN FIELD OR FOLD THE SIZES INTO CRTFACE",
+  },
+  SessionDial: {
+    handRolledBy: "GaugesScreen composing the session arc around DialGauge.",
+    verdict: "ADOPT UNTIL SESSIONFRACTION SHIPS UPSTREAM, THEN SCRAP",
+  },
+};
 
 const WORK_ORDERS = [
   {
@@ -620,30 +629,33 @@ const WORK_ORDERS = [
 ];
 
 function grepConsumers(): Map<string, Set<string>> {
-  const raw = execSync(
-    `grep -rn 'from "@room/ui"' panel/src packages/mobile/src prototype/src --include='*.tsx' --include='*.ts' 2>/dev/null || true`,
-    { cwd: ROOT, encoding: "utf8" },
-  );
-  const rawRig = execSync(
-    `grep -rn 'from "@room/ui/rig"' panel/src packages/mobile/src prototype/src --include='*.tsx' --include='*.ts' 2>/dev/null || true`,
-    { cwd: ROOT, encoding: "utf8" },
-  );
-  const lines = `${raw}\n${rawRig}`.split("\n").filter(Boolean);
   const bySymbol = new Map<string, Set<string>>();
+  const files = execSync(
+    `rg --files panel/src packages/mobile/src prototype/src -g '*.tsx' -g '*.ts'`,
+    { cwd: ROOT, encoding: "utf8" },
+  )
+    .split("\n")
+    .filter(Boolean)
+    .sort();
 
-  for (const line of lines) {
-    const m = line.match(/^([^:]+):\d+:/);
-    if (!m) continue;
-    const file = m[1]!;
-    const importMatch = line.match(/import\s+(?:type\s+)?\{([^}]+)\}/);
-    if (!importMatch) continue;
-    const symbols = importMatch[1]!
-      .split(",")
-      .map((s) => s.trim().split(/\s+as\s+/)[0]?.trim())
-      .filter(Boolean) as string[];
-    for (const sym of symbols) {
-      if (!bySymbol.has(sym)) bySymbol.set(sym, new Set());
-      bySymbol.get(sym)!.add(file);
+  for (const file of files) {
+    // Rendering a part in its catalog fixture is not product adoption.
+    if (file === "prototype/src/crib/specimens.tsx") continue;
+    const sourceText = readFileSync(join(ROOT, file), "utf8");
+    const importPattern = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+["']([^"']+)["']/g;
+    for (const match of sourceText.matchAll(importPattern)) {
+      const source = match[2]!;
+      const isSharedUi = source === "@room/ui" || source.startsWith("@room/ui/");
+      const isPrototypeRigExtension = source.includes("rig-ext/");
+      if (!isSharedUi && !isPrototypeRigExtension) continue;
+      const symbols = match[1]!
+        .split(",")
+        .map((symbol) => symbol.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]?.trim())
+        .filter(Boolean) as string[];
+      for (const symbol of symbols) {
+        if (!bySymbol.has(symbol)) bySymbol.set(symbol, new Set());
+        bySymbol.get(symbol)!.add(file);
+      }
     }
   }
   return bySymbol;
@@ -682,6 +694,21 @@ const instruments = INSTRUMENTS.map((seed) => {
     surfaces: surfacesFromConsumers(consumers),
   };
 });
+
+const deadStockBin = instruments
+  .filter((instrument) => instrument.consumers.length === 0)
+  .map((instrument) => {
+    const note = DEAD_STOCK_NOTES[instrument.name] ?? {
+      handRolledBy: "No importing call site was detected outside the catalog specimen.",
+      verdict: "SCRAP UNLESS A REAL CONSUMER IS IDENTIFIED",
+    };
+    return {
+      id: `dead-${instrument.id.toLowerCase()}`,
+      name: instrument.name,
+      provenance: instrument.provenance,
+      ...note,
+    };
+  });
 
 const generated = `/* eslint-disable */
 /** AUTO-GENERATED by prototype/scripts/build-crib-manifest.ts — do not edit by hand. */
@@ -727,7 +754,7 @@ export interface WorkOrder {
 
 export const adoptionCaveat = ${JSON.stringify(ADOPTION_CAVEAT)};
 
-export const deadStockBin: DeadStockEntry[] = ${JSON.stringify(DEAD_STOCK_BIN, null, 2)};
+export const deadStockBin: DeadStockEntry[] = ${JSON.stringify(deadStockBin, null, 2)};
 
 export const workOrders: WorkOrder[] = ${JSON.stringify(WORK_ORDERS, null, 2)};
 

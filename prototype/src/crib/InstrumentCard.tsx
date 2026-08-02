@@ -15,23 +15,30 @@ export function InstrumentCard({
 }) {
   const dead = stockTone(instrument.consumers.length) === "red";
   return (
-    <button
-      type="button"
+    <article
       className={`crib-speccard${selected ? " crib-speccard--sel" : ""}${dead ? " crib-speccard--dead" : ""}`}
-      onClick={onSelect}
     >
-      <span className="crib-cardno">{instrument.id}</span>
-      {dead ? <div className="crib-deadstamp">DEAD STOCK · 0 CONSUMERS</div> : null}
-      <ScreenBed className="crib-platen">
-        <InstrumentPlaten name={instrument.name} />
-      </ScreenBed>
-      <div className="crib-sinfo">
-        <span className="crib-snm">{instrument.name}</span>
-        <ProvenanceStamp provenance={instrument.provenance} />
-        <StockLamp consumers={instrument.consumers} />
-        <SurfacePins surfaces={instrument.surfaces} />
-        <span className="crib-spath">{instrument.path}</span>
+      <button
+        type="button"
+        className="crib-speccard-select"
+        onClick={onSelect}
+        aria-label={`Inspect ${instrument.name} (${instrument.id})`}
+        aria-pressed={selected}
+      />
+      <div className="crib-speccard-display" inert aria-hidden="true">
+        <span className="crib-cardno">{instrument.id}</span>
+        {dead ? <div className="crib-deadstamp">DEAD STOCK · 0 CONSUMERS</div> : null}
+        <ScreenBed className="crib-platen">
+          <InstrumentPlaten name={instrument.name} />
+        </ScreenBed>
+        <div className="crib-sinfo">
+          <span className="crib-snm">{instrument.name}</span>
+          <ProvenanceStamp provenance={instrument.provenance} />
+          <StockLamp consumers={instrument.consumers} />
+          <SurfacePins surfaces={instrument.surfaces} />
+          <span className="crib-spath">{instrument.path}</span>
+        </div>
       </div>
-    </button>
+    </article>
   );
 }

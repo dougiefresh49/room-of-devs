@@ -5,6 +5,7 @@ export const TooltipProvider = TooltipPrimitive.Provider;
 export const Tooltip = TooltipPrimitive.Root;
 export const TooltipTrigger = TooltipPrimitive.Trigger;
 export function TooltipContent({
+  children,
   className,
   sideOffset = 4,
   ...props
@@ -19,8 +20,10 @@ export function TooltipContent({
           className,
         )}
         {...props}
-      />
-      <TooltipPrimitive.Arrow className="fill-surface-strong" />
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="fill-surface-strong" />
+      </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   );
 }
