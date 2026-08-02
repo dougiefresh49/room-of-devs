@@ -3,8 +3,8 @@
 The single "where are we" page. Update at the end of every shipped
 round; publish to the phone with `pnpm docs:publish`.
 
-_Last updated: 2026-07-30 (RIG prototype round 2 — THE FIELD UNIT five
-mobile screens at /field — SHIPPED; v1 console+plot same day)_
+_Last updated: 2026-08-02 (Round D BUILT into the prototype overnight —
+hangar + commissioning bay + /crib + /map, all four phases shipped)_
 
 ## Inbox
 
@@ -25,6 +25,53 @@ the backlog, work → `active/` specs or Next up. Empty is the goal state.
 > adopted day-1 cuts, and prototype phases P1–P7.
 > Architecture (#73, docs 04–09) remains settled separately.
 
+- **ROUND D BUILT — SHIPPED overnight 2026-08-02** per
+  [shipped/spec-round-d-synthesis.md](shipped/spec-round-d-synthesis.md)
+  (moved from active/). All four phases on the prototype (port 5180),
+  each gate: typecheck + build clean, codex computer-use browser round,
+  zero console errors. Commits `b927887` / `c771a3e` / `963eaaf`.
+  - **P1 fleet seam + THE HANGAR** (gpt-5.6-sol lane): store split
+    `fleet`/`rooms` with `useRoom()` untouched, per-room fixtures
+    (r-devs rich, podlink/comic-reader thin, scratch one-off),
+    `routes.ts`, hangar rung (floor bus, berth grid, traffic strip with
+    belowGate, berth tabs), ⌘0–⌘n/ESC ladder, worst-room dock strip,
+    8 new deck triggers, ControlDeck rebuilt on vendored dialog + real
+    cmdk command with ⌘K room switcher. Fix round: deck was under the
+    Radix overlay (z-index) — the money demo (CROSS-ROOM ARRIVAL) and
+    all triggers browser-verified after.
+  - **P2 commissioning bay + FIELD variants** (sol lane): bench with
+    ceremony fork, three dials printing home + cost consequence,
+    live-bound manifest pane (graft A1 — path header updates as you
+    type), one-off ⇒ `NOT WRITTEN · MEMORY ONLY`, STRIKE BERTH → sonner
+    receipt + new berth, voice path prefilled by Mikey, GLANCE room
+    pills + cross-room attribution, START read-only voice manifest.
+    7/7 browser checks first pass.
+  - **P3 THE TOOL CRIB `/crib`** (composer-2.5 worktree lane + sol fix
+    round): generated `crib-manifest.ts` (35 instruments) from
+    `build-crib-manifest.ts`, drawer-rail tabs, spec plate with
+    four-class provenance / three-state stock lamps / tolerances,
+    dead-stock bin, work orders, components.json wired, vendored
+    tabs+collapsible. Fix round: nested-button hydration errors,
+    subpath-aware consumer grep, tooltip portal, roving focus.
+  - **P4 SERVICE SCHEMATIC `/map`** (sol lane): three-column cutaway,
+    harness lighting + reverse terminal lookup, WISH·Pn phase tags, gap
+    rivets (rivet 1 `FILLED · ROUND D`), S-xx/F-xx part stencils on
+    every console/field housing with shift-click deep links
+    (`/map?part=S-07`), SCHEMATIC keycap + full-bleed dialog. 11/12
+    browser checks; the one "FAIL" (tooltip) was an automation
+    artifact, confirmed working via CDP.
+  - **Judgment calls (owner was asleep):** boot rung is the hangar
+    (spec allowed either); `command`/`dialog` stock lamps are **green
+    (2 consumers each)**, not the spec's predicted amber — the
+    generated manifest tells the truth over the prediction; cmdk was
+    hand-rolled at first (codex sandbox had no registry access), then
+    swapped to the real dep same night; crib consumer grep broadened to
+    catch `@room/ui/*` subpath imports. Punt: `scroll-area` (optional
+    per spec).
+  - **Follow-up round queued:** panel/mobile shadcn audit items —
+    tabs/collapsible/select/slider adoption in the LIVE surfaces +
+    orphan-dep removal (this round only touched the prototype +
+    packages/ui vendoring).
 - **COURSE CORRECTION (2026-07-30, owner):** P1/P2 were executed as
   incremental builds on the LIVE app — that is not what the owner
   wanted from "prototype." A prototype is a **siloed mock-data build**
@@ -562,10 +609,9 @@ permission prompt that fires on first panel PTT recording, self-serve.)
    then work backwards to the daemon/wire changes and the shared
    mobile/desktop component refactor.
 0.5. **Prototype follow-ups (owner, 2026-07-31):**
-   - **Round D — OWNER PICKED THE FABLE LANE** (2026-08-01): best UI
-     layout and best match to the design/style of the rest of the app.
-     Synthesis DONE (2026-08-01):
-     [active/spec-round-d-synthesis.md](active/spec-round-d-synthesis.md)
+   - **Round D — BUILT 2026-08-02** (see Now section above). Owner
+     picked the fable lane 2026-08-01; synthesis spec now at
+     [shipped/spec-round-d-synthesis.md](shipped/spec-round-d-synthesis.md)
      — fable base + 14 opus grafts (live-bound manifest pane, per-dial
      cost consequences, shift-click housing → /map deep link, four-class
      provenance stamps, three-state stock lamps, work-orders drawer);
@@ -622,6 +668,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-08-02 | **Round D built into the prototype** — THE HANGAR (fleet zoom rung, floor bus, traffic strip, berth tabs, ⌘K switcher), commissioning bay with live-bound manifest + cost-honest dials, THE TOOL CRIB at /crib (generated 35-instrument manifest, provenance stamps, stock lamps, work orders), SERVICE SCHEMATIC at /map (harness lighting, wire terminals, gap rivets, shift-click part-number deep links); cmdk/dialog/tooltip/sonner/tabs/collapsible adopted — all three dead shadcn primitives now have consumers |
 | 2026-07-30 | **RIG P2 "the console" shipped** — panel main window is the RIG console (token flip desktop-only, faceplate + Donnie bay, thread nodes + open-node history, crew manifest, watch chips); input parity landed: desktop typed chat (incl. the panel-ws inject fix) + attachments; ~520 lines of legacy style.css deleted |
 | 2026-07-30 | **THE RIG: design target locked + P1 "metal shop" shipped** — design-ui-target.md signed off; --rig-* tokens, 12 RIG primitives + gallery in @room/ui, dock strip reskinned (salience LED bar, ticker, lamps); verified via gallery + codex dock screenshots |
 | 2026-07-28 | **Spine validated + Round C concept round** — `state/*`+`gear/*` labels live on the tracker, free `tap-in.ts` harness, 11 questions graded twice (0 wrong answers after deterministic roll-up, <4¢ total); design brief locked and 4 blind concept boards + pick matrix published |
