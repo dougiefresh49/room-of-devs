@@ -569,7 +569,10 @@ permission prompt that fires on first panel PTT recording, self-serve.)
      — fable base + 14 opus grafts (live-bound manifest pane, per-dial
      cost consequences, shift-click housing → /map deep link, four-class
      provenance stamps, three-state stock lamps, work-orders drawer);
-     grok/sol contributed nothing that beat fable. 4 build phases with
+     grok/sol contributed nothing that beat fable. **Final merged board
+     (fable + grafts, each tagged):**
+     <https://m4kyi0yz6emp.postplan.dev> /
+     `active/concepts-round-d/final.html`. 4 build phases with
      disjoint file ownership, ready for cursor-agent lanes. Next: owner
      green-light → build. Brief:
      [active/design-brief-round-d.md](active/design-brief-round-d.md) —
