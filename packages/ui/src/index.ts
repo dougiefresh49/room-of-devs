@@ -23,6 +23,8 @@ export * from "./primitives/sheet.js";
 export * from "./primitives/popover.js";
 export * from "./primitives/dropdown-menu.js";
 export * from "./primitives/toggle-group.js";
+export * from "./primitives/tabs.js";
+export * from "./primitives/collapsible.js";
 export * from "./primitives/tooltip.js";
 export * from "./primitives/toast.js";
 
