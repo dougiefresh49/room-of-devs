@@ -564,8 +564,14 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 0.5. **Prototype follow-ups (owner, 2026-07-31):**
    - **Round D — OWNER PICKED THE FABLE LANE** (2026-08-01): best UI
      layout and best match to the design/style of the rest of the app.
-     Next: synthesis pass (fable board as the base, graft any
-     better-solved pieces from the other lanes) → build spec. Brief:
+     Synthesis DONE (2026-08-01):
+     [active/spec-round-d-synthesis.md](active/spec-round-d-synthesis.md)
+     — fable base + 14 opus grafts (live-bound manifest pane, per-dial
+     cost consequences, shift-click housing → /map deep link, four-class
+     provenance stamps, three-state stock lamps, work-orders drawer);
+     grok/sol contributed nothing that beat fable. 4 build phases with
+     disjoint file ownership, ready for cursor-agent lanes. Next: owner
+     green-light → build. Brief:
      [active/design-brief-round-d.md](active/design-brief-round-d.md) —
      three problems: (A) all-projects view + new-project ceremony/one-off
      flow, (B) component library playground with shadcn provenance,
