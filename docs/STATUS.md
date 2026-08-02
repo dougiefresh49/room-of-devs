@@ -562,7 +562,10 @@ permission prompt that fires on first panel PTT recording, self-serve.)
    then work backwards to the daemon/wire changes and the shared
    mobile/desktop component refactor.
 0.5. **Prototype follow-ups (owner, 2026-07-31):**
-   - **Round D concept boards AWAITING OWNER PICK** (2026-07-31). Brief:
+   - **Round D — OWNER PICKED THE FABLE LANE** (2026-08-01): best UI
+     layout and best match to the design/style of the rest of the app.
+     Next: synthesis pass (fable board as the base, graft any
+     better-solved pieces from the other lanes) → build spec. Brief:
      [active/design-brief-round-d.md](active/design-brief-round-d.md) —
      three problems: (A) all-projects view + new-project ceremony/one-off
      flow, (B) component library playground with shadcn provenance,
