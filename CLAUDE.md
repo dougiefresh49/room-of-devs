@@ -311,10 +311,13 @@ Mechanics:
   that burns MORE quota for the same model served faster — default to
   non-fast; Cursor plan headroom is generous (2x usage promo), so
   `cursor-grok-4.5-high` is the standard grok pick.
-- gpt-5.6: codex CLI — `codex exec` / `codex review`. Note: `codex review`
-  accepts NO custom prompt; use `codex exec` with a self-contained prompt
-  when you need one. Long runs exceed Bash's 10-min default timeout —
-  background them.
+- gpt-5.6: codex CLI — `codex exec` / `codex review`. As of the
+  2026-08-01 CLI update (0.145.0), `codex review` DOES accept a custom
+  prompt (positional arg, or `-` to read stdin) — the old "no custom
+  prompt" limitation is gone. Local config now defaults to
+  `gpt-5.6-sol` at reasoning effort LOW — for deep work pass
+  `-c model_reasoning_effort="high"`. Long runs exceed Bash's 10-min
+  default timeout — background them.
 - Claude models run via the Agent/Workflow `model` parameter.
 - Parallel implementation agents that write code use worktree isolation;
   split work by file ownership so merges are trivial. Full parallel-round

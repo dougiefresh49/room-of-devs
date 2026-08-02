@@ -33,10 +33,13 @@ code):
 - **Budget note (owner, 2026-08-01): GPT-5.6 is at 100% availability
   with 2 resets that expire Aug 11 — go HAM on gpt-5.6 Sol via codex.**
   Use Sol as the primary implementation model for the hard phases (1, 2,
-  4) and for deep review passes. codex gotchas: `codex exec -m` the Sol
-  tier, `-s workspace-write`, background long runs with `< /dev/null`
-  (open stdin = infinite hang), they exceed Bash's 10-min default
-  timeout.
+  4) and for deep review passes. codex notes (verified against CLI
+  0.145.0): `gpt-5.6-sol` is already the config default but at
+  reasoning effort LOW — add `-c model_reasoning_effort="high"` for
+  implementation/review runs; `-s workspace-write`; background long
+  runs with `< /dev/null` (open stdin = infinite hang); they exceed
+  Bash's 10-min default timeout. `codex review` now accepts a custom
+  prompt (`-` reads stdin).
 - composer-2.5 / grok-4.5 via cursor-agent for mechanical/well-specced
   chunks (Phase 3 is a good composer fit). cursor-agent is
   composer/grok ONLY (other models bill the small Cursor API pool —
