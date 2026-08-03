@@ -80,6 +80,18 @@
 .tnode {
   border-radius: 13px 4px 4px 4px;
 }
+.spine-legend-pop {
+  border-radius: 12px 3px 3px 3px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cut-s)),
+    calc(100% - var(--cut-s)) 100%,
+    0 100%
+  );
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55))
+    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.6));
+}
 .plan .bpcard {
   border-radius: 12px 4px 4px 4px;
 }
@@ -107,8 +119,7 @@
 .watchchip,
 .grantchip,
 .composer .field,
-.salgate,
-.legendstrip {
+.salgate {
   border-radius: 8px 2px 2px 2px;
 }
 .salgate {

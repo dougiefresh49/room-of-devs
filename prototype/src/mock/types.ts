@@ -70,6 +70,8 @@ export interface Craft {
   state: CraftState;
   /** 0 = needs you NOW, 100 = settle-side rim. Wishlist wire field. */
   salience: number;
+  /** Signed CLR this craft is pulling off the room aggregate. Wishlist wire field. */
+  salienceDelta: number;
   planId: string | null;
   lastStamp: string;
   holdSeconds: number;
@@ -184,7 +186,7 @@ export interface SalienceState {
 }
 
 export interface TranscriptRow {
-  who: "YOU" | "MIKEY" | "DONNIE" | "SYSTEM";
+  who: string;
   text: string;
   you?: boolean;
 }
@@ -221,6 +223,10 @@ export interface RoomState {
   grantArmed: boolean;
   grantCountdown: number;
   turnChip: { model: string; costUsd: number };
+  /** Console dial positions. Dial homes are derived, never edited independently. Wishlist wire field. */
+  dials: { ceremony: GearDefault; voice: PersonaId; brain: BrainTable };
+  /** Which voice the faceplate is wearing (dial 2's home). Wishlist wire field. */
+  voicePersona: PersonaId;
   transcript: TranscriptRow[];
   tapIn: TapIn | null;
   crew: CrewMember[];

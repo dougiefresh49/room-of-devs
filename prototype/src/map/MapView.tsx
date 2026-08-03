@@ -10,9 +10,9 @@ import { onOpenSchematic } from "./schematic-events";
 type Selection = { kind: "node"; id: string } | { kind: "terminal"; id: string } | null;
 
 function selectionFromLocation(): Selection {
-  if (typeof window === "undefined") return { kind: "node", id: "s-06" };
+  if (typeof window === "undefined") return { kind: "node", id: "s-03" };
   const node = nodeByPartNo(new URLSearchParams(window.location.search).get("part"));
-  return { kind: "node", id: node?.id ?? "s-06" };
+  return { kind: "node", id: node?.id ?? "s-03" };
 }
 
 export interface MapViewProps {
@@ -22,6 +22,7 @@ export interface MapViewProps {
 
 export function MapView({ overlay = false, onClose }: MapViewProps) {
   const [selection, setSelection] = useState<Selection>(selectionFromLocation);
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -89,12 +90,17 @@ export function MapView({ overlay = false, onClose }: MapViewProps) {
   return (
     <main
       className={`map-view${overlay ? " map-view--overlay" : ""}${hasSelection ? " has-selection" : ""}`}
+      data-first-look={!touched || undefined}
     >
       <div className="map-hazard" aria-hidden />
       <header className="map-header">
         <div>
           <span className="map-kicker">SERVICE DOOR · STATIC DOCUMENT</span>
           <h1>SERVICE SCHEMATIC — UI ↔ ARCHITECTURE ↔ WIRE</h1>
+          <p className="map-intro">
+            THE STATIC MAP OF EVERY PART OF THE RIG — CLICK A PART TO SEE WHY IT EXISTS AND
+            WHICH WIRE FEEDS IT.
+          </p>
         </div>
         <div className="map-header-stamps">
           <span>REV 08-01</span>
@@ -130,7 +136,10 @@ export function MapView({ overlay = false, onClose }: MapViewProps) {
             selectedNodeId={selectedNode?.id ?? null}
             activeNodeIds={activeNodeIds}
             hasSelection={hasSelection}
-            onSelect={(id) => setSelection({ kind: "node", id })}
+            onSelect={(id) => {
+              setTouched(true);
+              setSelection({ kind: "node", id });
+            }}
           />
         </Chassis>
 
@@ -148,7 +157,10 @@ export function MapView({ overlay = false, onClose }: MapViewProps) {
             selectedNodeId={selectedNode?.id ?? null}
             activeNodeIds={activeNodeIds}
             hasSelection={hasSelection}
-            onSelect={(id) => setSelection({ kind: "node", id })}
+            onSelect={(id) => {
+              setTouched(true);
+              setSelection({ kind: "node", id });
+            }}
           />
           <section className="map-gaps" aria-label="Known design gaps">
             {GAPS.map((gap) => (
@@ -185,12 +197,20 @@ export function MapView({ overlay = false, onClose }: MapViewProps) {
             selectedTerminalId={selectedTerminal?.id ?? null}
             activeTerminalIds={activeTerminalIds}
             hasSelection={hasSelection}
-            onSelect={(id) => setSelection({ kind: "terminal", id })}
+            onSelect={(id) => {
+              setTouched(true);
+              setSelection({ kind: "terminal", id });
+            }}
           />
         </Chassis>
       </section>
 
-      <Inspector node={selectedNode} terminal={selectedTerminal} consumers={terminalConsumers} />
+      <Inspector
+        node={selectedNode}
+        terminal={selectedTerminal}
+        consumers={terminalConsumers}
+        firstLook={!touched}
+      />
     </main>
   );
 }

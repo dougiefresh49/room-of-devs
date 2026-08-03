@@ -19,6 +19,8 @@ import { transcriptRowKey } from "./transcriptKeys";
 
 export function ConsoleView() {
   const room = useRoom();
+  const voice = room.crew.find((member) => member.id === room.voicePersona);
+  const voiceCallsign = voice?.callsign ?? room.voicePersona.toUpperCase();
   const fleet = useFleet();
   const [instrOpen, setInstrOpen] = useState(true);
   const [chatFocused, setChatFocused] = useState(false);
@@ -96,7 +98,7 @@ export function ConsoleView() {
             <Faceplate />
             <div className="screenbed vt">
               <div className={`cap vt-cap${hasWatchStatus ? " has-part-no" : ""}`}>
-                <span>COMMS LOG</span>
+                <span>COMMS LOG · {voiceCallsign}</span>
                 <button
                   ref={focusLatchRef}
                   type="button"
@@ -116,7 +118,8 @@ export function ConsoleView() {
                     <span className="who">{row.who}</span>
                     <span className={`say${row.you ? " you" : ""}`}>
                       {row.text}
-                      {index === recentTranscript.length - 1 && room.speakingPersona === "mikey" ? (
+                      {index === recentTranscript.length - 1 &&
+                      room.speakingPersona === room.voicePersona ? (
                         <span className="cursor" />
                       ) : null}
                     </span>

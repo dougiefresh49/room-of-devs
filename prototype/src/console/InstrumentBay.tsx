@@ -1,50 +1,12 @@
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { SalienceRing } from "./SalienceRing";
+import { ThreeDials } from "./ThreeDials";
 import { TheCore } from "./TheCore";
 
 interface InstrumentBayProps {
   open: boolean;
   onToggle: () => void;
   clearPct: number;
-}
-
-function ThreeDials() {
-  return (
-    <div className="instr-plate">
-      <span className="screw bl" />
-      <span className="screw br" />
-      <div className="cap">
-        <span>THE THREE DIALS</span>
-        <b>EACH LIVES SOMEWHERE VISIBLE</b>
-      </div>
-      <div className="knobs">
-        <div className="knob k1">
-          <div className="kface" />
-          <div className="kl">1 · CEREMONY</div>
-          <div className="kv">FULL</div>
-          <div className="khome">
-            PER THREAD · <b>HOME: THE PLAN CARD</b>
-          </div>
-        </div>
-        <div className="knob k2">
-          <div className="kface" />
-          <div className="kl">2 · VOICE</div>
-          <div className="kv">MIKEY</div>
-          <div className="khome">
-            ATTACHMENT · <b>HOME: THE FACEPLATE</b>
-          </div>
-        </div>
-        <div className="knob k3">
-          <div className="kface" />
-          <div className="kl">3 · BRAIN / TURN</div>
-          <div className="kv">FLASH → OPUS</div>
-          <div className="khome">
-            ROUTING TABLE · <b>HOME: THE TURN CHIP</b>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export function InstrumentBay({ open, onToggle, clearPct }: InstrumentBayProps) {

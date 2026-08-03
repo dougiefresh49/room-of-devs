@@ -5,6 +5,7 @@ export interface InspectorProps {
   node: MapNode | null;
   terminal: Terminal | null;
   consumers: MapNode[];
+  firstLook: boolean;
 }
 
 function InspectorCell({ title, children }: { title: string; children: React.ReactNode }) {
@@ -19,7 +20,7 @@ function InspectorCell({ title, children }: { title: string; children: React.Rea
   );
 }
 
-export function Inspector({ node, terminal, consumers }: InspectorProps) {
+export function Inspector({ node, terminal, consumers, firstLook }: InspectorProps) {
   const title = node?.title ?? terminal?.field ?? "NO PART SELECTED";
   const identity = node?.partNo ?? (terminal ? "WIRE TERMINAL" : "SERVICE DOOR");
   const docPointer = node?.src ?? "prototype/src/mock/types.ts";
@@ -30,9 +31,11 @@ export function Inspector({ node, terminal, consumers }: InspectorProps) {
         <span className="inspector-part">{identity}</span>
         <strong>{title}</strong>
         <span className="inspector-mode">
-          {terminal
-            ? "REVERSE INDEX · WHO CONSUMES THIS FIELD"
-            : "FORWARD INDEX · WHAT THIS PART TOUCHES"}
+          {firstLook
+            ? "CLICK ANY PART TO CHANGE THIS PANEL"
+            : terminal
+              ? "REVERSE INDEX · WHO CONSUMES THIS FIELD"
+              : "FORWARD INDEX · WHAT THIS PART TOUCHES"}
         </span>
       </div>
 

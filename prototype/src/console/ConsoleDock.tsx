@@ -1,7 +1,7 @@
 import { Button } from "@room/ui";
 import { ArrowUp, Mic, Plus } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
-import { micClose, micOpen, sendMikeyChat } from "../mock/scenario";
+import { micClose, micOpen, sendVoiceChat } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 
 const MAX_TEXTAREA_HEIGHT = 168;
@@ -20,6 +20,9 @@ interface ConsoleDockProps {
 
 export function ConsoleDock({ draft, onDraftChange }: ConsoleDockProps) {
   const room = useRoom();
+  const voice = room.crew.find((member) => member.id === room.voicePersona);
+  const voiceCallsign = voice?.callsign ?? room.voicePersona.toUpperCase();
+  const voiceName = voiceCallsign.charAt(0) + voiceCallsign.slice(1).toLocaleLowerCase();
   const panelRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -31,7 +34,7 @@ export function ConsoleDock({ draft, onDraftChange }: ConsoleDockProps) {
   const submit = () => {
     const text = draft.trim();
     if (!text) return;
-    sendMikeyChat(text);
+    sendVoiceChat(text);
     onDraftChange("");
   };
 
@@ -48,12 +51,12 @@ export function ConsoleDock({ draft, onDraftChange }: ConsoleDockProps) {
       <div className="cdock-field screenbed">
         <textarea
           ref={textareaRef}
-          id="mikey-message"
-          name="mikey-message"
+          id="voice-message"
+          name="voice-message"
           rows={1}
           value={draft}
-          placeholder="message Mikey…"
-          aria-label="Message Mikey"
+          placeholder={`message ${voiceName}…`}
+          aria-label={`Message ${voiceName}`}
           onChange={(event) => {
             onDraftChange(event.currentTarget.value);
           }}

@@ -11,6 +11,7 @@ import {
 } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import type { Craft } from "../mock/types";
+import { ThreadStatLine } from "./ThreadStatLine";
 
 function stateTag(state: Craft["state"]) {
   switch (state) {
@@ -34,6 +35,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
   const artifact = room.artifacts.find(
     (a) => a.craftId === craft.id && a.status === "pending",
   );
+  const showNodeSpend = room.view === "node" && room.focusCraftId === craft.id;
   const wrapClass = [
     "tnwrap",
     craft.state === "needs-you" ? "needy" : "",
@@ -92,6 +94,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
               ) : null}
             </div>
             <div className="ttask">{craft.task}</div>
+            {room.view !== "node" ? <ThreadStatLine craft={craft} /> : null}
           </div>
           <div className="tstat">
             {stateTag(craft.state)}
@@ -173,21 +176,33 @@ export function ThreadNode({ craft }: { craft: Craft }) {
               ) : null}
             </div>
             <div className="side">
-              <div className="screenbed tspend">
-                <span>THIS THREAD</span>
-                <b>{craft.tokens.toLocaleString()} tok</b>
-                <span>·</span>
-                <b>${craft.spendUsd.toFixed(2)}</b>
-                <span>·</span>
-                <b>{craft.turns} turns</b>
-              </div>
-              {craft.state === "needs-you" ? (
-                <div className="screenbed tspend">
-                  <span>SALIENCE PULL</span>
-                  <b className="stn" style={{ color: "var(--red)" }}>
-                    −22 CLR
-                  </b>
-                </div>
+              {showNodeSpend ? (
+                <>
+                  <div className="screenbed tspend">
+                    <span>THIS THREAD</span>
+                    <b>{craft.tokens.toLocaleString()} tok</b>
+                    <span>·</span>
+                    <b>${craft.spendUsd.toFixed(2)}</b>
+                    <span>·</span>
+                    <b>{craft.turns} turns</b>
+                  </div>
+                  {craft.salienceDelta !== 0 ? (
+                    <div className="screenbed tspend">
+                      <span>SALIENCE PULL</span>
+                      <b
+                        className="stn"
+                        style={{
+                          color:
+                            craft.salienceDelta > 0 ? "var(--green)" : "var(--red)",
+                        }}
+                      >
+                        {craft.salienceDelta > 0
+                          ? `+${craft.salienceDelta} CLR`
+                          : `−${Math.abs(craft.salienceDelta)} CLR`}
+                      </b>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
               {craft.diff ? (
                 <div className="screenbed diff">

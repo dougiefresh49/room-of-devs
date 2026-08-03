@@ -1,4 +1,4 @@
-import { Led, Odometer } from "@room/ui/rig";
+import { Led, Odometer, Tag } from "@room/ui/rig";
 import { PartNo } from "../map/PartNo";
 import type { Plan } from "../mock/types";
 
@@ -31,7 +31,7 @@ function Schematic({ kind }: { kind: Plan["schematic"] }) {
   return null;
 }
 
-export function PlanCard({ plan }: { plan: Plan }) {
+export function PlanCard({ plan, departing = false }: { plan: Plan; departing?: boolean }) {
   const dockClass =
     plan.dock === "live"
       ? "active"
@@ -42,7 +42,7 @@ export function PlanCard({ plan }: { plan: Plan }) {
           : "archived";
 
   return (
-    <div className={`node plan ${dockClass}`}>
+    <div className={`node plan ${dockClass}${departing ? " is-departing" : ""}`}>
       <PartNo partNo="S-04" />
       <div className="bpcard">
         <div className="pl-id">
@@ -76,16 +76,19 @@ export function PlanCard({ plan }: { plan: Plan }) {
             </span>
           </>
         ) : (
-          <span
-            className={`pl-status${plan.dock === "queued" || plan.dock === "birth" ? " dim" : ""}`}
-          >
-            {plan.dock === "settled" ? (
-              <>
-                <Led tone="green" />{" "}
-              </>
-            ) : null}
-            {plan.status}
-          </span>
+          <>
+            {departing ? <Tag tone="dim">SETTLED · LEFT THE RAIL</Tag> : null}
+            <span
+              className={`pl-status${plan.dock === "queued" || plan.dock === "birth" ? " dim" : ""}`}
+            >
+              {plan.dock === "settled" ? (
+                <>
+                  <Led tone="green" />{" "}
+                </>
+              ) : null}
+              {plan.status}
+            </span>
+          </>
         )}
       </div>
     </div>

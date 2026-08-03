@@ -35,7 +35,9 @@ function makeRichFixtures(roomId: RoomId): RoomState {
       purpose: "WALK PLAN 0007-B",
       elapsed: "04:12",
     },
-    turnChip: { model: "FLASH", costUsd: 0.002 },
+    turnChip: { model: "FLASH → OPUS", costUsd: 0.043 },
+    dials: { ceremony: "full", voice: "mikey", brain: "deep" },
+    voicePersona: "mikey",
     tapIn: null,
     heldQuestion: {
       craftId: "c-0449",
@@ -70,7 +72,8 @@ function makeRichFixtures(roomId: RoomId): RoomState {
       contributors: [
         { label: "SPLINTER · PLAN HELD 06:41", delta: -22 },
         { label: "RAPH · WATCH ORDER ACTIVE", delta: -8 },
-        { label: "LEO, SHREDDER · QUIET", delta: 0 },
+        { label: "LEO · QUIET", delta: -4 },
+        { label: "SHREDDER · QUIET", delta: 6 },
       ],
     },
     spend: {
@@ -198,6 +201,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         task: "prod bugfix: stale team_map on cross-persona spawn",
         state: "working",
         salience: 62,
+        salienceDelta: -8,
         planId: "0007",
         lastStamp: "LAST EVENT 00:12 AGO",
         holdSeconds: 0,
@@ -234,6 +238,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         task: "panel header parity — step 5 of plan 0007",
         state: "working",
         salience: 78,
+        salienceDelta: -4,
         planId: "0007",
         lastStamp: "LAST EVENT 01:38 AGO",
         holdSeconds: 0,
@@ -271,6 +276,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         task: "docs round C review — plan 0007-B held for approval",
         state: "needs-you",
         salience: 18,
+        salienceDelta: -22,
         planId: "0007",
         lastStamp: "HOLDING 06:41",
         holdSeconds: 401,
@@ -278,7 +284,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         open: true,
         tmux: true,
         tokens: 1020,
-        spendUsd: 0.01,
+        spendUsd: 0.08,
         turns: 2,
         oneOff: false,
         plotAngle: 150,
@@ -294,6 +300,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         task: "svgo pass on docs-publish — finished, logged only",
         state: "settled",
         salience: 92,
+        salienceDelta: 6,
         planId: "0007",
         lastStamp: "WAITING FOR LULL",
         holdSeconds: 0,
@@ -320,6 +327,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         task: "— empty bay —",
         state: "empty",
         salience: 100,
+        salienceDelta: 0,
         planId: null,
         lastStamp: "",
         holdSeconds: 0,
@@ -415,6 +423,7 @@ function makePodlinkFixtures(roomId: RoomId): RoomState {
     callsign: "RAPH",
     task: "release watch · 5xx anomaly baseline",
     salience: 64,
+    salienceDelta: -12,
     planId: "0031",
     lastStamp: "WATCH ACTIVE · 02:18",
     watched: true,
@@ -428,6 +437,7 @@ function makePodlinkFixtures(roomId: RoomId): RoomState {
   };
   return {
     ...rich,
+    dials: { ...rich.dials, ceremony: "light" },
     focusCraftId: craft.id,
     plans: [
       {
@@ -489,6 +499,7 @@ function makeComicReaderFixtures(roomId: RoomId): RoomState {
     callsign: "LEO",
     task: "reader turn final · panel crop parity",
     salience: 74,
+    salienceDelta: -6,
     planId: "0007",
     lastStamp: "LAST EVENT 01:04 AGO",
     tokens: 1680,
@@ -500,6 +511,7 @@ function makeComicReaderFixtures(roomId: RoomId): RoomState {
   };
   return {
     ...rich,
+    dials: { ...rich.dials, ceremony: "light" },
     focusCraftId: craft.id,
     plans: [
       {
@@ -552,6 +564,7 @@ function makeScratchFixtures(roomId: RoomId): RoomState {
     task: "exif sweep — photo library",
     state: "working" as const,
     salience: 88,
+    salienceDelta: -2,
     planId: null,
     lastStamp: "RUNNING 04:12",
     watched: false,

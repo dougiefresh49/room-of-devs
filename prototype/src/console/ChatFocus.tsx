@@ -19,8 +19,10 @@ export function ChatFocus({ draft, onDraftChange, onRestore }: ChatFocusProps) {
   const room = useRoom();
   const panelRef = useRef<HTMLElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
-  const mikeySpeaking = room.speakingPersona === "mikey";
-  const mode = room.mood === "the-lull" ? "stoked" : mikeySpeaking ? "speaking" : "idle";
+  const voice = room.crew.find((member) => member.id === room.voicePersona);
+  const voiceCallsign = voice?.callsign ?? room.voicePersona.toUpperCase();
+  const voiceSpeaking = room.speakingPersona === room.voicePersona;
+  const mode = room.mood === "the-lull" ? "stoked" : voiceSpeaking ? "speaking" : "idle";
   const hasWatchStatus = room.crafts.some((craft) => craft.watched) || Boolean(room.liveClip);
 
   useEffect(() => {
@@ -36,17 +38,17 @@ export function ChatFocus({ draft, onDraftChange, onRestore }: ChatFocusProps) {
     <section ref={panelRef} id="chatfocus" className="chatfocus">
       <header className={`chatfocus-head${hasWatchStatus ? " has-part-no" : ""}`}>
         <CrtFace size={52} scanlines>
-          <AvatarFace persona="mikey" mode={mode} size={52} />
+          <AvatarFace persona={room.voicePersona} mode={mode} size={52} />
         </CrtFace>
         <div className="chatfocus-voice">
-          <b>MIKEY</b>
+          <b>{voiceCallsign}</b>
           <span>
-            <i className={`chatfocus-lamp${mikeySpeaking ? " is-speaking" : ""}`} />
-            {mikeySpeaking ? "SPEAKING" : room.mood === "the-lull" ? "STOKED" : "IDLE"}
+            <i className={`chatfocus-lamp${voiceSpeaking ? " is-speaking" : ""}`} />
+            {voiceSpeaking ? "SPEAKING" : room.mood === "the-lull" ? "STOKED" : "IDLE"}
           </span>
         </div>
-        <Waveform active={mikeySpeaking} />
-        <span className="chatfocus-title">COMMS LOG</span>
+        <Waveform active={voiceSpeaking} />
+        <span className="chatfocus-title">COMMS LOG · {voiceCallsign}</span>
         <button
           type="button"
           className="vt-latch"
@@ -66,7 +68,7 @@ export function ChatFocus({ draft, onDraftChange, onRestore }: ChatFocusProps) {
               <span className="who">{row.who}</span>
               <span className={`say${row.you ? " you" : ""}`}>
                 {row.text}
-                {index === room.transcript.length - 1 && mikeySpeaking ? (
+                {index === room.transcript.length - 1 && voiceSpeaking ? (
                   <span className="cursor" />
                 ) : null}
               </span>

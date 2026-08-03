@@ -522,6 +522,49 @@ header.mast {
   justify-content: space-between;
   margin: 0 2px 8px;
 }
+.bay > .baylabel .spine-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--steel-dim);
+  letter-spacing: 0.24em;
+}
+.spinebay > .baylabel {
+  padding-right: 44px;
+}
+.spine-legend-trigger {
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid #3a3f45;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--steel-dim);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+.spine-legend-trigger:hover,
+.spine-legend-trigger:focus-visible,
+.spine-legend-trigger[data-state="open"] {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+  outline: none;
+}
+.spine-legend-trigger:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}
+.spine-legend-tip,
+.dial-tooltip {
+  border: 1px solid var(--amber-dim);
+  background: #17130e;
+  color: var(--steel);
+  font: 700 8px / 1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 /* ---- LEFT: voice column — Mikey faceplate (hero housing #1) ---- */
 .faceplate {
@@ -1293,6 +1336,52 @@ header.mast {
 .plan.archived .pl-status {
   color: var(--green);
 }
+.settled-strip {
+  grid-column: 2;
+  min-width: 0;
+  margin-top: 4px;
+  margin-left: clamp(20px, 6%, 40px);
+  padding-right: 22px;
+  box-sizing: border-box;
+}
+.settled-rule {
+  margin: 10px 2px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--steel-dim);
+  font: 700 7.5px / 1 var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.settled-rule::before,
+.settled-rule::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed #3a3f45;
+}
+.settled-strip .node.plan {
+  margin: 0;
+}
+.node.plan.is-departing {
+  opacity: 0.45;
+  transform: translateX(22px);
+}
+.node.plan.is-departing::before,
+.node.plan.is-departing::after,
+.node.plan.is-departing .bpcard::before {
+  display: none;
+}
+.settled-roster {
+  margin: 9px 2px 0 24px;
+  color: var(--steel-dim);
+  font: 700 8px / 1.5 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.settled-roster b {
+  color: var(--amber-dim);
+}
 .plan.queued .bpcard {
   border-style: dashed;
   border-color: var(--amber-dim);
@@ -1414,6 +1503,46 @@ header.mast {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.tnode .tstats {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0 5px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tnode .tstats .sep {
+  color: #4a5058;
+}
+.tnode .tstats .tok {
+  color: var(--amber);
+  font-weight: 800;
+}
+.tnode .tstats .tok svg {
+  margin-left: 3px;
+  vertical-align: -1px;
+  color: var(--amber-dim);
+}
+.tnode .tstats .usd {
+  color: var(--green);
+  font-weight: 800;
+}
+.tnode .tstats .turns {
+  color: var(--steel-dim);
+}
+.tnode .tstats .pull {
+  color: var(--red);
+  font-weight: 800;
+}
+.tnode .tstats .pull.up {
+  color: var(--green);
 }
 .tnode .tstat {
   display: flex;
@@ -1929,28 +2058,41 @@ details[open] .expandhint {
 }
 
 /* three dials — flat rotaries */
-.knobs {
+.instr-plate .knobs {
   display: flex;
   justify-content: space-around;
   padding: 12px 6px 8px;
 }
-.knob {
+.instr-plate .knob {
   text-align: center;
   width: 86px;
 }
-.knob .kface {
+.instr-plate .knob .kface {
   width: 58px;
   height: 58px;
+  padding: 0;
   margin: 0 auto;
   border-radius: 50%;
   position: relative;
+  display: block;
   background: radial-gradient(circle at 36% 30%, #575f68, #2b3036 58%, #1a1e22);
   border: 2px solid #0d0f12;
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
   box-shadow:
     0 4px 9px rgba(0, 0, 0, 0.6),
     inset 0 1px 1px rgba(255, 255, 255, 0.14);
+  transition: box-shadow 160ms linear;
 }
-.knob .kface::after {
+.instr-plate .knob .kface:active {
+  cursor: grabbing;
+}
+.instr-plate .knob .kface:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 3px;
+}
+.instr-plate .knob .kface::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -1961,20 +2103,17 @@ details[open] .expandhint {
   border-radius: 2px;
   background: var(--amber);
   box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
-}
-.knob.k1 .kface::after {
   transform-origin: 50% 24px;
-  transform: rotate(-38deg);
+  transform: rotate(var(--dial-rot, 0deg));
+  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.25, 1);
 }
-.knob.k2 .kface::after {
-  transform-origin: 50% 24px;
-  transform: rotate(0deg);
+.instr-plate .knob.is-hit .kface {
+  box-shadow:
+    0 4px 9px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 0 12px rgba(255, 179, 71, 0.55);
 }
-.knob.k3 .kface::after {
-  transform-origin: 50% 24px;
-  transform: rotate(42deg);
-}
-.knob .kl {
+.instr-plate .knob .kl {
   font-family: var(--mono);
   font-size: 8px;
   letter-spacing: 0.16em;
@@ -1982,13 +2121,35 @@ details[open] .expandhint {
   text-transform: uppercase;
   margin-top: 7px;
 }
-.knob .kv {
+.instr-plate .knob .kv {
   font-family: var(--mono);
   font-size: 9.5px;
   letter-spacing: 0.12em;
   color: var(--amber);
   text-transform: uppercase;
   margin-top: 2px;
+}
+.instr-plate .dial-homes {
+  width: calc(100% + 2px);
+  margin-inline: -1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--steel-dim);
+  font: 700 7.5px / 1 var(--mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.instr-plate .dhome {
+  color: var(--amber-dim);
+  transition: color 140ms linear;
+}
+.instr-plate .dhome.is-hit {
+  color: var(--amber-hot);
+}
+.instr-plate .dhome-sep {
+  color: var(--steel-dim);
 }
 
 /* ============================================================
@@ -2409,30 +2570,55 @@ footer {
    reply deck, intake + verb rack, dial homes
    ============================================================ */
 
-/* node anatomy legend — fixes "are those just worker threads?" */
-.legendstrip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: center;
-  margin: 0 2px 10px;
-  padding: 8px 12px;
-  border: 1px dashed #3a3f45;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.25);
+/* node anatomy legend — housed in the Spine cap popover */
+.spine-legend-pop {
+  z-index: 100;
+  width: 360px;
+  padding: 11px 13px 12px;
+  border: 1px solid var(--gun-edge);
+  background: linear-gradient(178deg, var(--gun1), var(--gun2));
   font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--steel-dim);
 }
-.legendstrip b {
-  color: var(--amber);
+.spine-legend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--steel);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
 }
-.legendstrip .arr {
+.spine-legend-head span {
   color: var(--amber-dim);
 }
-.legendstrip .lgface {
+.spine-legend-grid {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: 34px auto minmax(0, 1fr);
+  grid-auto-rows: 22px;
+  gap: 7px;
+  align-items: center;
+}
+.spine-legend-grid > b {
+  color: var(--amber);
+  font-size: 8.5px;
+  white-space: nowrap;
+}
+.spine-legend-grid > span:not(.lgface):not(.lgcard):not(.lgdock) {
+  color: var(--steel-dim);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+}
+.spine-legend-pop p {
+  max-width: 42ch;
+  margin: 10px 0 0;
+  color: var(--steel-dim);
+  font: 700 8px / 1.5 var(--mono);
+  letter-spacing: 0.06em;
+}
+.spine-legend-pop .lgface {
   width: 26px;
   height: 26px;
   border-radius: 4px;
@@ -2441,11 +2627,11 @@ footer {
   background: var(--screen);
   flex: none;
 }
-.legendstrip .lgface .face {
+.spine-legend-pop .lgface .face {
   width: 26px;
   filter: sepia(0.5) hue-rotate(-12deg) saturate(1.4);
 }
-.legendstrip .lgcard {
+.spine-legend-pop .lgcard {
   width: 30px;
   height: 18px;
   border: 1px solid #565c63;
@@ -2453,19 +2639,6 @@ footer {
   background: linear-gradient(178deg, #31363c, #22262b);
   flex: none;
 }
-.legendstrip .lgcond {
-  width: 26px;
-  height: 2px;
-  flex: none;
-  opacity: 0.6;
-  background: repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 10px);
-}
-.legendstrip .lgitem {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 /* --- long-range plot --- */
 .plotwrap {
   display: grid;
@@ -2878,19 +3051,6 @@ footer {
   margin-top: 2px;
 }
 
-/* dial homes */
-.knob .khome {
-  font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: 0.08em;
-  color: #565c63;
-  text-transform: uppercase;
-  margin-top: 5px;
-  line-height: 1.7;
-}
-.knob .khome b {
-  color: var(--amber-dim);
-}
 /* ============================================================
    v6 COHESION PASS — one shop, one machine
    1) machined corner grammar   2) docked, energized spine
@@ -3228,7 +3388,7 @@ footer {
 }
 
 /* legend swatch for the dock */
-.legendstrip .lgdock {
+.spine-legend-pop .lgdock {
   width: 34px;
   height: 18px;
   flex: none;
@@ -3236,7 +3396,7 @@ footer {
   border-radius: 2px 6px 6px 2px;
   background: linear-gradient(90deg, #4a5158 0 12px, #2b3036 12px 14px, transparent 14px);
 }
-.legendstrip .lgdock::after {
+.spine-legend-pop .lgdock::after {
   content: "";
   position: absolute;
   left: 14px;
@@ -3245,6 +3405,14 @@ footer {
   height: 3px;
   background: repeating-linear-gradient(90deg, var(--amber) 0 4px, transparent 4px 8px);
   opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .instr-plate .knob .kface::after,
+  .instr-plate .knob.is-hit .kface,
+  .instr-plate .dhome.is-hit {
+    transition: none;
+  }
 }
 
 /* ---- hex backdrops on the big glass (texture, never layout) ---- */

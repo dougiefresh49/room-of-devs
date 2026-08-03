@@ -1,8 +1,9 @@
 import { HexLayer } from "@room/ui/rig";
-import { ChevronRight } from "lucide-react";
 import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 import { PlanCard } from "./PlanCard";
+import { SettledStrip } from "./SettledStrip";
+import { SpineLegendButton } from "./SpineLegend";
 import { ThreadNode } from "./ThreadNode";
 
 export function SpineRail() {
@@ -20,31 +21,12 @@ export function SpineRail() {
     <div className="bay spinebay">
       <PartNo partNo="S-03" />
       <div className="baylabel">
-        <span>THE SPINE // ENERGIZED RAIL — PLANS DOCK TO IT, MORTAL THREADS FLY THEM</span>
-        <span>PLANS 0004–0008</span>
-      </div>
-      <div className="legendstrip">
-        <span style={{ color: "var(--steel)", fontWeight: 700 }}>HOW TO READ A NODE:</span>
-        <span className="lgitem">
-          <span>
-            <b>PILOT</b> = PERSONA
-          </span>
+        <span className="spine-title">
+          <span>THE SPINE</span>
+          <SpineLegendButton />
         </span>
-        <span className="arr">
-          <ChevronRight size={11} aria-hidden />
-        </span>
-        <span className="lgitem">
-          <span>
-            <b>CRAFT</b> = T-####
-          </span>
-        </span>
-        <span className="arr">
-          <ChevronRight size={11} aria-hidden />
-        </span>
-        <span className="lgitem">
-          <span>
-            <b>DOCK</b> = PLAN ON RAIL
-          </span>
+        <span title="DOCKED 0007–0008 · SETTLED 0004–0006">
+          PLANS 0004–0008
         </span>
       </div>
       <div className="spine-grid">
@@ -77,10 +59,8 @@ export function SpineRail() {
             ))}
             {empty ? <ThreadNode craft={empty} /> : null}
           </div>
-          {settled.map((p) => (
-            <PlanCard key={p.id} plan={p} />
-          ))}
         </div>
+        {settled.length ? <SettledStrip plans={settled} /> : null}
       </div>
     </div>
   );

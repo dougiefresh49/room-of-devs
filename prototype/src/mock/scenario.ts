@@ -13,7 +13,52 @@ import {
   setRoom,
   strikeCommission,
 } from "./store";
-import type { Craft, PersonaId, RoomId, RoomState } from "./types";
+import type {
+  BrainTable,
+  Craft,
+  GearDefault,
+  PersonaId,
+  RoomId,
+  RoomState,
+} from "./types";
+
+const ROUTE: Record<BrainTable, { model: string; costUsd: number }> = {
+  lean: { model: "FLASH", costUsd: 0.002 },
+  std: { model: "FLASH → SONNET", costUsd: 0.011 },
+  deep: { model: "FLASH → OPUS", costUsd: 0.043 },
+};
+
+/** Dial 1 changes its position and the live plan-card home atomically. */
+export function setCeremony(next: GearDefault) {
+  const room = getRoom();
+  patchRoom({
+    dials: { ...room.dials, ceremony: next },
+    plans: room.plans.map((plan) =>
+      plan.dock === "live"
+        ? { ...plan, gearTag: `DIAL 1 · GEAR: ${next.toUpperCase()}` }
+        : plan,
+    ),
+  });
+}
+
+/** Dial 2 changes its position and the faceplate occupant atomically. */
+export function setVoiceDial(next: PersonaId) {
+  const room = getRoom();
+  if (room.crew.find((member) => member.id === next)?.piloting) return;
+  patchRoom({
+    dials: { ...room.dials, voice: next },
+    voicePersona: next,
+  });
+}
+
+/** Dial 3 changes its position and the turn-chip route atomically. */
+export function setBrainTable(next: BrainTable) {
+  const room = getRoom();
+  patchRoom({
+    dials: { ...room.dials, brain: next },
+    turnChip: ROUTE[next],
+  });
+}
 
 function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -44,6 +89,7 @@ export function spawnCraft() {
     task: "reads the spine, not anyone's history",
     state: "spawning",
     salience: 100,
+    salienceDelta: 0,
     planId: "0007",
     lastStamp: "MATERIALIZING",
     holdSeconds: 0,
@@ -408,6 +454,7 @@ export function diagramArtifact() {
         task: "one-off diagram — no conduit, dies on delivery",
         state: "working",
         salience: 70,
+        salienceDelta: -5,
         planId: null,
         lastStamp: "LAST EVENT 00:00 AGO",
         holdSeconds: 0,
@@ -872,8 +919,8 @@ export function injectReply(text: string) {
   });
 }
 
-/** Mock crew-chief chat: append locally, then acknowledge in the same room. */
-export function sendMikeyChat(text: string) {
+/** Mock seated-voice chat: append locally, then acknowledge in the same room. */
+export function sendVoiceChat(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return;
   const roomId = getFleet().activeRoomId;
@@ -896,6 +943,9 @@ export function sendMikeyChat(text: string) {
     setAppState((app) => {
       const room = app.rooms[roomId];
       if (!room) return app;
+      const voiceCallsign =
+        room.crew.find((member) => member.id === room.voicePersona)?.callsign ??
+        room.voicePersona.toUpperCase();
       return {
         ...app,
         rooms: {
@@ -906,7 +956,7 @@ export function sendMikeyChat(text: string) {
             transcript: [
               ...room.transcript,
               {
-                who: "MIKEY" as const,
+                who: voiceCallsign,
                 text: "Logged. I'll fold that in at the next lull.",
               },
             ],
