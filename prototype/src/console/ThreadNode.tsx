@@ -132,6 +132,10 @@ export function ThreadNode({ craft }: { craft: Craft }) {
                       onPress={() => answer(o.id)}
                     />
                   ))}
+                  <div className="held-reply-paths">
+                    ANSWER: CLICK A KEY · SAY THE QUOTED PHRASE · OR TYPE IN THE REPLY DECK
+                    BELOW
+                  </div>
                 </>
               ) : (
                 craft.tail.map((ln, i) => (

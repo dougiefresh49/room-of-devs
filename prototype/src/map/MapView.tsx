@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@room/ui";
+import { Dialog, DialogContent, DialogTitle } from "@room/ui";
 import { Chassis, HexLayer, Keycap } from "@room/ui/rig";
 import { useEffect, useMemo, useState } from "react";
 import { Inspector } from "./Inspector";
@@ -190,9 +190,12 @@ export function MapDialog() {
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogTrigger asChild>
-        <Keycap glyph="⌁" label="SCHEMATIC" className="schematic-keycap" />
-      </DialogTrigger>
+      <Keycap
+        glyph="⌁"
+        label="SCHEMATIC"
+        className="schematic-keycap"
+        onPress={() => changeOpen(true)}
+      />
       <DialogContent className="map-dialog-content" data-schematic-dialog>
         <DialogTitle className="visually-hidden">Service schematic</DialogTitle>
         <MapView overlay />

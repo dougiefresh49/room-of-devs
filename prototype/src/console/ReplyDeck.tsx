@@ -63,9 +63,11 @@ export function ReplyDeck() {
         >
           <span className="btn" />
           <span className="lbl">
-            <b>{room.micHot ? "CAPTURING — RELEASE TO SEND" : "MIC COLD"}</b>
+            <b>{room.micHot ? "CAPTURING — RELEASE TO SEND" : "HOLD TO TALK"}</b>
             <br />
-            HOLD TO OPEN · NEVER ALWAYS-LISTENING
+            {room.micHot
+              ? "RELEASE SPACE / HW KEY"
+              : "SPACE / HW KEY · NEVER ALWAYS-LISTENING"}
           </span>
           {room.micHot ? <Waveform active bars={6} /> : null}
         </div>

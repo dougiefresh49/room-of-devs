@@ -2,7 +2,7 @@ import { Toaster } from "@room/ui";
 import { CutFrame, Keycap, Tag } from "@room/ui/rig";
 import { useEffect } from "react";
 import { coupleRoom, setView } from "../mock/scenario";
-import { getFleet, getRoom, openCommission, useFleet } from "../mock/store";
+import { getFleet, getRoom, openCommission, useAppState, useFleet } from "../mock/store";
 import { BerthCard } from "./BerthCard";
 import { BerthTabs } from "./BerthTabs";
 import { CommissioningBay } from "./commission/CommissioningBay";
@@ -52,6 +52,7 @@ export function useFleetKeyboard(enabled = true) {
 
 export function HangarView() {
   const fleet = useFleet();
+  const app = useAppState();
   const numbered = fleet.rooms
     .filter((room) => room.berth != null)
     .sort((a, b) => (a.berth ?? 0) - (b.berth ?? 0));
@@ -77,6 +78,7 @@ export function HangarView() {
               {scratch.length ? `${scratch.length} SCRATCH` : "SCRATCH COLD"}
             </Tag>
           </div>
+          <BerthTabs compact />
           <Keycap
             glyph="+"
             label="COMMISSION A ROOM"
@@ -85,16 +87,8 @@ export function HangarView() {
           />
           <nav className="hangar-ladder" aria-label="Zoom ladder">
             <b>HANGAR</b>
-            <span>▸</span>
-            <span>PLOT</span>
-            <span>▸</span>
-            <span>RAIL</span>
-            <span>▸</span>
-            <span>NODE</span>
-            <Tag tone="dim">ESC ▸ CLIMBS ONE RUNG</Tag>
-            <Tag tone="dim">⌘K ▸ SWITCH ROOM</Tag>
+            <span>▸ PLOT ▸ RAIL ▸ NODE · ESC · ⌘K</span>
           </nav>
-          <BerthTabs compact />
         </header>
 
         {fleet.commission ? (
@@ -103,7 +97,15 @@ export function HangarView() {
           <>
             <TrafficStrip fleet={fleet} />
             <div className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}>
-              <FloorBus audioFloor={fleet.audioFloor} rooms={numbered} />
+              <FloorBus
+                audioFloor={fleet.audioFloor}
+                rooms={numbered}
+                holderSpeaking={Boolean(
+                  fleet.audioFloor.roomId &&
+                    app.rooms[fleet.audioFloor.roomId]?.speakingPersona ===
+                      fleet.audioFloor.persona,
+                )}
+              />
               {numbered.map((berth) => (
                 <BerthCard
                   key={berth.id}

@@ -688,26 +688,39 @@ export function crossRoomArrival() {
   });
 }
 
-/** Move the one global audio floor from room-of-devs to podlink. */
+/** Cycle the mock floor through handoff, cold, and reacquire states. */
 export function floorHandoff() {
-  setAppState((app) => ({
-    ...app,
-    fleet: {
-      ...app.fleet,
-      audioFloor: {
-        roomId: "podlink",
-        persona: "mikey",
-        elapsed: "00:00",
-        route: app.fleet.audioFloor.route,
-        queue: [{ roomId: "room-of-devs", reason: "held question waits" }],
+  setAppState((app) => {
+    const current = app.fleet.audioFloor.roomId;
+    const next = current === "room-of-devs" ? "podlink" : current === "podlink" ? null : "room-of-devs";
+    return {
+      ...app,
+      fleet: {
+        ...app.fleet,
+        audioFloor: {
+          roomId: next,
+          persona: next ? "mikey" : null,
+          elapsed: "00:00",
+          route: app.fleet.audioFloor.route,
+          queue:
+            next === "podlink"
+              ? [{ roomId: "room-of-devs", reason: "held question waits" }]
+              : next === "room-of-devs"
+                ? [{ roomId: "podlink", reason: "release watch update" }]
+                : [],
+        },
+        traffic: app.fleet.traffic.map((row) => ({
+          ...row,
+          floorState:
+            row.roomId === next
+              ? "has"
+              : next && (row.roomId === "room-of-devs" || row.roomId === "podlink")
+                ? "queued"
+                : "lull",
+        })),
       },
-      traffic: app.fleet.traffic.map((row) => ({
-        ...row,
-        floorState:
-          row.roomId === "podlink" ? "has" : row.roomId === "room-of-devs" ? "queued" : "lull",
-      })),
-    },
-  }));
+    };
+  });
 }
 
 const SPAWNED_SCRATCH_ROOM_ID = "scratch-repo-sweep";
@@ -858,6 +871,51 @@ export function injectReply(text: string) {
         : s.crafts,
     };
   });
+}
+
+/** Mock concierge chat: append locally, then acknowledge in the same room. */
+export function sendMikeyChat(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  const roomId = getFleet().activeRoomId;
+  setAppState((app) => {
+    const room = app.rooms[roomId];
+    if (!room) return app;
+    return {
+      ...app,
+      rooms: {
+        ...app.rooms,
+        [roomId]: {
+          ...room,
+          rev: room.rev + 1,
+          transcript: [...room.transcript, { who: "YOU" as const, text: trimmed, you: true }],
+        },
+      },
+    };
+  });
+  window.setTimeout(() => {
+    setAppState((app) => {
+      const room = app.rooms[roomId];
+      if (!room) return app;
+      return {
+        ...app,
+        rooms: {
+          ...app.rooms,
+          [roomId]: {
+            ...room,
+            rev: room.rev + 1,
+            transcript: [
+              ...room.transcript,
+              {
+                who: "MIKEY" as const,
+                text: "Logged. I'll fold that in at the next lull.",
+              },
+            ],
+          },
+        },
+      };
+    });
+  }, 1000);
 }
 
 /** Focus a craft for the ANSWER screen (field plot / row taps). */

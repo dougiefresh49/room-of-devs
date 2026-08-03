@@ -2,30 +2,41 @@ import { Waveform } from "@room/ui/rig";
 import type { AudioFloor, RoomBerth } from "../mock/types";
 import { roomShortLabel } from "./BerthTabs";
 
-export function FloorBus({ audioFloor, rooms }: { audioFloor: AudioFloor; rooms: RoomBerth[] }) {
+export function FloorBus({
+  audioFloor,
+  rooms,
+  holderSpeaking,
+}: {
+  audioFloor: AudioFloor;
+  rooms: RoomBerth[];
+  holderSpeaking: boolean;
+}) {
   const holderRoomId = audioFloor.roomId;
   const numbered = rooms.filter((room) => room.berth != null);
   const holderIndex = numbered.findIndex((room) => room.id === holderRoomId);
   const stop = holderIndex < 0 ? 50 : ((holderIndex + 0.5) / Math.max(1, numbered.length)) * 100;
-  const live = holderRoomId != null;
+  const held = holderRoomId != null;
+  const stateClass = !held ? "is-cold" : holderSpeaking ? "is-speaking" : "is-held";
 
   return (
     <aside
-      className={`hangar-floor-bus${live ? " is-live" : " is-cold"}`}
-      aria-label="Global audio floor"
+      className={`hangar-floor-bus ${stateClass}`}
+      aria-label={`Global audio floor: ${held ? `${roomShortLabel(holderRoomId)} holds${holderSpeaking ? " and is speaking" : " idle"}` : "cold"}`}
     >
       <span className="hangar-floor-core" aria-hidden />
-      {live ? (
+      {held ? (
         <span className="hangar-floor-beam" style={{ top: `${stop}%` }}>
-          <span>{roomShortLabel(holderRoomId ?? "")}</span>
+          <span>{roomShortLabel(holderRoomId ?? "").slice(0, 1)}</span>
         </span>
       ) : null}
       <span className="hangar-floor-label">AUDIO FLOOR BUS · ONE VOICE · GLOBAL</span>
-      {live ? (
-        <div className="hangar-floor-wave" style={{ top: `${Math.min(92, stop + 8)}%` }}>
-          <Waveform active bars={5} />
+      {held ? (
+        <div className="hangar-floor-wave" style={{ top: `${stop}%` }}>
+          <Waveform active={holderSpeaking} bars={5} />
         </div>
-      ) : null}
+      ) : (
+        <span className="hangar-floor-idle" aria-hidden>···</span>
+      )}
     </aside>
   );
 }

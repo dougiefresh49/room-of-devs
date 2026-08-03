@@ -1,4 +1,5 @@
 import { Led } from "@room/ui/rig";
+import { useState } from "react";
 import { CrewManifest } from "./CrewManifest";
 import { DockMiniBar } from "./DockMiniBar";
 import { DonnieBay, Faceplate } from "./Faceplate";
@@ -11,8 +12,68 @@ import { TurnChip } from "./TurnChip";
 import { VerbRack } from "./VerbRack";
 import { WatchChips } from "./WatchChips";
 import { useRoom } from "../mock/store";
+import { sendMikeyChat } from "../mock/scenario";
 import { BerthTabs } from "../hangar/BerthTabs";
 import { MapDialog } from "../map/MapView";
+
+function ConsoleTitleBar({ mode, stamp }: { mode: "MAIN" | "NODE"; stamp: string }) {
+  const room = useRoom();
+  return (
+    <div className="titlebar">
+      <span className="stn">{`ROOM CONSOLE // ${mode}`}</span>
+      <span className="tag">{stamp}</span>
+      <BerthTabs compact />
+      <MapDialog />
+      <span className="spacer" />
+      <div className="lamps">
+        <span>
+          <Led tone="green" /> DAEMON
+        </span>
+        <span>
+          <Led tone="green" /> WS
+        </span>
+        <span>
+          <Led tone="amber" pulse={room.speakingPersona != null} /> VOICE
+        </span>
+        <span>
+          <Led tone={room.micHot ? "red" : "dim"} pulse={room.micHot} pulseSpeed="hot" />
+          MIC
+        </span>
+        <span className="sseg">{room.clock}</span>
+      </div>
+    </div>
+  );
+}
+
+function MikeyChatComposer() {
+  const [draft, setDraft] = useState("");
+  const submit = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft("");
+    sendMikeyChat(text);
+  };
+
+  return (
+    <form
+      className="mikey-composer"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
+      <input
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        placeholder="message Mikey…"
+        aria-label="Message Mikey"
+      />
+      <button type="submit" disabled={!draft.trim()}>
+        SEND ⏎
+      </button>
+    </form>
+  );
+}
 
 export function ConsoleView() {
   const room = useRoom();
@@ -23,16 +84,7 @@ export function ConsoleView() {
       room.crafts.find((c) => c.state !== "empty");
     return (
       <div className="chassis mainwin">
-        <div className="titlebar">
-          <span className="stn">ROOM CONSOLE // NODE</span>
-          <span className="tag">ZOOM 3 · HARD CUT</span>
-          <BerthTabs compact />
-          <MapDialog />
-          <span className="spacer" />
-          <span className="sseg" style={{ fontSize: 11 }}>
-            {craft?.ticket ?? "—"}
-          </span>
-        </div>
+        <ConsoleTitleBar mode="NODE" stamp={`ZOOM 3 · ${craft?.ticket ?? "—"}`} />
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {craft ? <ThreadNode craft={{ ...craft, open: true }} /> : null}
         </div>
@@ -47,30 +99,7 @@ export function ConsoleView() {
         <span className="screw tr" />
         <span className="screw bl" />
         <span className="screw br" />
-        <div className="titlebar">
-          <span className="stn">ROOM CONSOLE // MAIN</span>
-          <span className="tag">SNAPSHOT REV {room.rev}</span>
-          <BerthTabs compact />
-          <MapDialog />
-          <span className="spacer" />
-          <div className="lamps">
-            <span>
-              <Led tone="green" /> DAEMON
-            </span>
-            <span>
-              <Led tone="green" /> WS
-            </span>
-            <span>
-              <Led tone="amber" pulse={room.speakingPersona != null} /> VOICE
-            </span>
-            <span>
-              <Led tone={room.micHot ? "red" : "dim"} pulse={room.micHot} pulseSpeed="hot" /> MIC
-            </span>
-            <span className="sseg" style={{ fontSize: 11 }}>
-              {room.clock}
-            </span>
-          </div>
-        </div>
+        <ConsoleTitleBar mode="MAIN" stamp={`SNAPSHOT REV ${room.rev}`} />
 
         <div className="cols">
           <div>
@@ -90,14 +119,17 @@ export function ConsoleView() {
               ))}
               <WatchChips />
               <TurnChip />
+              <MikeyChatComposer />
             </div>
             <DonnieBay />
             <div className={`pttbar${room.micHot ? " hot" : ""}`}>
               <span className="btn" />
               <span className="lbl">
-                <b>{room.micHot ? "CAPTURING" : "MIC COLD"}</b>
+                <b>{room.micHot ? "CAPTURING — RELEASE TO SEND" : "HOLD TO TALK"}</b>
                 <br />
-                HOLD SPACE OR HW KEY TO OPEN · NEVER ALWAYS-LISTENING
+                {room.micHot
+                  ? "RELEASE SPACE / HW KEY"
+                  : "SPACE / HW KEY · NEVER ALWAYS-LISTENING"}
               </span>
             </div>
           </div>

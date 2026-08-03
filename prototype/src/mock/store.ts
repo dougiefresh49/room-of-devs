@@ -76,6 +76,10 @@ export function useFleet(): FleetState {
   return useSyncExternalStore(subscribe, getFleet, getFleet);
 }
 
+export function useAppState(): AppState {
+  return useSyncExternalStore(subscribe, getAppState, getAppState);
+}
+
 /** Stable manifest-directory spelling for the live commissioning pane. */
 export function commissionRoomId(name: string): RoomId {
   return (
