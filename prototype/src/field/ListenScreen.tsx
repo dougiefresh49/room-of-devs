@@ -156,7 +156,7 @@ export function ListenScreen() {
           </span>
         ) : (
           <span>
-            CONCIERGE · <b>ROOM VOICE</b> · {room.audio.gateCountdown}
+            CREW CHIEF · <b>ROOM VOICE</b> · {room.audio.gateCountdown}
           </span>
         )}
       </div>

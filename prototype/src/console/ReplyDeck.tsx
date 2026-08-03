@@ -1,4 +1,5 @@
 import { Keycap, Waveform } from "@room/ui/rig";
+import { CornerDownLeft } from "lucide-react";
 import { PartNo } from "../map/PartNo";
 import { answer, micClose, micOpen, setComposer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
@@ -37,7 +38,7 @@ export function ReplyDeck() {
             onChange={(e) => setComposer(e.target.value)}
           />
           <button type="button" className="sendkey">
-            INJECT ⏎
+            INJECT <CornerDownLeft size={12} aria-hidden />
           </button>
         </div>
         <div className="voicehint">

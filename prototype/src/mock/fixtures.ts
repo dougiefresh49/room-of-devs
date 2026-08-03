@@ -381,9 +381,13 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         who: "MIKEY",
         text: "Update — fix staged, tests green. Splinter's still holding a plan for you when you want it.",
       },
+      {
+        who: "MIKEY",
+        text: "Long read for the log: Raph traced the stale team-map spawn through the hook handoff, confirmed the first paint was racing the room manifest, and moved the reconciliation behind the settled snapshot. The focused transcript keeps the diagnosis, the validation pass, and this full handoff readable without squeezing the spine or taking the live instruments off the board.",
+      },
     ],
     crew: [
-      { id: "mikey", callsign: "MIKEY", role: "CONCIERGE", piloting: false },
+      { id: "mikey", callsign: "MIKEY", role: "CREW CHIEF", piloting: false },
       { id: "donnie", callsign: "DONNIE", role: "SECOND VOICE", piloting: true },
       { id: "leo", callsign: "LEO", role: "CRAFT T-0452", piloting: true },
       { id: "raph", callsign: "RAPH", role: "CRAFT T-0451", piloting: true },
@@ -462,7 +466,12 @@ function makePodlinkFixtures(roomId: RoomId): RoomState {
     crew: rich.crew.map((member) => ({
       ...member,
       piloting: member.id === "raph",
-      role: member.id === "raph" ? "WATCHER W-2" : member.id === "mikey" ? "CONCIERGE" : "STANDBY",
+      role:
+        member.id === "raph"
+          ? "WATCHER W-2"
+          : member.id === "mikey"
+            ? "CREW CHIEF"
+            : "STANDBY",
     })),
     queuedForLull: [],
     dockTicker: "RAPH · RELEASE WATCH ACTIVE · BASELINE STABLE",
@@ -519,7 +528,12 @@ function makeComicReaderFixtures(roomId: RoomId): RoomState {
     crew: rich.crew.map((member) => ({
       ...member,
       piloting: member.id === "leo",
-      role: member.id === "leo" ? "CRAFT T-0912" : member.id === "mikey" ? "CONCIERGE" : "STANDBY",
+      role:
+        member.id === "leo"
+          ? "CRAFT T-0912"
+          : member.id === "mikey"
+            ? "CREW CHIEF"
+            : "STANDBY",
     })),
     queuedForLull: ["leo turn final"],
     dockTicker: "LEO · TURN FINAL · QUEUED FOR THE LULL",

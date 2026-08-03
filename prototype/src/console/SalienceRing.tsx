@@ -1,3 +1,4 @@
+import { GripHorizontal } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { setThreshold } from "../mock/scenario";
 import { PartNo } from "../map/PartNo";
@@ -30,13 +31,13 @@ export function SalienceRing() {
   );
 
   return (
-    <div className="chassis gaugebox">
+    <div className="instr-plate has-part-no has-top-screws">
       <PartNo partNo="S-06" />
       <span className="screw tl" />
       <span className="screw tr" />
       <div className="cap">
         <span>SALIENCE RING</span>
-        <b>DISTANCE FROM NEEDING YOU</b>
+        <b>WORST THREAD</b>
       </div>
       <div className="screenbed" style={{ padding: "12px 8px 10px" }}>
         <svg
@@ -56,6 +57,7 @@ export function SalienceRing() {
           }}
           style={{ cursor: "grab", touchAction: "none" }}
         >
+          <title>Salience ring and draggable speak-gate threshold</title>
           <circle cx="115" cy="115" r="106" fill="none" stroke="#31363c" strokeWidth="15" />
           <circle cx="115" cy="115" r="106" fill="none" stroke="#454b53" strokeWidth="2" opacity=".6" />
           <g fill="#565e67">
@@ -145,11 +147,23 @@ export function SalienceRing() {
           </text>
         </svg>
         <div className="salreadout">
-          <span className="dotmx ghost">SALIENCE</span>
-          <span className="pct">{clearPct}% CLR</span>
-          <span className="tag red" style={{ fontSize: 8, whiteSpace: "nowrap" }}>
-            TH {threshold} · DRAG
-          </span>
+          <div className="salvalue">
+            <span className="dotmx ghost">SALIENCE</span>
+            <span className="pct">{clearPct}% CLR</span>
+          </div>
+          <div
+            className="salgate"
+            title="Drag the red tab on the ring to set the speak gate"
+          >
+            <span>SPEAK GATE</span>
+            <b className="sseg">{threshold}</b>
+            <span className="salgate-drag">
+              <GripHorizontal size={11} /> DRAG TAB
+            </span>
+          </div>
+        </div>
+        <div className="salcaption">
+          100 = CLEAR OF YOU · MIKEY SPEAKS UNPROMPTED BELOW THE GATE
         </div>
       </div>
       <div className="screenbed salcauses">

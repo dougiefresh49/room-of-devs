@@ -12,7 +12,7 @@ export function TheCore() {
   const worst = worstGuard(spend);
 
   return (
-    <div className="chassis gaugebox">
+    <div className="instr-plate has-part-no">
       <PartNo partNo="S-07" />
       <div className="cap">
         <span>THE CORE</span>

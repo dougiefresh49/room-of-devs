@@ -13,7 +13,7 @@ export function Faceplate() {
     <div className="faceplate">
       <PartNo partNo="S-01" />
       <div className="fp-label">
-        <span>CONCIERGE</span>
+        <span>CREW CHIEF</span>
         <Tag tone="dim">DIAL 2 · VOICE</Tag>
       </div>
       <div className="screenbed fp-screen">

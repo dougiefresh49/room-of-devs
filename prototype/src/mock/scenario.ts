@@ -872,7 +872,7 @@ export function injectReply(text: string) {
   });
 }
 
-/** Mock concierge chat: append locally, then acknowledge in the same room. */
+/** Mock crew-chief chat: append locally, then acknowledge in the same room. */
 export function sendMikeyChat(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return;

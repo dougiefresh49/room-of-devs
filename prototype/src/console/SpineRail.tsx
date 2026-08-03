@@ -1,4 +1,5 @@
 import { HexLayer } from "@room/ui/rig";
+import { ChevronRight } from "lucide-react";
 import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 import { PlanCard } from "./PlanCard";
@@ -29,13 +30,17 @@ export function SpineRail() {
             <b>PILOT</b> = PERSONA
           </span>
         </span>
-        <span className="arr">▸</span>
+        <span className="arr">
+          <ChevronRight size={11} aria-hidden />
+        </span>
         <span className="lgitem">
           <span>
             <b>CRAFT</b> = T-####
           </span>
         </span>
-        <span className="arr">▸</span>
+        <span className="arr">
+          <ChevronRight size={11} aria-hidden />
+        </span>
         <span className="lgitem">
           <span>
             <b>DOCK</b> = PLAN ON RAIL

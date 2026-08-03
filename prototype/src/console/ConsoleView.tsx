@@ -1,92 +1,68 @@
-import { useState } from "react";
+import { Maximize2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RigMasthead } from "../chrome/RigMasthead";
-import { useRoom } from "../mock/store";
+import { PartNo } from "../map/PartNo";
+import { useFleet, useRoom } from "../mock/store";
+import { ChatFocus } from "./ChatFocus";
 import { ConsoleDock } from "./ConsoleDock";
 import { CrewManifest } from "./CrewManifest";
 import { DockMiniBar } from "./DockMiniBar";
 import { DonnieBay, Faceplate } from "./Faceplate";
+import { InstrumentBay } from "./InstrumentBay";
 import { ReplyDeck } from "./ReplyDeck";
-import { SalienceRing } from "./SalienceRing";
 import { SpineRail } from "./SpineRail";
-import { TheCore } from "./TheCore";
 import { ThreadNode } from "./ThreadNode";
 import { TurnChip } from "./TurnChip";
 import { VerbRack } from "./VerbRack";
 import { WatchChips } from "./WatchChips";
-
-function InstrumentStack({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  return (
-    <div className="instr">
-      <button
-        type="button"
-        className="instr-latch"
-        aria-expanded={open}
-        aria-label="Instruments column"
-        onClick={onToggle}
-      >
-        ▸
-      </button>
-      <SalienceRing />
-      <TheCore />
-      <div className="chassis gaugebox">
-        <span className="screw bl" />
-        <span className="screw br" />
-        <div className="cap">
-          <span>THE THREE DIALS</span>
-          <b>EACH LIVES SOMEWHERE VISIBLE</b>
-        </div>
-        <div className="knobs">
-          <div className="knob k1">
-            <div className="kface" />
-            <div className="kl">1 · CEREMONY</div>
-            <div className="kv">FULL</div>
-            <div className="khome">
-              PER THREAD · <b>HOME: THE PLAN CARD</b>
-            </div>
-          </div>
-          <div className="knob k2">
-            <div className="kface" />
-            <div className="kl">2 · VOICE</div>
-            <div className="kv">MIKEY</div>
-            <div className="khome">
-              ATTACHMENT · <b>HOME: THE FACEPLATE</b>
-            </div>
-          </div>
-          <div className="knob k3">
-            <div className="kface" />
-            <div className="kl">3 · BRAIN / TURN</div>
-            <div className="kv">FLASH → OPUS</div>
-            <div className="khome">
-              ROUTING TABLE · <b>HOME: THE TURN CHIP</b>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InstrumentStub({ clearPct, onExpand }: { clearPct: number; onExpand: () => void }) {
-  return (
-    <button
-      type="button"
-      className="instr-stub"
-      aria-expanded="false"
-      aria-label="Instruments column"
-      onClick={onExpand}
-    >
-      <span className="stub-latch" aria-hidden>
-        ◂
-      </span>
-      <span className="stub-label">INSTRUMENTS</span>
-      <span className="stub-value sseg">{clearPct}%</span>
-    </button>
-  );
-}
+import { transcriptRowKey } from "./transcriptKeys";
 
 export function ConsoleView() {
   const room = useRoom();
+  const fleet = useFleet();
   const [instrOpen, setInstrOpen] = useState(true);
+  const [chatFocused, setChatFocused] = useState(false);
+  const [draft, setDraft] = useState("");
+  const focusLatchRef = useRef<HTMLButtonElement>(null);
+  const restingLogRef = useRef<HTMLDivElement>(null);
+
+  const restoreChat = useCallback(() => {
+    setChatFocused(false);
+    window.requestAnimationFrame(() => focusLatchRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (fleet.activeRoomId) setChatFocused(false);
+  }, [fleet.activeRoomId]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1180px)");
+    const forceOpen = () => {
+      if (media.matches) setInstrOpen(true);
+    };
+    forceOpen();
+    media.addEventListener("change", forceOpen);
+    return () => media.removeEventListener("change", forceOpen);
+  }, []);
+
+  useEffect(() => {
+    if (!chatFocused) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      const target = event.target as Element | null;
+      if (target?.closest('[role="dialog"], [cmdk-root]')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      restoreChat();
+    };
+    window.addEventListener("keydown", onEscape, true);
+    return () => window.removeEventListener("keydown", onEscape, true);
+  }, [chatFocused, restoreChat]);
+
+  useEffect(() => {
+    const log = restingLogRef.current;
+    if (room.transcript.length > 0 && log) log.scrollTop = log.scrollHeight;
+  }, [room.transcript]);
 
   if (room.view === "node") {
     const craft =
@@ -102,6 +78,9 @@ export function ConsoleView() {
     );
   }
 
+  const recentTranscript = room.transcript.slice(-4);
+  const hasWatchStatus = room.crafts.some((craft) => craft.watched) || Boolean(room.liveClip);
+
   return (
     <>
       <div className="chassis mainwin">
@@ -110,35 +89,60 @@ export function ConsoleView() {
         <span className="screw tr" />
         <span className="screw bl" />
         <span className="screw br" />
-        <div className={`cols${instrOpen ? "" : " cols--instr-collapsed"}`}>
-          <div>
+        <div
+          className={`cols${instrOpen ? "" : " cols--instr-collapsed"}${chatFocused ? " cols--chat-focused" : ""}`}
+        >
+          <div inert={chatFocused || undefined} aria-hidden={chatFocused || undefined}>
             <Faceplate />
             <div className="screenbed vt">
-              {room.transcript.slice(-4).map((r, i) => (
-                <div className="row" key={i}>
-                  <span className="who">{r.who}</span>
-                  <span className={`say${r.you ? " you" : ""}`}>
-                    {r.text}
-                    {i === room.transcript.slice(-4).length - 1 &&
-                    room.speakingPersona === "mikey" ? (
-                      <span className="cursor" />
-                    ) : null}
-                  </span>
-                </div>
-              ))}
-              <WatchChips />
-              <TurnChip />
+              <div className={`cap vt-cap${hasWatchStatus ? " has-part-no" : ""}`}>
+                <span>COMMS LOG</span>
+                <button
+                  ref={focusLatchRef}
+                  type="button"
+                  className="vt-latch"
+                  aria-expanded={chatFocused}
+                  aria-controls={chatFocused ? "chatfocus" : undefined}
+                  onClick={() => setChatFocused(true)}
+                >
+                  <Maximize2 size={12} />
+                  FOCUS
+                </button>
+                {hasWatchStatus ? <PartNo partNo="S-09" bindHousing={false} /> : null}
+              </div>
+              <div ref={restingLogRef} className="vt-log">
+                {recentTranscript.map((row, index) => (
+                  <div className="row" key={transcriptRowKey(row)}>
+                    <span className="who">{row.who}</span>
+                    <span className={`say${row.you ? " you" : ""}`}>
+                      {row.text}
+                      {index === recentTranscript.length - 1 && room.speakingPersona === "mikey" ? (
+                        <span className="cursor" />
+                      ) : null}
+                    </span>
+                  </div>
+                ))}
+                <WatchChips />
+                <TurnChip />
+              </div>
             </div>
-            <ConsoleDock />
+            {!chatFocused ? <ConsoleDock draft={draft} onDraftChange={setDraft} /> : null}
             <DonnieBay />
           </div>
 
-          <SpineRail />
-
-          <div className="instr-slot">
-            <InstrumentStack open={instrOpen} onToggle={() => setInstrOpen(false)} />
-            <InstrumentStub clearPct={room.salience.clearPct} onExpand={() => setInstrOpen(true)} />
+          <div inert={chatFocused || undefined} aria-hidden={chatFocused || undefined}>
+            <SpineRail />
           </div>
+
+          <InstrumentBay
+            open={instrOpen}
+            clearPct={room.salience.clearPct}
+            onToggle={() => setInstrOpen((open) => !open)}
+          />
+
+          {chatFocused ? (
+            <ChatFocus draft={draft} onDraftChange={setDraft} onRestore={restoreChat} />
+          ) : null}
         </div>
       </div>
 

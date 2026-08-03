@@ -375,8 +375,7 @@
 .plotwrap,
 .field-root .screen-body,
 .field-root .fdock,
-.watchchip,
-.gaugebox {
+.watchchip {
   position: relative;
 }
 

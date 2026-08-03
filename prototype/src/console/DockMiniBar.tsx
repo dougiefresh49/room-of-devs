@@ -1,4 +1,5 @@
 import { CrtFace, Led, SalienceBar } from "@room/ui/rig";
+import { ChevronRight } from "lucide-react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
 import { useFleet } from "../mock/store";
@@ -29,7 +30,10 @@ export function DockMiniBar() {
         <SalienceBar lit={lit} threshold={th} segments={16} />
         <div className="tick">
           <span>
-            <b>{roomShortLabel(worst.id)} ▸</b> {worst.ticker}
+            <b>
+              {roomShortLabel(worst.id)} <ChevronRight size={10} aria-hidden />
+            </b>{" "}
+            {worst.ticker}
           </span>
         </div>
         <div className="dled">

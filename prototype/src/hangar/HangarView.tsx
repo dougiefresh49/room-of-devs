@@ -22,7 +22,8 @@ export function useFleetKeyboard(enabled = true) {
     if (!enabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      if (isEditable(event.target)) return;
+      const modified = event.metaKey || event.ctrlKey || event.altKey;
+      if (isEditable(event.target) && !modified) return;
       if (event.metaKey && /^\d$/.test(event.key)) {
         event.preventDefault();
         if (event.key === "0") {

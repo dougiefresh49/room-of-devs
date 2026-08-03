@@ -1,4 +1,5 @@
 import { CrtFace, Keycap } from "@room/ui/rig";
+import { ChevronRight } from "lucide-react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
 import {
@@ -99,7 +100,9 @@ export function ThreadNode({ craft }: { craft: Craft }) {
             ) : null}
           </div>
         </summary>
-        <div className="expandhint">▸ OPEN NODE</div>
+        <div className="expandhint">
+          <ChevronRight size={10} aria-hidden /> OPEN NODE
+        </div>
         {craft.state !== "empty" ? (
           <div className="innards">
             <div className="screenbed term">

@@ -1,4 +1,3 @@
-import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
 
 export function WatchChips() {
@@ -7,7 +6,6 @@ export function WatchChips() {
   if (watched.length === 0 && !room.liveClip) return null;
   return (
     <>
-      <PartNo partNo="S-09" bindHousing={false} />
       {watched.map((c) => (
         <div className="watchchip" key={c.id}>
           <span className="eye" /> WATCH ORDER · {c.ticket} {c.task.split(":")[0]?.toUpperCase()} ·
