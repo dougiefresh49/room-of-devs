@@ -1,0 +1,209 @@
+/* The room binder: recessed tab rail attached to one raised header plate. */
+.masthead {
+  margin: -4px -4px 12px;
+}
+
+.masthead-rail {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 6px 14px 0;
+  border-bottom: 1px solid var(--gun-edge);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+  overflow-y: clip;
+  scrollbar-width: thin;
+}
+
+/* Binder-tab exception: its open bottom edge is what attaches it to the plate. */
+.masthead-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  transform: translateY(2px);
+  padding: 8px 14px;
+  border: 1px solid var(--gun-edge);
+  border-bottom: 0;
+  border-radius: 10px 3px 0 0;
+  background: linear-gradient(180deg, #24282d, #1a1d21);
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.masthead-tab:hover,
+.masthead-tab:focus-visible {
+  color: var(--steel);
+  outline: none;
+}
+
+.masthead-tab.is-active {
+  transform: translateY(0);
+  margin-bottom: -1px;
+  padding-bottom: 9px;
+  border-color: var(--gun-edge);
+  color: var(--amber-hot);
+  background: linear-gradient(180deg, var(--gun1), #33383e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 2;
+}
+
+.masthead-tab.needs-you:not(.is-active) {
+  border-color: #7a2c22;
+  color: var(--red);
+}
+
+.masthead-tab--new {
+  padding: 8px 12px;
+  color: var(--steel-dim);
+  opacity: 0.6;
+}
+
+.masthead-tab--new:hover {
+  opacity: 1;
+  color: var(--amber-hot);
+}
+
+.masthead-plate {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  padding: 9px 18px;
+  border: 1px solid var(--gun-edge);
+  border-top: 0;
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(180deg, var(--gun1), #262a2f);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.masthead-plate .stn {
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: var(--steel);
+  white-space: nowrap;
+}
+
+.masthead-plate > .rig-tag {
+  flex: none;
+  white-space: nowrap;
+}
+
+.masthead-plate .spacer {
+  flex: 1;
+}
+
+.masthead-plate .lamps {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--steel-dim);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.viewmenu-trigger {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 6px 2px 2px 2px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.viewmenu-trigger:focus-visible {
+  outline: 1px solid var(--amber-hot);
+  outline-offset: 2px;
+}
+
+.viewmenu-trigger .vm-key {
+  color: var(--steel-dim);
+}
+
+.viewmenu-content {
+  min-width: 244px;
+  padding: 5px;
+  border: 1px solid var(--gun-edge);
+  border-radius: 12px 4px 4px 4px;
+  background: linear-gradient(178deg, var(--gun1), var(--gun2));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 14px 34px rgba(0, 0, 0, 0.6);
+}
+
+.viewmenu-content[data-state="closed"] {
+  display: none;
+}
+
+.viewmenu-content .vm-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 6px 2px 2px 2px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.viewmenu-content .vm-item[data-highlighted] {
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+}
+
+.viewmenu-content .vm-item .vm-hint {
+  margin-left: auto;
+  font-size: 7.5px;
+  opacity: 0.7;
+}
+
+.viewmenu-content .vm-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--gun-edge);
+}
+
+.viewmenu-content .vm-foot {
+  padding: 6px 10px 3px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.11em;
+}
+
+@media (max-width: 780px) {
+  .masthead-plate {
+    overflow-x: auto;
+  }
+}

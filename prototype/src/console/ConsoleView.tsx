@@ -1,5 +1,7 @@
-import { Led } from "@room/ui/rig";
 import { useState } from "react";
+import { RigMasthead } from "../chrome/RigMasthead";
+import { useRoom } from "../mock/store";
+import { ConsoleDock } from "./ConsoleDock";
 import { CrewManifest } from "./CrewManifest";
 import { DockMiniBar } from "./DockMiniBar";
 import { DonnieBay, Faceplate } from "./Faceplate";
@@ -11,72 +13,80 @@ import { ThreadNode } from "./ThreadNode";
 import { TurnChip } from "./TurnChip";
 import { VerbRack } from "./VerbRack";
 import { WatchChips } from "./WatchChips";
-import { useRoom } from "../mock/store";
-import { sendMikeyChat } from "../mock/scenario";
-import { BerthTabs } from "../hangar/BerthTabs";
-import { MapDialog } from "../map/MapView";
 
-function ConsoleTitleBar({ mode, stamp }: { mode: "MAIN" | "NODE"; stamp: string }) {
-  const room = useRoom();
+function InstrumentStack({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
-    <div className="titlebar">
-      <span className="stn">{`ROOM CONSOLE // ${mode}`}</span>
-      <span className="tag">{stamp}</span>
-      <BerthTabs compact />
-      <MapDialog />
-      <span className="spacer" />
-      <div className="lamps">
-        <span>
-          <Led tone="green" /> DAEMON
-        </span>
-        <span>
-          <Led tone="green" /> WS
-        </span>
-        <span>
-          <Led tone="amber" pulse={room.speakingPersona != null} /> VOICE
-        </span>
-        <span>
-          <Led tone={room.micHot ? "red" : "dim"} pulse={room.micHot} pulseSpeed="hot" />
-          MIC
-        </span>
-        <span className="sseg">{room.clock}</span>
+    <div className="instr">
+      <button
+        type="button"
+        className="instr-latch"
+        aria-expanded={open}
+        aria-label="Instruments column"
+        onClick={onToggle}
+      >
+        ▸
+      </button>
+      <SalienceRing />
+      <TheCore />
+      <div className="chassis gaugebox">
+        <span className="screw bl" />
+        <span className="screw br" />
+        <div className="cap">
+          <span>THE THREE DIALS</span>
+          <b>EACH LIVES SOMEWHERE VISIBLE</b>
+        </div>
+        <div className="knobs">
+          <div className="knob k1">
+            <div className="kface" />
+            <div className="kl">1 · CEREMONY</div>
+            <div className="kv">FULL</div>
+            <div className="khome">
+              PER THREAD · <b>HOME: THE PLAN CARD</b>
+            </div>
+          </div>
+          <div className="knob k2">
+            <div className="kface" />
+            <div className="kl">2 · VOICE</div>
+            <div className="kv">MIKEY</div>
+            <div className="khome">
+              ATTACHMENT · <b>HOME: THE FACEPLATE</b>
+            </div>
+          </div>
+          <div className="knob k3">
+            <div className="kface" />
+            <div className="kl">3 · BRAIN / TURN</div>
+            <div className="kv">FLASH → OPUS</div>
+            <div className="khome">
+              ROUTING TABLE · <b>HOME: THE TURN CHIP</b>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function MikeyChatComposer() {
-  const [draft, setDraft] = useState("");
-  const submit = () => {
-    const text = draft.trim();
-    if (!text) return;
-    setDraft("");
-    sendMikeyChat(text);
-  };
-
+function InstrumentStub({ clearPct, onExpand }: { clearPct: number; onExpand: () => void }) {
   return (
-    <form
-      className="mikey-composer"
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit();
-      }}
+    <button
+      type="button"
+      className="instr-stub"
+      aria-expanded="false"
+      aria-label="Instruments column"
+      onClick={onExpand}
     >
-      <input
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        placeholder="message Mikey…"
-        aria-label="Message Mikey"
-      />
-      <button type="submit" disabled={!draft.trim()}>
-        SEND ⏎
-      </button>
-    </form>
+      <span className="stub-latch" aria-hidden>
+        ◂
+      </span>
+      <span className="stub-label">INSTRUMENTS</span>
+      <span className="stub-value sseg">{clearPct}%</span>
+    </button>
   );
 }
 
 export function ConsoleView() {
   const room = useRoom();
+  const [instrOpen, setInstrOpen] = useState(true);
 
   if (room.view === "node") {
     const craft =
@@ -84,7 +94,7 @@ export function ConsoleView() {
       room.crafts.find((c) => c.state !== "empty");
     return (
       <div className="chassis mainwin">
-        <ConsoleTitleBar mode="NODE" stamp={`ZOOM 3 · ${craft?.ticket ?? "—"}`} />
+        <RigMasthead mode="room" stamp={`ZOOM 3 · ${craft?.ticket ?? "—"}`} />
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {craft ? <ThreadNode craft={{ ...craft, open: true }} /> : null}
         </div>
@@ -95,13 +105,12 @@ export function ConsoleView() {
   return (
     <>
       <div className="chassis mainwin">
+        <RigMasthead mode="room" />
         <span className="screw tl" />
         <span className="screw tr" />
         <span className="screw bl" />
         <span className="screw br" />
-        <ConsoleTitleBar mode="MAIN" stamp={`SNAPSHOT REV ${room.rev}`} />
-
-        <div className="cols">
+        <div className={`cols${instrOpen ? "" : " cols--instr-collapsed"}`}>
           <div>
             <Faceplate />
             <div className="screenbed vt">
@@ -119,60 +128,16 @@ export function ConsoleView() {
               ))}
               <WatchChips />
               <TurnChip />
-              <MikeyChatComposer />
             </div>
+            <ConsoleDock />
             <DonnieBay />
-            <div className={`pttbar${room.micHot ? " hot" : ""}`}>
-              <span className="btn" />
-              <span className="lbl">
-                <b>{room.micHot ? "CAPTURING — RELEASE TO SEND" : "HOLD TO TALK"}</b>
-                <br />
-                {room.micHot
-                  ? "RELEASE SPACE / HW KEY"
-                  : "SPACE / HW KEY · NEVER ALWAYS-LISTENING"}
-              </span>
-            </div>
           </div>
 
           <SpineRail />
 
-          <div className="instr">
-            <SalienceRing />
-            <TheCore />
-            <div className="chassis gaugebox">
-              <span className="screw bl" />
-              <span className="screw br" />
-              <div className="cap">
-                <span>THE THREE DIALS</span>
-                <b>EACH LIVES SOMEWHERE VISIBLE</b>
-              </div>
-              <div className="knobs">
-                <div className="knob k1">
-                  <div className="kface" />
-                  <div className="kl">1 · CEREMONY</div>
-                  <div className="kv">FULL</div>
-                  <div className="khome">
-                    PER THREAD · <b>HOME: THE PLAN CARD</b>
-                  </div>
-                </div>
-                <div className="knob k2">
-                  <div className="kface" />
-                  <div className="kl">2 · VOICE</div>
-                  <div className="kv">MIKEY</div>
-                  <div className="khome">
-                    ATTACHMENT · <b>HOME: THE FACEPLATE</b>
-                  </div>
-                </div>
-                <div className="knob k3">
-                  <div className="kface" />
-                  <div className="kl">3 · BRAIN / TURN</div>
-                  <div className="kv">FLASH → OPUS</div>
-                  <div className="khome">
-                    ROUTING TABLE · <b>HOME: THE TURN CHIP</b>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="instr-slot">
+            <InstrumentStack open={instrOpen} onToggle={() => setInstrOpen(false)} />
+            <InstrumentStub clearPct={room.salience.clearPct} onExpand={() => setInstrOpen(true)} />
           </div>
         </div>
       </div>

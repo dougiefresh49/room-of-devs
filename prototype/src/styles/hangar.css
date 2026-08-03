@@ -15,103 +15,7 @@
   background: linear-gradient(178deg, var(--gun1), var(--gun2) 55%, #1c2024);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.6);
-}
-
-.hangar-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 2px 4px 12px;
-  scrollbar-width: thin;
-}
-
-.hangar-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.hangar-ladder {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  color: var(--steel-dim);
-  font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: 0.11em;
-  white-space: nowrap;
-}
-
-.hangar-ladder b {
-  padding: 3px 8px;
-  border: 1px dashed var(--amber-dim);
-  border-radius: 5px 1px 1px 1px;
-  color: var(--amber-hot);
-  background: var(--amber-ghost);
-}
-
-.berth-tabs {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.hangar-header .berth-tabs {
-  flex: none;
-}
-
-.berth-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid #33383f;
-  border-radius: 8px 2px 2px 2px;
-  background: rgba(20, 23, 27, 0.65);
-  color: var(--steel-dim);
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.berth-tab:hover,
-.berth-tab:focus-visible,
-.berth-tab.is-active {
-  border-color: var(--amber-dim);
-  color: var(--amber-hot);
-  outline: none;
-  background: var(--amber-ghost);
-}
-
-.berth-tab.needs-you {
-  border-color: #7a2c22;
-  color: var(--red);
-}
-
-.berth-tabs--compact .berth-tab {
-  padding: 4px 7px;
-  font-size: 7.5px;
-}
-
-.titlebar > .berth-tabs {
-  flex: none;
-  margin-left: 4px;
-}
-
-.mainwin .titlebar:has(> .berth-tabs) {
-  flex-wrap: nowrap;
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
 }
 
 .hangar-traffic {
@@ -825,9 +729,6 @@
   .hangar-grid {
     grid-template-columns: 26px 1fr;
   }
-  .hangar-ladder {
-    margin-left: auto;
-  }
   .hangar-traffic-row {
     display: flex;
     flex-wrap: wrap;
@@ -835,9 +736,6 @@
   .hangar-traffic-label {
     flex-basis: 100%;
     order: 2;
-  }
-  .titlebar > .berth-tabs {
-    flex-basis: auto;
   }
 }
 
@@ -853,19 +751,6 @@
    ROUND D · PHASE 2 — COMMISSIONING BAY
    Motion contract: caret + the user-turned knob marker only.
    ══════════════════════════════════════════════════════════════ */
-.commission-entry-key {
-  flex: none;
-  grid-template-columns: 22px;
-  width: 30px;
-  min-width: 30px;
-  height: 30px;
-  padding: 3px;
-}
-
-.commission-entry-key .rig-keycap-label {
-  display: none;
-}
-
 .commission-bay-frame {
   display: block;
   min-width: 0;
@@ -879,10 +764,13 @@
     linear-gradient(rgba(255, 179, 71, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 179, 71, 0.025) 1px, transparent 1px),
     linear-gradient(178deg, #30353b, #1c2024 62%, #171a1e);
-  background-size: 28px 28px, 28px 28px, 100% 100%;
+  background-size:
+    28px 28px,
+    28px 28px,
+    100% 100%;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.58);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.72);
 }
 
 .commission-bay-head {
@@ -930,7 +818,7 @@
   background: linear-gradient(178deg, var(--gun1), var(--gun2) 58%, #1b1f23);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.72);
 }
 
 .commission-bench-body {

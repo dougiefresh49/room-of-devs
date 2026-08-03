@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { coupleRoom } from "../mock/scenario";
 import { useFleet } from "../mock/store";
-import { roomShortLabel } from "./BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 
 export function RoomSwitcherPalette() {
   const fleet = useFleet();

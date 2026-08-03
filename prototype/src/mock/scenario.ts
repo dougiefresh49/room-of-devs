@@ -1,5 +1,6 @@
 import { toast } from "@room/ui";
 import { speak as mockSpeak, stopSpeaking } from "../audio/mock";
+import { openSchematic } from "../map/schematic-events";
 import { makeFixtures, makeFleetFixtures, SCRATCH_ROOM_ID } from "./fixtures";
 import {
   getFleet,
@@ -692,7 +693,8 @@ export function crossRoomArrival() {
 export function floorHandoff() {
   setAppState((app) => {
     const current = app.fleet.audioFloor.roomId;
-    const next = current === "room-of-devs" ? "podlink" : current === "podlink" ? null : "room-of-devs";
+    const next =
+      current === "room-of-devs" ? "podlink" : current === "podlink" ? null : "room-of-devs";
     return {
       ...app,
       fleet: {
@@ -784,11 +786,8 @@ export function oneOffSettles() {
 
 export function openRoute(route: "/crib" | "/map") {
   if (route === "/map") {
-    const consoleKeycap = document.querySelector<HTMLButtonElement>(".schematic-keycap");
-    if (consoleKeycap) {
-      consoleKeycap.click();
-      return;
-    }
+    openSchematic();
+    return;
   }
   window.location.assign(route);
 }

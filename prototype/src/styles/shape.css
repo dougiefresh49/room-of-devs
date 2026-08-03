@@ -36,7 +36,7 @@
   border-radius: 16px 5px 5px 5px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
   filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.5));
 }
 .bay {
@@ -63,7 +63,7 @@
 .faceplate {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
 }
 .screw.br {
@@ -109,9 +109,16 @@
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
 }
 .pttbar,
+.cdock .talkgroup,
 .donbay {
   border-radius: 14px 4px 4px 4px;
 }
+
+/* ---- documented exceptions ---------------------------------
+   Binder tabs cannot carry the house bottom-right chamfer: their
+   bottom edge must remain open to merge into the masthead plate.
+   `.masthead-tab` therefore uses top corners only
+   (`border-radius: 10px 3px 0 0`) and deliberately has no clip-path. */
 
 /* ---- FIELD UNIT: phone shell + screen still milled here -------
    Device shell + screen take the large cut. Inner cards use CutFrame

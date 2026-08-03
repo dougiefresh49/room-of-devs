@@ -2,7 +2,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@room/ui";
 import { ScreenBed, Tag } from "@room/ui/rig";
 import { useState } from "react";
 import type { FleetState, FloorState } from "../mock/types";
-import { roomShortLabel } from "./BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 
 const FLOOR_LABEL: Record<FloorState, string> = {
   has: "HAS FLOOR",
@@ -46,9 +46,7 @@ export function TrafficStrip({ fleet }: { fleet: FleetState }) {
                 className={`hangar-traffic-row${row.belowGate ? " below-gate" : ""}`}
                 key={`${row.roomId}:${row.craftId ?? row.label}`}
               >
-                <Tag tone={row.belowGate ? "red" : "amber"}>
-                  {roomShortLabel(row.roomId)}
-                </Tag>
+                <Tag tone={row.belowGate ? "red" : "amber"}>{roomShortLabel(row.roomId)}</Tag>
                 <span className="hangar-traffic-label">{row.label}</span>
                 <Tag tone={row.belowGate ? "red" : "dim"}>{row.salience}% CLR</Tag>
                 <Tag tone={row.belowGate ? "red" : "dim"}>
@@ -61,8 +59,8 @@ export function TrafficStrip({ fleet }: { fleet: FleetState }) {
             ))}
           </div>
           <div className="hangar-gate-note">
-            ONE GATE, FLEET-WIDE · RED ROWS ARE EXACTLY WHAT MIKEY MAY RAISE UNPROMPTED ·
-            THRESHOLD {fleet.threshold}%
+            ONE GATE, FLEET-WIDE · RED ROWS ARE EXACTLY WHAT MIKEY MAY RAISE UNPROMPTED · THRESHOLD{" "}
+            {fleet.threshold}%
           </div>
         </CollapsibleContent>
       </ScreenBed>

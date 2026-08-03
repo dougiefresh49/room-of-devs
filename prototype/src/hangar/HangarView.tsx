@@ -1,13 +1,12 @@
 import { Toaster } from "@room/ui";
-import { CutFrame, Keycap, Tag } from "@room/ui/rig";
+import { CutFrame } from "@room/ui/rig";
 import { useEffect } from "react";
+import { RigMasthead } from "../chrome/RigMasthead";
 import { coupleRoom, setView } from "../mock/scenario";
-import { getFleet, getRoom, openCommission, useAppState, useFleet } from "../mock/store";
+import { getFleet, getRoom, useAppState, useFleet } from "../mock/store";
 import { BerthCard } from "./BerthCard";
-import { BerthTabs } from "./BerthTabs";
 import { CommissioningBay } from "./commission/CommissioningBay";
 import { FloorBus } from "./FloorBus";
-import { RoomSwitcherPalette } from "./RoomSwitcherPalette";
 import { TrafficStrip } from "./TrafficStrip";
 
 function isEditable(target: EventTarget | null) {
@@ -66,37 +65,19 @@ export function HangarView() {
         className="hangar-frame"
         innerClassName="hangar-shell"
       >
+        <RigMasthead mode="hangar" />
         <span className="screw tl" />
         <span className="screw tr" />
         <span className="screw bl" />
         <span className="screw br" />
-        <header className="hangar-header">
-          <div className="hangar-title">
-            <span>{"THE HANGAR // ALL ROOMS"}</span>
-            <Tag>
-              {numbered.length} BERTHS ·{" "}
-              {scratch.length ? `${scratch.length} SCRATCH` : "SCRATCH COLD"}
-            </Tag>
-          </div>
-          <BerthTabs compact />
-          <Keycap
-            glyph="+"
-            label="COMMISSION A ROOM"
-            className="commission-entry-key"
-            onPress={() => openCommission("rig")}
-          />
-          <nav className="hangar-ladder" aria-label="Zoom ladder">
-            <b>HANGAR</b>
-            <span>▸ PLOT ▸ RAIL ▸ NODE · ESC · ⌘K</span>
-          </nav>
-        </header>
-
         {fleet.commission ? (
           <CommissioningBay />
         ) : (
           <>
             <TrafficStrip fleet={fleet} />
-            <div className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}>
+            <div
+              className={`hangar-grid${scratch.length > 1 ? " hangar-grid--multi-scratch" : ""}`}
+            >
               <FloorBus
                 audioFloor={fleet.audioFloor}
                 rooms={numbered}
@@ -129,7 +110,6 @@ export function HangarView() {
         )}
       </CutFrame>
       <Toaster position="top-right" closeButton />
-      <RoomSwitcherPalette />
     </>
   );
 }

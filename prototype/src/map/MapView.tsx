@@ -1,10 +1,11 @@
-import { Dialog, DialogContent, DialogTitle } from "@room/ui";
-import { Chassis, HexLayer, Keycap } from "@room/ui/rig";
-import { useEffect, useMemo, useState } from "react";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@room/ui";
+import { Chassis, HexLayer } from "@room/ui/rig";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Inspector } from "./Inspector";
 import { StratumColumn } from "./StratumColumn";
 import { TerminalStrip } from "./TerminalStrip";
 import { GAPS, MAP_NODES, TERMINALS, nodeByPartNo } from "./map-data";
+import { onOpenSchematic } from "./schematic-events";
 
 type Selection = { kind: "node"; id: string } | { kind: "terminal"; id: string } | null;
 
@@ -16,19 +17,30 @@ function selectionFromLocation(): Selection {
 
 export interface MapViewProps {
   overlay?: boolean;
+  onClose?: () => void;
 }
 
-export function MapView({ overlay = false }: MapViewProps) {
+export function MapView({ overlay = false, onClose }: MapViewProps) {
   const [selection, setSelection] = useState<Selection>(selectionFromLocation);
 
   useEffect(() => {
-    const clearSelection = (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      setSelection(null);
+      if (selection) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setSelection(null);
+        return;
+      }
+      if (onClose) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        onClose();
+      }
     };
-    window.addEventListener("keydown", clearSelection);
-    return () => window.removeEventListener("keydown", clearSelection);
-  }, []);
+    window.addEventListener("keydown", handleEscape, true);
+    return () => window.removeEventListener("keydown", handleEscape, true);
+  }, [onClose, selection]);
 
   const selectedNode =
     selection?.kind === "node"
@@ -86,8 +98,21 @@ export function MapView({ overlay = false }: MapViewProps) {
         </div>
         <div className="map-header-stamps">
           <span>REV 08-01</span>
-          <span>ESC · CLEAR HARNESS</span>
+          <span>{hasSelection ? "ESC · CLEAR HARNESS" : "ESC · CLOSE"}</span>
           <b>⚠ NO LIVE DATA ON THIS PLATE</b>
+          {overlay ? (
+            <DialogClose asChild>
+              <button type="button" className="map-close-button">
+                <span aria-hidden>ESC · </span>CLOSE
+                <span className="sr-only"> service schematic</span>
+              </button>
+            </DialogClose>
+          ) : (
+            <button type="button" className="map-close-button" onClick={onClose}>
+              <span aria-hidden>ESC · </span>CLOSE
+              <span className="sr-only"> service schematic</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -179,23 +204,22 @@ export function MapDialog() {
     return () => window.removeEventListener("popstate", closeOnHistory);
   }, []);
 
-  const changeOpen = (nextOpen: boolean) => {
-    if (nextOpen && !open) {
-      window.history.pushState({ schematicOverlay: true }, "", "/map");
-    } else if (!nextOpen && open && window.history.state?.schematicOverlay) {
-      window.history.back();
-    }
-    setOpen(nextOpen);
-  };
+  const changeOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen && !open) {
+        window.history.pushState({ schematicOverlay: true }, "", "/map");
+      } else if (!nextOpen && open && window.history.state?.schematicOverlay) {
+        window.history.back();
+      }
+      setOpen(nextOpen);
+    },
+    [open],
+  );
+
+  useEffect(() => onOpenSchematic(() => changeOpen(true)), [changeOpen]);
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <Keycap
-        glyph="⌁"
-        label="SCHEMATIC"
-        className="schematic-keycap"
-        onPress={() => changeOpen(true)}
-      />
       <DialogContent className="map-dialog-content" data-schematic-dialog>
         <DialogTitle className="visually-hidden">Service schematic</DialogTitle>
         <MapView overlay />

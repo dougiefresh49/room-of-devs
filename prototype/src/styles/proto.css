@@ -144,6 +144,11 @@ p.note b {
 /* ============================================================
    CHASSIS — gunmetal used sparingly: outer frames + hero housings
    ============================================================ */
+/* MATERIAL RULE
+   RULE 1 — RAISED PLATE: light on top, a crisp 1px bottom edge, and
+   an outer cast shadow. Never use a blurred bottom inset.
+   RULE 2 — INSET BAY: shadow from the near/top lip, light on the far/
+   bottom lip, and no outer box-shadow or drop-shadow. */
 .chassis {
   position: relative;
   background: linear-gradient(178deg, var(--gun1), var(--gun2) 55%, #1c2024);
@@ -151,7 +156,7 @@ p.note b {
   border-radius: 10px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
     0 14px 40px rgba(0, 0, 0, 0.55);
 }
 .screw {
@@ -196,6 +201,7 @@ p.note b {
   border-radius: 6px;
   box-shadow:
     inset 0 0 24px rgba(0, 0, 0, 0.85),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
     inset 0 0 60px rgba(255, 140, 20, 0.05);
   position: relative;
   overflow: hidden;
@@ -455,67 +461,18 @@ header.mast {
   padding: 14px;
   margin-top: 16px;
 }
-.mainwin .titlebar {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 32px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
-  margin-bottom: 12px;
-  scrollbar-width: thin;
-}
-.mainwin .titlebar .stn {
-  font-size: 12px;
-  letter-spacing: 0.24em;
-  color: var(--steel);
-}
-.mainwin .titlebar .lamps {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--steel-dim);
-  letter-spacing: 0.1em;
-  flex: none;
-  white-space: nowrap;
-}
-.mainwin .titlebar .spacer {
-  flex: 1;
-}
-.mainwin .titlebar > .stn,
-.mainwin .titlebar > .tag,
-.mainwin .titlebar > .berth-tabs {
-  flex: none;
-  white-space: nowrap;
-}
-.mainwin .titlebar .sseg {
-  font-size: 11px;
-}
-.mainwin .titlebar .schematic-keycap {
-  flex: none;
-  grid-template-columns: 20px auto;
-  width: auto;
-  min-width: 104px;
-  min-height: 26px;
-  margin-left: 0;
-  padding: 3px 7px;
-}
-.mainwin .titlebar .schematic-keycap .rig-keycap-glyph {
-  width: 19px;
-  height: 19px;
-}
 .cols {
   display: grid;
   grid-template-columns: 308px minmax(0, 1fr) 330px;
   gap: 12px;
   align-items: start;
 }
+.cols--instr-collapsed {
+  grid-template-columns: 308px minmax(0, 1fr) 34px;
+}
 @media (max-width: 1180px) {
-  .cols {
+  .cols,
+  .cols--instr-collapsed {
     grid-template-columns: 1fr;
   }
 }
@@ -524,7 +481,9 @@ header.mast {
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(0, 0, 0, 0.55);
   border-radius: 8px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   padding: 10px;
 }
 .bay > .baylabel {
@@ -546,7 +505,7 @@ header.mast {
   border: 1px solid #0e1013;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
     0 10px 26px rgba(0, 0, 0, 0.5);
   position: relative;
 }
@@ -556,7 +515,10 @@ header.mast {
   letter-spacing: 0.26em;
   color: #9aa2ab;
   text-transform: uppercase;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 8px;
 }
 .fp-screen {
@@ -661,53 +623,6 @@ header.mast {
   animation: curs 1s steps(1, end) infinite;
   box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
 }
-.mikey-composer {
-  position: relative;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 10px;
-  padding-top: 9px;
-  border-top: 1px dashed rgba(255, 179, 71, 0.2);
-}
-.mikey-composer input {
-  min-width: 0;
-  flex: 1;
-  padding: 7px 9px;
-  border: 1px solid rgba(255, 179, 71, 0.3);
-  border-radius: 8px 2px 2px 2px;
-  outline: none;
-  background: rgba(8, 5, 1, 0.76);
-  color: var(--steel);
-  font: inherit;
-}
-.mikey-composer input:focus {
-  border-color: var(--amber);
-  box-shadow: 0 0 8px rgba(255, 179, 71, 0.15);
-}
-.mikey-composer input::placeholder {
-  color: var(--amber-dim);
-}
-.mikey-composer button {
-  flex: none;
-  padding: 7px 8px;
-  border: 1px solid var(--amber-dim);
-  border-radius: 6px 2px 2px 2px;
-  background: var(--amber-ghost);
-  color: var(--amber-hot);
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-.mikey-composer button:disabled {
-  border-color: #343940;
-  color: var(--steel-dim);
-  cursor: default;
-  opacity: 0.55;
-}
 @keyframes curs {
   50% {
     opacity: 0;
@@ -735,6 +650,248 @@ header.mast {
   background: var(--amber);
   animation: ledpulse 1.4s infinite;
   box-shadow: 0 0 8px rgba(255, 179, 71, 0.9);
+}
+
+/* CONSOLE COMMS DOCK — one segmented choice: type it or hold to talk. */
+.cdock {
+  margin-top: 12px;
+}
+
+.cdock-keys {
+  transition:
+    opacity 180ms ease,
+    max-height 200ms ease;
+}
+
+.cdock.typing .cdock-keys {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cdock .talkgroup {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 52px;
+  overflow: hidden;
+  border: 1px solid #0e1013;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.cdock .talkgroup.hot {
+  border-color: #5c1f16;
+  background: linear-gradient(180deg, #3a2320, #1d1512);
+}
+
+.cdock .chatkey {
+  flex: none;
+  display: flex;
+  width: 56px;
+  height: auto;
+  padding: 5px 0 4px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--steel-dim);
+  box-shadow: none;
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.cdock .chatkey:hover,
+.cdock .chatkey:focus-visible {
+  color: var(--amber-hot);
+  outline: none;
+  background: var(--amber-ghost);
+}
+
+.cdock .chatglyph {
+  color: var(--amber);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.cdock .tgdiv {
+  flex: none;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, #0b0d10 18%, #0b0d10 82%, transparent);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.cdock-ptt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--steel-dim);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cdock-ptt:focus-visible {
+  outline: 1px solid var(--amber-dim);
+  outline-offset: -3px;
+}
+
+.cdock-ptt .btn {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 2px solid #0c0e11;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #565e67, #2a2f35 60%, #191d21);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.cdock-ptt .btn::after {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #3a3f45;
+  content: "";
+}
+
+.cdock-ptt .lbl {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.55;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cdock-ptt .lbl b {
+  overflow: hidden;
+  color: var(--steel);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdock .talkgroup.hot .btn::after {
+  background: var(--red);
+  box-shadow: 0 0 14px rgba(255, 83, 64, 0.9);
+  animation: ledpulse 0.5s infinite;
+}
+
+.cdock .talkgroup.hot .lbl b {
+  color: var(--red);
+}
+
+.cdock .composer-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+}
+
+.cdock .composer-slot.open {
+  grid-template-rows: 1fr;
+}
+
+.cdock .composer-slide {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    transform 200ms ease,
+    opacity 200ms ease;
+}
+
+.cdock .composer-slot.open .composer-slide {
+  opacity: 1;
+  transform: none;
+}
+
+.cdock .composer {
+  display: flex;
+  height: 52px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 14px 4px 4px 4px;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.cdock .closekey {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(255, 179, 71, 0.25);
+  border-radius: 6px 2px 2px 2px;
+  background: transparent;
+  color: var(--amber-dim);
+  cursor: pointer;
+  font: 10px / 1 var(--mono);
+}
+
+.cdock .composer input.field {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 8px 2px 2px 2px;
+  outline: none;
+  background: rgba(8, 5, 1, 0.76);
+  color: var(--steel);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.cdock .composer input.field:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 8px rgba(255, 179, 71, 0.15);
+}
+
+.cdock .composer input.field::placeholder {
+  color: var(--amber-dim);
+}
+
+.cdock .sendkey {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--amber-dim);
+  background: var(--amber);
+  color: #181206;
+  cursor: pointer;
+  font: 800 13px / 1 var(--mono);
+}
+
+.cdock .sendkey:disabled {
+  border-color: #343940;
+  background: #262a2f;
+  color: var(--steel-dim);
+  cursor: default;
+  opacity: 0.55;
 }
 
 /* second voice bay — Donnie checked out */
@@ -776,7 +933,10 @@ header.mast {
   border-radius: 8px;
   background: linear-gradient(180deg, #2b3036, #1b1f24);
   border: 1px solid #0e1013;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 4px 12px rgba(0, 0, 0, 0.35);
 }
 .pttbar .btn {
   width: 38px;
@@ -982,7 +1142,8 @@ header.mast {
   border-color: #15181c;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.5);
+    inset 0 -1px 0 rgba(0, 0, 0, 0.78);
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.42));
   animation: none;
 }
 .plan.archived .pl-name {
@@ -1172,6 +1333,9 @@ header.mast {
 .tnode .innards {
   border-top: 1px solid #101317;
   background: rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
   padding: 10px;
   display: grid;
   grid-template-columns: minmax(260px, 1.35fr) minmax(200px, 1fr);
@@ -1336,6 +1500,116 @@ details[open] .expandhint {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.instr-slot {
+  min-width: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.instr-latch {
+  position: relative;
+  z-index: 3;
+  align-self: flex-end;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  margin-bottom: -8px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--amber-dim);
+  border-radius: 6px 2px 2px 2px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
+  background: linear-gradient(180deg, #343940, #20242a);
+  color: var(--amber-hot);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  font: 800 12px / 1 var(--mono);
+}
+
+.instr-latch:focus-visible,
+.instr-stub:focus-visible {
+  outline: 1px solid var(--amber-hot);
+  outline-offset: 2px;
+}
+
+.instr-stub {
+  display: none;
+  width: 34px;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+  padding: 8px 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--gun-edge);
+  border-radius: 12px 4px 4px 4px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cut-m)),
+    calc(100% - var(--cut-m)) 100%,
+    0 100%
+  );
+  background: linear-gradient(178deg, var(--gun1), var(--gun2) 55%, #1c2024);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+  color: var(--steel-dim);
+  cursor: pointer;
+}
+
+.cols--instr-collapsed .instr {
+  display: none;
+}
+
+.cols--instr-collapsed .instr-stub {
+  display: flex;
+}
+
+.instr-stub .stub-latch {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-bottom: 1px solid var(--gun-edge);
+  color: var(--amber-hot);
+  font: 800 12px / 1 var(--mono);
+}
+
+.instr-stub .stub-label {
+  flex: 1;
+  writing-mode: vertical-rl;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.instr-stub .stub-value {
+  width: 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gun-edge);
+  color: var(--amber);
+  font-size: 9px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .cols--instr-collapsed .instr {
+    display: flex;
+  }
+
+  .cols--instr-collapsed .instr-stub {
+    display: none;
+  }
 }
 .gaugebox {
   padding: 10px;
@@ -2001,13 +2275,17 @@ footer {
   gap: 12px;
   align-items: stretch;
 }
+.plotmain {
+  min-width: 0;
+}
 @media (max-width: 1100px) {
   .plotwrap {
     grid-template-columns: 1fr;
   }
 }
 .plotbay {
-  padding: 12px;
+  position: relative;
+  padding: 14px;
 }
 .plotbay .baylabel {
   font-family: var(--mono);
@@ -2893,7 +3171,7 @@ footer {
   filter: brightness(0.62) saturate(0.85);
   opacity: 0.88;
 }
-.proto-app.mic-open .pttbar,
+.proto-app.mic-open .cdock,
 .proto-app.mic-open .faceplate {
   filter: none;
   opacity: 1;
@@ -2913,37 +3191,6 @@ footer {
 .proto-app.arrival .dock .dled .led.red,
 .proto-dock .led.red {
   animation: ledpulse 0.7s ease-in-out infinite;
-}
-
-.view-switch {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 14px;
-}
-.view-switch button {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  cursor: pointer;
-  color: var(--steel-dim);
-  background: linear-gradient(180deg, #2b3036, #1d2126);
-  border: 1px solid #0e1013;
-  border-radius: 8px 2px 2px 2px;
-}
-.view-switch button.active {
-  color: var(--amber-hot);
-  border-color: var(--amber-dim);
-  box-shadow: 0 0 12px rgba(255, 150, 30, 0.25);
-}
-.view-switch .clock {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--amber);
-  letter-spacing: 0.12em;
 }
 
 /* Control deck drawer */

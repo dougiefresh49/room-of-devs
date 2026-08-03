@@ -1,4 +1,4 @@
-import { CrtFace, Waveform } from "@room/ui/rig";
+import { CrtFace, Tag, Waveform } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
 import { useRoom } from "../mock/store";
@@ -13,7 +13,8 @@ export function Faceplate() {
     <div className="faceplate">
       <PartNo partNo="S-01" />
       <div className="fp-label">
-        FACEPLATE // CONCIERGE UNIT: MIKEY · DIAL 2 HOME (VOICE)
+        <span>CONCIERGE</span>
+        <Tag tone="dim">DIAL 2 · VOICE</Tag>
       </div>
       <div className="screenbed fp-screen">
         <div className="facewrap">
@@ -54,11 +55,7 @@ export function DonnieBay() {
       <div className="screenbed" style={{ padding: 6 }}>
         <div className="facewrap">
           <CrtFace size={58} scanlines>
-            <AvatarFace
-              persona="donnie"
-              mode={speaking ? "speaking" : "idle"}
-              size={58}
-            />
+            <AvatarFace persona="donnie" mode={speaking ? "speaking" : "idle"} size={58} />
           </CrtFace>
         </div>
       </div>

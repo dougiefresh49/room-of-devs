@@ -1,10 +1,11 @@
-import { setView } from "./mock/scenario";
 import { useFleet, useRoom } from "./mock/store";
 import { ConsoleView } from "./console/ConsoleView";
 import { DockMiniBar } from "./console/DockMiniBar";
 import { ControlDeck } from "./deck/ControlDeck";
 import { FieldView } from "./field/FieldView";
 import { HangarView, useFleetKeyboard } from "./hangar/HangarView";
+import { RoomSwitcherPalette } from "./hangar/RoomSwitcherPalette";
+import { MapDialog } from "./map/MapView";
 import { LongRangePlot } from "./plot/LongRangePlot";
 import { CribView, MapView, currentRoute } from "./routes";
 
@@ -16,6 +17,7 @@ export function App() {
       <>
         <FieldView />
         <ControlDeck />
+        <MapDialog />
       </>
     );
   }
@@ -24,11 +26,12 @@ export function App() {
       <>
         <CribView />
         <ControlDeck />
+        <MapDialog />
       </>
     );
   }
   if (route === "map") {
-    return <MapView />;
+    return <MapView onClose={() => window.location.assign("/")} />;
   }
 
   return <ConsoleApp />;
@@ -52,7 +55,6 @@ function ConsoleApp() {
     <div
       className={`proto-app${fleet.zoom === "hangar" ? " proto-app--hangar" : ""}${moodClass ? ` ${moodClass}` : ""}`}
     >
-      <div className="haz" style={{ marginBottom: 18 }} />
       {fleet.zoom === "hangar" ? (
         <>
           <HangarView />
@@ -61,63 +63,13 @@ function ConsoleApp() {
         </>
       ) : (
         <>
-          <div className="view-switch">
-            <button type="button" onClick={() => setView("hangar")}>
-              HANGAR ⌘0
-            </button>
-            <button
-              type="button"
-              className={room.view === "console" || room.view === "node" ? "active" : ""}
-              onClick={() => setView("console")}
-            >
-              CONSOLE / RAIL
-            </button>
-            <button
-              type="button"
-              className={room.view === "plot" ? "active" : ""}
-              onClick={() => setView("plot")}
-            >
-              LONG-RANGE PLOT
-            </button>
-            <button
-              type="button"
-              className={room.view === "node" ? "active" : ""}
-              onClick={() => {
-                const id =
-                  room.focusCraftId ?? room.crafts.find((c) => c.state !== "empty")?.id ?? null;
-                setView("node", id);
-              }}
-            >
-              NODE
-            </button>
-            <a
-              href="/field"
-              className={undefined}
-              style={{
-                font: "inherit",
-                fontFamily: "var(--mono)",
-                fontSize: 10,
-                letterSpacing: ".14em",
-                textTransform: "uppercase",
-                color: "var(--steel-dim)",
-                textDecoration: "none",
-                padding: "6px 10px",
-                border: "1px solid #3a3f45",
-                borderRadius: 4,
-              }}
-            >
-              FIELD ▸
-            </a>
-            <span className="clock sseg">
-              REV {room.rev} · {room.clock}
-            </span>
-          </div>
-
           {room.view === "plot" ? <LongRangePlot /> : <ConsoleView />}
 
           <ControlDeck />
         </>
       )}
+      <RoomSwitcherPalette />
+      <MapDialog />
     </div>
   );
 }

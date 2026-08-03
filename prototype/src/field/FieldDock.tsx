@@ -3,12 +3,7 @@ import { Button } from "@room/ui";
 import { CrtFace } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
-import {
-  injectReply,
-  replayLastMikey,
-  setComposer,
-  stopPlayback,
-} from "../mock/scenario";
+import { injectReply, replayLastMikey, setComposer, stopPlayback } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import { PttPill } from "./PttPill";
 
@@ -91,16 +86,9 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
           <div className="mface">
             <CrtFace size={52} scanlines>
               <AvatarFace
-                persona={
-                  room.speakingPersona ??
-                  (room.donnieCheckout ? "donnie" : "mikey")
-                }
+                persona={room.speakingPersona ?? (room.donnieCheckout ? "donnie" : "mikey")}
                 mode={
-                  room.speakingPersona
-                    ? "speaking"
-                    : room.mood === "the-lull"
-                      ? "stoked"
-                      : "idle"
+                  room.speakingPersona ? "speaking" : room.mood === "the-lull" ? "stoked" : "idle"
                 }
                 size={52}
               />
@@ -108,15 +96,11 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
           </div>
         ) : null}
 
-        <div className="fdock-keys" aria-hidden={typing}>
+        <div className="fdock-keys" aria-hidden={typing} inert={typing ? true : undefined}>
           {listen ? <TransportKeys /> : null}
           {/* Type it OR say it — one segmented control, because it is one
               decision: how do these words reach the room? */}
-          <div
-            className="talkgroup"
-            role="group"
-            aria-label="Send words to the room"
-          >
+          <div className="talkgroup" role="group" aria-label="Send words to the room">
             <Button
               type="button"
               variant="ghost"
@@ -143,7 +127,11 @@ export function FieldDock({ listen = false }: { listen?: boolean }) {
         </div>
       </div>
 
-      <div className={`composer-slot${typing ? " open" : ""}`}>
+      <div
+        className={`composer-slot${typing ? " open" : ""}`}
+        aria-hidden={!typing}
+        inert={typing ? undefined : true}
+      >
         <div className="composer-slide">
           <div className="composer">
             <Button

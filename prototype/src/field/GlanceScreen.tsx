@@ -4,7 +4,7 @@ import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import type { Craft } from "../mock/types";
 import { coupleRoom } from "../mock/scenario";
 import { useFleet, useRoom } from "../mock/store";
-import { roomShortLabel } from "../hangar/BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 import { PartNo } from "../map/PartNo";
 import { FieldPlot } from "./FieldPlot";
 

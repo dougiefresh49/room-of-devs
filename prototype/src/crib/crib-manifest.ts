@@ -420,7 +420,7 @@ export const instruments: Instrument[] = [
       "prototype/src/field/ListenScreen.tsx",
       "prototype/src/field/StartScreen.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/hangar/BerthTabs.tsx"
+      "prototype/src/chrome/MastheadTabs.tsx"
     ],
     "surfaces": [
       "console",

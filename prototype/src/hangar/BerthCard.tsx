@@ -1,7 +1,7 @@
 import { Chassis, CrtFace, Keycap, Led, SalienceBar, Tag, Waveform } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import type { AudioFloor, RoomBerth } from "../mock/types";
-import { roomShortLabel } from "./BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 
 export interface BerthCardProps {
   berth: RoomBerth | null;

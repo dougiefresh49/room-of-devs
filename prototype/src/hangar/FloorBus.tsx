@@ -1,6 +1,6 @@
 import { Waveform } from "@room/ui/rig";
 import type { AudioFloor, RoomBerth } from "../mock/types";
-import { roomShortLabel } from "./BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 
 export function FloorBus({
   audioFloor,
@@ -35,7 +35,9 @@ export function FloorBus({
           <Waveform active={holderSpeaking} bars={5} />
         </div>
       ) : (
-        <span className="hangar-floor-idle" aria-hidden>···</span>
+        <span className="hangar-floor-idle" aria-hidden>
+          ···
+        </span>
       )}
     </aside>
   );

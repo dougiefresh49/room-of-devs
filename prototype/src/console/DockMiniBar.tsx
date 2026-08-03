@@ -2,7 +2,7 @@ import { CrtFace, Led, SalienceBar } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
 import { useFleet } from "../mock/store";
-import { roomShortLabel } from "../hangar/BerthTabs";
+import { roomShortLabel } from "../chrome/MastheadTabs";
 
 export function DockMiniBar() {
   const fleet = useFleet();
