@@ -1,13 +1,19 @@
-import { useEffect, useRef, useState } from "react";
 import { Button } from "@room/ui";
-import { CrtFace } from "@room/ui/rig";
-import { AvatarFace } from "../avatars/AvatarFace";
-import { PartNo } from "../map/PartNo";
+import { ArrowUp, Plus, RotateCcw, Square } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { injectReply, replayLastMikey, setComposer, stopPlayback } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import { PttPill } from "./PttPill";
 
-/** STOP + REPLAY — only on LISTEN, where there is playback to interrupt. */
+const MAX_TEXTAREA_HEIGHT = 132;
+
+function sizeTextarea(textarea: HTMLTextAreaElement | null) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
+  textarea.style.overflowY = textarea.scrollHeight > MAX_TEXTAREA_HEIGHT ? "auto" : "hidden";
+}
+
 function TransportKeys() {
   return (
     <>
@@ -15,186 +21,116 @@ function TransportKeys() {
         type="button"
         variant="ghost"
         size="icon"
-        className="stopkey"
+        className="dockkey stopkey"
         aria-label="Stop playback"
         title="STOP"
         onClick={() => stopPlayback()}
       >
-        <span className="sq" />
+        <Square size={15} fill="var(--red)" strokeWidth={0} />
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="replaykey"
+        className="dockkey replaykey"
         aria-label="Replay last clip (free)"
         title="REPLAY LAST · FREE"
         onClick={() => replayLastMikey()}
       >
-        <svg
-          viewBox="0 0 20 20"
-          width="20"
-          height="20"
-          aria-hidden
-          style={{ transform: "scaleX(-1)" }}
-        >
-          <path
-            d="M14.5 6.5 A6 6 0 1 0 16 10"
-            stroke="var(--amber)"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path d="M14.8 2.6 L14.8 7.2 L10.2 7.2 Z" fill="var(--amber)" />
-        </svg>
+        <RotateCcw size={16} />
       </Button>
     </>
   );
 }
 
-/**
- * The one place you talk to the room: "text or speak it", on every screen.
- *
- * Collapsed — avatar chip · [ chat | HOLD TO TALK ] as ONE capsule: both
- *             segments do the same job (get words into the room), so they
- *             read as one segmented control, not two loose buttons.
- * Expanded  — the keys give way to a composer that slides up from the bottom,
- *             with the face chip docked to its top-left corner (comms card).
- *
- * `listen` swaps in the playback transport keys and shrinks the PTT to a mic
- * key so STOP · REPLAY · CHAT · MIC all fit one row; the big faceplate above
- * already carries the identity there, so the chip is dropped.
- */
 export function FieldDock({ listen = false }: { listen?: boolean }) {
   const room = useRoom();
+  const panelRef = useRef<HTMLFormElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Composer is hidden until the chat key is tapped; opening focuses the input
-  // immediately so typing can start without a second tap.
-  const [typing, setTyping] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (typing) inputRef.current?.focus();
-  }, [typing]);
+    sizeTextarea(textareaRef.current);
+  }, [room.composerText]);
 
-  const showChip = !listen;
+  useEffect(() => {
+    const focusComposer = () => {
+      textareaRef.current?.focus();
+      textareaRef.current?.scrollIntoView({ block: "nearest" });
+    };
+    window.addEventListener("field:focus-composer", focusComposer);
+    return () => window.removeEventListener("field:focus-composer", focusComposer);
+  }, []);
+
+  const submit = () => {
+    const text = room.composerText.trim();
+    if (!text) return;
+    injectReply(text);
+  };
 
   return (
-    <div className={`fdock${typing ? " typing" : ""}`}>
-      <PartNo partNo="F-06" />
-      <div className="fdock-row">
-        {showChip ? (
-          <div className="mface">
-            <CrtFace size={52} scanlines>
-              <AvatarFace
-                persona={room.speakingPersona ?? (room.donnieCheckout ? "donnie" : "mikey")}
-                mode={
-                  room.speakingPersona ? "speaking" : room.mood === "the-lull" ? "stoked" : "idle"
-                }
-                size={52}
-              />
-            </CrtFace>
-          </div>
-        ) : null}
-
-        <div className="fdock-keys" aria-hidden={typing} inert={typing ? true : undefined}>
-          {listen ? <TransportKeys /> : null}
-          {/* Type it OR say it — one segmented control, because it is one
-              decision: how do these words reach the room? */}
-          <div className="talkgroup" role="group" aria-label="Send words to the room">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="chatkey"
-              aria-label="Type a reply"
-              title="TYPE IT"
-              tabIndex={typing ? -1 : 0}
-              onClick={() => setTyping(true)}
-            >
-              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden>
-                <path
-                  d="M3 5.5A1.5 1.5 0 0 1 4.5 4h11A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5H8l-4 3v-3H4.5A1.5 1.5 0 0 1 3 12.5z"
-                  fill="none"
-                  stroke="var(--amber)"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Button>
-            <span className="tgdiv" aria-hidden />
-            <PttPill compact={!listen} icon={listen} />
-          </div>
-        </div>
+    <form
+      ref={panelRef}
+      className="fdock"
+      data-part="F-06"
+      tabIndex={-1}
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
+      <div className="fdock-field screenbed">
+        <textarea
+          ref={textareaRef}
+          id="field-message"
+          name="field-message"
+          rows={1}
+          value={room.composerText}
+          placeholder="type it — lands as a tmux inject"
+          aria-label="Type a reply"
+          onChange={(event) => {
+            setComposer(event.currentTarget.value);
+            sizeTextarea(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              submit();
+              return;
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.currentTarget.blur();
+              panelRef.current?.focus();
+            }
+          }}
+        />
       </div>
 
-      <div
-        className={`composer-slot${typing ? " open" : ""}`}
-        aria-hidden={!typing}
-        inert={typing ? undefined : true}
-      >
-        <div className="composer-slide">
-          <div className="composer">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="closekey"
-              aria-label="Close composer"
-              title="CLOSE"
-              tabIndex={typing ? 0 : -1}
-              onClick={() => {
-                setComposer("");
-                setTyping(false);
-              }}
-            >
-              ✕
-            </Button>
-            <input
-              ref={inputRef}
-              className="field"
-              value={room.composerText}
-              placeholder="type it — lands as a tmux inject"
-              tabIndex={typing ? 0 : -1}
-              onChange={(e) => setComposer(e.target.value)}
-              onBlur={() => {
-                if (!room.composerText.trim()) setTyping(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setComposer("");
-                  setTyping(false);
-                }
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  injectReply(room.composerText);
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="default"
-              size="icon"
-              className="sendkey"
-              aria-label="Inject reply"
-              title="INJECT"
-              tabIndex={typing ? 0 : -1}
-              onClick={() => injectReply(room.composerText)}
-            >
-              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden>
-                <path
-                  d="M8 13.5V3.5M4 7.5l4-4 4 4"
-                  stroke="#181206"
-                  strokeWidth="2.1"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Button>
-          </div>
-        </div>
+      <div className="fdock-actions">
+        {listen ? <TransportKeys /> : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="dockkey attachkey"
+          aria-label="Attach"
+          title="ATTACH"
+        >
+          <Plus size={15} />
+        </Button>
+        <PttPill compact={!listen} icon={listen} />
+        <Button
+          type="submit"
+          variant="default"
+          size="icon"
+          className="sendkey"
+          aria-label="Send message"
+          title={"SEND \u23ce"}
+          disabled={!room.composerText.trim()}
+        >
+          <ArrowUp size={16} strokeWidth={2.5} />
+        </Button>
       </div>
-    </div>
+    </form>
   );
 }

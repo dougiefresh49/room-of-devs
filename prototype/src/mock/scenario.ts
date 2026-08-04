@@ -13,14 +13,7 @@ import {
   setRoom,
   strikeCommission,
 } from "./store";
-import type {
-  BrainTable,
-  Craft,
-  GearDefault,
-  PersonaId,
-  RoomId,
-  RoomState,
-} from "./types";
+import type { BrainTable, Craft, GearDefault, PersonaId, RoomId, RoomState } from "./types";
 
 const ROUTE: Record<BrainTable, { model: string; costUsd: number }> = {
   lean: { model: "FLASH", costUsd: 0.002 },
@@ -34,9 +27,7 @@ export function setCeremony(next: GearDefault) {
   patchRoom({
     dials: { ...room.dials, ceremony: next },
     plans: room.plans.map((plan) =>
-      plan.dock === "live"
-        ? { ...plan, gearTag: `DIAL 1 · GEAR: ${next.toUpperCase()}` }
-        : plan,
+      plan.dock === "live" ? { ...plan, gearTag: `DIAL 1 · GEAR: ${next.toUpperCase()}` } : plan,
     ),
   });
 }
@@ -80,52 +71,57 @@ function speakMikey(line: string) {
 /** SPAWN CRAFT — birth at top of rail → materialize → working. */
 export function spawnCraft() {
   const id = `c-spawn-${Date.now()}`;
-  const birth: Craft = {
-    roomId: getFleet().activeRoomId,
-    id,
-    ticket: "T-0453",
-    persona: "karai",
-    callsign: "KARAI",
-    task: "reads the spine, not anyone's history",
-    state: "spawning",
-    salience: 100,
-    salienceDelta: 0,
-    planId: "0007",
-    lastStamp: "MATERIALIZING",
-    holdSeconds: 0,
-    watched: false,
-    open: false,
-    tmux: true,
-    tokens: 0,
-    spendUsd: 0,
-    turns: 0,
-    oneOff: false,
-    plotAngle: 260,
-    tail: [{ kind: "info", text: "birth slot · clamping to plan 0007…" }],
-    diff: null,
-  };
-  setRoom((s) => ({
-    ...s,
-    rev: s.rev + 1,
-    mood: "normal",
-    plans: [
-      {
-        id: "birth",
-        name: "New Craft Birth",
-        dock: "birth",
-        steps: [],
-        stepLabel: "",
-        gearTag: "",
-        status: "SPAWNING · TOP OF RAIL",
-        schematic: "queued",
-      },
-      ...s.plans.filter((p) => p.dock !== "birth"),
-    ],
-    crafts: [birth, ...s.crafts.filter((c) => c.state !== "empty")],
-    crew: s.crew.map((m) =>
-      m.id === "karai" ? { ...m, piloting: true, role: "CRAFT T-0453" } : m,
-    ),
-  }));
+  setRoom((s) => {
+    const prompt = "reads the spine, not anyone's history";
+    const birth: Craft = {
+      roomId: getFleet().activeRoomId,
+      id,
+      ticket: "T-0453",
+      persona: "karai",
+      callsign: "KARAI",
+      task: prompt,
+      state: "spawning",
+      salience: 100,
+      salienceDelta: 0,
+      planId: "0007",
+      lastStamp: "MATERIALIZING",
+      holdSeconds: 0,
+      watched: false,
+      open: false,
+      tmux: true,
+      tokens: 0,
+      spendUsd: 0,
+      turns: 0,
+      oneOff: false,
+      plotAngle: 260,
+      spawnedRev: s.rev + 1,
+      spawnPrompt: prompt,
+      tail: [{ kind: "info", text: "birth slot · clamping to plan 0007…" }],
+      diff: null,
+    };
+    return {
+      ...s,
+      rev: s.rev + 1,
+      mood: "normal",
+      plans: [
+        {
+          id: "birth",
+          name: "New Craft Birth",
+          dock: "birth",
+          steps: [],
+          stepLabel: "",
+          gearTag: "",
+          status: "SPAWNING · TOP OF RAIL",
+          schematic: "queued",
+        },
+        ...s.plans.filter((p) => p.dock !== "birth"),
+      ],
+      crafts: [birth, ...s.crafts.filter((c) => c.state !== "empty")],
+      crew: s.crew.map((m) =>
+        m.id === "karai" ? { ...m, piloting: true, role: "CRAFT T-0453" } : m,
+      ),
+    };
+  });
   window.setTimeout(() => {
     setRoom((s) => ({
       ...s,
@@ -417,6 +413,7 @@ export function tapInQa() {
       question: q,
       interpreter: "FLASH · TICKET 0007 · $0.002",
       answer: null,
+      startedRev: s.rev + 1,
     },
     turnChip: { model: "FLASH", costUsd: 0.002 },
   }));
@@ -858,10 +855,12 @@ export function toggleCraftOpen(craftId: string) {
 }
 
 export function toggleVerb(verbId: string) {
+  const verb = getRoom().verbs.find((candidate) => candidate.id === verbId);
+  if (!verb || verb.gatedIssue != null) return;
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
-    verbs: s.verbs.map((v) => (v.id === verbId && v.gatedIssue == null ? { ...v, on: !v.on } : v)),
+    verbs: s.verbs.map((v) => (v.id === verbId ? { ...v, on: !v.on } : v)),
   }));
 }
 

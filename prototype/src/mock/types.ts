@@ -1,14 +1,7 @@
 /** Mock room model for THE RIG prototype. Invented fields are wishlist for wire. */
 
 /** Persona id → avatar folder under panel/public/avatars/tmnt. */
-export type PersonaId =
-  | "mikey"
-  | "donnie"
-  | "leo"
-  | "raph"
-  | "splinter"
-  | "shredder"
-  | "karai";
+export type PersonaId = "mikey" | "donnie" | "leo" | "raph" | "splinter" | "shredder" | "karai";
 
 export type RoomId = string;
 export type Ceremony = "full" | "one-off";
@@ -17,12 +10,7 @@ export type BrainTable = "lean" | "std" | "deep";
 export type FloorState = "has" | "queued" | "lull";
 
 /** Craft lifecycle — board thread-node states. */
-export type CraftState =
-  | "working"
-  | "needs-you"
-  | "settled"
-  | "spawning"
-  | "empty";
+export type CraftState = "working" | "needs-you" | "settled" | "spawning" | "empty";
 
 /** Plan dock state on the spine rail. */
 export type PlanDock = "live" | "queued" | "settled" | "birth";
@@ -87,6 +75,10 @@ export interface Craft {
   oneOff: boolean;
   /** Polar angle in degrees for plot placement. */
   plotAngle: number;
+  /** Mock-only intake ordering; retained after a spawned craft materializes. */
+  spawnedRev?: number;
+  /** Plain request copy retained for START's launch receipt. */
+  spawnPrompt?: string;
 }
 
 export interface Plan {
@@ -105,6 +97,8 @@ export interface Verb {
   id: string;
   utterance: string;
   params: string;
+  /** Plain-language sentence used only by the narrow FIELD saved-orders rack. */
+  fieldLabel: string;
   on: boolean;
   /** Watcher verbs racked with GATED #N tag. */
   gatedIssue: number | null;
@@ -195,6 +189,8 @@ export interface TapIn {
   question: string;
   interpreter: string;
   answer: string | null;
+  /** Mock-only intake ordering against spawn receipts. */
+  startedRev: number;
 }
 
 export interface CrewMember {
@@ -254,9 +250,9 @@ export interface RoomManifest {
   /** null ⇒ scratch room; nothing durable is written. */
   spine: { tracker: "github"; repo: string } | null;
   cast: { lead: PersonaId; checkout: PersonaId[] };
-  gearDefault: GearDefault;   // dial 1 — home: PLAN CARD
-  brainTable: BrainTable;     // dial 3 — home: TURN CHIP
-  connectors: string[];       // "gh-issues" | "tmux" | "vercel" | "sentry"
+  gearDefault: GearDefault; // dial 1 — home: PLAN CARD
+  brainTable: BrainTable; // dial 3 — home: TURN CHIP
+  connectors: string[]; // "gh-issues" | "tmux" | "vercel" | "sentry"
 }
 
 /** One berth on the hangar floor — manifest + the rollups a plate reads. */

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Mic } from "lucide-react";
 import { useRoom } from "../mock/store";
 
 /**
@@ -48,41 +49,19 @@ export function PttPill({
         className={cls}
         style={style}
         aria-label="Hold to talk"
-        title={
-          hot
-            ? "MIC HOT"
-            : handoff
-              ? "NO MIC OUT HERE — TYPE IT INSTEAD"
-              : "HOLD TO TALK"
-        }
+        title={hot ? "MIC HOT" : handoff ? "NO MIC OUT HERE — TYPE IT INSTEAD" : "HOLD TO TALK"}
         onPointerDown={onDown}
       >
-        <svg viewBox="0 0 20 20" width="19" height="19" aria-hidden>
-          <rect
-            x="7"
-            y="2.5"
-            width="6"
-            height="9.5"
-            rx="3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-          />
-          <path
-            d="M4.6 9.5a5.4 5.4 0 0 0 10.8 0M10 15v2.6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-        </svg>
+        <Mic size={15} aria-hidden />
       </button>
     );
   }
 
   return (
     <button type="button" className={cls} style={style} onPointerDown={onDown}>
-      <span className="btn" />
+      <span className="btn">
+        <Mic size={15} aria-hidden />
+      </span>
       <span className="lbl">
         {hot ? (
           <b>MIC HOT</b>

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Led } from "@room/ui/rig";
 import { focusCraftForAnswer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import "../styles/field.css";
 import { AnswerScreen } from "./AnswerScreen";
 import { FieldDock } from "./FieldDock";
 import { FieldNav, type FieldScreen } from "./FieldNav";
+import { FieldRoomRail } from "./FieldRoomRail";
 import { GaugesScreen } from "./GaugesScreen";
 import { GlanceScreen } from "./GlanceScreen";
 import { ListenScreen } from "./ListenScreen";
@@ -85,28 +85,15 @@ export function FieldView() {
         <span className="sidekey low" />
         <div className="screenbed fscr">
           <div className="inner">
-            <div className="fstat">
-              <span>ROOM // FIELD LINK</span>
-              <span className="spacer" />
-              <span title="SSE link — RoomClient connected to the daemon">
-                <Led tone="green" /> SSE
-              </span>
-              <span title="AUD — lit when this phone holds the speaker gate (audio plays here, Mac speakers cold)">
-                <Led
-                  tone={room.audio.route === "phone" ? "amber" : "dim"}
-                  pulse={room.audio.route === "phone"}
-                />{" "}
-                AUD
-              </span>
-              <span className="sseg">{room.clock}</span>
+            <div className="fhead">
+              <FieldRoomRail />
+              <FieldNav
+                screen={screen}
+                onChange={setScreen}
+                answerBadge={answerBadge}
+                listenBadge={listenBadge}
+              />
             </div>
-
-            <FieldNav
-              screen={screen}
-              onChange={setScreen}
-              answerBadge={answerBadge}
-              listenBadge={listenBadge}
-            />
 
             {screen === "glance" ? (
               <GlanceScreen onSelectCraft={goAnswer} />

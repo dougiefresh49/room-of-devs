@@ -1,11 +1,10 @@
-import { useEffect, useRef } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@room/ui";
 import { CutFrame, Led, Waveform } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
-import { PartNo } from "../map/PartNo";
 import { setAudioRoute } from "../mock/scenario";
 import { useRoom } from "../mock/store";
+import { CommsLog } from "./CommsLog";
 
 /** House-style glyphs for the audio-route segments (no emoji). */
 function PhoneGlyph() {
@@ -79,15 +78,13 @@ export function ListenScreen() {
   const checkout = persona === "donnie" ? room.donnieCheckout : null;
   const watched = room.crafts.find((c) => c.watched);
   const rows = room.transcript.slice(-8);
-  const threadRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = threadRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [room.transcript.length]);
+  const footNote =
+    room.queuedForLull.length > 0
+      ? `QUEUED FOR THE LULL: ${room.queuedForLull.join(" · ")}`
+      : undefined;
 
   return (
-    <div className="screen-body">
-      <PartNo partNo="F-03" />
+    <div className="screen-body" data-part="F-03">
       <div className="lhead">
         <CutFrame scale="s" className="lcol-wrap" innerClassName="lcol">
           <div className="lname">{persona === "donnie" ? "DONNIE" : "MIKEY"}</div>
@@ -161,22 +158,7 @@ export function ListenScreen() {
         )}
       </div>
 
-      <div className="vt field-thread" ref={threadRef}>
-        {rows.map((r, i) => (
-          <div className="row" key={`${r.who}-${i}-${r.text.slice(0, 12)}`}>
-            <span className="who">{r.who === "YOU" ? "YOU" : r.who.slice(0, 3)}</span>
-            <span className={`say${r.you ? " you" : ""}`}>{r.text}</span>
-          </div>
-        ))}
-        {room.queuedForLull.length > 0 ? (
-          <div className="row">
-            <span className="who" />
-            <span className="say" style={{ color: "var(--amber-dim)", opacity: 0.75 }}>
-              QUEUED FOR THE LULL: {room.queuedForLull.join(" · ")}
-            </span>
-          </div>
-        ) : null}
-      </div>
+      <CommsLog rows={rows} footNote={footNote} />
 
       {watched ? (
         <div className="watchchip">

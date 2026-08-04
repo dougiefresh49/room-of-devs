@@ -113,9 +113,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
           label: "CURSOR",
           // 30-day rolling timer window. No session reset → no blue arc.
           sessionFraction: null,
-          windows: [
-            { window: "30D ROLLING", fraction: 0.34, readout: "34% · 11D LEFT" },
-          ],
+          windows: [{ window: "30D ROLLING", fraction: 0.34, readout: "34% · 11D LEFT" }],
         },
         {
           id: "elevenlabs",
@@ -348,6 +346,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         id: "v-standby",
         utterance: "STAND BY ON PROD",
         params: "LIVE · WATCH ORDER",
+        fieldLabel: "Watches the prod fix and speaks up at every real step.",
         on: true,
         gatedIssue: null,
       },
@@ -355,6 +354,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         id: "v-lull",
         utterance: "SPEAK AT THE LULL",
         params: "SETTLED QUEUE",
+        fieldLabel: "Holds finished news until the room goes quiet.",
         on: true,
         gatedIssue: null,
       },
@@ -362,6 +362,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         id: "v-gated",
         utterance: "SPIN UP WATCHERS",
         params: "PLAN 0008",
+        fieldLabel: "Would put watchers on a plan — not built yet.",
         on: false,
         gatedIssue: 75,
       },
@@ -476,12 +477,7 @@ function makePodlinkFixtures(roomId: RoomId): RoomState {
     crew: rich.crew.map((member) => ({
       ...member,
       piloting: member.id === "raph",
-      role:
-        member.id === "raph"
-          ? "WATCHER W-2"
-          : member.id === "mikey"
-            ? "CREW CHIEF"
-            : "STANDBY",
+      role: member.id === "raph" ? "WATCHER W-2" : member.id === "mikey" ? "CREW CHIEF" : "STANDBY",
     })),
     queuedForLull: [],
     dockTicker: "RAPH · RELEASE WATCH ACTIVE · BASELINE STABLE",
@@ -540,12 +536,7 @@ function makeComicReaderFixtures(roomId: RoomId): RoomState {
     crew: rich.crew.map((member) => ({
       ...member,
       piloting: member.id === "leo",
-      role:
-        member.id === "leo"
-          ? "CRAFT T-0912"
-          : member.id === "mikey"
-            ? "CREW CHIEF"
-            : "STANDBY",
+      role: member.id === "leo" ? "CRAFT T-0912" : member.id === "mikey" ? "CREW CHIEF" : "STANDBY",
     })),
     queuedForLull: ["leo turn final"],
     dockTicker: "LEO · TURN FINAL · QUEUED FOR THE LULL",
@@ -629,7 +620,10 @@ export function makeFleetFixtures(): {
         repo: "dougiefresh49/cursor-read-aloud",
         ceremony: "full",
         spine: { tracker: "github", repo: "dougiefresh49/cursor-read-aloud" },
-        cast: { lead: "mikey", checkout: ["donnie", "leo", "raph", "splinter", "shredder", "karai"] },
+        cast: {
+          lead: "mikey",
+          checkout: ["donnie", "leo", "raph", "splinter", "shredder", "karai"],
+        },
         gearDefault: "full",
         brainTable: "std",
         connectors: ["gh-issues", "tmux", "vercel", "sentry"],

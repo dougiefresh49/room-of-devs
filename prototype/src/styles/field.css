@@ -1,7 +1,6 @@
 /* FIELD UNIT — phone screens. Selectors scoped under .field-root.
    Ported from board-industrial-mobile.html. */
 
-
 .field-root {
   display: flex;
   flex-direction: column;
@@ -16,47 +15,64 @@
 }
 .field-root .field-mast h1 {
   font-size: 18px;
-  letter-spacing: .2em;
+  letter-spacing: 0.2em;
   color: var(--steel);
   line-height: 1.2;
 }
-.field-root .field-mast h1 span { color: var(--amber); text-shadow: 0 0 14px rgba(255,179,71,.45); }
+.field-root .field-mast h1 span {
+  color: var(--amber);
+  text-shadow: 0 0 14px rgba(255, 179, 71, 0.45);
+}
 .field-root .field-mast .back {
   display: inline-block;
   margin-top: 8px;
   font-family: var(--mono);
   font-size: 9px;
-  letter-spacing: .16em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--steel-dim);
   text-decoration: none;
 }
-.field-root .field-mast .back:hover { color: var(--amber); }
+.field-root .field-mast .back:hover {
+  color: var(--amber);
+}
+.field-root .fhead {
+  flex: none;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 179, 71, 0.14);
+}
 .field-root .fnav {
   display: flex;
+  justify-content: space-between;
   gap: 2px;
-  margin: 0 0 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255,179,71,.12);
+  margin: 0;
+  padding: 7px 0 6px;
 }
 .field-root .fnav button {
-  flex: 1;
+  flex: none;
   background: transparent;
   border: none;
-  padding: 6px 2px;
+  border-bottom: 2px solid transparent;
+  padding: 3px 1px 4px;
   font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: .1em;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--steel-dim);
   cursor: pointer;
   position: relative;
 }
-.field-root .fnav button.active { color: var(--amber); text-shadow: 0 0 8px rgba(255,179,71,.5); }
+.field-root .fnav button.active {
+  border-bottom-color: var(--amber);
+  color: var(--amber);
+  text-shadow: 0 0 8px rgba(255, 179, 71, 0.5);
+}
 .field-root .fnav button .fnav-dot {
   position: absolute;
-  top: 2px; right: 4px;
-  width: 5px; height: 5px;
+  top: 2px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
 }
 /* CrtFace wells — fill wrapper (FieldCrtFace) so non-library sizes (40/148) fit */
 .field-root .field-crt-fill.rig-crt {
@@ -69,39 +85,84 @@
 }
 .field-root .pttpill.handoff .btn::after {
   background: var(--haz);
-  box-shadow: 0 0 10px rgba(217,160,33,.7);
+  box-shadow: 0 0 10px rgba(217, 160, 33, 0.7);
 }
-.field-root .pttpill.handoff .lbl b { color: var(--haz); }
+.field-root .pttpill.handoff .lbl b {
+  color: var(--haz);
+}
 .field-root .trow.spawning {
   border-style: dashed;
   border-color: var(--amber-dim);
   animation: field-matz 1.4s ease-in-out infinite;
 }
-.field-root .vswitch { cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit; }
-.field-root .trow { cursor: pointer; }
-.field-root .stopkey { cursor: pointer; border: 1px solid #5c1f16; color: inherit; font: inherit; }
-.field-root .composer .field { color: var(--amber); }
-.field-root.mood-mic-open .fscr .inner > *:not(.fdock):not(.introw) { opacity: .55; }
-.field-root.mood-mic-open .fdock, .field-root.mood-mic-open .pttpill { opacity: 1; }
-.field-root.mood-the-lull .trow { border-color: rgba(143,232,110,.25); }
-.field-root.mood-the-lull .salstrip { border-color: rgba(143,232,110,.35); }
-.field-root.mood-the-lull .salstrip .pct { color: var(--green); text-shadow: 0 0 10px rgba(143,232,110,.5); }
-.field-root.mood-arrival .fone { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 6px rgba(0,0,0,.6), 0 0 0 1px rgba(255,179,71,.45), 0 18px 44px rgba(0,0,0,.6); }
-.field-root.mood-arrival .trow.needsyou { animation: field-needglow 1s ease-in-out infinite; }
-.field-root .empty-line {
-  font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--steel-dim); padding: 14px 6px; text-align: center;
+.field-root .vswitch {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
-.field-root .screen-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.field-root .trow {
+  cursor: pointer;
+}
+.field-root .stopkey {
+  cursor: pointer;
+  border: 1px solid #5c1f16;
+  color: inherit;
+  font: inherit;
+}
+.field-root.mood-mic-open .fscr .inner > *:not(.fdock) {
+  opacity: 0.55;
+}
+.field-root.mood-mic-open .fdock,
+.field-root.mood-mic-open .pttpill {
+  opacity: 1;
+}
+.field-root.mood-the-lull .trow {
+  border-color: rgba(143, 232, 110, 0.25);
+}
+.field-root.mood-the-lull .salstrip {
+  border-color: rgba(143, 232, 110, 0.35);
+}
+.field-root.mood-the-lull .salstrip .pct {
+  color: var(--green);
+  text-shadow: 0 0 10px rgba(143, 232, 110, 0.5);
+}
+.field-root.mood-arrival .fone {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 179, 71, 0.45),
+    0 18px 44px rgba(0, 0, 0, 0.6);
+}
+.field-root.mood-arrival .trow.needsyou {
+  animation: field-needglow 1s ease-in-out infinite;
+}
+.field-root .screen-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
+}
 /* full-height message thread (ANSWER) — scrolls, newest pinned by autoscroll */
-.field-root .field-thread{flex:1;min-height:0;overflow-y:auto;margin-top:10px;padding:10px;
-  border:1px solid rgba(255,179,71,.18);border-radius:6px;background:rgba(0,0,0,.35);
-  scrollbar-width:thin;scrollbar-color:var(--amber-dim) transparent}
-/* grant chip as a banner riveted to the top of the composer */
-.field-root .grantchip.banner{margin:10px 0 0;border-bottom:none;border-radius:4px 4px 0 0}
-.field-root .grantchip.banner + .composer{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.field-root .field-thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
+}
 @media (prefers-reduced-motion: reduce) {
-  .field-root *, .field-root *::before, .field-root *::after {
+  .field-root *,
+  .field-root *::before,
+  .field-root *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -110,162 +171,519 @@
 
 /* Ported phone-frame instrument CSS from board-industrial-mobile.html.
    Avatar frames use AvatarFace (real PNGs), not board data-URI flip-books. */
-.field-root .dotmx{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--amber)}
-.field-root .dotmx .ghost, .field-root .dotmx.ghost{opacity:.32}
+.field-root .dotmx {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.field-root .dotmx .ghost,
+.field-root .dotmx.ghost {
+  opacity: 0.32;
+}
 /* odo / wave / led → @room/ui/rig (Odometer, Waveform, Led) — bespoke copies deleted */
-@keyframes field-ledpulse{50%{opacity:.45}}
-.field-root .fone{width:322px;flex:none;padding:11px;border-radius:44px;position:relative;
-  background:linear-gradient(172deg,#454b53,#24282d 60%,#1a1d21);
-  border:1px solid #0e1013;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -3px 6px rgba(0,0,0,.6),0 18px 44px rgba(0,0,0,.6)}
-.field-root .fone::before{ /* earpiece slit */
-  content:"";position:absolute;top:5px;left:50%;width:54px;height:3px;margin-left:-27px;border-radius:2px;
-  background:#101317;box-shadow:inset 0 1px 1px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06);z-index:9}
-.field-root .fone .sidekey{position:absolute;right:-3px;top:150px;width:4px;height:58px;border-radius:2px;
-  background:linear-gradient(90deg,#3b4148,#1a1d21);box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}
-.field-root .fone .sidekey.low{top:222px;height:34px}
-.field-root .fscr{border-radius:34px;min-height:648px;display:flex;flex-direction:column;overflow:hidden}
-.field-root .fscr .inner{position:relative;z-index:6;display:flex;flex-direction:column;flex:1;padding:14px 14px 16px}
-/* phone status bar */
-.field-root .fstat{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:8.5px;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--amber-dim);padding:2px 2px 10px;
-  border-bottom:1px solid rgba(255,179,71,.14);margin-bottom:10px}
-.field-root .fstat .spacer{flex:1}
-.field-root .fstat .sseg{font-size:10px}
+@keyframes field-ledpulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.field-root .fone {
+  width: 322px;
+  flex: none;
+  padding: 11px;
+  border-radius: 44px;
+  position: relative;
+  background: linear-gradient(172deg, #454b53, #24282d 60%, #1a1d21);
+  border: 1px solid #0e1013;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6),
+    0 18px 44px rgba(0, 0, 0, 0.6);
+}
+.field-root .fone::before {
+  /* earpiece slit */
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 54px;
+  height: 3px;
+  margin-left: -27px;
+  border-radius: 2px;
+  background: #101317;
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+  z-index: 9;
+}
+.field-root .fone .sidekey {
+  position: absolute;
+  right: -3px;
+  top: 150px;
+  width: 4px;
+  height: 58px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3b4148, #1a1d21);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.field-root .fone .sidekey.low {
+  top: 222px;
+  height: 34px;
+}
+.field-root .fscr {
+  border-radius: 34px;
+  height: 648px;
+  min-height: 648px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.field-root .fscr .inner {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 14px 16px;
+  overflow: hidden;
+}
 /* thumb-reach arc — honesty overlay */
 /* compact salience strip — bar is rig SalienceBar */
-.field-root .salstrip{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,179,71,.2);
-  border-radius:5px;background:rgba(0,0,0,.4)}
-.field-root .salstrip .pct{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber);text-shadow:0 0 10px rgba(255,179,71,.6)}
-.field-root .salstrip .cap{font-family:var(--mono);font-size:7.5px;letter-spacing:.16em;color:var(--amber-dim);text-transform:uppercase;line-height:1.5}
+.field-root .salstrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 179, 71, 0.2);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.4);
+}
+.field-root .salstrip .pct {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.6);
+}
+.field-root .salstrip .cap {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+  color: var(--amber-dim);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
 /* plot svg animations (from v4) */
-.field-root .rsweep{transform-origin:150px 128px;animation: field-rsweepm 9s linear infinite}
-@keyframes field-rsweepm{to{transform:rotate(360deg)}}
-.field-root .blip .bcore{filter:drop-shadow(0 0 5px rgba(255,179,71,.8))}
-.field-root .blip.red .bcore{filter:drop-shadow(0 0 6px rgba(255,83,64,.9));animation: field-blipflare 1.4s ease-in-out infinite}
-@keyframes field-blipflare{50%{opacity:.35}}
-.field-root .blip.grn .bcore{filter:drop-shadow(0 0 5px rgba(143,232,110,.7))}
-.field-root .thrring{animation: field-thrpulse 2.6s ease-in-out infinite}
-@keyframes field-thrpulse{50%{opacity:.45}}
-.field-root .pl-conduit{stroke:var(--amber);opacity:.16;stroke-dasharray:4 5;animation: field-dashflow 1.2s linear infinite}
-@keyframes field-dashflow{to{stroke-dashoffset:-18}}
-.field-root .splan{animation: field-planglow 2.6s ease-in-out infinite}
-@keyframes field-planglow{50%{filter:drop-shadow(0 0 8px rgba(255,150,30,.55))}}
-@keyframes field-matz{50%{opacity:.5}}
+.field-root .rsweep {
+  transform-origin: 150px 128px;
+  animation: field-rsweepm 9s linear infinite;
+}
+@keyframes field-rsweepm {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.field-root .blip .bcore {
+  filter: drop-shadow(0 0 5px rgba(255, 179, 71, 0.8));
+}
+.field-root .blip.red .bcore {
+  filter: drop-shadow(0 0 6px rgba(255, 83, 64, 0.9));
+  animation: field-blipflare 1.4s ease-in-out infinite;
+}
+@keyframes field-blipflare {
+  50% {
+    opacity: 0.35;
+  }
+}
+.field-root .blip.grn .bcore {
+  filter: drop-shadow(0 0 5px rgba(143, 232, 110, 0.7));
+}
+.field-root .thrring {
+  animation: field-thrpulse 2.6s ease-in-out infinite;
+}
+@keyframes field-thrpulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.field-root .pl-conduit {
+  stroke: var(--amber);
+  opacity: 0.16;
+  stroke-dasharray: 4 5;
+  animation: field-dashflow 1.2s linear infinite;
+}
+@keyframes field-dashflow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+.field-root .splan {
+  animation: field-planglow 2.6s ease-in-out infinite;
+}
+@keyframes field-planglow {
+  50% {
+    filter: drop-shadow(0 0 8px rgba(255, 150, 30, 0.55));
+  }
+}
+@keyframes field-matz {
+  50% {
+    opacity: 0.5;
+  }
+}
 /* compact thread rows — the spine at phone scale */
-.field-root .trows{display:flex;flex-direction:column;gap:7px;margin-top:10px}
-.field-root .trow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:9px;align-items:center;
-  padding:6px 8px 6px 6px;border-radius:7px;border:1px solid #15181c;
-  background:linear-gradient(178deg,#31363c,#22262b);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 12px rgba(0,0,0,.4)}
-.field-root .trow .tface{width:40px;height:40px;overflow:hidden;position:relative;flex:none}
-.field-root .trow .tmid{min-width:0}
-.field-root .trow .callsign{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
-.field-root .trow .tid{font-family:var(--mono);font-size:7.5px;color:var(--steel-dim);letter-spacing:.1em;margin-left:6px}
-.field-root .trow .ttask{font-family:var(--mono);font-size:8.5px;color:var(--amber);letter-spacing:.02em;margin-top:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.field-root .trow .rig-tag{font-size:7.5px;padding:2px 5px}
-.field-root .field-tag-sm{font-size:7.5px}
-.field-root .trow.needsyou{border-color:var(--amber);animation: field-needglow 1.8s ease-in-out infinite}
-@keyframes field-needglow{50%{box-shadow:0 0 24px rgba(255,150,30,.35),inset 0 1px 0 rgba(255,255,255,.07)}}
-.field-root .trow.settled{opacity:.66}
-/* bottom dock: mikey chip + PTT pill — the always-there thumb row */
-.field-root .fdock{margin-top:auto;display:flex;gap:10px;align-items:center;padding-top:12px}
-.field-root .fdock .mface{width:52px;height:52px;overflow:hidden;flex:none;position:relative}
-.field-root .pttpill{flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:26px;
-  background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid #0e1013;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 12px rgba(0,0,0,.5)}
-.field-root .pttpill .btn{width:26px;height:26px;border-radius:50%;flex:none;position:relative;
-  background:radial-gradient(circle at 35% 30%,#565e67,#2a2f35 60%,#191d21);
-  border:2px solid #0c0e11;box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 1px rgba(255,255,255,.15)}
-.field-root .pttpill .btn::after{content:"";position:absolute;inset:7px;border-radius:50%;background:#3a3f45}
-.field-root .pttpill .lbl{font-family:var(--mono);font-size:8px;letter-spacing:.16em;color:var(--steel-dim);text-transform:uppercase;line-height:1.6}
-.field-root .pttpill .lbl b{color:var(--steel)}
-.field-root .pttpill.hot{border-color:#5c1f16;background:linear-gradient(180deg,#3a2320,#1d1512)}
-.field-root .pttpill.hot .btn::after{background:var(--red);box-shadow:0 0 12px rgba(255,83,64,.9);animation: field-ledpulse .5s infinite}
-.field-root .pttpill.hot .lbl b{color:var(--red)}
+.field-root .trows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+.field-root .trow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding: 6px 8px 6px 6px;
+  border-radius: 7px;
+  border: 1px solid #15181c;
+  background: linear-gradient(178deg, #31363c, #22262b);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.field-root .trow .tface {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  position: relative;
+  flex: none;
+}
+.field-root .trow .tmid {
+  min-width: 0;
+}
+.field-root .trow .callsign {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.field-root .trow .tid {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: var(--steel-dim);
+  letter-spacing: 0.1em;
+  margin-left: 6px;
+}
+.field-root .trow .ttask {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--amber);
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.field-root .trow .rig-tag {
+  font-size: 7.5px;
+  padding: 2px 5px;
+}
+.field-root .field-tag-sm {
+  font-size: 7.5px;
+}
+.field-root .trow.needsyou {
+  border-color: var(--amber);
+  animation: field-needglow 1.8s ease-in-out infinite;
+}
+@keyframes field-needglow {
+  50% {
+    box-shadow:
+      0 0 24px rgba(255, 150, 30, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+}
+.field-root .trow.settled {
+  opacity: 0.66;
+}
+.field-root .pttpill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  border: 1px solid #0e1013;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.field-root .pttpill .btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 35% 30%, #565e67, #2a2f35 60%, #191d21);
+  border: 2px solid #0c0e11;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+.field-root .pttpill .btn::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #3a3f45;
+}
+.field-root .pttpill .btn svg {
+  position: relative;
+  z-index: 1;
+  color: var(--steel);
+}
+.field-root .pttpill .lbl {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--steel-dim);
+  text-transform: uppercase;
+  line-height: 1.6;
+}
+.field-root .pttpill .lbl b {
+  color: var(--steel);
+}
+.field-root .pttpill.hot {
+  border-color: #5c1f16;
+  background: linear-gradient(180deg, #3a2320, #1d1512);
+}
+.field-root .pttpill.hot .btn::after {
+  background: var(--red);
+  box-shadow: 0 0 12px rgba(255, 83, 64, 0.9);
+  animation: field-ledpulse 0.5s infinite;
+}
+.field-root .pttpill.hot .btn svg {
+  color: var(--red);
+}
+.field-root .pttpill.hot .lbl b {
+  color: var(--red);
+}
 /* held-question option keys — rig Keycap, sized for thumbs */
-.field-root .field-opt.rig-keycap{
-  grid-template-columns:32px minmax(0,1fr) auto;font-size:10px;letter-spacing:.04em;
-  padding:13px 12px;margin-top:7px;cursor:pointer}
-.field-root .field-opt.field-opt-first{margin-top:10px}
-.field-root .field-opt .rig-keycap-glyph{width:28px;height:28px;font-size:12px}
-.field-root .field-opt .rig-keycap-hint{font-size:7.5px}
-/* composer: one screen-bed pill, submit key embedded at the right end */
-.field-root .composer{display:flex;gap:8px;align-items:center;margin-top:10px;padding:5px 5px 5px 12px;
-  border-radius:6px;border:1px solid rgba(255,179,71,.3);background:var(--screen);
-  box-shadow:inset 0 0 14px rgba(0,0,0,.7)}
-.field-root .composer .field{flex:1;min-width:0;padding:8px 0;font-family:var(--mono);font-size:10px;color:#e8e5df;
-  letter-spacing:.03em;background:transparent;border:none;box-shadow:none;outline:none}
-.field-root .composer .field .cursor{display:inline-block;width:7px;height:11px;background:var(--amber);vertical-align:-1px;
-  animation:curs 1s steps(1,end) infinite;box-shadow:0 0 6px rgba(255,179,71,.8)}
-.field-root .sendkey{flex:none;width:32px;height:32px;display:grid;place-items:center;font-family:var(--mono);
-  font-size:13px;color:#181206;border-radius:5px;background:linear-gradient(180deg,var(--amber-hot),var(--amber));
-  border:1px solid #7a5518;box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 10px rgba(255,160,40,.25);
-  font-weight:700;cursor:pointer;line-height:1}
-.field-root .grantchip{display:flex;gap:9px;align-items:center;margin-top:9px;padding:7px 10px;border-radius:4px;
-  border:1px dashed var(--green-dim);background:rgba(143,232,110,.06);font-family:var(--mono);font-size:8px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--green);line-height:1.7}
-.field-root .grantchip .rig-led{flex:none;width:8px;height:8px}
-/* voice transcript (v4) */
-.field-root .vt{padding:10px 11px;font-family:var(--mono);font-size:9.5px;line-height:1.75;letter-spacing:.02em}
-.field-root .vt .row{display:flex;gap:7px}
-.field-root .vt .who{color:var(--amber-dim);flex:none;width:38px;text-align:right}
-.field-root .vt .say{color:var(--amber)}
-.field-root .vt .say.you{color:#e8e5df}
-.field-root .vt .say .cursor{display:inline-block;width:7px;height:11px;background:var(--amber);vertical-align:-2px;
-  animation:curs 1s steps(1,end) infinite;box-shadow:0 0 6px rgba(255,179,71,.8)}
-.field-root .watchchip{display:flex;gap:9px;align-items:center;margin-top:9px;padding:7px 10px;border-radius:4px;
-  border:1px dashed var(--amber-dim);background:var(--amber-ghost);font-family:var(--mono);font-size:8px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--amber);line-height:1.6}
-.field-root .watchchip .watch-eye{width:9px;height:9px;flex:none}
-.field-root .start-purpose{font-size:8px;letter-spacing:.2em;margin:0 2px 8px}
-.field-root .standing-orders-cap{
-  font-size:8px;letter-spacing:.16em;margin:12px 2px 0;margin-top:auto}
-/* interrupt row — big thumb targets */
-.field-root .replaykey{flex:none;width:46px;display:grid;place-items:center;padding:0;border-radius:8px;cursor:pointer;
-  background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid rgba(255,179,71,.3);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
-.field-root .replaykey svg{filter:drop-shadow(0 0 5px rgba(255,179,71,.5))}
-.field-root .stopkey{flex:none;width:46px;display:grid;place-items:center;padding:0;border-radius:8px;
-  background:linear-gradient(180deg,#3a2320,#1d1512);border:1px solid #5c1f16;cursor:pointer;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
-.field-root .stopkey .sq{width:18px;height:18px;background:var(--red);box-shadow:0 0 10px rgba(255,83,64,.8);border-radius:2px}
-.field-root .stopkey .sl{font-family:var(--mono);font-size:7px;letter-spacing:.16em;color:var(--red);text-transform:uppercase}
+.field-root .field-opt.rig-keycap {
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 13px 12px;
+  margin-top: 7px;
+  cursor: pointer;
+}
+.field-root .field-opt.field-opt-first {
+  margin-top: 10px;
+}
+.field-root .field-opt .rig-keycap-glyph {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+.field-root .field-opt .rig-keycap-hint {
+  font-size: 7.5px;
+}
+.field-root .grantchip {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: 9px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  border: 1px dashed var(--green-dim);
+  background: rgba(143, 232, 110, 0.06);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  line-height: 1.7;
+}
+.field-root .grantchip .rig-led {
+  flex: none;
+  width: 8px;
+  height: 8px;
+}
+.field-root .watchchip {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: 9px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  border: 1px dashed var(--amber-dim);
+  background: var(--amber-ghost);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+  line-height: 1.6;
+}
+.field-root .watchchip .watch-eye {
+  width: 9px;
+  height: 9px;
+  flex: none;
+}
 /* verb rack rows — speakable one-liners on the phone */
-.field-root .vrack{display:flex;flex-direction:column;gap:7px;margin-top:8px}
-.field-root .vswitch{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;
-  border-radius:5px;background:linear-gradient(180deg,#2b3036,#1d2126);border:1px solid #0e1013;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.field-root .vswitch .lever{width:14px;height:26px;border-radius:7px;background:linear-gradient(180deg,#14171b,#22262b);
-  border:1px solid #0b0d10;position:relative}
-.field-root .vswitch .lever::after{content:"";position:absolute;left:1px;right:1px;height:11px;border-radius:5px;bottom:1px;
-  background:radial-gradient(circle at 35% 30%,#5a626b,#31363c)}
-.field-root .vswitch.on .lever::after{top:1px;bottom:auto;
-  background:radial-gradient(circle at 35% 30%,var(--amber-hot),var(--amber));box-shadow:0 0 8px rgba(255,179,71,.7)}
-.field-root .vswitch .vname{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--steel);
-  text-transform:uppercase;font-weight:700}
-.field-root .vswitch.on .vname{color:var(--amber)}
-.field-root .vswitch .vparams{font-family:var(--mono);font-size:7.5px;letter-spacing:.05em;color:var(--steel-dim);
-  text-transform:uppercase;margin-top:2px}
+.field-root .vrack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+}
+.field-root .vswitch {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #2b3036, #1d2126);
+  border: 1px solid #0e1013;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.field-root .vswitch .lever {
+  width: 14px;
+  height: 26px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #14171b, #22262b);
+  border: 1px solid #0b0d10;
+  position: relative;
+}
+.field-root .vswitch .lever::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 11px;
+  border-radius: 5px;
+  bottom: 1px;
+  background: radial-gradient(circle at 35% 30%, #5a626b, #31363c);
+}
+.field-root .vswitch.on .lever::after {
+  top: 1px;
+  bottom: auto;
+  background: radial-gradient(circle at 35% 30%, var(--amber-hot), var(--amber));
+  box-shadow: 0 0 8px rgba(255, 179, 71, 0.7);
+}
+.field-root .vswitch .vname {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--steel);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.field-root .vswitch.on .vname {
+  color: var(--amber);
+}
+.field-root .vswitch .vparams {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.05em;
+  color: var(--steel-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
 /* knobs (GAUGES read-only dials) */
-.field-root .spendfoot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding:8px 11px;
-  font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber-dim)}
-.field-root .spendfoot b{color:var(--amber)}
-.field-root .knobs{display:flex;justify-content:space-around;padding:12px 2px 8px}
-.field-root .knob{text-align:center;width:82px}
-.field-root .knob .kface{width:50px;height:50px;margin:0 auto;border-radius:50%;position:relative;
-  background:radial-gradient(circle at 36% 30%,#575f68,#2b3036 58%,#1a1e22);
-  border:2px solid #0d0f12;box-shadow:0 4px 9px rgba(0,0,0,.6),inset 0 1px 1px rgba(255,255,255,.14)}
-.field-root .knob .kface::after{content:"";position:absolute;left:50%;top:4px;width:3px;height:13px;margin-left:-1.5px;
-  border-radius:2px;background:var(--amber);box-shadow:0 0 6px rgba(255,179,71,.8)}
-.field-root .knob.k1 .kface::after{transform-origin:50% 21px;transform:rotate(-38deg)}
-.field-root .knob.k2 .kface::after{transform-origin:50% 21px;transform:rotate(0deg)}
-.field-root .knob.k3 .kface::after{transform-origin:50% 21px;transform:rotate(42deg)}
-.field-root .knob .kl{font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;color:var(--steel-dim);text-transform:uppercase;margin-top:7px}
-.field-root .knob .kv{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;margin-top:2px}
-.field-root .knob .khome{font-family:var(--mono);font-size:7px;letter-spacing:.06em;color:#565c63;text-transform:uppercase;margin-top:4px;line-height:1.6}
-.field-root .knob .khome b{color:var(--amber-dim)}
+.field-root .spendfoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 9px;
+  padding: 8px 11px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber-dim);
+}
+.field-root .spendfoot b {
+  color: var(--amber);
+}
+.field-root .knobs {
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 2px 8px;
+}
+.field-root .knob {
+  text-align: center;
+  width: 82px;
+}
+.field-root .knob .kface {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto;
+  border-radius: 50%;
+  position: relative;
+  background: radial-gradient(circle at 36% 30%, #575f68, #2b3036 58%, #1a1e22);
+  border: 2px solid #0d0f12;
+  box-shadow:
+    0 4px 9px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14);
+}
+.field-root .knob .kface::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  width: 3px;
+  height: 13px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
+}
+.field-root .knob.k1 .kface::after {
+  transform-origin: 50% 21px;
+  transform: rotate(-38deg);
+}
+.field-root .knob.k2 .kface::after {
+  transform-origin: 50% 21px;
+  transform: rotate(0deg);
+}
+.field-root .knob.k3 .kface::after {
+  transform-origin: 50% 21px;
+  transform: rotate(42deg);
+}
+.field-root .knob .kl {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  color: var(--steel-dim);
+  text-transform: uppercase;
+  margin-top: 7px;
+}
+.field-root .knob .kv {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.field-root .knob .khome {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  color: #565c63;
+  text-transform: uppercase;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.field-root .knob .khome b {
+  color: var(--amber-dim);
+}
 
 .field-root button.pttpill,
 .field-root button.trow,
@@ -274,99 +692,146 @@
   -webkit-appearance: none;
 }
 /* ── single-line PTT pill (subtext stripped) + its compact inline variant ── */
-.field-root .pttpill{padding:8px 14px}
-.field-root .pttpill .lbl{line-height:1.2}
-.field-root .pttpill.compact{padding:6px 10px;gap:8px;border-radius:22px}
-.field-root .pttpill.compact .btn{width:20px;height:20px}
-.field-root .pttpill.compact .btn::after{inset:5px}
-.field-root .pttpill.compact .lbl{font-size:7.5px;letter-spacing:.14em}
+.field-root .pttpill {
+  padding: 8px 14px;
+}
+.field-root .pttpill .lbl {
+  line-height: 1.2;
+}
+.field-root .pttpill.compact {
+  padding: 6px 10px;
+  gap: 8px;
+  border-radius: 22px;
+}
+.field-root .pttpill.compact .btn {
+  width: 20px;
+  height: 20px;
+}
+.field-root .pttpill.compact .btn::after {
+  inset: 5px;
+}
+.field-root .pttpill.compact .lbl {
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+}
 
-/* ── THE COMMON DOCK: talk row + chat key + slide-up composer ──
-   One dock on every screen. Collapsed it is [face][chat][HOLD TO TALK];
-   tapping chat swaps the keys for a composer that slides up with the face
-   chip docked to its top-left corner (Titanfall comms-card look). */
-.field-root .fdock{margin-top:auto;display:block;padding-top:12px}
-.field-root .fdock-row{display:flex;gap:10px;align-items:center}
-.field-root .fdock-keys{flex:1;display:flex;gap:8px;align-items:center;min-width:0;
-  transition:opacity 180ms ease,max-height 200ms ease}
-.field-root .fdock.typing .fdock-keys{opacity:0;max-height:0;overflow:hidden;pointer-events:none}
-.field-root .chatkey{flex:none;width:40px;height:34px;display:grid;place-items:center;padding:0;cursor:pointer;
-  border-radius:8px;background:linear-gradient(180deg,#2b3036,#1b1f24);border:1px solid rgba(255,179,71,.3);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.5)}
-.field-root .chatkey svg{filter:drop-shadow(0 0 5px rgba(255,179,71,.45))}
-/* mic key — the icon-sized PTT used where the row is tight (LISTEN) */
-.field-root .pttpill.iconpill{flex:1;justify-content:center;gap:0;padding:0;height:40px;border-radius:8px;
-  color:var(--steel)}
-.field-root .pttpill.iconpill.hot{color:var(--red)}
-.field-root .pttpill.iconpill.handoff{color:var(--haz)}
-.field-root .pttpill.iconpill svg{filter:drop-shadow(0 0 5px rgba(255,179,71,.35))}
-/* every key in the dock row is one height — a tidy thumb strip */
-.field-root .fdock-keys .stopkey,
-.field-root .fdock-keys .replaykey{width:44px;height:40px}
-.field-root .fdock-keys .chatkey{height:40px}
-/* the slide-up composer */
-.field-root .composer-slot{display:grid;grid-template-rows:0fr;
-  transition:grid-template-rows 200ms ease}
-.field-root .composer-slot.open{grid-template-rows:1fr}
-.field-root .composer-slot > .composer-slide{min-height:0;overflow:hidden;
-  transform:translateY(14px);opacity:0;transition:transform 200ms ease,opacity 200ms ease}
-.field-root .composer-slot.open > .composer-slide{transform:none;opacity:1}
-.field-root .composer-slot .composer{margin-top:0}
-.field-root .closekey{flex:none;width:22px;height:22px;display:grid;place-items:center;padding:0;cursor:pointer;
-  margin-left:-6px;border-radius:4px;background:transparent;border:1px solid rgba(255,179,71,.25);
-  font-family:var(--mono);font-size:10px;line-height:1;color:var(--amber-dim)}
-/* comms card: the face chip welds itself onto the composer's top-left corner */
-.field-root .fdock.typing .fdock-row{margin-bottom:0}
-.field-root .fdock.typing .mface{border-radius:8px 8px 0 0;border-bottom-color:transparent;
-  margin-bottom:-1px;position:relative;z-index:2;
-  box-shadow:0 0 14px rgba(255,140,20,.22),inset 0 0 10px rgba(0,0,0,.7)}
-.field-root .fdock.typing .composer{border-top-left-radius:0}
 /* ── LISTEN: audio route as ToggleGroup (.devtog) ── */
 
 /* ── GAUGES: per-provider guard board ── */
-.field-root .gboard-cap{font-size:8px;letter-spacing:.2em;margin:0 2px 8px}
-.field-root .gauge-cap-info{display:flex;align-items:center;gap:5px}
-.field-root .gauge-info-trigger{
-  width:16px;height:16px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;
-  background:transparent;color:var(--amber-dim);font-family:var(--mono);font-size:12px;
-  line-height:1;cursor:pointer;opacity:.8}
-.field-root .gauge-info-trigger:hover,
-.field-root .gauge-info-trigger:focus-visible{
-  color:var(--amber);opacity:1;outline:1px solid var(--amber-dim)}
-.field-root .gboard{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.field-root .gtile{padding:8px 9px 9px;background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,179,71,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.field-root .gtile-wrap:first-child{grid-column:1 / -1}
-.field-root .gtile .gname{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--amber);
-  text-transform:uppercase;margin-bottom:5px}
-.field-root .gbar + .gbar{margin-top:6px}
-.field-root .gbar-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
-  font-family:var(--mono);font-size:7px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
-.field-root .gbar-head .gw{color:var(--steel-dim);white-space:nowrap}
-.field-root .gbar-head .gv{color:var(--amber);white-space:nowrap}
-.field-root .gbar.hot .gbar-head .gv{color:var(--red)}
-.field-root .gtrack{position:relative;height:7px;border-radius:4px;overflow:hidden;
-  background:#241d10;box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
-.field-root .gtrack i{display:block;height:100%;border-radius:4px;
-  background:linear-gradient(90deg,var(--amber),var(--amber-hot));
-  box-shadow:0 0 8px rgba(255,179,71,.45);transition:width 220ms ease}
-.field-root .gbar.hot .gtrack i{background:linear-gradient(90deg,var(--amber-hot),var(--red));
-  box-shadow:0 0 9px rgba(255,83,64,.6)}
-/* red zone marker at 85% of the track */
-.field-root .gtrack u{position:absolute;top:0;bottom:0;left:85%;right:0;
-  background:rgba(255,83,64,.16);border-left:1px solid rgba(255,83,64,.5)}
-
-.field-root .vt .say .cursor {
-  display: inline-block;
-  width: 7px;
-  height: 11px;
-  margin-left: 2px;
-  background: var(--amber);
-  vertical-align: -1px;
-  animation: field-cursorblink 1s steps(2, end) infinite;
+.field-root .gboard-cap {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  margin: 0 2px 8px;
 }
+.field-root .gauge-cap-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.field-root .gauge-info-trigger {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--amber-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.field-root .gauge-info-trigger:hover,
+.field-root .gauge-info-trigger:focus-visible {
+  color: var(--amber);
+  opacity: 1;
+  outline: 1px solid var(--amber-dim);
+}
+.field-root .gboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.field-root .gtile {
+  padding: 8px 9px 9px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.field-root .gtile-wrap:first-child {
+  grid-column: 1 / -1;
+}
+.field-root .gtile .gname {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.field-root .gbar + .gbar {
+  margin-top: 6px;
+}
+.field-root .gbar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.field-root .gbar-head .gw {
+  color: var(--steel-dim);
+  white-space: nowrap;
+}
+.field-root .gbar-head .gv {
+  color: var(--amber);
+  white-space: nowrap;
+}
+.field-root .gbar.hot .gbar-head .gv {
+  color: var(--red);
+}
+.field-root .gtrack {
+  position: relative;
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #241d10;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.field-root .gtrack i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--amber), var(--amber-hot));
+  box-shadow: 0 0 8px rgba(255, 179, 71, 0.45);
+  transition: width 220ms ease;
+}
+.field-root .gbar.hot .gtrack i {
+  background: linear-gradient(90deg, var(--amber-hot), var(--red));
+  box-shadow: 0 0 9px rgba(255, 83, 64, 0.6);
+}
+/* red zone marker at 85% of the track */
+.field-root .gtrack u {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 85%;
+  right: 0;
+  background: rgba(255, 83, 64, 0.16);
+  border-left: 1px solid rgba(255, 83, 64, 0.5);
+}
+
 @keyframes field-cursorblink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -392,81 +857,6 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
-/* ── the talk group: chat | hold-to-talk as ONE segmented control ── */
-.field-root .talkgroup {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: stretch;
-  height: var(--fkey-h);
-  overflow: hidden;
-  border-radius: calc(var(--fkey-h) / 2);
-  border: 1px solid #0e1013;
-  background: linear-gradient(180deg, #2b3036, #1b1f24);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 4px 12px rgba(0, 0, 0, 0.5);
-}
-.field-root .talkgroup .chatkey {
-  flex: none;
-  width: 48px;
-  height: auto;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.field-root .talkgroup .tgdiv {
-  flex: none;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, #0b0d10 18%, #0b0d10 82%, transparent);
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
-}
-.field-root .talkgroup .pttpill {
-  flex: 1;
-  min-width: 0;
-  height: auto;
-  padding: 0 12px;
-  justify-content: center;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.field-root .talkgroup .pttpill.iconpill {
-  padding: 0;
-}
-.field-root .talkgroup .pttpill.hot {
-  background: linear-gradient(180deg, #3a2320, #1d1512);
-}
-.field-root .talkgroup .pttpill.handoff {
-  background: linear-gradient(180deg, #3a3220, #1d1912);
-}
-.field-root .talkgroup .pttpill .lbl {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* pressed segment reads as pressed */
-.field-root .talkgroup .chatkey:active,
-.field-root .talkgroup .pttpill:active {
-  background: rgba(0, 0, 0, 0.35);
-}
-
-/* ── one height for every bottom-row control ── */
-.field-root .fdock-keys .stopkey,
-.field-root .fdock-keys .replaykey {
-  width: 46px;
-  height: var(--fkey-h);
-}
-.field-root .fdock .mface {
-  width: var(--fkey-h);
-  height: var(--fkey-h);
-}
-.field-root .fdock .mface .face {
-  width: var(--fkey-h);
-  height: var(--fkey-h);
-}
 .field-root .vrack .vswitch {
   min-height: var(--fkey-h);
 }
@@ -615,86 +1005,92 @@
 }
 
 /* ── GAUGES: SessionDial (DialGauge + blue session arc) ── */
-.field-root .gauges-body{overflow-y:auto;min-height:0}
-.field-root .gboard-cap b{color:var(--amber)}
-.field-root .gboard-cap i{color:#5fd0ff;font-style:normal}
-.field-root .fdialrow{display:flex;gap:8px;justify-content:center;margin-bottom:2px}
-.field-root .fdial{width:132px;max-width:50%;position:relative}
-.field-root .fdial .session-dial-arc{
-  position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:1}
-.field-root .fdial .rig-dial{width:100%;position:relative;z-index:0}
-.field-root .fdial .rig-dial-cap{font-size:7.5px;letter-spacing:.11em;margin-top:1px;line-height:1.55;text-align:center}
-.field-root .spendfoot-wrap{margin-top:9px}
-.field-root .spendfoot-wrap .spendfoot{margin-top:0}
-.field-root .gtile-wrap{display:block}
-.field-root .gtile-wrap.hot .gtile{border-color:rgba(255,83,64,.55)}
+.field-root .gauges-body {
+  overflow-y: auto;
+  min-height: 0;
+}
+.field-root .gboard-cap b {
+  color: var(--amber);
+}
+.field-root .gboard-cap i {
+  color: #5fd0ff;
+  font-style: normal;
+}
+.field-root .fdialrow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.field-root .fdial {
+  width: 132px;
+  max-width: 50%;
+  position: relative;
+}
+.field-root .fdial .session-dial-arc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.field-root .fdial .rig-dial {
+  width: 100%;
+  position: relative;
+  z-index: 0;
+}
+.field-root .fdial .rig-dial-cap {
+  font-size: 7.5px;
+  letter-spacing: 0.11em;
+  margin-top: 1px;
+  line-height: 1.55;
+  text-align: center;
+}
+.field-root .spendfoot-wrap {
+  margin-top: 9px;
+}
+.field-root .spendfoot-wrap .spendfoot {
+  margin-top: 0;
+}
+.field-root .gtile-wrap {
+  display: block;
+}
+.field-root .gtile-wrap.hot .gtile {
+  border-color: rgba(255, 83, 64, 0.55);
+}
 
 /* Popover is portaled outside .field-root, so its theme class is intentionally global. */
-.gauge-info-popover{
-  width:min(270px,calc(100vw - 28px));padding:10px 11px;border-color:rgba(255,179,71,.35);
-  background:#17130d;color:var(--amber-dim);font-family:var(--mono);font-size:8px;
-  letter-spacing:.04em;line-height:1.55;text-transform:uppercase;
-  box-shadow:0 10px 28px rgba(0,0,0,.7),inset 0 0 18px rgba(255,179,71,.04)}
-.gauge-info-popover p{margin:0}
-.gauge-info-popover p + p{margin-top:6px}
-.gauge-info-popover b{color:var(--amber);font-weight:700}
+.gauge-info-popover {
+  width: min(270px, calc(100vw - 28px));
+  padding: 10px 11px;
+  border-color: rgba(255, 179, 71, 0.35);
+  background: #17130d;
+  color: var(--amber-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  text-transform: uppercase;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.7),
+    inset 0 0 18px rgba(255, 179, 71, 0.04);
+}
+.gauge-info-popover p {
+  margin: 0;
+}
+.gauge-info-popover p + p {
+  margin-top: 6px;
+}
+.gauge-info-popover b {
+  color: var(--amber);
+  font-weight: 700;
+}
 
 /* ══════════════════════════════════════════════════════════════
    ROUND D · PHASE 2 — FIELD FLEET + VOICE COMMISSION VARIANTS
    Static attribution only; no new ambient motion.
    ══════════════════════════════════════════════════════════════ */
-.field-root .field-room-pills {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.field-root .field-room-pills button {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex-direction: column;
-  padding: 6px 3px 5px;
-  border: 1px solid #3a3f45;
-  border-radius: 8px 2px 2px 2px;
-  outline: none;
-  background: rgba(0, 0, 0, 0.26);
-  color: var(--steel-dim);
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 6.8px;
-  letter-spacing: 0.07em;
-  line-height: 1.1;
-  text-transform: uppercase;
-}
-
-.field-root .field-room-pills button b {
-  color: var(--amber-dim);
-  font-size: 7.5px;
-}
-
-.field-root .field-room-pills button.is-active,
-.field-root .field-room-pills button:focus-visible {
-  border-color: var(--amber-dim);
-  background: var(--amber-ghost);
-  color: var(--amber-hot);
-}
-
-.field-root .field-room-pills button i {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--red);
-  box-shadow: 0 0 5px rgba(255, 83, 64, 0.72);
-}
-
 .field-root .field-cross-room-wrap {
   margin-top: 9px;
 }
@@ -746,42 +1142,6 @@
 
 .field-root .field-cross-room-row > b.is-red {
   color: var(--red);
-}
-
-.field-root .field-commission-voice {
-  display: flex;
-  width: 100%;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 9px;
-  padding: 9px 10px;
-  border: 1px solid var(--amber-dim);
-  border-radius: 9px 3px 3px 3px;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
-  outline: none;
-  background: linear-gradient(180deg, rgba(255, 179, 71, 0.1), rgba(255, 179, 71, 0.025));
-  color: var(--amber);
-  cursor: pointer;
-  font-family: var(--mono);
-  text-align: left;
-}
-
-.field-root .field-commission-voice:focus-visible {
-  outline: 1px solid var(--amber);
-  outline-offset: 2px;
-}
-
-.field-root .field-commission-voice b {
-  color: var(--amber-hot);
-  font-size: 8.5px;
-  letter-spacing: 0.17em;
-}
-
-.field-root .field-commission-voice span {
-  color: var(--steel-dim);
-  font-size: 6.8px;
-  letter-spacing: 0.1em;
 }
 
 .field-root .field-commission-draft {
@@ -869,10 +1229,526 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field-root .field-room-pills *,
   .field-root .field-cross-room *,
   .field-root .field-commission-draft *,
-  .field-root .field-commission-voice {
+  .field-root .start-newroom {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .field-root {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+  .field-root .fone {
+    width: 100%;
+  }
+}
+
+/* FIELD UNIT owner round — rooms first, then screens. */
+.field-root .frail {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  align-items: stretch;
+  overflow: hidden;
+}
+.field-root .frail-scroll {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+}
+.field-root .frail-scroll button {
+  position: relative;
+  display: flex;
+  height: 24px;
+  min-width: 0;
+  flex: 1 1 0;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  padding: 0 3px;
+  border: 1px solid #3a3f45;
+  border-radius: 8px 2px 2px 2px;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--steel-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.field-root .frail-scroll button span {
+  min-width: 0;
+  white-space: nowrap;
+}
+.field-root .frail-scroll button b {
+  color: var(--amber-dim);
+  font-size: 7.5px;
+  font-weight: 700;
+}
+.field-root .frail-scroll button.is-active,
+.field-root .frail-scroll button:focus-visible {
+  border-color: var(--amber-dim);
+  border-bottom: 2px solid var(--amber);
+  background: rgba(255, 179, 71, 0.13);
+  color: var(--amber-hot);
+  outline: none;
+}
+.field-root .frail-scroll button.is-active b {
+  color: var(--amber);
+}
+.field-root .frail-scroll button i {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 5px rgba(255, 83, 64, 0.72);
+}
+.field-root .flamps {
+  z-index: 2;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding-left: 5px;
+  background: var(--screen);
+}
+.field-root .flamps span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 6.25px;
+  letter-spacing: 0.06em;
+}
+.field-root .flamps em {
+  font-style: normal;
+}
+.field-root .flamps .rig-led {
+  width: 6px;
+  height: 6px;
+  flex: none;
+}
+
+/* Grouped phone comms — sender is a label, never a gutter. */
+.field-root .vt.comms-log {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+.field-root .comms-group + .comms-group {
+  margin-top: 10px;
+}
+.field-root .comms-group.is-you {
+  max-width: 86%;
+  margin-left: auto;
+  text-align: right;
+}
+.field-root .comms-who {
+  margin-bottom: 3px;
+  color: var(--amber-dim);
+  font-size: 7px;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.field-root .comms-say {
+  color: var(--amber);
+  overflow-wrap: anywhere;
+}
+.field-root .comms-say + .comms-say {
+  margin-top: 2px;
+}
+.field-root .comms-say.you {
+  color: #e8e5df;
+}
+.field-root .comms-tail,
+.field-root .comms-footnote {
+  color: var(--amber-dim);
+  opacity: 0.8;
+}
+.field-root .comms-tail .comms-say,
+.field-root .comms-footnote .comms-say {
+  color: inherit;
+}
+.field-root .comms-tail .comms-say > span {
+  margin-right: 6px;
+}
+.field-root .comms-say .cursor {
+  display: inline-block;
+  width: 7px;
+  height: 11px;
+  margin-left: 4px;
+  background: var(--amber);
+  vertical-align: -1px;
+  animation: field-cursorblink 1s steps(2, end) infinite;
+  box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
+}
+.field-root .held-question-log {
+  flex: none;
+}
+.field-root .answer-status {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.field-root .answer-body > .answer-status,
+.field-root .answer-body > .trow,
+.field-root .answer-body > .held-question-log,
+.field-root .answer-body > .field-opt,
+.field-root .answer-body > .grantchip {
+  flex: none;
+}
+.field-root .answer-body > .field-thread:not(.held-question-log) {
+  min-height: 160px;
+}
+
+/* ConsoleDock treatment, compressed for the field bed. */
+.field-root .fdock {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+  padding: 8px;
+  flex: none;
+  flex-direction: column;
+  gap: 7px;
+  border: 1px solid var(--gun-edge);
+  border-radius: 16px 5px 5px 5px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cut-m)),
+    calc(100% - var(--cut-m)) 100%,
+    0 100%
+  );
+  background: linear-gradient(178deg, #2b3036, #1b1f24);
+  color: var(--steel);
+}
+.field-root .fdock:focus {
+  outline: none;
+}
+.field-root .fdock:focus-within {
+  border-color: var(--amber-dim);
+}
+.field-root .fdock-field {
+  min-height: 52px;
+  border: 1px solid rgba(255, 179, 71, 0.22);
+  background: var(--screen);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75);
+}
+.field-root .fdock:focus-within .fdock-field {
+  border-color: var(--amber-dim);
+  box-shadow:
+    inset 0 0 22px rgba(0, 0, 0, 0.82),
+    0 0 0 1px rgba(255, 179, 71, 0.15);
+}
+.field-root .fdock-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  max-height: 132px;
+  padding: 9px 10px;
+  resize: none;
+  overflow-y: hidden;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #e8e5df;
+  font: 9.5px / 1.7 var(--mono);
+  letter-spacing: 0.02em;
+}
+.field-root .fdock-field textarea::placeholder {
+  color: var(--amber-dim);
+  opacity: 1;
+}
+.field-root .fdock-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.field-root .fdock .dockkey,
+.field-root .fdock .sendkey {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+}
+.field-root .fdock .dockkey {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--steel-dim);
+  box-shadow: none;
+}
+.field-root .fdock .dockkey:hover,
+.field-root .fdock .dockkey:focus-visible {
+  border-color: rgba(255, 179, 71, 0.25);
+  outline: none;
+  background: var(--amber-ghost);
+  color: var(--amber-hot);
+}
+.field-root .fdock .stopkey {
+  border-color: #5c1f16;
+  background: linear-gradient(180deg, #3a2320, #1d1512);
+  color: var(--red);
+}
+.field-root .fdock .replaykey {
+  border-color: rgba(255, 179, 71, 0.3);
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  color: var(--amber);
+}
+.field-root .fdock .sendkey {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--amber-dim);
+  background: var(--amber);
+  color: #181206;
+  cursor: pointer;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(255, 160, 40, 0.25);
+}
+.field-root .fdock .sendkey:disabled {
+  border-color: #343940;
+  background: #262a2f;
+  color: var(--steel-dim);
+  cursor: default;
+  opacity: 0.55;
+}
+.field-root .fdock .pttpill {
+  min-width: 0;
+  min-height: 36px;
+  padding: 5px 9px;
+}
+.field-root .fdock .pttpill .lbl b {
+  overflow-wrap: anywhere;
+}
+.field-root .pttpill.compact .btn::after {
+  display: none;
+}
+.field-root .pttpill.compact .btn {
+  display: grid;
+  place-items: center;
+  color: var(--steel);
+}
+.field-root .pttpill.compact.hot .btn {
+  color: var(--red);
+}
+.field-root .pttpill.compact.handoff .btn {
+  color: var(--haz);
+}
+.field-root .pttpill.iconpill {
+  flex: 1;
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 0;
+  color: var(--steel);
+}
+.field-root .pttpill.iconpill.hot {
+  color: var(--red);
+}
+.field-root .pttpill.iconpill.handoff {
+  color: var(--haz);
+}
+
+/* START — one plain-language job, with detail revealed only after intake. */
+.field-root .start-body {
+  overflow-y: auto;
+  padding-right: 1px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
+}
+.field-root .start-hero-wrap {
+  flex: none;
+}
+.field-root .start-hero {
+  padding: 12px;
+  border: 1px solid rgba(255, 179, 71, 0.24);
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.055), rgba(0, 0, 0, 0.34));
+}
+.field-root .start-hero-kicker,
+.field-root .start-intake-cap,
+.field-root .start-launched-cap,
+.field-root .saved-orders-head {
+  color: var(--steel-dim);
+  font-family: var(--stencil);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.field-root .start-hero h2 {
+  margin: 8px 0 0;
+  color: var(--steel);
+  font-family: var(--stencil);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+}
+.field-root .start-hero p {
+  margin: 5px 0 0;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+.field-root .start-hero-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(84px, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.field-root .start-hero-actions .pttpill,
+.field-root .start-type {
+  min-height: 48px;
+}
+.field-root .start-type {
+  border: 1px solid #3a3f45;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  color: var(--steel);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.field-root .start-room-chip {
+  margin-top: 9px;
+  color: var(--amber-dim);
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.field-root .start-intake-cap {
+  margin: 1px 2px 0;
+  font-size: 9px;
+}
+.field-root .start-intake {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+.field-root .start-exchange {
+  flex: none;
+  max-height: 150px;
+}
+.field-root .start-receipt {
+  flex: none;
+}
+.field-root .start-launched-cap {
+  margin: 10px 2px 0;
+  font-size: 7.5px;
+}
+.field-root .start-launched {
+  margin-top: 5px;
+}
+.field-root .start-newroom {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  margin-top: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 179, 71, 0.22);
+  border-radius: 9px 3px 3px 3px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cut-s)),
+    calc(100% - var(--cut-s)) 100%,
+    0 100%
+  );
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--steel);
+  cursor: pointer;
+  text-align: left;
+}
+.field-root .start-newroom b {
+  font-family: var(--stencil);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.field-root .start-newroom i {
+  color: var(--amber);
+  font: 10px var(--mono);
+  font-style: normal;
+}
+.field-root .start-newroom span {
+  grid-column: 1 / -1;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+.field-root .saved-orders-head {
+  margin: 11px 2px 0;
+}
+.field-root .saved-orders-copy {
+  margin: 3px 2px 0;
+  color: var(--steel-dim);
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.45;
+}
+.field-root .saved-orders {
+  margin-top: 6px;
+}
+.field-root .saved-orders .vswitch {
+  gap: 8px;
+  padding: 7px 8px;
+}
+.field-root .saved-orders .vname,
+.field-root .saved-orders .vparams {
+  display: block;
+}
+.field-root .saved-orders .vname {
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+}
+.field-root .saved-orders .vparams {
+  margin-top: 2px;
+  color: var(--steel-dim);
+  font-size: 7.5px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  text-transform: none;
+}
+.field-root .saved-orders .is-gated {
+  cursor: default;
+  opacity: 0.66;
+}
+
+/* GLANCE cross-room attribution, tightened to field density. */
+.field-root .field-cross-room-head {
+  margin-bottom: 6px;
+}
+.field-root .field-cross-room-row {
+  padding: 5px 0;
+  font-size: 8px;
+}
+.field-root .field-cross-room-row + .field-cross-room-row {
+  margin-top: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-root .frail *,
+  .field-root .fnav *,
+  .field-root .comms-log *,
+  .field-root .fdock *,
+  .field-root .start-body * {
     animation: none !important;
     transition: none !important;
   }

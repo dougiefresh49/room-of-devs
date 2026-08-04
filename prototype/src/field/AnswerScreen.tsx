@@ -1,11 +1,9 @@
-import { useEffect, useRef } from "react";
 import { Keycap, Led, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
-import { FieldCard } from "../rig-ext/FieldCard";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
-import { PartNo } from "../map/PartNo";
 import { answer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
+import { CommsLog } from "./CommsLog";
 
 function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -24,26 +22,21 @@ export function AnswerScreen() {
   // Only surface the held question when it belongs to the focused craft —
   // tapping another row must not show someone else's keycaps.
   const hq =
-    room.heldQuestion && room.heldQuestion.craftId === focus?.id
-      ? room.heldQuestion
-      : null;
+    room.heldQuestion && room.heldQuestion.craftId === focus?.id ? room.heldQuestion : null;
 
   const holding = focus?.state === "needs-you";
-  const tailLines = focus ? focus.tail.slice(-2) : [];
-  const threadRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = threadRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [room.transcript.length, focus?.tail.length]);
+  const tailLines = focus
+    ? focus.tail.slice(-2).map((line) => ({
+        kind: line.kind === "cmd" ? ("cmd" as const) : ("out" as const),
+        text: line.text,
+      }))
+    : [];
 
   // Talk row + composer live in FieldDock now — one dock for every screen.
 
   return (
-    <div className="screen-body">
-      <PartNo partNo="F-02" />
-      <div className="fstat" style={{ borderBottom: "none", marginBottom: 4, paddingBottom: 0 }}>
-        <span>◂ ROOM</span>
-        <span className="spacer" />
+    <div className="screen-body answer-body" data-part="F-02">
+      <div className="answer-status">
         {holding && focus ? (
           <Tag tone="red" className="field-tag-sm">
             NEEDS YOU · HELD {fmtHold(focus.holdSeconds)}
@@ -70,27 +63,16 @@ export function AnswerScreen() {
             </span>
             <div className="ttask">{focus.task}</div>
           </div>
-          <Tag tone={holding ? "red" : "dim"}>
-            {holding ? "HELD" : focus.state.toUpperCase()}
-          </Tag>
+          <Tag tone={holding ? "red" : "dim"}>{holding ? "HELD" : focus.state.toUpperCase()}</Tag>
         </div>
       ) : null}
 
       {hq ? (
-        <FieldCard className="vt" style={{ marginTop: 10, padding: 10 }}>
-          <div className="row">
-            <span className="who">
-              {focus?.callsign.slice(0, 3).toUpperCase() ?? "???"}
-            </span>
-            <span className="say">{hq.prompt}</span>
-          </div>
-          <div className="row">
-            <span className="who" />
-            <span className="say" style={{ color: "var(--amber-dim)" }}>
-              /thread/{focus?.ticket ?? "—"} · full history above ▴
-            </span>
-          </div>
-        </FieldCard>
+        <CommsLog
+          className="field-thread held-question-log"
+          rows={[{ who: focus?.callsign ?? "???", text: hq.prompt }]}
+          footNote={`/thread/${focus?.ticket ?? "—"} · full history above ▴`}
+        />
       ) : null}
 
       {hq
@@ -107,25 +89,7 @@ export function AnswerScreen() {
           ))
         : null}
 
-      <div className="vt field-thread" ref={threadRef}>
-        {room.transcript.map((r, i) => (
-          <div className="row" key={`${r.who}-${i}-${r.text.slice(0, 12)}`}>
-            <span className="who">{r.who === "YOU" ? "YOU" : r.who.slice(0, 3)}</span>
-            <span className={`say${r.you ? " you" : ""}`}>{r.text}</span>
-          </div>
-        ))}
-        {tailLines.map((t, i) => (
-          <div className="row" key={`t-${t.text.slice(0, 16)}-${i}`}>
-            <span className="who">{t.kind === "cmd" ? "▸" : "·"}</span>
-            <span
-              className="say"
-              style={{ color: "var(--amber-dim)", opacity: 0.8 }}
-            >
-              {t.text}
-            </span>
-          </div>
-        ))}
-      </div>
+      <CommsLog rows={room.transcript} tail={tailLines} />
 
       {room.grantArmed ? (
         <div className="grantchip">

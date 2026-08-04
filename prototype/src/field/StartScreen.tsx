@@ -1,29 +1,48 @@
-import { Toaster, toast } from "@room/ui";
-import { useRef } from "react";
-import { Led, Tag } from "@room/ui/rig";
+import { Button, Toaster, toast } from "@room/ui";
+import { CutFrame, Led, Tag } from "@room/ui/rig";
+import { useEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
-import { FieldCard } from "../rig-ext/FieldCard";
-import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
-import { PartNo } from "../map/PartNo";
+import { roomShortLabel } from "../chrome/MastheadTabs";
+import { manifestFromDraft, manifestPath } from "../hangar/commission/ManifestPreview";
 import { toggleVerb } from "../mock/scenario";
 import { openCommission, strikeCommission, useFleet, useRoom } from "../mock/store";
-import { manifestFromDraft, manifestPath } from "../hangar/commission/ManifestPreview";
+import { FieldCard } from "../rig-ext/FieldCard";
+import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
+import { CommsLog, type CommsRow } from "./CommsLog";
+import { PttPill } from "./PttPill";
 
 export function StartScreen() {
   const room = useRoom();
   const fleet = useFleet();
   const commission = fleet.commission;
   const tap = room.tapIn;
-  const spawning = room.crafts.find((c) => c.state === "spawning");
-  // Keep the launched craft's row visible after it materializes — the birth
-  // shouldn't vanish from under the thumb 1.6s after spawn.
-  const spawnedRef = useRef<string | null>(null);
-  if (spawning) spawnedRef.current = spawning.id;
-  const launched =
-    !spawning && spawnedRef.current
-      ? (room.crafts.find((c) => c.id === spawnedRef.current) ?? null)
-      : null;
-  const birth = spawning ?? launched;
+  const latestBirth = room.crafts.reduce<(typeof room.crafts)[number] | null>(
+    (latest, craft) =>
+      craft.spawnedRev != null && (latest == null || craft.spawnedRev > (latest.spawnedRev ?? -1))
+        ? craft
+        : latest,
+    null,
+  );
+  const intakeKind =
+    latestBirth && (!tap || (latestBirth.spawnedRev ?? -1) > tap.startedRev)
+      ? "spawn"
+      : tap
+        ? "tap"
+        : null;
+  const activeTap = intakeKind === "tap" ? tap : null;
+  const birth = intakeKind === "spawn" ? latestBirth : null;
+  const spawning = birth?.state === "spawning";
+  const intakeKey =
+    intakeKind === "spawn"
+      ? `spawn-${birth?.spawnedRev}`
+      : activeTap
+        ? `tap-${activeTap.startedRev}`
+        : null;
+  const intakeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (intakeKey) intakeRef.current?.scrollIntoView({ block: "start" });
+  }, [intakeKey]);
 
   const strikeVoiceDraft = () => {
     const receipt = strikeCommission();
@@ -35,72 +54,92 @@ export function StartScreen() {
     }
   };
 
-  let exchange: { you?: string; mikey?: string; typing?: boolean } = {};
-  if (tap) {
-    exchange = {
-      you: tap.question,
-      mikey: tap.answer ?? undefined,
-      typing: tap.answer === null,
-    };
-  } else {
-    const lastYou = [...room.transcript].reverse().find((r) => r.who === "YOU");
-    const lastMikey = [...room.transcript].reverse().find((r) => r.who === "MIKEY");
-    exchange = { you: lastYou?.text, mikey: lastMikey?.text };
-  }
+  const exchangeRows: CommsRow[] = activeTap
+    ? [
+        { who: "YOU", text: activeTap.question, you: true },
+        {
+          who: "MIKEY",
+          text: activeTap.answer ?? "On it — filing that now.",
+        },
+      ]
+    : birth
+      ? [
+          { who: "YOU", text: birth.spawnPrompt ?? birth.task, you: true },
+          {
+            who: "MIKEY",
+            text: `${birth.callsign} is ${spawning ? "launching" : "on it"}.`,
+          },
+        ]
+      : [];
 
   return (
-    <div className="screen-body">
-      <PartNo partNo="F-04" />
-      <div className="dotmx ghost start-purpose">START — KICK OFF NEW WORK</div>
+    <div className="screen-body start-body" data-part="F-04">
+      {intakeKind ? (
+        <div ref={intakeRef} className="start-intake">
+          <div className="start-intake-cap">NEW WORK · INTAKE</div>
+          <CommsLog
+            rows={exchangeRows}
+            className="field-thread start-exchange"
+            typing={activeTap?.answer === null}
+          />
+          <div className="watchchip start-receipt">
+            {activeTap ? (
+              <>INTERPRETER: {activeTap.interpreter}</>
+            ) : birth ? (
+              <>NEW WORK → FILE {birth.ticket} → SPAWN · FLASH $0.002 · LOGGED</>
+            ) : null}
+          </div>
 
-      <FieldCard className="vt" style={{ padding: 10 }}>
-        {exchange.you ? (
-          <div className="row">
-            <span className="who">YOU</span>
-            <span className="say you">{exchange.you}</span>
+          {birth ? (
+            <>
+              <div className="start-launched-cap">JUST LAUNCHED</div>
+              <div className="trows start-launched">
+                <div className={`trow${spawning ? " spawning" : ""}`}>
+                  <div className="tface">
+                    <FieldCrtFace size={40} scanlines>
+                      <AvatarFace persona={birth.persona} size={40} />
+                    </FieldCrtFace>
+                  </div>
+                  <div className="tmid">
+                    <span className="callsign">{birth.callsign}</span>
+                    <span className="tid">{birth.ticket}</span>
+                    <div className="ttask">{birth.task}</div>
+                  </div>
+                  <Tag>{spawning ? "LAUNCHING" : birth.state.toUpperCase()}</Tag>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : (
+        <CutFrame scale="m" className="start-hero-wrap" innerClassName="start-hero">
+          <div className="start-hero-kicker">NEW WORK</div>
+          <h2>TELL MIKEY WHAT TO BUILD</h2>
+          <p>
+            Say it out loud. He writes the ticket and puts a dev on it — you&apos;ll hear back when
+            it moves.
+          </p>
+          <div className="start-hero-actions">
+            <PttPill />
+            <Button
+              type="button"
+              variant="ghost"
+              className="start-type"
+              onClick={() => window.dispatchEvent(new Event("field:focus-composer"))}
+            >
+              TYPE IT
+            </Button>
           </div>
-        ) : (
-          <div className="row">
-            <span className="who">YOU</span>
-            <span className="say" style={{ color: "var(--amber-dim)" }}>
-              speak new work — or tap a verb below
-            </span>
+          <div className="start-room-chip">
+            GOES TO THIS ROOM · {roomShortLabel(fleet.activeRoomId)}
           </div>
-        )}
-        {exchange.mikey || exchange.typing ? (
-          <div className="row">
-            <span className="who">MIK</span>
-            <span className="say">
-              {exchange.typing ? (
-                <>
-                  …<span className="cursor" />
-                </>
-              ) : (
-                exchange.mikey
-              )}
-            </span>
-          </div>
-        ) : null}
-      </FieldCard>
-
-      <div className="watchchip" style={{ marginTop: 10 }}>
-        {tap ? (
-          <>INTERPRETER: {tap.interpreter}</>
-        ) : birth ? (
-          <>
-            NEW WORK → FILE {birth.ticket} → SPAWN · FLASH $0.002 · LOGGED
-          </>
-        ) : (
-          <span style={{ color: "var(--steel-dim)" }}>
-            SAY IT OR TYPE IT — MIKEY FILES THE TICKET AND SPAWNS A DEV
-          </span>
-        )}
-      </div>
+        </CutFrame>
+      )}
 
       {commission ? (
         <FieldCard className="field-commission-draft">
           <div className="field-commission-draft-head">
-            <span>VOICE COMMISSION · READ-ONLY OUT HERE</span>
+            <span>NEW ROOM DRAFT · READ-ONLY OUT HERE</span>
             <Tag tone="hot">SOURCE · {commission.source.toUpperCase()}</Tag>
           </div>
           <b className="field-commission-path">{manifestPath(commission)}</b>
@@ -113,64 +152,44 @@ export function StartScreen() {
           </div>
         </FieldCard>
       ) : (
-        <button
-          type="button"
-          className="field-commission-voice"
-          onClick={() => openCommission("voice")}
-        >
-          <b>COMMISSION ▸ VOICE</b>
-          <span>MIKEY PREFILLS THE MANIFEST · DIALS LOCK AT THE RIG</span>
+        <button type="button" className="start-newroom" onClick={() => openCommission("voice")}>
+          <b>OPEN A NEW ROOM</b>
+          <i aria-hidden>▸</i>
+          <span>
+            For work that doesn&apos;t belong to {roomShortLabel(fleet.activeRoomId)}. Mikey drafts
+            the manifest; you lock the dials back at the rig.
+          </span>
         </button>
       )}
 
-      {birth ? (
-        <div className="trows">
-          <div className={`trow${spawning ? " spawning" : ""}`}>
-            <div className="tface">
-              <FieldCrtFace size={40} scanlines>
-                <AvatarFace persona={birth.persona} size={40} />
-              </FieldCrtFace>
-            </div>
-            <div className="tmid">
-              <span className="callsign">{birth.callsign}</span>
-              <span className="tid">{birth.ticket}</span>
-              <div className="ttask">{birth.task}</div>
-            </div>
-            {spawning ? (
-              <Tag>LAUNCHING</Tag>
-            ) : (
-              <Tag>{birth.state.toUpperCase()}</Tag>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="empty-line">READY FOR NEW WORK</div>
-      )}
-
-      <div className="dotmx ghost standing-orders-cap">
-        STANDING ORDERS · TAP TO TOGGLE
-      </div>
-
-      <div className="vrack">
-        {room.verbs.map((v) => (
-          <button
-            type="button"
-            key={v.id}
-            className={`vswitch${v.on ? " on" : ""}`}
-            onClick={() => toggleVerb(v.id)}
-          >
-            <span className="lever" />
-            <span>
-              <div className="vname">&quot;{v.utterance}&quot;</div>
-              <div className="vparams">{v.params}</div>
-            </span>
-            {v.gatedIssue != null ? (
-              <Tag tone="red">GATED #{v.gatedIssue}</Tag>
-            ) : (
-              <Led tone={v.on ? "amber" : "dim"} pulse={v.on} />
-            )}
-          </button>
-        ))}
+      <div className="saved-orders-head">SAVED ORDERS</div>
+      <div className="saved-orders-copy">Things Mikey keeps doing without being asked.</div>
+      <div className="vrack saved-orders">
+        {room.verbs.map((verb) => {
+          const gated = verb.gatedIssue != null;
+          const on = !gated && verb.on;
+          return (
+            <button
+              type="button"
+              key={verb.id}
+              className={`vswitch${on ? " on" : ""}${gated ? " is-gated" : ""}`}
+              onClick={gated ? undefined : () => toggleVerb(verb.id)}
+              aria-disabled={gated ? "true" : undefined}
+              aria-pressed={on}
+            >
+              <span className="lever" />
+              <span>
+                <span className="vname">&quot;{verb.utterance}&quot;</span>
+                <span className="vparams">{verb.fieldLabel}</span>
+              </span>
+              {gated ? (
+                <Tag tone="red">GATED #{verb.gatedIssue}</Tag>
+              ) : (
+                <Led tone={on ? "amber" : "dim"} pulse={on} />
+              )}
+            </button>
+          );
+        })}
       </div>
       <Toaster position="top-center" closeButton />
     </div>

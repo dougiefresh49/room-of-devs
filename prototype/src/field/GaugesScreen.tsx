@@ -1,5 +1,4 @@
 import { SessionDial } from "../rig-ext/SessionDial";
-import { PartNo } from "../map/PartNo";
 import type { GuardWindow } from "../mock/types";
 import { useRoom } from "../mock/store";
 import { CutFrame, Odometer } from "@room/ui/rig";
@@ -42,8 +41,7 @@ export function GaugesScreen() {
   const codexLong = longWindow(codex);
 
   return (
-    <div className="screen-body gauges-body">
-      <PartNo partNo="F-05" />
+    <div className="screen-body gauges-body" data-part="F-05">
       <div className="dotmx ghost gboard-cap gauge-cap-info">
         <span>SPEND DIALS</span>
         <Popover>
