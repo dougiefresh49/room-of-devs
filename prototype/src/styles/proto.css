@@ -531,6 +531,8 @@ header.mast {
   letter-spacing: 0.24em;
 }
 .spinebay > .baylabel {
+  /* 22px matches .rail's margin-left so the cap lines up with the rail edge */
+  padding-left: 22px;
   padding-right: 44px;
 }
 .spine-legend-trigger {
