@@ -32,6 +32,8 @@ export function ReplyDeck() {
         </div>
         <div className="composer">
           <input
+            id="reply-deck-inject"
+            name="reply-deck-inject"
             className="field"
             value={room.composerText}
             placeholder="type an inject…"
@@ -72,12 +74,6 @@ export function ReplyDeck() {
           </span>
           {room.micHot ? <Waveform active bars={6} /> : null}
         </div>
-        {room.grantArmed ? (
-          <div className="grantchip">
-            <span className="gl" /> SPEAKER GRANT ARMED · MOCK DEVICE ·{" "}
-            {room.grantCountdown}s
-          </div>
-        ) : null}
       </div>
 
       <div className="chassis rcard">

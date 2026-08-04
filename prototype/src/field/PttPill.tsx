@@ -1,27 +1,35 @@
-import { useEffect, useState } from "react";
 import { Mic } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRoom } from "../mock/store";
 
+function PillLabel({ label }: { label: string }) {
+  const ticketAt = label.lastIndexOf(" · T-");
+  if (ticketAt < 0) return <>{label}</>;
+  return (
+    <>
+      <span className="pttpill-main">{label.slice(0, ticketAt)}</span>
+      <span className="pttpill-ticket">{label.slice(ticketAt)}</span>
+    </>
+  );
+}
+
 /**
- * The one hold-to-talk pill. There is no phone mic in this concept — pressing
- * it flashes the handoff state ("type it instead") and nothing else.
- * `compact` = the smaller inline variant used next to the chat key.
- * `icon` = the square mic key used where transport keys already eat most of
- * the row.
+ * The FIELD hold-to-talk control. There is no phone mic: pressing it only
+ * flashes the handoff caption and never starts recording or synthesis.
  */
 export function PttPill({
   compact = false,
   icon = false,
   segment = false,
-  short = false,
-  subLabel,
+  big = false,
+  label = "TALK TO MIKEY",
   style,
 }: {
   compact?: boolean;
   icon?: boolean;
   segment?: boolean;
-  short?: boolean;
-  subLabel?: string;
+  big?: boolean;
+  label?: string;
   style?: React.CSSProperties;
 }) {
   const room = useRoom();
@@ -29,17 +37,22 @@ export function PttPill({
 
   useEffect(() => {
     if (!handoff) return;
-    const t = window.setTimeout(() => setHandoff(false), 2400);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setHandoff(false), 2400);
+    return () => window.clearTimeout(timer);
   }, [handoff]);
 
   const hot = room.micHot;
+  const showHandoff = handoff && !hot;
+  useEffect(() => {
+    if (hot) setHandoff(false);
+  }, [hot]);
   const cls = [
     "pttpill",
-    hot ? "hot" : handoff ? "handoff" : "",
+    hot ? "hot" : showHandoff ? "handoff" : "",
     compact ? "compact" : "",
     icon ? "iconpill" : "",
     segment ? "segment" : "",
+    big ? "big" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -49,6 +62,28 @@ export function PttPill({
     setHandoff(true);
   };
 
+  if (big) {
+    return (
+      <div className="pttpill-bigwrap">
+        <button
+          type="button"
+          className={cls}
+          style={style}
+          aria-label="Hold to talk"
+          title={showHandoff ? "NO MIC OUT HERE — TYPE IT INSTEAD" : hot ? "MIC HOT" : "HOLD TO TALK"}
+          onPointerDown={onDown}
+        >
+          <Mic size={28} aria-hidden />
+        </button>
+        {showHandoff ? (
+          <span className="pttpill-handoff" role="status">
+            NO MIC OUT HERE — TYPE IT INSTEAD
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
   if (icon) {
     return (
       <button
@@ -56,7 +91,7 @@ export function PttPill({
         className={cls}
         style={style}
         aria-label="Hold to talk"
-        title={hot ? "MIC HOT" : handoff ? "NO MIC OUT HERE — TYPE IT INSTEAD" : "HOLD TO TALK"}
+        title={showHandoff ? "NO MIC OUT HERE — TYPE IT INSTEAD" : hot ? "MIC HOT" : "HOLD TO TALK"}
         onPointerDown={onDown}
       >
         <Mic size={15} aria-hidden />
@@ -72,13 +107,10 @@ export function PttPill({
       <span className="lbl">
         {hot ? (
           <b>MIC HOT</b>
-        ) : handoff ? (
+        ) : showHandoff ? (
           <b>NO MIC OUT HERE — TYPE IT INSTEAD</b>
         ) : (
-          <>
-            <b>{short ? "TALK" : "HOLD TO TALK"}</b>
-            {subLabel ? <small>{subLabel}</small> : null}
-          </>
+          <b><PillLabel label={label} /></b>
         )}
       </span>
     </button>

@@ -15,6 +15,7 @@ const ARTIFACT_SVG = `<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/s
 
 /** Rich room fixture — 2 plans live/queued, 3 settled, 5 crafts, spend, watch, artifact. */
 function makeRichFixtures(roomId: RoomId): RoomState {
+  const now = Date.now();
   return {
     view: "console",
     mood: "normal",
@@ -22,12 +23,19 @@ function makeRichFixtures(roomId: RoomId): RoomState {
     rev: 4187,
     clock: "21:47:09",
     micHot: false,
-    grantArmed: true,
-    grantCountdown: 12,
     speakingPersona: null,
+    nowPlaying: null,
+    lastClip: {
+      persona: "mikey",
+      label: "T-0451 · WATCH ORDER",
+      craftId: "c-0451",
+      kind: "turn-final",
+      startedAt: now - 42 * 60_000,
+      text: "Watch order update on T-0451: tests green.",
+    },
     liveClip: null,
     composerText: "",
-    audio: { route: "phone", gateCountdown: "04:58" },
+    audio: { route: "phone", gateStartedAt: now - 2_000 },
     queuedForLull: ["shredder's svgo digest", "leo step 5"],
     dockTicker: "RAPH · WATCH ORDER ACTIVE · SPLINTER HOLDING PLAN 0007-B · LEO QUIET ON STEP 5",
     dockLedRed: false,
@@ -381,18 +389,39 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         who: "YOU",
         text: "mikey, keep me posted on the prod bug fix — diagnosis and updates.",
         you: true,
+        at: now - 3 * 60 * 60_000 - 8 * 60_000,
       },
       {
         who: "MIKEY",
         text: "On it. Raph's chasing the stale team-map spawn. First read: the hook fires before the map settles. I'll speak up at each real step.",
+        at: now - 3 * 60 * 60_000 - 6 * 60_000,
+      },
+      {
+        who: "YOU",
+        text: "keep the watch order on until staging clears",
+        you: true,
+        at: now - 3 * 60 * 60_000 - 4 * 60_000,
       },
       {
         who: "MIKEY",
         text: "Update — fix staged, tests green. Splinter's still holding a plan for you when you want it.",
+        at: now - 44 * 60_000,
+      },
+      {
+        who: "YOU",
+        text: "ship it",
+        you: true,
+        at: now - 42 * 60_000,
+      },
+      {
+        who: "MIKEY",
+        text: "Cowabunga — Raph's still on the watch order.",
+        at: now - 40 * 60_000,
       },
       {
         who: "MIKEY",
         text: "Long read for the log: Raph traced the stale team-map spawn through the hook handoff, confirmed the first paint was racing the room manifest, and moved the reconciliation behind the settled snapshot. The focused transcript keeps the diagnosis, the validation pass, and this full handoff readable without squeezing the spine or taking the live instruments off the board.",
+        at: now - 2 * 60_000,
       },
     ],
     crew: [
@@ -472,7 +501,11 @@ function makePodlinkFixtures(roomId: RoomId): RoomState {
     artifacts: [],
     donnieCheckout: null,
     transcript: [
-      { who: "MIKEY", text: "Podlink is on release watch. Raph has the only craft out." },
+      {
+        who: "MIKEY",
+        text: "Podlink is on release watch. Raph has the only craft out.",
+        at: Date.now() - 6 * 60_000,
+      },
     ],
     crew: rich.crew.map((member) => ({
       ...member,
@@ -531,7 +564,11 @@ function makeComicReaderFixtures(roomId: RoomId): RoomState {
     artifacts: [],
     donnieCheckout: null,
     transcript: [
-      { who: "MIKEY", text: "Comic Reader has one craft finishing the crop-parity turn." },
+      {
+        who: "MIKEY",
+        text: "Comic Reader has one craft finishing the crop-parity turn.",
+        at: Date.now() - 4 * 60_000,
+      },
     ],
     crew: rich.crew.map((member) => ({
       ...member,
@@ -582,7 +619,13 @@ function makeScratchFixtures(roomId: RoomId): RoomState {
     },
     artifacts: [],
     donnieCheckout: null,
-    transcript: [{ who: "MIKEY", text: "One-off EXIF sweep running from room-of-devs." }],
+    transcript: [
+      {
+        who: "MIKEY",
+        text: "One-off EXIF sweep running from room-of-devs.",
+        at: Date.now() - 3 * 60_000,
+      },
+    ],
     crew: rich.crew.map((member) => ({
       ...member,
       piloting: false,
@@ -709,7 +752,7 @@ export function makeFleetFixtures(): {
           label: "T-0449 · SPLINTER HOLDING A QUESTION · HELD 06:41",
           salience: 18,
           belowGate: true,
-          floorState: "has",
+          floorState: "lull",
         },
         {
           roomId: "podlink",
@@ -729,9 +772,9 @@ export function makeFleetFixtures(): {
         },
       ],
       audioFloor: {
-        roomId: "room-of-devs",
-        persona: "mikey",
-        elapsed: "00:18",
+        roomId: null,
+        persona: null,
+        elapsed: "00:00",
         route: "phone",
         queue: [{ roomId: "podlink", reason: "release watch update" }],
       },

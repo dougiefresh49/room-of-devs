@@ -11,6 +11,10 @@ interface ComsScreenProps {
   onOpenNode: (craftId: string) => void;
 }
 
+function formatHold(seconds: number): string {
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 export function ComsScreen({ faceplateLarge, onReadBack, onOpenNode }: ComsScreenProps) {
   const room = useRoom();
   const heldCraft = room.heldQuestion
@@ -19,8 +23,9 @@ export function ComsScreen({ faceplateLarge, onReadBack, onOpenNode }: ComsScree
   const tap = room.tapIn;
   const rows: CommsRow[] = [...room.transcript];
   if (tap && !rows.some((row) => row.text === tap.question)) {
-    rows.push({ who: "YOU", text: tap.question, you: true });
-    rows.push({ who: "MIKEY", text: tap.answer ?? "Reading the room…" });
+    const at = Date.now();
+    rows.push({ who: "YOU", text: tap.question, you: true, at });
+    rows.push({ who: "MIKEY", text: tap.answer ?? "Reading the room…", at });
   }
   const latestBirth = room.crafts.reduce<(typeof room.crafts)[number] | null>(
     (latest, craft) =>
@@ -43,22 +48,10 @@ export function ComsScreen({ faceplateLarge, onReadBack, onOpenNode }: ComsScree
           className="screenbed coms-banner"
           onClick={() => onOpenNode(heldCraft.id)}
         >
-          <FieldCrtFace size={32} scanlines>
-            <AvatarFace persona={heldCraft.persona} size={32} />
-          </FieldCrtFace>
-          <span>
-            <b>{heldCraft.callsign} · {heldCraft.ticket}</b>
-            <small>HELD QUESTION · {heldCraft.lastStamp}</small>
-          </span>
-          <Tag tone="red">NEEDS YOU</Tag>
+          <Led tone="red" />
+          <b>{heldCraft.callsign} HOLDING · {heldCraft.ticket} · {formatHold(heldCraft.holdSeconds)}</b>
           <i aria-hidden>▸</i>
         </button>
-      ) : null}
-
-      {room.grantArmed ? (
-        <div className="grantchip coms-grant">
-          <Led tone="green" /> SPEAKER GRANT ARMED · THIS PHONE · {room.grantCountdown}s
-        </div>
       ) : null}
 
       <CommsLog

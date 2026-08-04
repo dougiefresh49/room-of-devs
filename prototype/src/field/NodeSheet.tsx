@@ -1,6 +1,5 @@
-import { Button, Sheet, SheetContent, SheetDescription, SheetTitle } from "@room/ui";
+import { Sheet, SheetContent, SheetTitle } from "@room/ui";
 import { Keycap, Tag } from "@room/ui/rig";
-import { MessageSquare, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { answer, focusCraftForAnswer } from "../mock/scenario";
@@ -11,6 +10,10 @@ function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function fmtClear(value: number): string {
+  return value < 0 ? `−${Math.abs(value)}` : `+${value}`;
 }
 
 interface NodeSheetProps {
@@ -32,6 +35,7 @@ export function NodeSheet({
   const craft = room.crafts.find((item) => item.id === craftId);
   const question = room.heldQuestion?.craftId === craftId ? room.heldQuestion : null;
   const closeFinished = useRef(false);
+  const pullStart = useRef<{ x: number; y: number } | null>(null);
 
   const finishClose = useCallback(() => {
     if (closeFinished.current) return;
@@ -75,17 +79,22 @@ export function NodeSheet({
 
   if (!craft) return null;
 
+  const held = craft.state === "needs-you";
+  const settled = craft.state === "settled";
+  const stateLabel = held ? `HELD ${fmtHold(craft.holdSeconds)}` : settled ? "SETTLED" : "WORKING";
+  const stateTone = held ? "red" : settled ? "green" : "amber";
+
   return (
     <Sheet
       open
-      onOpenChange={(open) => {
-        if (!open) onRequestClose();
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onRequestClose();
       }}
     >
       <SheetContent
         side="bottom"
         showClose={false}
-        className={`screenbed field-nodesheet${open ? "" : " is-closing"}`}
+        className={`screenbed field-nodesheet ${held ? "is-held" : "is-short"}${open ? "" : " is-closing"}`}
         overlayClassName={`field-sheet-overlay${open ? "" : " is-closing"}`}
         aria-modal="true"
         onCloseAutoFocus={(event) => event.preventDefault()}
@@ -93,32 +102,51 @@ export function NodeSheet({
           if (event.target === event.currentTarget && !open) finishClose();
         }}
       >
+        <button
+          type="button"
+          className="nodesheet-pull"
+          aria-label="Disengage and close node"
+          onPointerDown={(event) => {
+            pullStart.current = { x: event.clientX, y: event.clientY };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerUp={(event) => {
+            const start = pullStart.current;
+            pullStart.current = null;
+            if (!start) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            if (dy > 40 || Math.hypot(dx, dy) <= 8) onRequestClose();
+          }}
+          onPointerCancel={() => {
+            pullStart.current = null;
+          }}
+          onClick={(event) => {
+            // Keyboard activation has detail 0; pointer taps are handled above
+            // so a drag's synthetic click cannot accidentally close the sheet.
+            if (event.detail === 0) onRequestClose();
+          }}
+        >
+          <span aria-hidden />
+        </button>
+
         <header className="nodesheet-head">
-          <FieldCrtFace size={42} scanlines>
-            <AvatarFace persona={craft.persona} size={42} />
-          </FieldCrtFace>
-          <div>
-            <SheetTitle>
-              {craft.callsign} · {craft.ticket}
-            </SheetTitle>
-            <SheetDescription>{craft.task}</SheetDescription>
-            <span>
-              {craft.state === "needs-you"
-                ? `HELD ${fmtHold(craft.holdSeconds)}`
-                : craft.state.toUpperCase()}
-              {` · TMUX ${craft.tmux ? "✓" : "—"} · ${craft.salienceDelta} CLR`}
-            </span>
+          <div className="nodesheet-identity">
+            <FieldCrtFace size={56} scanlines>
+              <AvatarFace persona={craft.persona} size={56} />
+            </FieldCrtFace>
+            <div className="nodesheet-idcopy">
+              <SheetTitle>{craft.callsign}</SheetTitle>
+              <span>{craft.ticket} · TMUX {craft.tmux ? "✓" : "—"} · {fmtClear(craft.salienceDelta)} CLR</span>
+            </div>
+            <div className="nodesheet-state">
+              <Tag tone={stateTone}>{stateLabel}</Tag>
+              <button type="button" className="nodesheet-disengage" onClick={onRequestClose}>
+                DISENGAGE ▾
+              </button>
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="nodesheet-x"
-            aria-label="Close node"
-            onClick={onRequestClose}
-          >
-            <X size={17} />
-          </Button>
+          <p className="nodesheet-task">{craft.task}</p>
         </header>
 
         {question ? (
@@ -128,7 +156,7 @@ export function NodeSheet({
               <Keycap
                 key={option.id}
                 glyph={String(index + 1)}
-                label={`${option.label} — ${option.detail}`}
+                label={option.label}
                 hint={`SAY “${option.speakHint}”`}
                 armed={option.armed}
                 onPress={() => {
@@ -158,14 +186,6 @@ export function NodeSheet({
             <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
             <span>ON THE BIG BOARD ▸</span>
           </div>
-          <button
-            type="button"
-            className="nodesheet-reply"
-            onClick={() => window.dispatchEvent(new Event("field:focus-composer"))}
-          >
-            <MessageSquare size={14} /> REPLY TO {craft.callsign}
-          </button>
-          {question ? <Tag tone="red">QUESTION HELD UNTIL ANSWERED</Tag> : null}
         </section>
         <div className="field-root nodesheet-composer-mount" />
       </SheetContent>

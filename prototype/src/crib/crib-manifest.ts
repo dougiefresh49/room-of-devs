@@ -339,7 +339,8 @@ export const instruments: Instrument[] = [
       "prototype/src/hangar/TrafficStrip.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/hangar/commission/ManifestPreview.tsx",
-      "prototype/src/hangar/commission/VoicePath.tsx"
+      "prototype/src/hangar/commission/VoicePath.tsx",
+      "prototype/src/rig-ext/NowPlaying.tsx"
     ],
     "surfaces": [
       "console",
@@ -377,11 +378,11 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/console/ChatFocus.tsx",
-      "prototype/src/console/Faceplate.tsx",
       "prototype/src/console/ReplyDeck.tsx",
       "prototype/src/field/VoiceBar.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/hangar/FloorBus.tsx"
+      "prototype/src/hangar/FloorBus.tsx",
+      "prototype/src/rig-ext/NowPlaying.tsx"
     ],
     "surfaces": [
       "console",
@@ -724,9 +725,7 @@ export const instruments: Instrument[] = [
     "verdict": "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
     "consumers": [
       "prototype/src/console/ConsoleDock.tsx",
-      "prototype/src/field/FieldComposer.tsx",
-      "prototype/src/field/FieldTransport.tsx",
-      "prototype/src/field/NodeSheet.tsx"
+      "prototype/src/field/FieldComposer.tsx"
     ],
     "surfaces": [
       "console",
@@ -928,13 +927,11 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "prototype/src/field/VoiceBar.tsx",
       "prototype/src/hangar/commission/CeremonyFork.tsx",
       "prototype/src/hangar/commission/DialRow.tsx"
     ],
     "surfaces": [
-      "console",
-      "field"
+      "console"
     ]
   },
   {

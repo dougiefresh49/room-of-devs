@@ -58,7 +58,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
         x="10"
         y="26"
         fontFamily="monospace"
-        fontSize="6.5"
+        fontSize="8.5"
         fill="#ff5340"
         letterSpacing="1.2"
       >
@@ -113,7 +113,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
                 x="-30"
                 y={y - spineTop - 3}
                 fontFamily="monospace"
-                fontSize="5.5"
+                fontSize="8.5"
                 fill="#ffb347"
                 letterSpacing="1"
               >
@@ -156,7 +156,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
           y={cy + 25}
           textAnchor="middle"
           fontFamily="monospace"
-          fontSize="6.5"
+          fontSize="8.5"
           fill="#ffd894"
           letterSpacing="1.6"
         >
@@ -235,7 +235,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
             <text
               x={lx}
               y={ly}
-              fontSize="6.5"
+              fontSize="8.5"
               fill={
                 c.state === "needs-you"
                   ? "#ff5340"

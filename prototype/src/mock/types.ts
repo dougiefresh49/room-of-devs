@@ -3,6 +3,21 @@
 /** Persona id → avatar folder under panel/public/avatars/tmnt. */
 export type PersonaId = "mikey" | "donnie" | "leo" | "raph" | "splinter" | "shredder" | "karai";
 
+export type NowPlayingKind = "turn-final" | "live-clip" | "tap-in" | "replay";
+
+/** The one audio clip on the floor right now. Null = floor clear. */
+export interface NowPlaying {
+  persona: PersonaId;
+  /** What it is about — "T-0451 · WATCH ORDER", "TURN FINAL", "TAP-IN ANSWER". */
+  label: string;
+  craftId: string | null;
+  kind: NowPlayingKind;
+  /** Epoch ms; elapsed derives from this and ticks only while playing. */
+  startedAt: number;
+  /** The spoken text — REPLAY LAST re-speaks this for free. */
+  text: string;
+}
+
 export type RoomId = string;
 export type Ceremony = "full" | "one-off";
 export type GearDefault = "bare" | "light" | "full";
@@ -80,6 +95,11 @@ export interface Craft {
   /** Plain request copy retained for START's launch receipt. */
   spawnPrompt?: string;
 }
+
+export type ComposerTarget =
+  | { kind: "mikey" }
+  | { kind: "craft"; craft: Craft }
+  | { kind: "mikey-about"; craft: Craft };
 
 export interface Plan {
   id: string;
@@ -183,6 +203,8 @@ export interface TranscriptRow {
   who: string;
   text: string;
   you?: boolean;
+  /** Epoch ms; COMS renders only gap dividers, never per-message times. */
+  at: number;
 }
 
 export interface TapIn {
@@ -216,8 +238,6 @@ export interface RoomState {
   /** Second-voice checkout. */
   donnieCheckout: { purpose: string; elapsed: string } | null;
   micHot: boolean;
-  grantArmed: boolean;
-  grantCountdown: number;
   turnChip: { model: string; costUsd: number };
   /** Console dial positions. Dial homes are derived, never edited independently. Wishlist wire field. */
   dials: { ceremony: GearDefault; voice: PersonaId; brain: BrainTable };
@@ -233,10 +253,18 @@ export interface RoomState {
   /** Composer draft. */
   composerText: string;
   speakingPersona: PersonaId | null;
+  /** The clip currently holding the audio floor. */
+  nowPlaying: NowPlaying | null;
+  /** Last non-replay clip receipt; replay never replaces it. */
+  lastClip: NowPlaying | null;
   dockTicker: string;
   dockLedRed: boolean;
   /** Which device holds the speaker gate — routed chip + AUD LED. Wishlist wire field. */
-  audio: { route: "phone" | "mac"; gateCountdown: string };
+  audio: {
+    route: "phone" | "mac";
+    /** Mock speaker-gate lease start; the visible countdown derives from this. */
+    gateStartedAt: number | null;
+  };
   /** Turn-final digests parked for the lull — LISTEN's dim queue line. Wishlist wire field. */
   queuedForLull: string[];
 }

@@ -135,8 +135,6 @@ export const MAP_NODES: MapNode[] = [
     terminals: [
       "heldQuestion",
       "micHot",
-      "grantArmed",
-      "grantCountdown",
       "composerText",
       "focusCraftId",
     ],
@@ -240,8 +238,6 @@ export const MAP_NODES: MapNode[] = [
       "focusCraftId",
       "crafts",
       "transcript",
-      "grantArmed",
-      "grantCountdown",
     ],
     src: `${DOC} · Mobile 2 · ANSWER`,
   },
@@ -563,8 +559,6 @@ export const TERMINALS: Terminal[] = [
     consumers: ["s-02", "f-03", "f-06", "m-02", "r-08"],
   },
   { id: "micHot", field: "micHot", status: "live", consumers: ["s-08", "f-06", "m-04"] },
-  { id: "grantArmed", field: "grantArmed", status: "live", consumers: ["s-08", "f-02"] },
-  { id: "grantCountdown", field: "grantCountdown", status: "live", consumers: ["s-08", "f-02"] },
   {
     id: "turnChip",
     field: "turnChip",

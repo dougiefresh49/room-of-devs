@@ -5,7 +5,6 @@ import { manifestFromDraft, manifestPath } from "../hangar/commission/ManifestPr
 import { openCommission, strikeCommission, useFleet } from "../mock/store";
 import type { RoomId } from "../mock/types";
 import { FieldBerthRow } from "./FieldBerthRow";
-import { FieldLamps } from "./FieldRoomMenu";
 
 interface FieldHangarProps {
   returnLabel: string;
@@ -40,7 +39,6 @@ export function FieldHangar({ returnLabel, onBack, onCouple }: FieldHangarProps)
         <button type="button" onClick={onBack}>
           <ArrowLeft size={15} /> BACK TO {returnLabel}
         </button>
-        <FieldLamps />
       </div>
       <div className="fhangar-scroll screen-body">
         <header className="fhangar-head">

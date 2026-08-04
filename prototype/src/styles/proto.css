@@ -655,6 +655,55 @@ header.mast {
   animation: ledpulse 0.9s ease-in-out infinite;
 }
 
+/* AUDIO FLOOR — transport end of the console faceplate wave row. */
+.fp-wavebar .audio-floor--faceplate {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.audio-floor--faceplate .ffloor-meter {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.audio-floor--faceplate .ffloor-meter .rig-wave {
+  flex: 1;
+}
+.audio-floor--faceplate .ffloor-elapsed {
+  min-width: 38px;
+  color: var(--amber);
+  font: 700 10px / 1 var(--mono);
+  letter-spacing: 0.02em;
+  text-align: right;
+}
+.audio-floor--faceplate.is-idle .ffloor-elapsed {
+  color: var(--steel-dim);
+}
+.audio-floor--faceplate .ffloor-live {
+  flex: none;
+  padding: 2px 4px;
+  font-size: 7px;
+}
+.audio-floor--faceplate .ffloor-actions {
+  flex: none;
+  display: flex;
+  gap: 5px;
+}
+.audio-floor--faceplate .ffloor-key {
+  width: 30px;
+  height: 30px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-wavebar .talklamp {
+    animation: none;
+  }
+}
+
 /* voice transcript screen */
 .vt {
   margin-top: 12px;
@@ -2356,6 +2405,196 @@ details[open] .expandhint {
   gap: 6px;
 }
 
+/* AUDIO FLOOR — fixed third bay in the floating desktop dock. */
+.dock .audio-floor--dock {
+  position: relative;
+  flex: 0 0 242px;
+  width: 242px;
+  height: 52px;
+  min-width: 242px;
+  display: grid;
+  grid-template-columns: 28px minmax(60px, 1fr) 64px 48px;
+  grid-template-rows: 24px 18px;
+  align-items: center;
+  gap: 2px 4px;
+  padding: 4px 5px;
+  border-left: 1px solid var(--gun-edge);
+  background: linear-gradient(180deg, rgba(10, 11, 13, 0.96), rgba(4, 5, 6, 0.98));
+  color: var(--steel-dim);
+  overflow: hidden;
+}
+.dock .audio-floor--dock.is-speaking {
+  border-color: rgba(255, 179, 71, 0.3);
+  box-shadow: inset 0 0 18px rgba(255, 140, 20, 0.06);
+}
+.dock .audio-floor--dock .ffloor-face {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 28px;
+  height: 28px;
+  filter: sepia(0.4) hue-rotate(-12deg) saturate(1.35);
+}
+.dock .audio-floor--dock .field-crt-fill.rig-crt {
+  width: 100% !important;
+  height: 100% !important;
+}
+.dock .audio-floor--dock .ffloor-copy,
+.dock .audio-floor--dock .ffloor-clear {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  align-self: center;
+}
+.dock .audio-floor--dock .ffloor-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.05;
+}
+.dock .audio-floor--dock .ffloor-name {
+  overflow: hidden;
+  color: var(--amber-hot);
+  font: 800 8px / 1 var(--stencil);
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dock .audio-floor--dock .ffloor-label {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--steel-dim);
+  font: 700 7px / 1 var(--mono);
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dock .audio-floor--dock .ffloor-clear {
+  color: var(--steel-dim);
+  font: 800 8px / 1 var(--mono);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.dock .audio-floor--dock .ffloor-meter {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+.dock .audio-floor--dock .ffloor-meter .rig-wave {
+  gap: 1px;
+}
+.dock .audio-floor--dock .ffloor-elapsed {
+  color: var(--amber);
+  font: 700 7px / 1 var(--mono);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.dock .audio-floor--dock.is-idle .ffloor-elapsed {
+  color: var(--steel-dim);
+}
+.dock .audio-floor--dock .ffloor-route {
+  grid-column: 2;
+  grid-row: 2;
+}
+.dock .audio-floor--dock .ffloor-route--segments {
+  width: 44px;
+  height: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 1px solid #34383d;
+  border-radius: 9px;
+  background: #090a0c;
+}
+.dock .audio-floor--dock .ffloor-route--segments button {
+  display: grid;
+  min-width: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-right: 1px solid #34383d;
+  background: transparent;
+  color: #555c64;
+  cursor: pointer;
+}
+.dock .audio-floor--dock .ffloor-route--segments button:last-child {
+  border-right: 0;
+}
+.dock .audio-floor--dock .ffloor-route--segments button.is-active {
+  background: rgba(255, 179, 71, 0.12);
+  color: var(--amber-hot);
+}
+.dock .audio-floor--dock .ffloor-route svg {
+  width: 11px;
+  height: 11px;
+}
+.dock .audio-floor--dock .ffloor-gate {
+  grid-column: 3;
+  grid-row: 2;
+  overflow: hidden;
+  color: var(--steel-dim);
+  font: 700 6.5px / 1 var(--mono);
+  letter-spacing: 0.015em;
+  text-overflow: clip;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dock .audio-floor--dock .ffloor-gate.is-held {
+  color: var(--green);
+}
+.dock .audio-floor--dock .ffloor-actions {
+  grid-column: 4;
+  grid-row: 1 / 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.dock .audio-floor--dock .ffloor-key,
+.audio-floor--faceplate .ffloor-key {
+  display: grid;
+  width: 23px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #43484e;
+  background: linear-gradient(180deg, #2c3137, #171a1e);
+  color: var(--amber);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.75);
+}
+.dock .audio-floor--dock .ffloor-stop,
+.audio-floor--faceplate .ffloor-stop {
+  color: var(--red);
+}
+.dock .audio-floor--dock .ffloor-key:focus-visible,
+.audio-floor--faceplate .ffloor-key:focus-visible {
+  outline: 1px solid var(--amber-hot);
+  outline-offset: 1px;
+}
+.dock .audio-floor--dock .ffloor-key:disabled,
+.audio-floor--faceplate .ffloor-key:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.dock .audio-floor--dock .ffloor-live {
+  position: absolute;
+  top: 2px;
+  left: 82px;
+  padding: 1px 3px;
+  font-size: 5.5px;
+}
+.audio-floor--faceplate .ffloor-key {
+  width: 30px;
+  height: 30px;
+}
+
 /* ============================================================
    PHONE
    ============================================================ */
@@ -2882,31 +3121,6 @@ footer {
   font-weight: 700;
   cursor: pointer;
 }
-.grantchip {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  margin-top: 9px;
-  padding: 7px 10px;
-  border-radius: 4px;
-  border: 1px dashed var(--green-dim);
-  background: rgba(143, 232, 110, 0.06);
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--green);
-  line-height: 1.7;
-}
-.grantchip .gl {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 7px rgba(143, 232, 110, 0.8);
-  flex: none;
-}
-
 /* held-question option keys — first-class amber controls */
 .optbtn {
   display: grid;

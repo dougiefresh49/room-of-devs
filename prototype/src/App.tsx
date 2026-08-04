@@ -12,6 +12,15 @@ import { CribView, MapView, currentRoute } from "./routes";
 const route = currentRoute();
 
 export function App() {
+  if (route === "field-test") {
+    return (
+      <>
+        <FieldView bare />
+        <ControlDeck />
+        <MapDialog />
+      </>
+    );
+  }
   if (route === "field") {
     return (
       <>

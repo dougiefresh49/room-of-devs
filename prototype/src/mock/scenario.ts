@@ -13,7 +13,16 @@ import {
   setRoom,
   strikeCommission,
 } from "./store";
-import type { BrainTable, Craft, GearDefault, PersonaId, RoomId, RoomState } from "./types";
+import type {
+  BrainTable,
+  ComposerTarget,
+  Craft,
+  GearDefault,
+  NowPlaying,
+  PersonaId,
+  RoomId,
+  RoomState,
+} from "./types";
 
 const ROUTE: Record<BrainTable, { model: string; costUsd: number }> = {
   lean: { model: "FLASH", costUsd: 0.002 },
@@ -61,11 +70,83 @@ function mapCraft(crafts: Craft[], id: string, fn: (c: Craft) => Craft): Craft[]
   return crafts.map((c) => (c.id === id ? fn(c) : c));
 }
 
-function speakMikey(line: string) {
-  patchRoom({ speakingPersona: "mikey" });
-  void mockSpeak(line, "mikey").finally(() => {
-    patchRoom({ speakingPersona: null });
+/** One atomic write owns both room playback and the fleet-wide audio floor. */
+function setPlayback(roomId: RoomId, clip: NowPlaying | null, expected?: NowPlaying) {
+  setAppState((app) => {
+    const owner = app.rooms[roomId];
+    if (!owner || (expected && owner.nowPlaying !== expected)) return app;
+    const rooms = Object.fromEntries(
+      Object.entries(app.rooms).map(([id, room]) => {
+        const current = room.nowPlaying;
+        if (id !== roomId && !current) return [id, room];
+        if (id !== roomId) {
+          return [id, {
+            ...room,
+            rev: room.rev + 1,
+            lastClip: current?.kind === "replay" ? room.lastClip : (current ?? room.lastClip),
+            nowPlaying: null,
+            speakingPersona: null,
+            liveClip: null,
+          }];
+        }
+        return [id, {
+          ...room,
+          rev: room.rev + 1,
+          lastClip:
+            current && current.kind !== "replay" ? current : room.lastClip,
+          nowPlaying: clip,
+          speakingPersona: clip?.persona ?? null,
+          liveClip: clip?.kind === "live-clip" ? clip.label : null,
+        }];
+      }),
+    ) as typeof app.rooms;
+    return {
+      ...app,
+      rooms,
+      fleet: {
+        ...app.fleet,
+        audioFloor: {
+          ...app.fleet.audioFloor,
+          roomId: clip ? roomId : null,
+          persona: clip?.persona ?? null,
+          elapsed: "00:00",
+          route: owner.audio.route,
+        },
+        traffic: app.fleet.traffic.map((row) => ({
+          ...row,
+          floorState: clip
+            ? row.roomId === roomId
+              ? "has"
+              : row.floorState === "has"
+                ? "queued"
+                : row.floorState
+            : row.floorState === "has"
+              ? "lull"
+              : row.floorState,
+        })),
+      },
+    };
   });
+}
+
+function playClip(input: Omit<NowPlaying, "startedAt">): NowPlaying {
+  stopSpeaking();
+  const clip: NowPlaying = { ...input, startedAt: Date.now() };
+  const roomId = getFleet().activeRoomId;
+  setPlayback(roomId, clip);
+  void mockSpeak(clip.text, clip.persona).finally(() => {
+    setPlayback(roomId, null, clip);
+  });
+  return clip;
+}
+
+function speakMikey(
+  line: string,
+  label = "TURN FINAL",
+  kind: NowPlaying["kind"] = "turn-final",
+  craftId: string | null = null,
+) {
+  playClip({ persona: "mikey", label, craftId, kind, text: line });
 }
 
 /** SPAWN CRAFT — birth at top of rail → materialize → working. */
@@ -245,8 +326,8 @@ export function answer(optionId: string, speakIt = false) {
     })),
     transcript: [
       ...prev.transcript,
-      { who: "YOU" as const, text: opt.speakHint, you: true },
-      { who: "MIKEY" as const, text: line },
+      { who: "YOU" as const, text: opt.speakHint, you: true, at: Date.now() },
+      { who: "MIKEY" as const, text: line, at: Date.now() },
     ],
   }));
   if (speakIt) speakMikey(line);
@@ -258,39 +339,38 @@ export function speak() {
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
-    transcript: [...s.transcript, { who: "MIKEY", text: line }],
+    transcript: [...s.transcript, { who: "MIKEY", text: line, at: Date.now() }],
   }));
-  speakMikey(line);
+  speakMikey(line, "TURN FINAL");
 }
 
 /** DONNIE CHECKOUT. */
 export function donnieCheckout() {
   patchRoom({
     donnieCheckout: { purpose: "WALK PLAN 0007-B", elapsed: "00:00" },
-    speakingPersona: "donnie",
   });
-  void mockSpeak("Checking out. I'll walk the held plan with you.", "donnie").finally(() =>
-    patchRoom({ speakingPersona: null }),
-  );
+  playClip({
+    persona: "donnie",
+    label: "CHECKOUT",
+    craftId: null,
+    kind: "turn-final",
+    text: "Checking out. I'll walk the held plan with you.",
+  });
 }
 
 /** Thanks Donnie — return. */
 export function thanksDonnie() {
-  stopSpeaking();
   setRoom((s) => ({
     ...s,
     rev: s.rev + 1,
     donnieCheckout: null,
-    speakingPersona: "mikey",
     transcript: [
       ...s.transcript,
-      { who: "YOU", text: "thanks Donnie", you: true },
-      { who: "MIKEY", text: "He's back on the rack. I'm on voice." },
+      { who: "YOU", text: "thanks Donnie", you: true, at: Date.now() },
+      { who: "MIKEY", text: "He's back on the rack. I'm on voice.", at: Date.now() },
     ],
   }));
-  void mockSpeak("He's back on the rack. I'm on voice.", "mikey").finally(() =>
-    patchRoom({ speakingPersona: null }),
-  );
+  speakMikey("He's back on the rack. I'm on voice.", "HANDBACK");
 }
 
 /** LIVE CLIP tick on watched craft. */
@@ -318,10 +398,19 @@ export function liveClip() {
     })),
     transcript: [
       ...prev.transcript,
-      { who: "MIKEY", text: `Watch order update on ${watched.ticket}: tests green.` },
+      {
+        who: "MIKEY",
+        text: `Watch order update on ${watched.ticket}: tests green.`,
+        at: Date.now(),
+      },
     ],
   }));
-  speakMikey(`Watch order — ${watched.callsign} just cleared tests.`);
+  speakMikey(
+    `Watch order — ${watched.callsign} just cleared tests.`,
+    `${watched.ticket} · WATCH ORDER`,
+    "live-clip",
+    watched.id,
+  );
 }
 
 /** SETTLE craft N. */
@@ -388,6 +477,7 @@ export function theLull() {
       {
         who: "MIKEY",
         text: "That's the lull — spine green top to bottom. Nice work.",
+        at: Date.now(),
       },
     ],
   }));
@@ -425,11 +515,11 @@ export function tapInQa() {
       tapIn: s.tapIn ? { ...s.tapIn, answer } : null,
       transcript: [
         ...s.transcript,
-        { who: "YOU", text: q, you: true },
-        { who: "MIKEY", text: answer },
+        { who: "YOU", text: q, you: true, at: Date.now() },
+        { who: "MIKEY", text: answer, at: Date.now() },
       ],
     }));
-    speakMikey(answer);
+    speakMikey(answer, "TAP-IN ANSWER", "tap-in");
   }, 700);
 }
 
@@ -733,40 +823,13 @@ export function crossRoomArrival() {
   });
 }
 
-/** Cycle the mock floor through handoff, cold, and reacquire states. */
+/** Exercise the same audio transition as every other mock playback. */
 export function floorHandoff() {
-  setAppState((app) => {
-    const current = app.fleet.audioFloor.roomId;
-    const next =
-      current === "room-of-devs" ? "podlink" : current === "podlink" ? null : "room-of-devs";
-    return {
-      ...app,
-      fleet: {
-        ...app.fleet,
-        audioFloor: {
-          roomId: next,
-          persona: next ? "mikey" : null,
-          elapsed: "00:00",
-          route: app.fleet.audioFloor.route,
-          queue:
-            next === "podlink"
-              ? [{ roomId: "room-of-devs", reason: "held question waits" }]
-              : next === "room-of-devs"
-                ? [{ roomId: "podlink", reason: "release watch update" }]
-                : [],
-        },
-        traffic: app.fleet.traffic.map((row) => ({
-          ...row,
-          floorState:
-            row.roomId === next
-              ? "has"
-              : next && (row.roomId === "room-of-devs" || row.roomId === "podlink")
-                ? "queued"
-                : "lull",
-        })),
-      },
-    };
-  });
+  if (getFleet().audioFloor.roomId) {
+    stopPlayback();
+    return;
+  }
+  speakMikey("Floor handoff check. Every transport reads this same mock clip.", "FLOOR HANDOFF");
 }
 
 const SPAWNED_SCRATCH_ROOM_ID = "scratch-repo-sweep";
@@ -870,45 +933,54 @@ export function setComposer(text: string) {
 
 /** Flip speaker-gate route between phone and Mac. */
 export function toggleAudioRoute() {
-  setAudioRoute(getRoom().audio.route === "phone" ? "mac" : "phone");
+  setAudioRoute(getFleet().audioFloor.route === "phone" ? "mac" : "phone");
 }
 
 /** Pick a speaker explicitly — the segmented phone|mac toggle in COMS. */
 export function setAudioRoute(next: "phone" | "mac") {
-  const s = getRoom();
-  if (s.audio.route === next) return;
-  patchRoom({
-    audio: {
-      ...s.audio,
-      route: next,
-      gateCountdown: next === "phone" ? "04:58" : "—",
-    },
+  setAppState((app) => {
+    const roomId = app.fleet.audioFloor.roomId ?? app.fleet.activeRoomId;
+    const room = app.rooms[roomId];
+    if (!room || room.audio.route === next) return app;
+    const audio = { ...room.audio, route: next, gateStartedAt: next === "phone" ? Date.now() : null };
+    return {
+      ...app,
+      rooms: { ...app.rooms, [roomId]: { ...room, rev: room.rev + 1, audio } },
+      fleet: { ...app.fleet, audioFloor: { ...app.fleet.audioFloor, route: next } },
+    };
   });
 }
 
 /** STOP playback — free by construction (clip already paid). */
 export function stopPlayback() {
   stopSpeaking();
-  patchRoom({ speakingPersona: null, liveClip: null });
+  const holderRoomId = getFleet().audioFloor.roomId ?? getFleet().activeRoomId;
+  setPlayback(holderRoomId, null);
 }
 
-/** Mock text inject into the focused craft's tmux. */
-export function injectReply(text: string, targetCraftId?: string) {
+/** Mock room message or explicit tmux inject, depending on composer target. */
+export function injectReply(text: string, target: ComposerTarget) {
   const trimmed = text.trim();
   if (!trimmed) return;
   setRoom((s) => {
-    const craftId =
-      targetCraftId ??
-      s.focusCraftId ??
-      s.heldQuestion?.craftId ??
-      s.crafts.find((c) => c.state === "needs-you")?.id ??
-      s.crafts.find((c) => c.state !== "empty")?.id ??
-      null;
+    const at = Date.now();
+    const craftId = target.kind === "craft" ? target.craft.id : null;
+    const transcript = [
+      ...s.transcript,
+      { who: "YOU" as const, text: trimmed, you: true, at },
+    ];
+    if (target.kind === "mikey-about") {
+      transcript.push({
+        who: "MIKEY",
+        text: `Got it — I'll route that with ${target.craft.ticket}.`,
+        at,
+      });
+    }
     return {
       ...s,
       rev: s.rev + 1,
       composerText: "",
-      transcript: [...s.transcript, { who: "YOU" as const, text: trimmed, you: true }],
+      transcript,
       crafts: craftId
         ? mapCraft(s.crafts, craftId, (c) => ({
             ...c,
@@ -932,7 +1004,11 @@ export function standDownWatch(craftId: string) {
     })),
     transcript: [
       ...room.transcript,
-      { who: "MIKEY", text: "Watch order stood down. I’ll stay quiet unless the room goes red." },
+      {
+        who: "MIKEY",
+        text: "Watch order stood down. I’ll stay quiet unless the room goes red.",
+        at: Date.now(),
+      },
     ],
   }));
 }
@@ -952,7 +1028,10 @@ export function sendVoiceChat(text: string) {
         [roomId]: {
           ...room,
           rev: room.rev + 1,
-          transcript: [...room.transcript, { who: "YOU" as const, text: trimmed, you: true }],
+          transcript: [
+            ...room.transcript,
+            { who: "YOU" as const, text: trimmed, you: true, at: Date.now() },
+          ],
         },
       },
     };
@@ -976,6 +1055,7 @@ export function sendVoiceChat(text: string) {
               {
                 who: voiceCallsign,
                 text: "Logged. I'll fold that in at the next lull.",
+                at: Date.now(),
               },
             ],
           },
@@ -998,12 +1078,30 @@ export function focusCraftForAnswer(craftId: string) {
   }));
 }
 
-/** Replay the last Mikey transcript line (free speechSynthesis). */
+/** Replay the saved audio receipt (free speechSynthesis). */
 export function replayLastMikey() {
   const s = getRoom();
-  const last = [...s.transcript].reverse().find((r) => r.who === "MIKEY");
+  const last = s.lastClip;
   if (!last) return;
-  speakMikey(last.text);
+  playClip({
+    persona: last.persona,
+    label: `REPLAY · ${last.label}`,
+    craftId: last.craftId,
+    kind: "replay",
+    text: last.text,
+  });
+}
+
+/** Long canned line for visibly checking the honest elapsed clock. */
+export function longClip() {
+  const line =
+    "Long clip check. Raph traced the team map handoff, verified the settled snapshot, reran the spawn path, checked the watcher, and is holding the floor while the instrument clock advances. He is walking the validation one instrument at a time: room manifest, hook receipt, watcher order, settled state, and final handback. Nothing new is being invented while he talks. This is mock speech only, and the transport remains free to stop at any moment.";
+  setRoom((room) => ({
+    ...room,
+    rev: room.rev + 1,
+    transcript: [...room.transcript, { who: "MIKEY", text: line, at: Date.now() }],
+  }));
+  speakMikey(line, "LONG CLIP · 30S");
 }
 
 export type ScenarioTrigger = {
@@ -1044,6 +1142,8 @@ export const TRIGGERS: ScenarioTrigger[] = [
     run: () => answer("ship", true),
   },
   { id: "speak", label: "SPEAK (MIKEY)", run: speak },
+  { id: "floor-clear", label: "FLOOR CLEAR (STOP)", run: stopPlayback },
+  { id: "long-clip", label: "LONG CLIP (30s)", run: longClip },
   { id: "donnie-out", label: "DONNIE CHECKOUT", run: donnieCheckout },
   { id: "donnie-in", label: "THANKS DONNIE", run: thanksDonnie },
   { id: "live", label: "LIVE CLIP", run: liveClip },

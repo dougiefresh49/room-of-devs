@@ -117,7 +117,6 @@
 .optbtn,
 .vswitch,
 .watchchip,
-.grantchip,
 .composer .field,
 .salgate {
   border-radius: 8px 2px 2px 2px;
@@ -127,7 +126,10 @@
 }
 .optbtn .keycap,
 .dockkey,
-.sendkey {
+.sendkey,
+.fcomp-key,
+.ffloor-key,
+.nodesheet-disengage {
   border-radius: 6px 2px 2px 2px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
 }
@@ -140,7 +142,14 @@
    Binder tabs cannot carry the house bottom-right chamfer: their
    bottom edge must remain open to merge into the masthead plate.
    `.masthead-tab` therefore uses top corners only
-   (`border-radius: 10px 3px 0 0`) and deliberately has no clip-path. */
+   (`border-radius: 10px 3px 0 0`) and deliberately has no clip-path.
+
+   The FIELD node sheet is flush to the glass at its bottom edge, so it
+   carries the L-scale top radii only (`26px 6px 0 0`) and no bottom cut. */
+.field-nodesheet {
+  border-radius: 26px 6px 0 0;
+  clip-path: none;
+}
 
 /* ---- FIELD UNIT: phone shell + screen still milled here -------
    Device shell + screen take the large cut. Inner cards use CutFrame

@@ -1,7 +1,9 @@
-import { CrtFace, Tag, Waveform } from "@room/ui/rig";
+import { CrtFace, Tag } from "@room/ui/rig";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
+import { replayLastMikey, setAudioRoute, stopPlayback } from "../mock/scenario";
 import { useRoom } from "../mock/store";
+import { NowPlaying } from "../rig-ext/NowPlaying";
 
 export function Faceplate() {
   const room = useRoom();
@@ -37,10 +39,16 @@ export function Faceplate() {
                 : { background: "#3a3f45", boxShadow: "none", animation: "none" }
             }
           />
-          <Waveform active={voiceSpeaking} />
-          <span className="dotmx" style={{ marginLeft: "auto" }}>
-            {voiceSpeaking ? "SPEAKING" : stoked ? "STOKED" : "IDLE"}
-          </span>
+          <NowPlaying
+            variant="faceplate"
+            nowPlaying={room.nowPlaying}
+            lastClip={room.lastClip}
+            route={room.audio.route}
+            gateStartedAt={room.audio.gateStartedAt}
+            onStop={stopPlayback}
+            onReplay={replayLastMikey}
+            onRoute={setAudioRoute}
+          />
         </div>
       </div>
     </div>

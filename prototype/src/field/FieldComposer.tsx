@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { injectReply, setComposer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
-import type { Craft } from "../mock/types";
-import { FieldTransport } from "./FieldTransport";
+import type { ComposerTarget } from "../mock/types";
 import { PttPill } from "./PttPill";
 
 const MAX_TEXTAREA_HEIGHT = 132;
@@ -17,12 +16,53 @@ function sizeTextarea(textarea: HTMLTextAreaElement | null) {
   textarea.style.overflowY = textarea.scrollHeight > MAX_TEXTAREA_HEIGHT ? "auto" : "hidden";
 }
 
+function collapsedLabel(target: ComposerTarget): string {
+  if (target.kind === "mikey-about") return `TALK TO MIKEY · ${target.craft.ticket}`;
+  if (target.kind === "craft") return `TALK TO ${target.craft.callsign} · ${target.craft.ticket}`;
+  return "TALK TO MIKEY";
+}
+
+function CompactTargetLabel({ target }: { target: ComposerTarget }) {
+  const label = collapsedLabel(target);
+  const ticketAt = label.lastIndexOf(" · T-");
+  return (
+    <span className="fcomposer-compact-label" aria-hidden>
+      <span className="fcomposer-compact-main">
+        {ticketAt < 0 ? label : label.slice(0, ticketAt)}
+      </span>
+      {ticketAt < 0 ? null : (
+        <span className="fcomposer-compact-ticket">{label.slice(ticketAt)}</span>
+      )}
+    </span>
+  );
+}
+
+function targetLine(target: ComposerTarget): string {
+  if (target.kind === "craft") {
+    return `▸ ANSWERING ${target.craft.callsign} · ${target.craft.ticket}`;
+  }
+  if (target.kind === "mikey-about") {
+    return `▸ TELLING MIKEY ABOUT ${target.craft.ticket} · he routes it`;
+  }
+  return "▸ TALKING TO MIKEY · he routes it";
+}
+
+function placeholder(target: ComposerTarget): string {
+  if (target.kind === "craft") {
+    return `reply to ${target.craft.callsign} — lands as a tmux inject`;
+  }
+  if (target.kind === "mikey-about") {
+    return `tell Mikey about ${target.craft.ticket} — he routes it`;
+  }
+  return "tell Mikey — he routes it to the room";
+}
+
 interface FieldComposerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFocusChange: (focused: boolean) => void;
   onFocusComposer?: () => void;
-  targetCraft?: Craft | null;
+  target: ComposerTarget;
 }
 
 export function FieldComposer({
@@ -30,23 +70,30 @@ export function FieldComposer({
   onOpenChange,
   onFocusChange,
   onFocusComposer,
-  targetCraft,
+  target,
 }: FieldComposerProps) {
   const room = useRoom();
   const expandKeyRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLDivElement | null>(null);
-  const audioLive = room.speakingPersona != null || room.liveClip != null;
+  const mountedInSheet = target.kind !== "mikey";
 
   useEffect(() => sizeTextarea(textareaRef.current), [room.composerText]);
 
   useEffect(() => {
-    setPortalTarget(
-      targetCraft
-        ? document.querySelector<HTMLDivElement>(".nodesheet-composer-mount")
-        : null,
-    );
-  }, [targetCraft]);
+    if (!mountedInSheet) {
+      setPortalTarget(null);
+      return;
+    }
+    const resolveTarget = () => {
+      setPortalTarget(document.querySelector<HTMLDivElement>(".nodesheet-composer-mount"));
+    };
+    resolveTarget();
+    // Radix mounts SheetContent through its own portal. One frame lets that
+    // stable mount appear without making the effect depend on the craft object.
+    const frame = window.requestAnimationFrame(resolveTarget);
+    return () => window.cancelAnimationFrame(frame);
+  }, [mountedInSheet]);
 
   useEffect(() => {
     const focusComposer = () => {
@@ -72,112 +119,128 @@ export function FieldComposer({
   const submit = () => {
     const text = room.composerText.trim();
     if (!text) return;
-    injectReply(text, targetCraft?.id);
+    injectReply(text, target);
     onOpenChange(false);
     onFocusChange(false);
     window.requestAnimationFrame(() => expandKeyRef.current?.focus());
   };
 
-  const targetLine = targetCraft ? targetCraft.ticket : undefined;
-  const placeholder = targetCraft
-    ? `reply to ${targetCraft.callsign} — lands as a tmux inject`
-    : "tell Mikey — he routes it to the room";
-
   const composer = (
-    <>
+    <form
+      className={`fcomposer${open ? " is-open" : ""}`}
+      data-part="F-06"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
       {open ? (
-        <button
-          type="button"
-          className="fcomp-scrim"
-          aria-label="Collapse composer"
-          onClick={collapse}
-        />
-      ) : null}
-      <form
-        className={`fcomposer${open ? " is-open" : ""}${audioLive ? " has-audio" : ""}`}
-        data-part="F-06"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        {open ? (
-          <div className="screenbed fcomposer-panel">
-            <div className="fcomposer-field screenbed">
-              <textarea
-                ref={textareaRef}
-                id="field-message"
-                name="field-message"
-                rows={1}
+        <div className="screenbed fcomposer-panel">
+          <div className="fcomposer-target">
+            <span>{targetLine(target)}</span>
+            <button
+              type="button"
+              className="fcomposer-collapse"
+              aria-label="Collapse composer"
+              onClick={collapse}
+            >
+              <ChevronDown size={17} />
+            </button>
+          </div>
+          <div className="fcomposer-field screenbed">
+            <textarea
+              ref={textareaRef}
+              id="field-message"
+              name="field-message"
+              rows={1}
+              value={room.composerText}
+              placeholder={placeholder(target)}
+              aria-label="Type a room message"
+              onFocus={() => {
+                onFocusChange(true);
+                onFocusComposer?.();
+              }}
+              onBlur={() => onFocusChange(false)}
+              onChange={(event) => {
+                setComposer(event.currentTarget.value);
+                sizeTextarea(event.currentTarget);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  submit();
+                }
+              }}
+            />
+          </div>
+          <div className="fcomposer-actions">
+            <Button type="button" variant="ghost" size="icon" className="fcomp-key" aria-label="Attach">
+              <Plus size={18} />
+            </Button>
+            <PttPill big />
+            <Button
+              type="submit"
+              variant="default"
+              size="icon"
+              className="fcomp-key sendkey"
+              aria-label="Send message"
+              disabled={!room.composerText.trim()}
+            >
+              <ArrowUp size={18} strokeWidth={2.5} />
+            </Button>
+          </div>
+        </div>
+      ) : mountedInSheet ? (
+        <div className="fcomposer-collapsed">
+          <div className="fcombo fcombo-targeted">
+            <PttPill icon />
+            <div className={`fcomposer-compact-field${room.composerText ? " has-value" : ""}`}>
+              <CompactTargetLabel target={target} />
+              <input
+                id="field-message-compact"
+                name="field-message-compact"
+                className="fcomposer-compact-input"
                 value={room.composerText}
-                placeholder={placeholder}
-                aria-label="Type a room message"
+                aria-label={`${collapsedLabel(target)}; focus to expand composer`}
                 onFocus={() => {
+                  onOpenChange(true);
                   onFocusChange(true);
                   onFocusComposer?.();
                 }}
-                onBlur={() => onFocusChange(false)}
-                onChange={(event) => {
-                  setComposer(event.currentTarget.value);
-                  sizeTextarea(event.currentTarget);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    submit();
-                  }
-                }}
+                onChange={(event) => setComposer(event.currentTarget.value)}
               />
             </div>
-            <div className="fcomposer-actions">
-              <Button type="button" variant="ghost" size="icon" className="fcomp-key" aria-label="Attach">
-                <Plus size={15} />
-              </Button>
-              <PttPill segment subLabel={targetLine} />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="fcomp-key"
-                aria-label="Collapse composer"
-                onClick={collapse}
-              >
-                <ChevronDown size={17} />
-              </Button>
-              <Button
-                type="submit"
-                variant="default"
-                size="icon"
-                className="fcomp-key sendkey"
-                aria-label="Send message"
-                disabled={!room.composerText.trim()}
-              >
-                <ArrowUp size={16} strokeWidth={2.5} />
-              </Button>
-            </div>
+            <button
+              ref={expandKeyRef}
+              type="button"
+              className="fcombo-expand"
+              aria-label="Open text composer"
+              onClick={() => onOpenChange(true)}
+            >
+              <ChevronUp size={17} />
+            </button>
           </div>
-        ) : (
-          <div className="fcomposer-collapsed">
-            {audioLive ? <FieldTransport /> : null}
-            <div className="fcombo">
-              <PttPill segment short={audioLive} subLabel={targetLine} />
-              <button
-                ref={expandKeyRef}
-                type="button"
-                className="fcombo-expand"
-                aria-label="Open text composer"
-                onClick={() => onOpenChange(true)}
-              >
-                <ChevronUp size={17} />
-              </button>
-            </div>
+        </div>
+      ) : (
+        <div className="fcomposer-collapsed">
+          <div className="fcombo">
+            <PttPill segment label={collapsedLabel(target)} />
+            <button
+              ref={expandKeyRef}
+              type="button"
+              className="fcombo-expand"
+              aria-label="Open text composer"
+              onClick={() => onOpenChange(true)}
+            >
+              <ChevronUp size={17} />
+            </button>
           </div>
-        )}
-      </form>
-    </>
+        </div>
+      )}
+    </form>
   );
 
-  if (targetCraft) {
+  if (mountedInSheet) {
     return portalTarget ? createPortal(composer, portalTarget) : null;
   }
   return composer;

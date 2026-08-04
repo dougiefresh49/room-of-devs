@@ -213,12 +213,15 @@ export function strikeCommission(): StrikeReceipt | null {
             draft.source === "voice"
               ? `Berth ${berth ?? "scratch"} struck from the voice draft.`
               : `Berth ${berth ?? "scratch"} struck from the commissioning bench.`,
+          at: Date.now(),
         },
       ],
       queuedForLull: [],
       dockTicker: berthSummary.ticker,
       dockLedRed: false,
       speakingPersona: null,
+      nowPlaying: null,
+      lastClip: null,
       rev: template.rev + 1,
     };
 
