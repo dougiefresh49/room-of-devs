@@ -190,8 +190,17 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
             key={c.id}
             className={cls}
             fontFamily="monospace"
+            role="button"
+            tabIndex={0}
+            aria-label={`Open ${c.callsign} ${c.ticket}`}
             style={{ cursor: "pointer" }}
             onClick={() => onSelectCraft(c.id)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelectCraft(c.id);
+              }
+            }}
           >
             {c.watched ? (
               <circle

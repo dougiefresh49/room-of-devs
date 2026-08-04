@@ -3,6 +3,11 @@ import type { GuardWindow } from "../mock/types";
 import { useRoom } from "../mock/store";
 import { CutFrame, Odometer } from "@room/ui/rig";
 import { Popover, PopoverContent, PopoverTrigger } from "@room/ui";
+import type { SpendState } from "../mock/types";
+
+export function hasHotGuard(spend: SpendState): boolean {
+  return spend.guards.some((guard) => guard.windows.some((window) => window.fraction >= 0.85));
+}
 
 /** One window's fill bar. Red once it's inside the last 15% of its cap. */
 function GuardBar({ w }: { w: GuardWindow }) {

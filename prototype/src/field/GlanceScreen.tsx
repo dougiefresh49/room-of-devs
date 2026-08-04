@@ -3,11 +3,13 @@ import { AvatarFace } from "../avatars/AvatarFace";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import type { Craft } from "../mock/types";
 import { useFleet, useRoom } from "../mock/store";
+import type { RoomId } from "../mock/types";
 import { roomShortLabel } from "../chrome/MastheadTabs";
 import { FieldPlot } from "./FieldPlot";
 
 export interface GlanceScreenProps {
-  onSelectCraft: (craftId: string) => void;
+  onOpenNode: (craftId: string) => void;
+  onCouple: (roomId: RoomId) => void;
 }
 
 function stateTag(c: Craft): { label: string; tone: TagTone } {
@@ -26,7 +28,7 @@ function rowClass(c: Craft): string {
   return bits.join(" ");
 }
 
-export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
+export function GlanceScreen({ onOpenNode, onCouple }: GlanceScreenProps) {
   const room = useRoom();
   const fleet = useFleet();
   const { clearPct, threshold, contributors } = room.salience;
@@ -63,7 +65,7 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
         innerClassName="fcard"
       >
         <div style={{ padding: 4 }}>
-          <FieldPlot onSelectCraft={onSelectCraft} />
+          <FieldPlot onSelectCraft={onOpenNode} />
         </div>
       </CutFrame>
 
@@ -75,7 +77,7 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
               type="button"
               key={c.id}
               className={rowClass(c)}
-              onClick={() => onSelectCraft(c.id)}
+              onClick={() => onOpenNode(c.id)}
               style={{ width: "100%", textAlign: "left" }}
             >
               <div className="tface">
@@ -94,21 +96,26 @@ export function GlanceScreen({ onSelectCraft }: GlanceScreenProps) {
         })}
       </div>
 
-      <CutFrame scale="s" className="field-cross-room-wrap" innerClassName="field-cross-room">
-        <div className="field-cross-room-head">OTHER ROOMS</div>
-        {fleet.traffic
-          .filter((row) => row.roomId !== fleet.activeRoomId)
-          .slice(0, 3)
-          .map((row) => (
-            <div className="field-cross-room-row" key={`${row.roomId}:${row.craftId ?? row.label}`}>
-              <Tag tone={row.belowGate ? "red" : "dim"}>{roomShortLabel(row.roomId)}</Tag>
-              <span>{row.label}</span>
-              <b className={row.belowGate ? "is-red" : undefined}>
-                {row.belowGate ? "BELOW GATE" : `${row.salience}% CLR`}
-              </b>
-            </div>
-          ))}
-      </CutFrame>
+      {fleet.traffic.filter((row) => row.roomId !== fleet.activeRoomId && row.belowGate).length ? (
+        <CutFrame scale="s" className="field-cross-room-wrap" innerClassName="field-cross-room">
+          <div className="field-cross-room-head">OTHER ROOMS · ALARM</div>
+          {fleet.traffic
+            .filter((row) => row.roomId !== fleet.activeRoomId && row.belowGate)
+            .slice(0, 2)
+            .map((row) => (
+              <button
+                type="button"
+                className="field-cross-room-row"
+                key={`${row.roomId}:${row.craftId ?? row.label}`}
+                onClick={() => onCouple(row.roomId)}
+              >
+                <Tag tone="red">{roomShortLabel(row.roomId)}</Tag>
+                <span>{row.label}</span>
+                <b className="is-red">BELOW GATE</b>
+              </button>
+            ))}
+        </CutFrame>
+      ) : null}
     </div>
   );
 }

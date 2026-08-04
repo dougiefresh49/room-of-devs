@@ -17,6 +17,7 @@ interface CommsLogProps {
   footNote?: string;
   className?: string;
   typing?: boolean;
+  onReadBack?: () => void;
 }
 
 interface CommsGroup {
@@ -31,6 +32,7 @@ export function CommsLog({
   footNote,
   className = "field-thread",
   typing = false,
+  onReadBack,
 }: CommsLogProps) {
   const logRef = useRef<HTMLDivElement>(null);
   const groups = useMemo(
@@ -54,17 +56,22 @@ export function CommsLog({
   });
 
   return (
-    <div ref={logRef} className={`vt comms-log ${className}`.trim()}>
+    <div
+      ref={logRef}
+      className={`vt comms-log ${className}`.trim()}
+      onWheel={onReadBack}
+      onTouchMove={onReadBack}
+    >
       {groups.map((group, groupIndex) => (
         <div
           className={`comms-group${group.you ? " is-you" : ""}`}
-          key={`${group.who}-${group.you ? "you" : "other"}-${group.rows[0]?.text}`}
+          key={`${group.who}-${group.you ? "you" : "other"}-${groupIndex}`}
         >
           {!group.you ? <div className="comms-who">{group.who.slice(0, 3)}</div> : null}
           {group.rows.map((row, rowIndex) => (
             <div
               className={`comms-say${group.you ? " you" : ""}`}
-              key={`${row.who}-${row.you === true ? "you" : "other"}-${row.text}`}
+              key={`${row.who}-${row.you === true ? "you" : "other"}-${groupIndex}-${rowIndex}`}
             >
               {row.text}
               {typing && groupIndex === groups.length - 1 && rowIndex === group.rows.length - 1 ? (
@@ -77,8 +84,8 @@ export function CommsLog({
 
       {tail.length > 0 ? (
         <div className="comms-group comms-tail">
-          {tail.map((line) => (
-            <div className="comms-say" key={`${line.kind}-${line.text}`}>
+          {tail.map((line, index) => (
+            <div className="comms-say" key={`${line.kind}-${line.text}-${index}`}>
               <span aria-hidden>{line.kind === "cmd" ? "▸" : "·"}</span>
               {line.text}
             </div>

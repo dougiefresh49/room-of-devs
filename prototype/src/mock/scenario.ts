@@ -873,7 +873,7 @@ export function toggleAudioRoute() {
   setAudioRoute(getRoom().audio.route === "phone" ? "mac" : "phone");
 }
 
-/** Pick a speaker explicitly — the segmented phone|mac toggle on LISTEN. */
+/** Pick a speaker explicitly — the segmented phone|mac toggle in COMS. */
 export function setAudioRoute(next: "phone" | "mac") {
   const s = getRoom();
   if (s.audio.route === next) return;
@@ -889,15 +889,16 @@ export function setAudioRoute(next: "phone" | "mac") {
 /** STOP playback — free by construction (clip already paid). */
 export function stopPlayback() {
   stopSpeaking();
-  patchRoom({ speakingPersona: null });
+  patchRoom({ speakingPersona: null, liveClip: null });
 }
 
 /** Mock text inject into the focused craft's tmux. */
-export function injectReply(text: string) {
+export function injectReply(text: string, targetCraftId?: string) {
   const trimmed = text.trim();
   if (!trimmed) return;
   setRoom((s) => {
     const craftId =
+      targetCraftId ??
       s.focusCraftId ??
       s.heldQuestion?.craftId ??
       s.crafts.find((c) => c.state === "needs-you")?.id ??
@@ -916,6 +917,24 @@ export function injectReply(text: string) {
         : s.crafts,
     };
   });
+}
+
+/** Cancel a running watch order from the FIELD orders tab. */
+export function standDownWatch(craftId: string) {
+  setRoom((room) => ({
+    ...room,
+    rev: room.rev + 1,
+    crafts: mapCraft(room.crafts, craftId, (craft) => ({
+      ...craft,
+      watched: false,
+      lastStamp: "WATCH STOOD DOWN · 00:00",
+      tail: [...craft.tail, { kind: "ok" as const, text: "watch order stood down" }],
+    })),
+    transcript: [
+      ...room.transcript,
+      { who: "MIKEY", text: "Watch order stood down. I’ll stay quiet unless the room goes red." },
+    ],
+  }));
 }
 
 /** Mock seated-voice chat: append locally, then acknowledge in the same room. */
@@ -966,7 +985,7 @@ export function sendVoiceChat(text: string) {
   }, 1000);
 }
 
-/** Focus a craft for the ANSWER screen (field plot / row taps). */
+/** Focus a craft for its NodeSheet (field plot / row taps). */
 export function focusCraftForAnswer(craftId: string) {
   setRoom((s) => ({
     ...s,

@@ -51,6 +51,15 @@ export const deadStockBin: DeadStockEntry[] = [
     },
     "handRolledBy": "panel/src/app/ActionCluster.tsx and mobile transport icon-button clusters.",
     "verdict": "SCRAP UNTIL A REAL SHARED CONSUMER REPLACES THOSE CLUSTERS"
+  },
+  {
+    "id": "dead-ext-001",
+    "name": "FieldCard",
+    "provenance": {
+      "kind": "custom"
+    },
+    "handRolledBy": "field screens using raw chassis/view-terminal wrappers.",
+    "verdict": "ADOPT IN FIELD OR SCRAP THE EXTENSION"
   }
 ];
 
@@ -148,9 +157,12 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ThreadNode.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/SpecPlate.tsx",
+      "prototype/src/field/ComsScreen.tsx",
+      "prototype/src/field/FieldBerthRow.tsx",
+      "prototype/src/field/FieldHangar.tsx",
       "prototype/src/field/GaugesScreen.tsx",
       "prototype/src/field/GlanceScreen.tsx",
-      "prototype/src/field/ListenScreen.tsx",
+      "prototype/src/field/VoiceBar.tsx",
       "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/rig-ext/FieldCard.tsx"
@@ -194,7 +206,8 @@ export const instruments: Instrument[] = [
       "prototype/src/crib/CribView.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
-      "prototype/src/hangar/commission/VoicePath.tsx"
+      "prototype/src/hangar/commission/VoicePath.tsx",
+      "prototype/src/map/MapView.tsx"
     ],
     "surfaces": [
       "console",
@@ -309,15 +322,20 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ConsoleView.tsx",
       "panel/src/app/console/DialChips.tsx",
       "panel/src/app/console/ThreadNode.tsx",
+      "prototype/src/chrome/RigMasthead.tsx",
+      "prototype/src/console/Faceplate.tsx",
+      "prototype/src/console/PlanCard.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/DeadStockBin.tsx",
       "prototype/src/crib/SpecPlate.tsx",
       "prototype/src/crib/crib-chrome.tsx",
-      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/ComsScreen.tsx",
+      "prototype/src/field/FieldBerthRow.tsx",
+      "prototype/src/field/FieldHangar.tsx",
       "prototype/src/field/GlanceScreen.tsx",
-      "prototype/src/field/StartScreen.tsx",
+      "prototype/src/field/NodeSheet.tsx",
+      "prototype/src/field/OrdersScreen.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/TrafficStrip.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/hangar/commission/ManifestPreview.tsx",
@@ -358,9 +376,10 @@ export const instruments: Instrument[] = [
     "consumers": [
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
+      "prototype/src/console/ChatFocus.tsx",
       "prototype/src/console/Faceplate.tsx",
       "prototype/src/console/ReplyDeck.tsx",
-      "prototype/src/field/ListenScreen.tsx",
+      "prototype/src/field/VoiceBar.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/FloorBus.tsx"
     ],
@@ -410,17 +429,20 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/WatchChips.tsx",
-      "prototype/src/console/ConsoleView.tsx",
+      "prototype/src/chrome/MastheadTabs.tsx",
+      "prototype/src/chrome/RigMasthead.tsx",
+      "prototype/src/chrome/ViewMenu.tsx",
       "prototype/src/console/DockMiniBar.tsx",
       "prototype/src/console/PlanCard.tsx",
       "prototype/src/crib/crib-chrome.tsx",
-      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/ComsScreen.tsx",
+      "prototype/src/field/FieldBerthRow.tsx",
+      "prototype/src/field/FieldHangar.tsx",
       "prototype/src/field/FieldNav.tsx",
-      "prototype/src/field/FieldView.tsx",
-      "prototype/src/field/ListenScreen.tsx",
-      "prototype/src/field/StartScreen.tsx",
-      "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/chrome/MastheadTabs.tsx"
+      "prototype/src/field/FieldRoomMenu.tsx",
+      "prototype/src/field/OrdersScreen.tsx",
+      "prototype/src/field/VoiceBar.tsx",
+      "prototype/src/hangar/BerthCard.tsx"
     ],
     "surfaces": [
       "console",
@@ -463,9 +485,8 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/console/ReplyDeck.tsx",
       "prototype/src/console/ThreadNode.tsx",
-      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/NodeSheet.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx"
     ],
     "surfaces": [
@@ -501,7 +522,8 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "prototype/src/console/SpineRail.tsx"
+      "prototype/src/console/SpineRail.tsx",
+      "prototype/src/map/MapView.tsx"
     ],
     "surfaces": [
       "console"
@@ -617,17 +639,16 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ThreadNode.tsx",
+      "prototype/src/console/ChatFocus.tsx",
       "prototype/src/console/CrewManifest.tsx",
       "prototype/src/console/DockMiniBar.tsx",
       "prototype/src/console/Faceplate.tsx",
       "prototype/src/console/ThreadNode.tsx",
-      "prototype/src/field/FieldDock.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/rig-ext/FieldCrtFace.tsx"
     ],
     "surfaces": [
       "console",
-      "field",
       "panel"
     ]
   },
@@ -661,6 +682,7 @@ export const instruments: Instrument[] = [
     "consumers": [
       "panel/src/app/DockView.tsx",
       "prototype/src/console/DockMiniBar.tsx",
+      "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/hangar/BerthCard.tsx"
     ],
@@ -701,9 +723,13 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "button",
     "verdict": "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
     "consumers": [
-      "prototype/src/field/FieldDock.tsx"
+      "prototype/src/console/ConsoleDock.tsx",
+      "prototype/src/field/FieldComposer.tsx",
+      "prototype/src/field/FieldTransport.tsx",
+      "prototype/src/field/NodeSheet.tsx"
     ],
     "surfaces": [
+      "console",
       "field"
     ]
   },
@@ -737,7 +763,8 @@ export const instruments: Instrument[] = [
     "verdict": "Vendored, dead in audit — exactly what ControlDeck.tsx hand-rolls with role=dialog and a manual keydown listener. Round D adopted Radix dialog in the prototype.",
     "consumers": [
       "prototype/src/deck/ControlDeck.tsx",
-      "prototype/src/hangar/RoomSwitcherPalette.tsx"
+      "prototype/src/hangar/RoomSwitcherPalette.tsx",
+      "prototype/src/map/MapView.tsx"
     ],
     "surfaces": [
       "console"
@@ -801,9 +828,11 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "packages/mobile/src/components/OverflowMenu.tsx"
+      "packages/mobile/src/components/OverflowMenu.tsx",
+      "prototype/src/chrome/ViewMenu.tsx"
     ],
     "surfaces": [
+      "console",
       "mobile"
     ]
   },
@@ -830,9 +859,12 @@ export const instruments: Instrument[] = [
     ],
     "consumers": [
       "panel/src/app/ActionCluster.tsx",
+      "prototype/src/console/SpineLegend.tsx",
+      "prototype/src/field/FieldRoomMenu.tsx",
       "prototype/src/field/GaugesScreen.tsx"
     ],
     "surfaces": [
+      "console",
       "field",
       "panel"
     ]
@@ -861,9 +893,11 @@ export const instruments: Instrument[] = [
     "consumers": [
       "packages/mobile/src/components/ConvoSheet.tsx",
       "packages/mobile/src/components/PickerSheet.tsx",
-      "packages/mobile/src/components/PlayerSheet.tsx"
+      "packages/mobile/src/components/PlayerSheet.tsx",
+      "prototype/src/field/NodeSheet.tsx"
     ],
     "surfaces": [
+      "field",
       "mobile"
     ]
   },
@@ -894,7 +928,7 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "prototype/src/field/ListenScreen.tsx",
+      "prototype/src/field/VoiceBar.tsx",
       "prototype/src/hangar/commission/CeremonyFork.tsx",
       "prototype/src/hangar/commission/DialRow.tsx"
     ],
@@ -927,8 +961,11 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "tooltip",
     "verdict": "Vendored, dead; would replace dozens of native title=\"\" attributes with accessible, styled hints.",
     "consumers": [
+      "prototype/src/console/SpineLegend.tsx",
+      "prototype/src/console/ThreeDials.tsx",
       "prototype/src/crib/CribView.tsx",
-      "prototype/src/crib/crib-chrome.tsx"
+      "prototype/src/crib/crib-chrome.tsx",
+      "prototype/src/map/PartNo.tsx"
     ],
     "surfaces": [
       "console"
@@ -958,7 +995,7 @@ export const instruments: Instrument[] = [
     "registryEquivalent": "sonner",
     "verdict": "Vendored, dead — highest effort-to-payoff in the audit; panel and mobile still hand-roll toast timers.",
     "consumers": [
-      "prototype/src/field/StartScreen.tsx",
+      "prototype/src/field/FieldHangar.tsx",
       "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/mock/scenario.ts"
@@ -1298,13 +1335,8 @@ export const instruments: Instrument[] = [
         "note": "card body"
       }
     ],
-    "consumers": [
-      "prototype/src/field/AnswerScreen.tsx",
-      "prototype/src/field/StartScreen.tsx"
-    ],
-    "surfaces": [
-      "field"
-    ]
+    "consumers": [],
+    "surfaces": []
   },
   {
     "id": "EXT-002",
@@ -1326,10 +1358,11 @@ export const instruments: Instrument[] = [
       }
     ],
     "consumers": [
-      "prototype/src/field/AnswerScreen.tsx",
+      "prototype/src/field/ComsScreen.tsx",
+      "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/GlanceScreen.tsx",
-      "prototype/src/field/ListenScreen.tsx",
-      "prototype/src/field/StartScreen.tsx"
+      "prototype/src/field/NodeSheet.tsx",
+      "prototype/src/field/VoiceBar.tsx"
     ],
     "surfaces": [
       "field"

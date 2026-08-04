@@ -1,28 +1,28 @@
 import { Led } from "@room/ui/rig";
 
-export type FieldScreen = "glance" | "answer" | "listen" | "start" | "gauges";
+export type FieldScreen = "glance" | "coms" | "orders" | "gauges";
+
+export interface FieldBadge {
+  tone: "red" | "amber";
+  pulse?: boolean;
+  label: string;
+}
 
 const TABS: { id: FieldScreen; label: string }[] = [
   { id: "glance", label: "GLANCE" },
-  { id: "answer", label: "ANSWER" },
-  { id: "listen", label: "LISTEN" },
-  { id: "start", label: "START" },
+  { id: "coms", label: "COMS" },
+  { id: "orders", label: "ORDERS" },
   { id: "gauges", label: "GAUGES" },
 ];
 
 export interface FieldNavProps {
   screen: FieldScreen;
   onChange: (s: FieldScreen) => void;
-  answerBadge: boolean;
-  listenBadge: boolean;
+  badges: Partial<Record<FieldScreen, FieldBadge>>;
+  onBadgePress?: (screen: FieldScreen, badge: FieldBadge) => void;
 }
 
-export function FieldNav({
-  screen,
-  onChange,
-  answerBadge,
-  listenBadge,
-}: FieldNavProps) {
+export function FieldNav({ screen, onChange, badges, onBadgePress }: FieldNavProps) {
   return (
     <nav className="fnav" aria-label="Field screens">
       {TABS.map((t) => (
@@ -30,15 +30,22 @@ export function FieldNav({
           key={t.id}
           type="button"
           className={screen === t.id ? "active" : undefined}
-          onClick={() => onChange(t.id)}
+          onClick={() => {
+            const badge = badges[t.id];
+            onChange(t.id);
+            if (badge) onBadgePress?.(t.id, badge);
+          }}
         >
           {t.label}
-          {t.id === "answer" && answerBadge ? (
-            <Led tone="red" className="fnav-dot" />
+          {badges[t.id] ? (
+            <Led
+              tone={badges[t.id]?.tone}
+              pulse={badges[t.id]?.pulse}
+              className="fnav-dot"
+              aria-hidden
+            />
           ) : null}
-          {t.id === "listen" && listenBadge ? (
-            <Led tone="amber" className="fnav-dot" />
-          ) : null}
+          {badges[t.id] ? <span className="sr-only">{badges[t.id]?.label}</span> : null}
         </button>
       ))}
     </nav>

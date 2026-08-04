@@ -37,8 +37,10 @@
   color: var(--amber);
 }
 .field-root .fhead {
+  position: relative;
+  z-index: 82;
   flex: none;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   border-bottom: 1px solid rgba(255, 179, 71, 0.14);
 }
 .field-root .fnav {
@@ -49,18 +51,20 @@
   padding: 7px 0 6px;
 }
 .field-root .fnav button {
-  flex: none;
+  flex: 1;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 3px 1px 4px;
+  min-height: 34px;
+  padding: 7px 1px 5px;
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--steel-dim);
   cursor: pointer;
   position: relative;
+  white-space: nowrap;
 }
 .field-root .fnav button.active {
   border-bottom-color: var(--amber);
@@ -70,9 +74,20 @@
 .field-root .fnav button .fnav-dot {
   position: absolute;
   top: 2px;
-  right: 4px;
+  right: 7px;
   width: 5px;
   height: 5px;
+}
+.field-root .fnav .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 /* CrtFace wells — fill wrapper (FieldCrtFace) so non-library sizes (40/148) fit */
 .field-root .field-crt-fill.rig-crt {
@@ -111,10 +126,10 @@
   color: inherit;
   font: inherit;
 }
-.field-root.mood-mic-open .fscr .inner > *:not(.fdock) {
+.field-root.mood-mic-open .fscr .inner > *:not(.fcomposer):not(.fcomp-scrim) {
   opacity: 0.55;
 }
-.field-root.mood-mic-open .fdock,
+.field-root.mood-mic-open .fcomposer,
 .field-root.mood-mic-open .pttpill {
   opacity: 1;
 }
@@ -144,10 +159,14 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
+  padding-bottom: 76px;
+  scroll-padding-bottom: 76px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 24px), transparent 100%);
   scrollbar-width: thin;
   scrollbar-color: var(--amber-dim) transparent;
 }
-/* full-height message thread (ANSWER) — scrolls, newest pinned by autoscroll */
+/* full-height COMS message thread — scrolls, newest pinned by autoscroll */
 .field-root .field-thread {
   flex: 1;
   min-height: 0;
@@ -241,13 +260,18 @@
 }
 .field-root .fscr .inner {
   position: relative;
-  z-index: 6;
+  z-index: auto;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   padding: 14px 14px 16px;
   overflow: hidden;
+}
+.field-root .plotbay-f svg {
+  width: 76% !important;
+  margin-right: auto;
+  margin-left: auto;
 }
 /* thumb-reach arc — honesty overlay */
 /* compact salience strip — bar is rig SalienceBar */
@@ -336,7 +360,7 @@
 .field-root .trows {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   margin-top: 10px;
 }
 .field-root .trow {
@@ -344,7 +368,7 @@
   grid-template-columns: 40px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: center;
-  padding: 6px 8px 6px 6px;
+  padding: 5px 8px 5px 5px;
   border-radius: 7px;
   border: 1px solid #15181c;
   background: linear-gradient(178deg, #31363c, #22262b);
@@ -715,7 +739,7 @@
   letter-spacing: 0.14em;
 }
 
-/* ── LISTEN: audio route as ToggleGroup (.devtog) ── */
+/* ── COMS voice-bar audio route as ToggleGroup (.devtog) ── */
 
 /* ── GAUGES: per-provider guard board ── */
 .field-root .gboard-cap {
@@ -837,7 +861,7 @@
 /* ══════════════════════════════════════════════════════════════
    ROUND 3
    1) one control height everywhere      2) grouped talk capsule
-   3) LISTEN head: 1/3 stack | 2/3 face  4) segmented device toggle
+   3) COMS voice bar: 1/3 stack | 2/3 face  4) segmented device toggle
    Inner cards take chamfer from @room/ui/rig CutFrame; this file keeps
    the phone shell + a few interactive/scroll housings that can't wrap.
    ══════════════════════════════════════════════════════════════ */
@@ -861,114 +885,7 @@
   min-height: var(--fkey-h);
 }
 
-/* ── LISTEN head: 1/3 readout stack | 2/3 face ── */
-.field-root .lhead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 162px;
-  gap: 10px;
-  align-items: stretch;
-}
-.field-root .lcol {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding: 9px 8px;
-  border: 1px solid rgba(255, 179, 71, 0.18);
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  height: 100%;
-}
-.field-root .lcol-wrap,
-.field-root .lface-wrap {
-  min-height: 0;
-}
-.field-root .lface-wrap {
-  width: 162px;
-}
-.field-root .lcol .lname {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: var(--amber-hot);
-  text-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
-  line-height: 1.1;
-}
-.field-root .lcol .lsub {
-  font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--amber-dim);
-  line-height: 1.4;
-}
-.field-root .lcol .lwave {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: auto;
-  padding: 6px 7px;
-  border-radius: 4px 1px 1px 1px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 179, 71, 0.2);
-}
-.field-root .lcol .lwave .talklamp-led {
-  width: 9px;
-  height: 9px;
-  flex: none;
-}
-.field-root .lcol .lwave .lwave-bars {
-  flex: 1;
-  min-width: 0;
-  height: 14px;
-  overflow: hidden;
-  justify-content: center;
-}
-.field-root .lcol .lgate {
-  font-family: var(--mono);
-  font-size: 7px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--steel-dim);
-  text-align: center;
-}
-.field-root .lcol .lgate b {
-  color: var(--green);
-}
-.field-root .lface {
-  position: relative;
-  padding: 6px;
-  border: 1px solid rgba(255, 179, 71, 0.3);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow:
-    0 0 18px rgba(255, 140, 20, 0.18),
-    inset 0 0 18px rgba(0, 0, 0, 0.7);
-}
-.field-root .lface img {
-  width: 100% !important;
-  height: auto !important;
-}
-/* walk-plan / duty line under the two columns */
-.field-root .lplan {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 6px 9px;
-  border-radius: 4px 1px 1px 1px;
-  border: 1px solid rgba(255, 179, 71, 0.16);
-  background: rgba(0, 0, 0, 0.3);
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--amber-dim);
-  line-height: 1.5;
-}
-.field-root .lplan b {
-  color: var(--amber);
-}
-
-/* ── segmented device toggle: 📱 | 💻 as house-style glyphs ── */
+/* Segmented audio route inside the COMS voice bar. */
 .field-root .devtog {
   display: flex;
   align-items: stretch;
@@ -1247,70 +1164,47 @@
   }
 }
 
-/* FIELD UNIT owner round — rooms first, then screens. */
-.field-root .frail {
+/* FIELD room dropdown: one coupled-room control, transport lamps stay put. */
+.field-root .froom-row {
   display: flex;
-  width: 100%;
-  height: 30px;
-  align-items: stretch;
-  overflow: hidden;
-}
-.field-root .frail-scroll {
-  display: flex;
-  min-width: 0;
-  flex: 1;
+  min-height: 32px;
   align-items: center;
-  gap: 3px;
-  overflow: hidden;
+  justify-content: space-between;
+  gap: 8px;
 }
-.field-root .frail-scroll button {
+.field-root .froom-menu {
   position: relative;
   display: flex;
-  height: 24px;
-  min-width: 0;
-  flex: 1 1 0;
-  justify-content: center;
+  width: fit-content;
+  max-width: 132px;
+  min-height: 30px;
   align-items: center;
-  gap: 2px;
-  padding: 0 3px;
-  border: 1px solid #3a3f45;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid var(--amber-dim);
   border-radius: 8px 2px 2px 2px;
-  background: rgba(0, 0, 0, 0.26);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--steel-dim);
   cursor: pointer;
-  font-family: var(--mono);
-  font-size: 7px;
-  letter-spacing: 0.025em;
-  line-height: 1;
-  text-transform: uppercase;
+  font: 7.5px var(--mono);
+  letter-spacing: 0.04em;
 }
-.field-root .frail-scroll button span {
-  min-width: 0;
+.field-root .froom-menu b {
+  overflow: hidden;
+  color: var(--steel);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.field-root .frail-scroll button b {
-  color: var(--amber-dim);
-  font-size: 7.5px;
-  font-weight: 700;
-}
-.field-root .frail-scroll button.is-active,
-.field-root .frail-scroll button:focus-visible {
-  border-color: var(--amber-dim);
-  border-bottom: 2px solid var(--amber);
-  background: rgba(255, 179, 71, 0.13);
-  color: var(--amber-hot);
-  outline: none;
-}
-.field-root .frail-scroll button.is-active b {
-  color: var(--amber);
-}
-.field-root .frail-scroll button i {
-  width: 5px;
-  height: 5px;
-  flex: none;
+.field-root .froom-menu span { color: var(--amber); }
+.field-root .froom-menu i {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--red);
-  box-shadow: 0 0 5px rgba(255, 83, 64, 0.72);
+  box-shadow: 0 0 7px rgba(255, 83, 64, 0.85);
 }
 .field-root .flamps {
   z-index: 2;
@@ -1319,7 +1213,7 @@
   align-items: center;
   gap: 3px;
   padding-left: 5px;
-  background: var(--screen);
+  background: transparent;
 }
 .field-root .flamps span {
   display: flex;
@@ -1394,362 +1288,457 @@
   animation: field-cursorblink 1s steps(2, end) infinite;
   box-shadow: 0 0 6px rgba(255, 179, 71, 0.8);
 }
-.field-root .held-question-log {
-  flex: none;
+/* Round E FIELD IA: COMS, floating composer, node sheet, orders and hangar. */
+.field-root .pttpill.segment {
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
-.field-root .answer-status {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 4px;
+.field-root .pttpill.segment .btn {
+  width: 28px;
+  height: 28px;
 }
-.field-root .answer-body > .answer-status,
-.field-root .answer-body > .trow,
-.field-root .answer-body > .held-question-log,
-.field-root .answer-body > .field-opt,
-.field-root .answer-body > .grantchip {
-  flex: none;
+.field-root .pttpill.segment .lbl {
+  min-width: 0;
+  overflow: hidden;
 }
-.field-root .answer-body > .field-thread:not(.held-question-log) {
-  min-height: 160px;
+.field-root .pttpill.segment .lbl b,
+.field-root .pttpill.segment .lbl small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-root .pttpill.segment .lbl small {
+  color: var(--amber-dim);
+  font-size: 6.5px;
+  line-height: 1.2;
 }
 
-/* ConsoleDock treatment, compressed for the field bed. */
-.field-root .fdock {
-  display: flex;
-  width: 100%;
-  margin-top: auto;
-  padding: 8px;
-  flex: none;
-  flex-direction: column;
-  gap: 7px;
-  border: 1px solid var(--gun-edge);
-  border-radius: 16px 5px 5px 5px;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--cut-m)),
-    calc(100% - var(--cut-m)) 100%,
-    0 100%
-  );
-  background: linear-gradient(178deg, #2b3036, #1b1f24);
+/* Floating combo pill: z70; expanded composer/scrim: z80/81. */
+.field-root .fcomposer {
+  position: absolute;
+  z-index: 70;
+  right: 14px;
+  bottom: 12px;
+  left: 14px;
   color: var(--steel);
 }
-.field-root .fdock:focus {
-  outline: none;
+.field-root .fcomposer-collapsed {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 6px;
 }
-.field-root .fdock:focus-within {
-  border-color: var(--amber-dim);
+.field-root .fcombo {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid #0e1013;
+  border-radius: 25px;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-.field-root .fdock-field {
-  min-height: 52px;
-  border: 1px solid rgba(255, 179, 71, 0.22);
+.field-root .fcombo-expand {
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid #0d1013;
+  background: rgba(0, 0, 0, 0.16);
+  color: var(--amber);
+  cursor: pointer;
+}
+.field-root .ftransport {
+  display: flex;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid #0e1013;
+  border-radius: 23px;
+  background: linear-gradient(180deg, #2b3036, #1b1f24);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.68);
+}
+.field-root .ftransport-key {
+  width: 42px;
+  min-width: 42px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.field-root .ftransport-key + .ftransport-key { border-left: 1px solid #0d1013; }
+.field-root .ftransport-key.stopkey { color: var(--red); }
+.field-root .ftransport-key.replaykey { color: var(--amber); }
+.field-root .fcomp-scrim {
+  position: absolute;
+  z-index: 80;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(to bottom, rgba(8, 8, 7, 0.08), rgba(8, 8, 7, 0.72) 56%, rgba(8, 8, 7, 0.92));
+  cursor: pointer;
+}
+.field-root .fcomposer.is-open {
+  z-index: 81;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+}
+.field-root .fcomposer-panel {
+  padding: 9px;
+  border: 1px solid var(--gun-edge);
+  background: linear-gradient(178deg, #2b3036, #1b1f24);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.78);
+  animation: field-composer-in 160ms ease-out both;
+}
+@keyframes field-composer-in {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.field-root .fcomposer-field {
+  min-height: 68px;
+  border: 1px solid rgba(255, 179, 71, 0.28);
   background: var(--screen);
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
 }
-.field-root .fdock:focus-within .fdock-field {
-  border-color: var(--amber-dim);
-  box-shadow:
-    inset 0 0 22px rgba(0, 0, 0, 0.82),
-    0 0 0 1px rgba(255, 179, 71, 0.15);
-}
-.field-root .fdock-field textarea {
+.field-root .fcomposer-field textarea {
   display: block;
   width: 100%;
-  min-height: 52px;
+  min-height: 68px;
   max-height: 132px;
   padding: 9px 10px;
   resize: none;
-  overflow-y: hidden;
   border: 0;
-  outline: none;
+  outline: 0;
   background: transparent;
   color: #e8e5df;
-  font: 9.5px / 1.7 var(--mono);
-  letter-spacing: 0.02em;
+  font: 9.5px / 1.6 var(--mono);
 }
-.field-root .fdock-field textarea::placeholder {
-  color: var(--amber-dim);
-  opacity: 1;
-}
-.field-root .fdock-actions {
+.field-root .fcomposer-field textarea::placeholder { color: var(--amber-dim); opacity: 1; }
+.field-root .fcomposer-actions {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  margin-top: 7px;
 }
-.field-root .fdock .dockkey,
-.field-root .fdock .sendkey {
-  width: 36px;
-  height: 36px;
-  flex: none;
+.field-root .fcomp-key {
+  width: 40px;
+  min-width: 40px;
+  height: 44px;
   padding: 0;
-}
-.field-root .fdock .dockkey {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--steel-dim);
-  box-shadow: none;
-}
-.field-root .fdock .dockkey:hover,
-.field-root .fdock .dockkey:focus-visible {
-  border-color: rgba(255, 179, 71, 0.25);
-  outline: none;
-  background: var(--amber-ghost);
-  color: var(--amber-hot);
-}
-.field-root .fdock .stopkey {
-  border-color: #5c1f16;
-  background: linear-gradient(180deg, #3a2320, #1d1512);
-  color: var(--red);
-}
-.field-root .fdock .replaykey {
-  border-color: rgba(255, 179, 71, 0.3);
-  background: linear-gradient(180deg, #2b3036, #1b1f24);
-  color: var(--amber);
-}
-.field-root .fdock .sendkey {
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--amber-dim);
-  background: var(--amber);
-  color: #181206;
-  cursor: pointer;
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.5),
-    0 0 12px rgba(255, 160, 40, 0.25);
-}
-.field-root .fdock .sendkey:disabled {
-  border-color: #343940;
-  background: #262a2f;
-  color: var(--steel-dim);
-  cursor: default;
-  opacity: 0.55;
-}
-.field-root .fdock .pttpill {
-  min-width: 0;
-  min-height: 36px;
-  padding: 5px 9px;
-}
-.field-root .fdock .pttpill .lbl b {
-  overflow-wrap: anywhere;
-}
-.field-root .pttpill.compact .btn::after {
-  display: none;
-}
-.field-root .pttpill.compact .btn {
-  display: grid;
-  place-items: center;
-  color: var(--steel);
-}
-.field-root .pttpill.compact.hot .btn {
-  color: var(--red);
-}
-.field-root .pttpill.compact.handoff .btn {
-  color: var(--haz);
-}
-.field-root .pttpill.iconpill {
-  flex: 1;
-  min-width: 36px;
-  min-height: 36px;
-  justify-content: center;
-  padding: 0;
-  color: var(--steel);
-}
-.field-root .pttpill.iconpill.hot {
-  color: var(--red);
-}
-.field-root .pttpill.iconpill.handoff {
-  color: var(--haz);
-}
-
-/* START — one plain-language job, with detail revealed only after intake. */
-.field-root .start-body {
-  overflow-y: auto;
-  padding-right: 1px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--amber-dim) transparent;
-}
-.field-root .start-hero-wrap {
-  flex: none;
-}
-.field-root .start-hero {
-  padding: 12px;
-  border: 1px solid rgba(255, 179, 71, 0.24);
-  background: linear-gradient(180deg, rgba(255, 179, 71, 0.055), rgba(0, 0, 0, 0.34));
-}
-.field-root .start-hero-kicker,
-.field-root .start-intake-cap,
-.field-root .start-launched-cap,
-.field-root .saved-orders-head {
-  color: var(--steel-dim);
-  font-family: var(--stencil);
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-.field-root .start-hero h2 {
-  margin: 8px 0 0;
-  color: var(--steel);
-  font-family: var(--stencil);
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  line-height: 1.25;
-}
-.field-root .start-hero p {
-  margin: 5px 0 0;
-  color: var(--steel-dim);
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.02em;
-  line-height: 1.6;
-}
-.field-root .start-hero-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(84px, 1fr);
-  gap: 8px;
-  margin-top: 10px;
-}
-.field-root .start-hero-actions .pttpill,
-.field-root .start-type {
-  min-height: 48px;
-}
-.field-root .start-type {
   border: 1px solid #3a3f45;
-  background: linear-gradient(180deg, #2b3036, #1b1f24);
-  color: var(--steel);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--steel-dim);
 }
-.field-root .start-room-chip {
-  margin-top: 9px;
-  color: var(--amber-dim);
-  font-family: var(--mono);
-  font-size: 7.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.field-root .start-intake-cap {
-  margin: 1px 2px 0;
-  font-size: 9px;
-}
-.field-root .start-intake {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-}
-.field-root .start-exchange {
-  flex: none;
-  max-height: 150px;
-}
-.field-root .start-receipt {
-  flex: none;
-}
-.field-root .start-launched-cap {
-  margin: 10px 2px 0;
-  font-size: 7.5px;
-}
-.field-root .start-launched {
-  margin-top: 5px;
-}
-.field-root .start-newroom {
+.field-root .fcomposer-actions .pttpill { flex: 1; }
+.field-root .fcomp-key.sendkey { border-color: var(--amber-dim); background: var(--amber); color: #181206; }
+.field-root .fcomp-key:disabled { opacity: 0.45; }
+
+/* COMS faceplate: a speech event expands once; scrolling/focus latches compact. */
+.field-root .coms-body { overflow: hidden; }
+.field-root .coms-voicebar-wrap { flex: none; }
+.field-root .coms-voicebar {
   display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 54px;
+  gap: 7px;
+  align-items: center;
+  min-height: 58px;
+  padding: 6px;
+  border: 1px solid rgba(255, 179, 71, 0.28);
+  background: rgba(0, 0, 0, 0.44);
+}
+.field-root .coms-face { width: 44px; height: 44px; overflow: hidden; }
+.field-root .coms-voice-main { min-width: 0; }
+.field-root .coms-name { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+.field-root .coms-name b { color: var(--amber-hot); font: 800 11px var(--stencil); letter-spacing: 0.12em; }
+.field-root .coms-name span { overflow: hidden; color: var(--amber-dim); font: 6.5px var(--mono); letter-spacing: 0.08em; white-space: nowrap; }
+.field-root .coms-wave { display: flex; align-items: center; gap: 5px; height: 14px; margin-top: 3px; overflow: hidden; }
+.field-root .coms-wave .rig-led { width: 7px; height: 7px; flex: none; }
+.field-root .coms-wave .rig-waveform { height: 12px; overflow: hidden; }
+.field-root .coms-duty { margin-top: 2px; overflow: hidden; color: var(--steel-dim); font: 6.5px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.field-root .coms-route .devtog { height: 27px; }
+.field-root .coms-route > span { display: block; margin-top: 3px; color: var(--steel-dim); font: 5.8px var(--mono); text-align: center; }
+.field-root .coms-route > span.is-held { color: var(--green); }
+.field-root .coms-voicebar-wrap.is-large .coms-voicebar {
+  grid-template-columns: 148px minmax(0, 1fr);
+  grid-template-rows: 108px 32px;
+  align-items: stretch;
+  padding: 6px;
+}
+.field-root .coms-voicebar-wrap.is-large .coms-face { width: 148px; height: 148px; grid-row: 1 / 3; }
+.field-root .coms-voicebar-wrap.is-large .coms-voice-main { padding: 9px 4px 0; }
+.field-root .coms-voicebar-wrap.is-large .coms-name { display: block; }
+.field-root .coms-voicebar-wrap.is-large .coms-name span { display: block; margin-top: 4px; }
+.field-root .coms-voicebar-wrap.is-large .coms-wave { margin-top: 14px; }
+.field-root .coms-voicebar-wrap.is-large .coms-duty { margin-top: 9px; white-space: normal; line-height: 1.4; }
+.field-root .coms-voicebar-wrap.is-large .coms-route { align-self: end; padding: 0 4px; }
+.field-root .coms-banner {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  flex: none;
+  align-items: center;
+  gap: 6px;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 8px;
-  margin-top: 9px;
-  padding: 9px 10px;
-  border: 1px solid rgba(255, 179, 71, 0.22);
-  border-radius: 9px 3px 3px 3px;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - var(--cut-s)),
-    calc(100% - var(--cut-s)) 100%,
-    0 100%
-  );
-  background: rgba(0, 0, 0, 0.3);
+  min-height: 48px;
+  margin-top: 6px;
+  padding: 6px;
+  border: 1px solid var(--red);
+  background: rgba(88, 22, 16, 0.28);
   color: var(--steel);
   cursor: pointer;
   text-align: left;
 }
-.field-root .start-newroom b {
-  font-family: var(--stencil);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-}
-.field-root .start-newroom i {
-  color: var(--amber);
-  font: 10px var(--mono);
-  font-style: normal;
-}
-.field-root .start-newroom span {
-  grid-column: 1 / -1;
+.field-root .coms-banner span { min-width: 0; }
+.field-root .coms-banner b,
+.field-root .coms-banner small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field-root .coms-banner b { font: 8.5px var(--stencil); letter-spacing: 0.08em; }
+.field-root .coms-banner small { margin-top: 3px; color: var(--red); font: 6.5px var(--mono); }
+.field-root .coms-banner i { color: var(--red); font-style: normal; }
+.field-root .coms-grant { flex: none; margin-top: 5px; padding: 5px 7px; }
+.field-root .coms-thread { margin-top: 6px; }
+.field-root .coms-receipts { flex: none; margin-top: 6px; }
+.field-root .coms-receipt { padding: 6px 8px; border: 1px dashed var(--amber-dim); background: var(--amber-ghost); color: var(--amber); font: 7px/1.4 var(--mono); }
+.field-root .coms-receipts .trow { width: 100%; margin-top: 5px; text-align: left; }
+.field-root .coms-empty { display: grid; gap: 5px; padding: 14px; color: var(--steel-dim); font: 8px/1.5 var(--mono); }
+.field-root .coms-empty b { color: var(--amber); font-family: var(--stencil); letter-spacing: 0.1em; }
+
+/* ORDERS owns durable verbs and live watch orders. */
+.field-root .orders-head {
   color: var(--steel-dim);
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 0.01em;
-  line-height: 1.5;
+  font: 800 9px var(--stencil);
+  letter-spacing: 0.18em;
 }
-.field-root .saved-orders-head {
-  margin: 11px 2px 0;
+.field-root .orders-copy { margin-top: 4px; color: var(--steel-dim); font: 8px/1.45 var(--mono); }
+.field-root .orders-rack { margin-top: 7px; }
+.field-root .orders-rack .vswitch { gap: 8px; padding: 8px; }
+.field-root .orders-rack .vname,
+.field-root .orders-rack .vparams { display: block; }
+.field-root .orders-rack .vname { font-size: 8.5px; letter-spacing: 0.05em; }
+.field-root .orders-rack .vparams { margin-top: 2px; color: var(--steel-dim); font-size: 7.5px; line-height: 1.4; text-transform: none; }
+.field-root .orders-rack .is-gated { cursor: not-allowed; opacity: 0.55; }
+.field-root .orders-running-head { margin-top: 14px; }
+.field-root .orders-watch { min-height: 50px; margin-top: 7px; }
+.field-root .orders-watch > span { min-width: 0; flex: 1; }
+.field-root .orders-watch b,
+.field-root .orders-watch small { display: block; }
+.field-root .orders-watch small { margin-top: 3px; color: var(--amber-dim); font-size: 6.5px; }
+.field-root .orders-watch button { display: grid; width: 34px; height: 34px; place-items: center; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; }
+.field-root .orders-empty { margin-top: 7px; padding: 12px; border: 1px dashed #343940; color: var(--steel-dim); font: 8px var(--mono); }
+
+/* Full-screen FIELD hangar lives below sheets/composer at z45. */
+.field-root .fhangar {
+  position: absolute;
+  z-index: 45;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 14px 14px 16px;
+  background: linear-gradient(180deg, var(--screen), var(--screen2));
 }
-.field-root .saved-orders-copy {
-  margin: 3px 2px 0;
-  color: var(--steel-dim);
-  font-family: var(--mono);
-  font-size: 8px;
-  line-height: 1.45;
+.field-root .fhangar-backbar { display: flex; flex: none; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 179, 71, 0.18); }
+.field-root .fhangar-backbar > button { display: flex; min-height: 32px; align-items: center; gap: 5px; padding: 0 6px; border: 0; background: transparent; color: var(--amber); font: 7px var(--mono); letter-spacing: 0.07em; cursor: pointer; }
+.field-root .fhangar-backbar .flamps { margin-left: auto; }
+.field-root .fhangar-scroll { padding-top: 9px; }
+.field-root .fhangar-head { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
+.field-root .fhangar-head > span:first-child b,
+.field-root .fhangar-head > span:first-child small { display: block; }
+.field-root .fhangar-head b { color: var(--amber-hot); font: 12px var(--stencil); letter-spacing: 0.12em; }
+.field-root .fhangar-head small { margin-top: 2px; color: var(--steel-dim); font: 7px var(--mono); }
+.field-root .fhangar-floor { display: flex; align-items: center; gap: 4px; color: var(--steel-dim); font: 6.5px var(--mono); text-align: right; }
+.field-root .fhangar-floor .rig-led { width: 7px; height: 7px; }
+.field-root .fhangar-cap { margin: 11px 2px 5px; color: var(--red); font: 800 7px var(--stencil); letter-spacing: 0.18em; }
+.field-root .fhangar-cap.scratch { color: var(--steel-dim); }
+.field-root .fhangar-berths { display: grid; gap: 6px; }
+.field-root .fberth-shell { border: 1px solid #262b31; background: linear-gradient(178deg, #30353b, #20242a); }
+.field-root .fberth-shell:has(.needs-you) { border-color: var(--red); }
+.field-root .fberth-shell > button { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.field-root .fberth {
+  display: grid;
+  grid-template-columns: 28px 32px minmax(0, 1fr) 54px;
+  grid-template-rows: 32px 16px;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 58px;
+  padding: 5px 6px;
 }
-.field-root .saved-orders {
-  margin-top: 6px;
-}
-.field-root .saved-orders .vswitch {
+.field-root .fberth-num { color: var(--steel-dim); font: 7px var(--mono); }
+.field-root .fberth-main { min-width: 0; }
+.field-root .fberth-main b,
+.field-root .fberth-main small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field-root .fberth-main b { color: var(--steel); font: 9px var(--stencil); letter-spacing: 0.08em; }
+.field-root .fberth-main small { margin-top: 3px; color: var(--steel-dim); font: 5.8px var(--mono); }
+.field-root .fberth-salience { display: flex; align-items: center; gap: 3px; }
+.field-root .fberth-salience .rig-salience { min-width: 0; }
+.field-root .fberth-salience b { color: var(--amber); font: 7px var(--mono); }
+.field-root .fberth-flags { grid-column: 3 / 5; display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+.field-root .fberth.is-scratch { opacity: 0.55; }
+.field-root .fhangar-commission {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 8px;
-  padding: 7px 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  background: var(--amber-ghost);
+  color: var(--amber);
+  cursor: pointer;
+  text-align: left;
 }
-.field-root .saved-orders .vname,
-.field-root .saved-orders .vparams {
-  display: block;
-}
-.field-root .saved-orders .vname {
-  font-size: 8.5px;
-  letter-spacing: 0.06em;
-}
-.field-root .saved-orders .vparams {
-  margin-top: 2px;
-  color: var(--steel-dim);
-  font-size: 7.5px;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
-  text-transform: none;
-}
-.field-root .saved-orders .is-gated {
-  cursor: default;
-  opacity: 0.66;
+.field-root .fhangar-commission b,
+.field-root .fhangar-commission small { display: block; }
+.field-root .fhangar-commission b { font: 9px var(--stencil); letter-spacing: 0.08em; }
+.field-root .fhangar-commission small { margin-top: 3px; color: var(--steel-dim); font: 7px/1.4 var(--mono); }
+.field-root .fhangar-commission i { font-style: normal; }
+
+.field-root .field-cross-room-row {
+  width: 100%;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
-/* GLANCE cross-room attribution, tightened to field density. */
-.field-root .field-cross-room-head {
-  margin-bottom: 6px;
+.field-root .field-toaster[data-sonner-toaster] {
+  position: absolute;
+  z-index: 80;
+  top: 52px;
+  right: 8px;
+  left: 8px;
+  width: auto;
 }
-.field-root .field-cross-room-row {
-  padding: 5px 0;
-  font-size: 8px;
+
+/* Portal surfaces: bounded to the measured FIELD glass, never the desktop. */
+.froom-pop {
+  z-index: 90;
+  width: 210px;
+  padding: 6px;
+  border: 1px solid var(--amber-dim);
+  background: #17130d;
+  color: var(--steel);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.78);
 }
-.field-root .field-cross-room-row + .field-cross-room-row {
-  margin-top: 5px;
+.froom-pop-cap { padding: 3px 5px 5px; color: var(--steel-dim); font: 6.5px var(--mono); letter-spacing: 0.16em; }
+.froom-pop button { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 7px; width: 100%; min-height: 42px; padding: 5px; border: 0; background: transparent; color: var(--steel); cursor: pointer; text-align: left; }
+.froom-pop button:hover,
+.froom-pop button:focus-visible { outline: 0; background: var(--amber-ghost); }
+.froom-pop button span { min-width: 0; }
+.froom-pop button b,
+.froom-pop button small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.froom-pop button b { font: 8px var(--stencil); letter-spacing: 0.08em; }
+.froom-pop button small { margin-top: 2px; color: var(--steel-dim); font: 6.5px var(--mono); }
+.froom-pop button em { color: var(--amber); font: 7px var(--mono); font-style: normal; }
+.froom-pop .froom-rule { height: 1px; margin: 3px 4px; background: rgba(255, 179, 71, 0.16); }
+.froom-pop button.froom-hangar-entry { grid-template-columns: 15px minmax(0, 1fr) auto; }
+
+.field-sheet-overlay {
+  position: fixed !important;
+  z-index: 55 !important;
+  inset: auto !important;
+  top: var(--field-screen-top) !important;
+  left: var(--field-screen-left) !important;
+  width: var(--field-screen-width) !important;
+  height: var(--field-screen-height) !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+.field-sheet-overlay[data-state="open"] { animation: field-sheet-overlay-in 180ms ease-out both; }
+.field-sheet-overlay.is-closing { animation: field-sheet-overlay-out 160ms ease-in both; }
+.field-nodesheet {
+  position: fixed !important;
+  z-index: 60 !important;
+  inset: auto auto calc(var(--field-screen-bottom) + 6px) calc(var(--field-screen-left) + 6px) !important;
+  display: flex !important;
+  width: calc(var(--field-screen-width) - 12px) !important;
+  height: calc(var(--field-screen-height) * 0.78) !important;
+  max-height: calc(var(--field-screen-height) - 12px) !important;
+  flex-direction: column;
+  gap: 0 !important;
+  overflow-y: auto;
+  padding: 10px 10px 84px !important;
+  border: 1px solid var(--amber-dim) !important;
+  background: linear-gradient(180deg, #25221c, #141311) !important;
+  color: var(--steel) !important;
+  box-shadow: 0 -14px 32px rgba(0, 0, 0, 0.78) !important;
+}
+.field-nodesheet[data-state="open"] { animation: field-sheet-in 180ms ease-out both; }
+.field-nodesheet.is-closing { animation: field-sheet-out 160ms ease-in both; }
+@keyframes field-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes field-sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes field-sheet-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes field-sheet-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.nodesheet-head { display: grid; grid-template-columns: 42px minmax(0, 1fr) 36px; flex: none; align-items: start; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 179, 71, 0.18); }
+.nodesheet-head [data-slot="sheet-title"] { margin: 1px 0 0; color: var(--amber-hot); font: 11px var(--stencil); letter-spacing: 0.08em; }
+.nodesheet-head [data-slot="sheet-description"] { margin: 3px 0 0; overflow: hidden; color: var(--steel); font: 8px/1.35 var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.nodesheet-head > div > span { display: block; margin-top: 4px; color: var(--red); font: 6.5px var(--mono); }
+.nodesheet-x { width: 36px; height: 36px; padding: 0; border: 1px solid #3a3f45 !important; background: transparent !important; color: var(--steel-dim) !important; }
+.nodesheet-answer { flex: none; padding-top: 8px; }
+.nodesheet-answer p { margin: 0 0 5px; color: var(--amber); font: 9px/1.5 var(--mono); }
+.nodesheet-keycap.rig-keycap { min-height: 48px; margin-top: 6px; padding: 9px 8px; font-size: 8px; }
+.nodesheet-keycap .rig-keycap-glyph { width: 28px; height: 28px; }
+.nodesheet-keycap .rig-keycap-hint { font-size: 6.5px; }
+.nodesheet-context { padding-top: 10px; }
+.nodesheet-cap { padding-bottom: 5px; border-bottom: 1px solid rgba(255, 179, 71, 0.18); color: var(--steel-dim); font: 7px var(--stencil); letter-spacing: 0.16em; }
+.nodesheet-tail { padding: 7px; background: rgba(0, 0, 0, 0.32); color: var(--amber); font: 8px/1.55 var(--mono); }
+.nodesheet-tail span { margin-right: 6px; color: var(--steel-dim); }
+.nodesheet-spend { padding: 7px 2px; color: var(--steel); font: 7px var(--mono); letter-spacing: 0.08em; }
+.nodesheet-diff { display: flex; justify-content: space-between; gap: 8px; padding: 8px; border: 1px dashed #3a3f45; color: var(--steel-dim); font: 6.5px var(--mono); }
+.nodesheet-diff b { color: var(--amber-dim); }
+.nodesheet-reply { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 7px; border: 1px solid var(--amber-dim); background: var(--amber-ghost); color: var(--amber); cursor: pointer; font: 8px var(--mono); }
+.nodesheet-context > .rig-tag { display: block; width: fit-content; margin-top: 7px; }
+.nodesheet-composer-mount.field-root {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  min-height: 0;
+  padding: 0;
+  pointer-events: none;
+}
+.nodesheet-composer-mount .fcomposer,
+.nodesheet-composer-mount .fcomp-scrim { pointer-events: auto; }
+
+@media (max-width: 340px) {
+  .field-root .fnav button { font-size: 9px; letter-spacing: 0.06em; }
+  .field-root .froom-menu { max-width: 126px; }
+  .field-root .ftransport-key { width: 38px; min-width: 38px; }
+  .field-root .fcomposer.has-audio .pttpill.segment { padding-right: 4px; padding-left: 7px; }
+  .field-root .fcomposer.has-audio .pttpill.segment .lbl { font-size: 7px; letter-spacing: 0.08em; }
+  .field-root .coms-voicebar-wrap.is-large .coms-voicebar { grid-template-columns: 132px minmax(0, 1fr); }
+  .field-root .coms-voicebar-wrap.is-large .coms-face { width: 132px; height: 148px; overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field-root .frail *,
-  .field-root .fnav *,
-  .field-root .comms-log *,
-  .field-root .fdock *,
-  .field-root .start-body * {
+  .field-root .fcomposer-panel,
+  .field-nodesheet,
+  .froom-pop {
     animation: none !important;
+    transform: none !important;
     transition: none !important;
   }
 }
