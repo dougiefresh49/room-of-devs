@@ -124,41 +124,37 @@ export function GaugesScreen() {
         />
       </CutFrame>
 
-      <div
-        className="dotmx ghost"
-        style={{ margin: "14px 2px 2px", fontSize: 8, letterSpacing: ".2em" }}
-      >
-        DIALS · READ-ONLY
-      </div>
-
-      <div className="knobs">
-        <div className="knob k1">
-          <div className="kface" />
-          <div className="kl">1 · CEREMONY</div>
-          <div className="kv">FULL</div>
-          <div className="khome">
-            <b>HOME: PLAN CARD</b>
+      <details className="fdials">
+        <summary>DIALS · READ-ONLY ▾</summary>
+        <div className="knobs">
+          <div className="knob k1">
+            <div className="kface" />
+            <div className="kl">1 · CEREMONY</div>
+            <div className="kv">FULL</div>
+            <div className="khome">
+              <b>HOME: PLAN CARD</b>
+            </div>
+          </div>
+          <div className="knob k2">
+            <div className="kface" />
+            <div className="kl">2 · VOICE</div>
+            <div className="kv">MIKEY</div>
+            <div className="khome">
+              <b>HOME: FACEPLATE</b>
+            </div>
+          </div>
+          <div className="knob k3">
+            <div className="kface" />
+            <div className="kl">3 · BRAIN</div>
+            <div className="kv">FLASH→OPUS</div>
+            <div className="khome">
+              <b>
+                HOME: TURN CHIP · {turnChip.model} ${turnChip.costUsd.toFixed(3)}
+              </b>
+            </div>
           </div>
         </div>
-        <div className="knob k2">
-          <div className="kface" />
-          <div className="kl">2 · VOICE</div>
-          <div className="kv">MIKEY</div>
-          <div className="khome">
-            <b>HOME: FACEPLATE</b>
-          </div>
-        </div>
-        <div className="knob k3">
-          <div className="kface" />
-          <div className="kl">3 · BRAIN</div>
-          <div className="kv">FLASH→OPUS</div>
-          <div className="khome">
-            <b>
-              HOME: TURN CHIP · {turnChip.model} ${turnChip.costUsd.toFixed(3)}
-            </b>
-          </div>
-        </div>
-      </div>
+      </details>
     </div>
   );
 }

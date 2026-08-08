@@ -1,19 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { flushSync } from "react-dom";
 import { roomShortLabel } from "../chrome/MastheadTabs";
 import { coupleRoom, focusCraftForAnswer } from "../mock/scenario";
 import { useFleet, useRoom } from "../mock/store";
 import type { ComposerTarget, RoomId } from "../mock/types";
 import "../styles/field.css";
 import { ComsScreen } from "./ComsScreen";
-import { FieldComposer } from "./FieldComposer";
-import { FieldFloorStrip } from "./FieldFloorStrip";
+import { FieldDock, type FieldBadge, type FieldDockMode, type FieldScreen } from "./FieldDock";
 import { FieldHangar } from "./FieldHangar";
-import { FieldNav, type FieldBadge, type FieldScreen } from "./FieldNav";
-import { FieldRoomMenu } from "./FieldRoomMenu";
+import { FieldPlaceSheet } from "./FieldPlaceSheet";
+import { FieldSizePicker, readFieldHandsetSize } from "./FieldSizePicker";
+import { FieldTopBar } from "./FieldTopBar";
+import { FloorSheet } from "./FloorSheet";
 import { GaugesScreen, hasHotGuard } from "./GaugesScreen";
 import { GlanceScreen } from "./GlanceScreen";
 import { NodeSheet } from "./NodeSheet";
 import { OrdersScreen } from "./OrdersScreen";
+import { VoiceNoteSheet } from "./VoiceNoteSheet";
 
 function verbSignature(room: ReturnType<typeof useRoom>): string {
   return room.verbs.map((verb) => `${verb.id}:${verb.on}`).join("|");
@@ -112,9 +115,14 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   const screen = screens[roomId] ?? "glance";
   const [sheetCraftId, setSheetCraftId] = useState<string | null>(null);
   const [hangarOpen, setHangarOpen] = useState(false);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [composerFocused, setComposerFocused] = useState(false);
-  const [faceplateLarge, setFaceplateLarge] = useState(false);
+  const [dockMode, setDockMode] = useState<FieldDockMode>("nav");
+  const [dockFocused, setDockFocused] = useState(false);
+  const [dockFocusSignal, setDockFocusSignal] = useState(0);
+  const [replyTargetCraftId, setReplyTargetCraftId] = useState<string | null>(null);
+  const [placeOpen, setPlaceOpen] = useState(false);
+  const [floorOpen, setFloorOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [handsetSize, setHandsetSize] = useState(readFieldHandsetSize);
   const [pendingByRoom, setPendingByRoom] = useState<Partial<Record<RoomId, PendingBadges>>>({});
   const heldCounter = useRef(1);
   const [heldKeys, setHeldKeys] = useState<Record<RoomId, string | null>>({
@@ -144,6 +152,9 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   const setScreen = useCallback(
     (next: FieldScreen) => {
       setScreens((current) => ({ ...current, [roomId]: next }));
+      setDockMode(next === "coms" ? "reply" : "nav");
+      setDockFocused(false);
+      setReplyTargetCraftId(null);
       if (next === "glance" || next === "coms" || next === "orders") {
         setPending(roomId, next, false);
       }
@@ -169,10 +180,6 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       sheetCloseAction.current = null;
       restoreSheetFocus.current = true;
-      // A held sheet starts with its targeted one-line composer collapsed so
-      // all three answer keycaps remain visible; focus expands it.
-      setComposerOpen(false);
-      setComposerFocused(false);
       focusCraftForAnswer(craftId);
       setSheetCraftId(craftId);
       setSheetOpen(true);
@@ -183,14 +190,15 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
 
   const enterHangar = useCallback(() => {
     if (!hangarOpen) hangarHistory.current = { roomId, screen };
-    setComposerOpen(false);
-    setComposerFocused(false);
+    setDockMode("nav");
+    setDockFocused(false);
+    setReplyTargetCraftId(null);
     setHangarOpen(true);
   }, [hangarOpen, roomId, screen]);
 
   const openHangar = useCallback(() => {
-    setComposerOpen(false);
-    setComposerFocused(false);
+    setDockMode("nav");
+    setDockFocused(false);
     if (sheetCraftId) {
       sheetCloseAction.current = enterHangar;
       restoreSheetFocus.current = false;
@@ -207,8 +215,6 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     sheetCloseAction.current = null;
     sheetOpener.current = null;
     restoreSheetFocus.current = true;
-    setComposerOpen(false);
-    setComposerFocused(false);
     setSheetCraftId(null);
     setSheetOpen(false);
     action?.();
@@ -235,13 +241,17 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
       setScreens((current) => ({ ...current, [history.roomId]: history.screen }));
     }
     setHangarOpen(false);
+    setDockMode(history?.screen === "coms" ? "reply" : "nav");
+    setDockFocused(false);
+    setReplyTargetCraftId(null);
   }, []);
 
   const coupleFromField = useCallback((nextRoomId: RoomId) => {
     setSheetCraftId(null);
     setSheetOpen(false);
-    setComposerOpen(false);
-    setComposerFocused(false);
+    setDockMode("nav");
+    setDockFocused(false);
+    setReplyTargetCraftId(null);
     coupleRoom(nextRoomId);
     setScreens((current) => ({ ...current, [nextRoomId]: "glance" }));
   }, []);
@@ -252,13 +262,15 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     setHangarOpen(false);
     setSheetCraftId(null);
     setSheetOpen(false);
+    setDockMode("nav");
+    setDockFocused(false);
+    setReplyTargetCraftId(null);
   }, []);
 
   const canAutoNavigate =
     !hangarOpen &&
     sheetCraftId == null &&
-    !composerOpen &&
-    !composerFocused &&
+    !dockFocused &&
     room.composerText.trim().length === 0;
 
   const previous = useRef<FieldSnapshot | null>(null);
@@ -305,8 +317,6 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
             focusCraftForAnswer(event.craftId);
             setSheetCraftId(event.craftId);
             setSheetOpen(true);
-            setComposerOpen(false);
-            setComposerFocused(false);
             setSeenHeldKeys((current) => new Set(current).add(key));
           }
           // Suppression is represented by the new unseen held key, which is
@@ -324,10 +334,7 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           openHangar();
           break;
         case "speech":
-          routeTo("coms", () => {
-            setFaceplateLarge(true);
-            setScreen("coms");
-          });
+          routeTo("coms", () => setScreen("coms"));
           break;
         case "cross-room":
           routeTo("glance", () => setScreen("glance"));
@@ -343,20 +350,10 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (sheetCraftId && composerOpen) {
-        event.preventDefault();
-        event.stopPropagation();
-        setComposerOpen(false);
-        setComposerFocused(false);
-      } else if (sheetCraftId) {
+      if (sheetCraftId) {
         event.preventDefault();
         event.stopPropagation();
         closeNode();
-      } else if (composerOpen) {
-        event.preventDefault();
-        event.stopPropagation();
-        setComposerOpen(false);
-        setComposerFocused(false);
       } else if (hangarOpen) {
         event.preventDefault();
         event.stopPropagation();
@@ -365,7 +362,7 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     };
     window.addEventListener("keydown", onEscape, true);
     return () => window.removeEventListener("keydown", onEscape, true);
-  }, [closeNode, composerOpen, hangarOpen, restoreFromHangar, sheetCraftId]);
+  }, [closeNode, hangarOpen, restoreFromHangar, sheetCraftId]);
 
   const unseenHeld = Boolean(
     room.heldQuestion && currentHeldKey && !seenHeldKeys.has(currentHeldKey),
@@ -385,11 +382,12 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     return next;
   }, [pending, room.crafts, room.speakingPersona, room.spend, unseenHeld]);
 
-  const targetCraft = sheetCraftId
-    ? (room.crafts.find((craft) => craft.id === sheetCraftId) ?? null)
+  const targetCraftId = replyTargetCraftId ?? sheetCraftId;
+  const targetCraft = targetCraftId
+    ? (room.crafts.find((craft) => craft.id === targetCraftId) ?? null)
     : null;
   const composerTarget: ComposerTarget = targetCraft
-    ? room.heldQuestion?.craftId === targetCraft.id
+    ? replyTargetCraftId === targetCraft.id || room.heldQuestion?.craftId === targetCraft.id
       ? { kind: "craft", craft: targetCraft }
       : { kind: "mikey-about", craft: targetCraft }
     : { kind: "mikey" };
@@ -402,26 +400,39 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
         : room.mood === "arrival"
           ? "mood-arrival"
           : "";
+  const anySheetOpen = sheetCraftId != null || placeOpen || floorOpen || voiceOpen;
+
+  useLayoutEffect(() => {
+    const screenElement = document.querySelector<HTMLElement>(".field-root .fscr");
+    if (!screenElement) return;
+    const setBounds = () => {
+      const rect = screenElement.getBoundingClientRect();
+      const root = document.documentElement;
+      root.style.setProperty("--field-screen-left", `${rect.left}px`);
+      root.style.setProperty("--field-screen-top", `${rect.top}px`);
+      root.style.setProperty("--field-screen-width", `${rect.width}px`);
+      root.style.setProperty("--field-screen-height", `${rect.height}px`);
+      root.style.setProperty("--field-screen-bottom", `${window.innerHeight - rect.bottom}px`);
+    };
+    setBounds();
+    const observer = "ResizeObserver" in window ? new ResizeObserver(setBounds) : null;
+    observer?.observe(screenElement);
+    window.addEventListener("resize", setBounds);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", setBounds);
+    };
+  }, [bare, handsetSize]);
 
   const screenBed = (
     <div className="screenbed fscr">
       <div className="inner">
-        {!hangarOpen ? (
-          <div className="fhead">
-            <FieldNav
-              leading={
-                <FieldRoomMenu onCouple={coupleFromField} onOpenHangar={openHangar} />
-              }
-              screen={screen}
-              onChange={setScreen}
-              badges={badges}
-              onBadgePress={(targetScreen, badge) => {
-                if (targetScreen !== "coms" || badge.tone !== "red" || !room.heldQuestion) return;
-                openNode(room.heldQuestion.craftId);
-              }}
-            />
-          </div>
-        ) : null}
+        <FieldTopBar
+          screen={screen}
+          hangarOpen={hangarOpen}
+          onOpenPlaces={() => setPlaceOpen(true)}
+          onOpenFloor={() => setFloorOpen(true)}
+        />
 
         {hangarOpen ? (
           <FieldHangar
@@ -433,9 +444,8 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           <GlanceScreen onOpenNode={openNode} onCouple={coupleFromField} />
         ) : screen === "coms" ? (
           <ComsScreen
-            faceplateLarge={faceplateLarge}
-            onReadBack={() => setFaceplateLarge(false)}
             onOpenNode={openNode}
+            onOpenFloor={() => setFloorOpen(true)}
           />
         ) : screen === "orders" ? (
           <OrdersScreen
@@ -447,13 +457,49 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           <GaugesScreen />
         )}
 
-        <FieldFloorStrip portaled={Boolean(sheetCraftId)} raised={composerOpen} />
-        <FieldComposer
-          open={composerOpen}
-          onOpenChange={setComposerOpen}
-          onFocusChange={setComposerFocused}
-          onFocusComposer={() => setFaceplateLarge(false)}
+        {anySheetOpen ? <span className="field-sheet-open" aria-hidden /> : null}
+        <FieldDock
+          mode={dockMode}
+          screen={screen}
+          badges={badges}
           target={composerTarget}
+          focused={dockFocused}
+          focusSignal={dockFocusSignal}
+          onModeChange={(mode) => {
+            setDockMode(mode);
+            if (mode === "nav") setDockFocused(false);
+          }}
+          onFocusChange={setDockFocused}
+          onTargetConsumed={() => setReplyTargetCraftId(null)}
+          onTargetDismissed={() => setReplyTargetCraftId(null)}
+          onOpenVoice={() => setVoiceOpen(true)}
+          onScreenChange={(next) => {
+            if (hangarOpen) setHangarOpen(false);
+            setScreen(next);
+          }}
+          onBadgePress={(targetScreen, badge) => {
+            if (targetScreen !== "coms" || badge.tone !== "red" || !room.heldQuestion) return;
+            openNode(room.heldQuestion.craftId);
+          }}
+        />
+
+        <FieldPlaceSheet
+          open={placeOpen}
+          onOpenChange={setPlaceOpen}
+          onCouple={coupleFromField}
+          onOpenHangar={openHangar}
+        />
+        <FloorSheet open={floorOpen} onOpenChange={setFloorOpen} />
+        <VoiceNoteSheet
+          open={voiceOpen}
+          onOpenChange={setVoiceOpen}
+          onTypeInstead={() => {
+            flushSync(() => {
+              setVoiceOpen(false);
+              setDockMode("reply");
+            });
+            document.querySelector<HTMLTextAreaElement>(".field-root .fdock textarea")?.focus();
+          }}
         />
 
         {sheetCraftId && !hangarOpen ? (
@@ -463,9 +509,12 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
             onRequestClose={() => closeNode()}
             onAfterClose={finishSheetClose}
             onAnswered={() => {
-              setComposerOpen(false);
-              setComposerFocused(false);
-              closeNode(() => setScreen("coms"));
+              const answeredCraftId = sheetCraftId;
+              closeNode(() => {
+                setScreen("coms");
+                setReplyTargetCraftId(answeredCraftId);
+                setDockFocusSignal((value) => value + 1);
+              });
             }}
           />
         ) : null}
@@ -473,8 +522,13 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     </div>
   );
 
+  const fieldStyle = {
+    "--fone-w": `${handsetSize.width}px`,
+    "--fone-h": `${handsetSize.height}px`,
+  } as CSSProperties;
+
   return (
-    <div className={`field-root${bare ? " is-bare" : ""}${moodClass ? ` ${moodClass}` : ""}`}>
+    <div className={`field-root${bare ? " is-bare" : ""}${moodClass ? ` ${moodClass}` : ""}`} style={fieldStyle}>
       {!bare ? <div className="field-mast">
         <div className="haz" style={{ marginBottom: 12 }} />
         <h1>
@@ -484,6 +538,7 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
         <a className="back" href="/">
           ◂ RIG
         </a>
+        <FieldSizePicker value={handsetSize} onChange={setHandsetSize} />
       </div> : null}
 
       {bare ? screenBed : (

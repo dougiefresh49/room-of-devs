@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetTitle } from "@room/ui";
 import { Keycap, Tag } from "@room/ui/rig";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { answer, focusCraftForAnswer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
@@ -34,6 +34,7 @@ export function NodeSheet({
   const room = useRoom();
   const craft = room.crafts.find((item) => item.id === craftId);
   const question = room.heldQuestion?.craftId === craftId ? room.heldQuestion : null;
+  const [showFull, setShowFull] = useState(false);
   const closeFinished = useRef(false);
   const pullStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -46,6 +47,7 @@ export function NodeSheet({
   useEffect(() => {
     if (open) {
       closeFinished.current = false;
+      setShowFull(false);
       return;
     }
     const fallback = window.setTimeout(finishClose, 240);
@@ -83,6 +85,7 @@ export function NodeSheet({
   const settled = craft.state === "settled";
   const stateLabel = held ? `HELD ${fmtHold(craft.holdSeconds)}` : settled ? "SETTLED" : "WORKING";
   const stateTone = held ? "red" : settled ? "green" : "amber";
+  const questionOnly = question != null && !showFull;
 
   return (
     <Sheet
@@ -94,7 +97,7 @@ export function NodeSheet({
       <SheetContent
         side="bottom"
         showClose={false}
-        className={`screenbed field-nodesheet ${held ? "is-held" : "is-short"}${open ? "" : " is-closing"}`}
+        className={`screenbed field-nodesheet field-sheet-open${open ? "" : " is-closing"}`}
         overlayClassName={`field-sheet-overlay${open ? "" : " is-closing"}`}
         aria-modal="true"
         onCloseAutoFocus={(event) => event.preventDefault()}
@@ -146,10 +149,10 @@ export function NodeSheet({
               </button>
             </div>
           </div>
-          <p className="nodesheet-task">{craft.task}</p>
+          {!questionOnly ? <p className="nodesheet-task">{craft.task}</p> : null}
         </header>
 
-        {question ? (
+        {questionOnly && question ? (
           <section className="nodesheet-answer" aria-label="Held question answers">
             <p>{question.prompt}</p>
             {question.options.map((option, index) => (
@@ -166,10 +169,13 @@ export function NodeSheet({
                 className="nodesheet-keycap"
               />
             ))}
+            <button type="button" className="nodesheet-open-full" onClick={() => setShowFull(true)}>
+              OPEN FULL NODE ▸
+            </button>
           </section>
         ) : null}
 
-        <section className="nodesheet-context">
+        {!questionOnly ? <section className="nodesheet-context">
           <div className="nodesheet-cap">LIVE TAIL</div>
           <div className="nodesheet-tail">
             {craft.tail.slice(-4).map((line, index) => (
@@ -186,8 +192,7 @@ export function NodeSheet({
             <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
             <span>ON THE BIG BOARD ▸</span>
           </div>
-        </section>
-        <div className="field-root nodesheet-composer-mount" />
+        </section> : null}
       </SheetContent>
     </Sheet>
   );

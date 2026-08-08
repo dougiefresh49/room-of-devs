@@ -17,6 +17,8 @@ export function ControlDeck() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    const forced = new URLSearchParams(window.location.search).get("deck") === "1";
+    document.documentElement.classList.toggle("deck-forced", forced);
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "`") return;
       const modified = event.metaKey || event.ctrlKey || event.altKey;
@@ -30,8 +32,14 @@ export function ControlDeck() {
       event.preventDefault();
       setOpen((current) => !current);
     };
+    const onFieldOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("field:open-deck", onFieldOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("field:open-deck", onFieldOpen);
+      document.documentElement.classList.remove("deck-forced");
+    };
   }, []);
 
   return (
@@ -43,6 +51,7 @@ export function ControlDeck() {
       </DialogTrigger>
       <DialogContent className="rig-command-dialog deck-drawer">
         <DialogTitle className="visually-hidden">Scenario triggers</DialogTitle>
+        <div className="deck-touch-hint">LONG-PRESS THE ROOM CHIP ON TOUCH</div>
         <Command aria-label="Scenario triggers">
           <CommandInput
             autoFocus

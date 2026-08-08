@@ -1,4 +1,4 @@
-import type { Craft, Plan } from "../mock/types";
+import type { Craft } from "../mock/types";
 import { useRoom } from "../mock/store";
 
 function polar(cx: number, cy: number, salience: number, angleDeg: number, maxR: number) {
@@ -21,27 +21,17 @@ export interface FieldPlotProps {
 export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
   const room = useRoom();
   const cx = 150;
-  const cy = 128;
-  const maxR = 118;
+  const cy = 112;
+  const maxR = 96;
   const thrR = (room.salience.threshold / 100) * maxR;
   const crafts = room.crafts.filter((c) => c.state !== "empty");
-  const plans = room.plans.filter((p) => p.dock !== "birth");
-  const livePlan = plans.find((p) => p.dock === "live");
-
-  const spineX = 272;
-  const spineTop = 52;
-
-  const planBlocks = plans.slice(0, 4).map((p: Plan, i) => ({
-    plan: p,
-    y: spineTop + 34 + i * 22,
-  }));
 
   return (
-    <svg viewBox="0 0 300 256" style={{ display: "block", width: "100%" }}>
+    <svg viewBox="0 0 300 220" style={{ display: "block", width: "100%" }}>
       <g fill="none" stroke="#3a2f1c" strokeWidth="1">
-        <circle cx={cx} cy={cy} r="52" strokeDasharray="2 4" />
-        <circle cx={cx} cy={cy} r="86" strokeDasharray="2 4" />
-        <circle cx={cx} cy={cy} r="118" strokeDasharray="2 4" stroke="#4a3c22" />
+        <circle cx={cx} cy={cy} r={maxR * 0.44} strokeDasharray="2 4" />
+        <circle cx={cx} cy={cy} r={maxR * 0.73} strokeDasharray="2 4" />
+        <circle cx={cx} cy={cy} r={maxR} strokeDasharray="2 4" stroke="#4a3c22" />
       </g>
       <circle
         className="thrring"
@@ -54,16 +44,6 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
         strokeDasharray="6 5"
         opacity=".8"
       />
-      <text
-        x="10"
-        y="26"
-        fontFamily="monospace"
-        fontSize="8.5"
-        fill="#ff5340"
-        letterSpacing="1.2"
-      >
-        RED RING = SPEAK GATE · {room.salience.threshold}
-      </text>
       <g className="rsweep">
         <path
           d={`M${cx} ${cy} L${cx} ${cy - maxR} A${maxR} ${maxR} 0 0 0 ${cx - 32} ${cy - maxR + 5} Z`}
@@ -79,66 +59,6 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
           opacity=".4"
         />
       </g>
-
-      <g transform={`translate(${spineX},${spineTop})`}>
-        <rect
-          x="0"
-          y="0"
-          width="8"
-          height="150"
-          rx="2"
-          fill="#31363c"
-          stroke="#12151a"
-        />
-        {planBlocks.map(({ plan, y }, i) => (
-          <g key={plan.id}>
-            <rect
-              className={plan.dock === "live" ? "splan" : undefined}
-              x="-30"
-              y={y - spineTop}
-              width="26"
-              height={plan.dock === "live" ? 14 : 11}
-              rx="2"
-              fill={
-                plan.dock === "live"
-                  ? "rgba(255,150,30,.08)"
-                  : plan.dock === "queued"
-                    ? "#23272c"
-                    : "#1a1d21"
-              }
-              stroke={plan.dock === "live" ? "#ffb347" : "#15181c"}
-            />
-            {i === 0 || plan.dock === "live" ? (
-              <text
-                x="-30"
-                y={y - spineTop - 3}
-                fontFamily="monospace"
-                fontSize="8.5"
-                fill="#ffb347"
-                letterSpacing="1"
-              >
-                {plan.id}
-              </text>
-            ) : null}
-          </g>
-        ))}
-      </g>
-
-      <g className="pl-conduit" fill="none" strokeWidth="1">
-        {crafts.map((c) => {
-          const { x, y } = polar(cx, cy, c.salience, c.plotAngle, maxR);
-          const liveY =
-            planBlocks.find((b) => b.plan.id === (c.planId ?? livePlan?.id))?.y ??
-            spineTop + 40;
-          return (
-            <path
-              key={`conduit-${c.id}`}
-              d={`M${spineX} ${liveY} L${x} ${y}`}
-            />
-          );
-        })}
-      </g>
-
       <g>
         <circle
           cx={cx}
@@ -153,7 +73,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
         <line x1={cx - 11} y1={cy} x2={cx + 11} y2={cy} stroke="#ffd894" strokeWidth="1" />
         <text
           x={cx}
-          y={cy + 25}
+          y={cy + 24}
           textAnchor="middle"
           fontFamily="monospace"
           fontSize="8.5"
@@ -173,18 +93,13 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
             : c.state === "settled"
               ? "blip grn"
               : "blip";
-        const label =
-          c.state === "needs-you"
-            ? `${c.callsign} ${fmtHoldShort(c.holdSeconds)}`
-            : c.watched
-              ? `${c.callsign} · WATCHED`
-              : c.state === "settled"
-                ? `${c.callsign} · SETTLED`
-                : c.state === "spawning"
-                  ? `${c.callsign} · LAUNCH`
-                  : `${c.callsign} · QUIET`;
-        const lx = x < cx ? x - 66 : x + 8;
-        const ly = y < cy ? y - 8 : y + 18;
+        const showLabel = c.state === "needs-you" || c.watched || c.state === "spawning";
+        const label = c.state === "needs-you" ? `${c.callsign} ${fmtHoldShort(c.holdSeconds)}` : c.callsign;
+        const flip = x > cx;
+        const anchor = flip ? "end" : "start";
+        const rawX = flip ? x - 10 : x + 10;
+        const lx = Math.min(Math.max(rawX, 6), 294);
+        const ly = y < cy ? y - 10 : y + 20;
         return (
           <g
             key={c.id}
@@ -232,22 +147,19 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
               d={`M${x} ${y} l${size} ${size + 1} -${size} ${size + 1} -${size} -${size + 1} z`}
               fill={blipFill(c)}
             />
-            <text
-              x={lx}
-              y={ly}
-              fontSize="8.5"
-              fill={
-                c.state === "needs-you"
-                  ? "#ff5340"
-                  : c.state === "settled"
-                    ? "#3d6b2c"
-                    : "#ffb347"
-              }
-              letterSpacing="1"
-              style={{ pointerEvents: "none" }}
-            >
-              {label}
-            </text>
+            {showLabel ? (
+              <text
+                x={lx}
+                y={ly}
+                textAnchor={anchor}
+                fontSize="8.5"
+                fill={c.state === "needs-you" ? "#ff5340" : "#ffb347"}
+                letterSpacing="1"
+                style={{ pointerEvents: "none" }}
+              >
+                {label}
+              </text>
+            ) : null}
           </g>
         );
       })}

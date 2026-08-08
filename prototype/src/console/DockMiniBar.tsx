@@ -51,7 +51,6 @@ export function DockMiniBar() {
       <NowPlaying
         variant="dock"
         nowPlaying={transportRoom.nowPlaying}
-        lastClip={transportRoom.lastClip}
         route={fleet.audioFloor.route}
         gateStartedAt={transportRoom.audio.gateStartedAt}
         onStop={stopPlayback}

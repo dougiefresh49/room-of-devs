@@ -42,7 +42,6 @@ export function Faceplate() {
           <NowPlaying
             variant="faceplate"
             nowPlaying={room.nowPlaying}
-            lastClip={room.lastClip}
             route={room.audio.route}
             gateStartedAt={room.audio.gateStartedAt}
             onStop={stopPlayback}

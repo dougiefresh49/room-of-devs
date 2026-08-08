@@ -1,4 +1,7 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { Waveform } from "@room/ui/rig";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { NowPlaying } from "../mock/types";
+import { formatElapsed } from "../rig-ext/NowPlaying";
 
 export interface CommsRow {
   who: string;
@@ -18,7 +21,10 @@ interface CommsLogProps {
   footNote?: string;
   className?: string;
   typing?: boolean;
-  onReadBack?: () => void;
+  nowPlaying?: NowPlaying | null;
+  onOpenFloor?: () => void;
+  onAirAliases?: string[];
+  stickyHeader?: ReactNode;
 }
 
 interface CommsGroup {
@@ -73,9 +79,14 @@ export function CommsLog({
   footNote,
   className = "field-thread",
   typing = false,
-  onReadBack,
+  nowPlaying = null,
+  onOpenFloor,
+  onAirAliases = [],
+  stickyHeader,
 }: CommsLogProps) {
   const logRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [now, setNow] = useState(() => Date.now());
   const blocks = useMemo(
     () => {
       const seenDays = new Set<string>();
@@ -103,19 +114,32 @@ export function CommsLog({
     },
     [rows],
   );
+  const onAirKey = nowPlaying
+    ? [...rows]
+        .reverse()
+        .find((row) => onAirAliases.includes(row.who.toLowerCase()))
+    : null;
+  const lastRow = rows.at(-1);
+  const rowAppendKey = `${rows.length}:${lastRow?.who ?? ""}:${lastRow?.text ?? ""}`;
+
+  useLayoutEffect(() => {
+    if (!nowPlaying) return;
+    setNow(Date.now());
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [nowPlaying]);
 
   useLayoutEffect(() => {
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
-  });
+  }, [rowAppendKey]);
 
   return (
     <div
       ref={logRef}
       className={`vt comms-log ${className}`.trim()}
-      onWheel={onReadBack}
-      onTouchMove={onReadBack}
     >
+      {stickyHeader}
       {blocks.map((block, blockIndex) =>
         block.kind === "divider" ? (
           <div className="comms-divider" key={`divider-${block.at}-${blockIndex}`}>
@@ -130,18 +154,50 @@ export function CommsLog({
             className={`comms-group${block.you ? " is-you" : ""}`}
             key={`${block.who}-${block.you ? "you" : "other"}-${blockIndex}`}
           >
-            {!block.you ? <div className="comms-who">{block.who.slice(0, 3)}</div> : null}
-            {block.rows.map((row, rowIndex) => (
+            {!block.you ? (
+              <div className="comms-who">
+                {block.who.slice(0, 3)}
+                {nowPlaying && onAirKey && block.rows.includes(onAirKey) ? (
+                  <button type="button" onClick={onOpenFloor} aria-label="Open audio floor">
+                    <Waveform active bars={4} />
+                    <span className="sseg">{formatElapsed(nowPlaying.startedAt, now)}</span>
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {block.rows.map((row, rowIndex) => {
+              const key = `${row.who}-${row.at}`;
+              const long = row.text.length > 420;
+              const isExpanded = expanded.has(key);
+              const onAir = row === onAirKey;
+              return (
               <div
-                className={`comms-say${block.you ? " you" : ""}`}
-                key={`${row.who}-${row.at}-${rowIndex}`}
+                className={`comms-say${block.you ? " you" : ""}${onAir ? " is-onair" : ""}`}
+                key={`${key}-${rowIndex}`}
               >
-                {row.text}
+                <span className={`comms-text${long && !isExpanded ? " is-clamped" : ""}`}>{row.text}</span>
                 {typing && blockIndex === blocks.length - 1 && rowIndex === block.rows.length - 1 ? (
                   <span className="cursor" role="status" aria-label="Reply pending" />
                 ) : null}
+                {long ? (
+                  <button
+                    type="button"
+                    className="comms-read-full"
+                    onClick={() => {
+                      setExpanded((current) => {
+                        const next = new Set(current);
+                        if (next.has(key)) next.delete(key);
+                        else next.add(key);
+                        return next;
+                      });
+                    }}
+                  >
+                    {isExpanded ? "COLLAPSE ▴" : "READ FULL ▸"}
+                  </button>
+                ) : null}
               </div>
-            ))}
+              );
+            })}
           </div>
         ),
       )}

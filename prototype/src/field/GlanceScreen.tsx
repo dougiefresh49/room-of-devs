@@ -37,6 +37,11 @@ export function GlanceScreen({ onOpenNode, onCouple }: GlanceScreenProps) {
   const drag = contributors.find((c) => c.delta < 0);
 
   const crafts = room.crafts.filter((c) => c.state !== "empty");
+  const needsYou = crafts.filter((craft) => craft.state === "needs-you").length;
+  const watched = crafts.filter((craft) => craft.watched).length;
+  const quiet = crafts.filter(
+    (craft) => craft.state !== "needs-you" && !craft.watched && craft.state !== "spawning",
+  ).length;
 
   return (
     <div className="screen-body" data-part="F-01">
@@ -68,6 +73,13 @@ export function GlanceScreen({ onOpenNode, onCouple }: GlanceScreenProps) {
           <FieldPlot onSelectCraft={onOpenNode} />
         </div>
       </CutFrame>
+
+      <div className="fplot-legend">
+        <span className="is-red">◇ RED RING = SPEAK GATE · {threshold}</span>
+        <span className="is-red">● NEEDS YOU {needsYou}</span>
+        <span className="is-amber">○ WATCHED {watched}</span>
+        <span>· QUIET {quiet}</span>
+      </div>
 
       <div className="trows">
         {crafts.map((c) => {

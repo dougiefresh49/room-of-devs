@@ -10,7 +10,6 @@ export function OrdersScreen({ onLocalChange }: { onLocalChange: () => void }) {
   return (
     <div className="screen-body orders-body" data-part="F-03">
       <div className="orders-head">STANDING ORDERS</div>
-      <div className="orders-copy">Things Mikey keeps doing without being asked.</div>
       <div className="vrack orders-rack">
         {room.verbs.map((verb) => {
           const gated = verb.gatedIssue != null;

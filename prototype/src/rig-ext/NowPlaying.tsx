@@ -5,12 +5,11 @@ import { AvatarFace } from "../avatars/AvatarFace";
 import type { NowPlaying as NowPlayingModel } from "../mock/types";
 import { FieldCrtFace } from "./FieldCrtFace";
 
-export type NowPlayingVariant = "strip" | "dock" | "faceplate";
+export type NowPlayingVariant = "dock" | "faceplate";
 
 export interface NowPlayingProps {
   variant: NowPlayingVariant;
   nowPlaying: NowPlayingModel | null;
-  lastClip: NowPlayingModel | null;
   route: "phone" | "mac";
   gateStartedAt: number | null;
   onStop: () => void;
@@ -18,7 +17,7 @@ export interface NowPlayingProps {
   onRoute: (route: "phone" | "mac") => void;
 }
 
-function PhoneGlyph() {
+export function PhoneGlyph() {
   return (
     <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden>
       <rect
@@ -37,7 +36,7 @@ function PhoneGlyph() {
   );
 }
 
-function MacGlyph() {
+export function MacGlyph() {
   return (
     <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden>
       <rect
@@ -55,14 +54,14 @@ function MacGlyph() {
   );
 }
 
-function formatElapsed(startedAt: number, now: number): string {
+export function formatElapsed(startedAt: number, now: number): string {
   const totalSeconds = Math.max(0, Math.floor((now - startedAt) / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function formatGateRemaining(startedAt: number | null, now: number): string {
+export function formatGateRemaining(startedAt: number | null, now: number): string {
   if (startedAt == null) return "00:00";
   const remaining = Math.max(0, 5 * 60 - Math.floor((now - startedAt) / 1000));
   return `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
@@ -72,14 +71,16 @@ function RouteGlyph({ route }: { route: "phone" | "mac" }) {
   return route === "phone" ? <PhoneGlyph /> : <MacGlyph />;
 }
 
-function RouteControl({
+export function RouteControl({
   compact,
   route,
   onRoute,
+  showLabels = false,
 }: {
   compact: boolean;
   route: "phone" | "mac";
   onRoute: (route: "phone" | "mac") => void;
+  showLabels?: boolean;
 }) {
   if (compact) {
     const next = route === "phone" ? "mac" : "phone";
@@ -106,6 +107,7 @@ function RouteControl({
         onClick={() => onRoute("phone")}
       >
         <PhoneGlyph />
+        {showLabels ? <span>PHONE</span> : null}
       </button>
       <button
         type="button"
@@ -115,6 +117,7 @@ function RouteControl({
         onClick={() => onRoute("mac")}
       >
         <MacGlyph />
+        {showLabels ? <span>MAC</span> : null}
       </button>
     </div>
   );
@@ -127,7 +130,6 @@ function RouteControl({
 export function NowPlaying({
   variant,
   nowPlaying,
-  lastClip,
   route,
   gateStartedAt,
   onStop,
@@ -137,8 +139,6 @@ export function NowPlaying({
   const [now, setNow] = useState(() => Date.now());
   const speaking = nowPlaying != null;
   const live = nowPlaying?.kind === "live-clip";
-  const coldStrip = variant === "strip" && !nowPlaying && !lastClip;
-
   useEffect(() => {
     if (!nowPlaying && !(route === "phone" && gateStartedAt != null)) return;
     setNow(Date.now());
@@ -158,11 +158,7 @@ export function NowPlaying({
       aria-label={speaking ? `${nowPlaying.persona} has the audio floor` : "Audio floor clear"}
     >
       {showRoute ? (
-        <RouteControl
-          compact={variant === "strip" && (speaking || coldStrip)}
-          route={route}
-          onRoute={onRoute}
-        />
+        <RouteControl compact={false} route={route} onRoute={onRoute} />
       ) : null}
 
       {showFace && nowPlaying ? (
@@ -170,7 +166,7 @@ export function NowPlaying({
           <FieldCrtFace size={28}>
             <AvatarFace
               persona={nowPlaying.persona}
-              mode={variant === "strip" ? "idle" : "speaking"}
+              mode="speaking"
               size={28}
             />
           </FieldCrtFace>
@@ -192,16 +188,16 @@ export function NowPlaying({
         </Tag>
       ) : null}
 
-      {!coldStrip && (variant === "dock" || variant === "strip") ? (
+      {variant === "dock" ? (
         <span className={`ffloor-gate${route === "phone" ? " is-held" : ""}`}>{gateLabel}</span>
       ) : null}
 
-      {!coldStrip ? <div className="ffloor-meter">
-        <Waveform active={speaking} bars={variant === "strip" ? 7 : variant === "dock" ? 6 : 9} />
+      <div className="ffloor-meter">
+        <Waveform active={speaking} bars={variant === "dock" ? 6 : 9} />
         <span className="ffloor-elapsed sseg">{elapsed ?? "IDLE"}</span>
-      </div> : null}
+      </div>
 
-      {!coldStrip ? <div className="ffloor-actions">
+      <div className="ffloor-actions">
         <button
           type="button"
           className="ffloor-key ffloor-stop"
@@ -210,7 +206,7 @@ export function NowPlaying({
           aria-label="STOP"
           title="STOP"
         >
-          <Square size={variant === "strip" ? 14 : 12} fill="currentColor" aria-hidden />
+          <Square size={12} fill="currentColor" aria-hidden />
         </button>
         <button
           type="button"
@@ -219,9 +215,9 @@ export function NowPlaying({
           aria-label="REPLAY LAST · FREE"
           title="REPLAY LAST · FREE"
         >
-          <RotateCcw size={variant === "strip" ? 15 : 13} aria-hidden />
+          <RotateCcw size={13} aria-hidden />
         </button>
-      </div> : null}
+      </div>
     </div>
   );
 }

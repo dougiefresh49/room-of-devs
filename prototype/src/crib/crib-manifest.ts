@@ -162,7 +162,7 @@ export const instruments: Instrument[] = [
       "prototype/src/field/FieldHangar.tsx",
       "prototype/src/field/GaugesScreen.tsx",
       "prototype/src/field/GlanceScreen.tsx",
-      "prototype/src/field/VoiceBar.tsx",
+      "prototype/src/field/ComsHeader.tsx",
       "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/rig-ext/FieldCard.tsx"
@@ -379,7 +379,7 @@ export const instruments: Instrument[] = [
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/console/ChatFocus.tsx",
       "prototype/src/console/ReplyDeck.tsx",
-      "prototype/src/field/VoiceBar.tsx",
+      "prototype/src/field/ComsHeader.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/FloorBus.tsx",
       "prototype/src/rig-ext/NowPlaying.tsx"
@@ -439,10 +439,10 @@ export const instruments: Instrument[] = [
       "prototype/src/field/ComsScreen.tsx",
       "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/FieldHangar.tsx",
-      "prototype/src/field/FieldNav.tsx",
-      "prototype/src/field/FieldRoomMenu.tsx",
+      "prototype/src/field/FieldDock.tsx",
+      "prototype/src/field/FieldPlaceSheet.tsx",
       "prototype/src/field/OrdersScreen.tsx",
-      "prototype/src/field/VoiceBar.tsx",
+      "prototype/src/field/ComsHeader.tsx",
       "prototype/src/hangar/BerthCard.tsx"
     ],
     "surfaces": [
@@ -725,7 +725,7 @@ export const instruments: Instrument[] = [
     "verdict": "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
     "consumers": [
       "prototype/src/console/ConsoleDock.tsx",
-      "prototype/src/field/FieldComposer.tsx"
+      "prototype/src/field/FieldDock.tsx"
     ],
     "surfaces": [
       "console",
@@ -859,7 +859,7 @@ export const instruments: Instrument[] = [
     "consumers": [
       "panel/src/app/ActionCluster.tsx",
       "prototype/src/console/SpineLegend.tsx",
-      "prototype/src/field/FieldRoomMenu.tsx",
+      "prototype/src/field/FieldPlaceSheet.tsx",
       "prototype/src/field/GaugesScreen.tsx"
     ],
     "surfaces": [
@@ -1359,7 +1359,7 @@ export const instruments: Instrument[] = [
       "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/field/NodeSheet.tsx",
-      "prototype/src/field/VoiceBar.tsx"
+      "prototype/src/field/ComsHeader.tsx"
     ],
     "surfaces": [
       "field"

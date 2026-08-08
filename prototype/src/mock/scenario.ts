@@ -1151,6 +1151,11 @@ export const TRIGGERS: ScenarioTrigger[] = [
   { id: "lull", label: "THE LULL", run: theLull },
   { id: "mic", label: "MIC OPEN", run: micOpen },
   { id: "mic-close", label: "MIC CLOSE", run: micClose },
+  {
+    id: "mock-mic",
+    label: "MIC: SHOW MOCK RECORDER",
+    run: () => window.localStorage.setItem("rig.field.mockmic", "1"),
+  },
   { id: "tapin", label: "TAP-IN Q&A", run: tapInQa },
   { id: "diagram", label: "DIAGRAM ARTIFACT", run: diagramArtifact },
   { id: "burn", label: "SPEND BURN", run: spendBurn },
