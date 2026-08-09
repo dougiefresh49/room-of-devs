@@ -1,5 +1,14 @@
 import { Led } from "@room/ui/rig";
-import { ArrowUp, Gauge, LayoutGrid, MessageSquare, Mic, Radar, ToggleRight } from "lucide-react";
+import {
+  ArrowUp,
+  ChevronDown,
+  Gauge,
+  MessageSquare,
+  Mic,
+  PenLine,
+  Radar,
+  ToggleRight,
+} from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { injectReply, setComposer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
@@ -30,8 +39,17 @@ function placeholder(target: ComposerTarget): string {
 function sizeTextarea(textarea: HTMLTextAreaElement | null) {
   if (!textarea) return;
   textarea.style.height = "auto";
-  textarea.style.height = `${Math.min(84, Math.max(40, textarea.scrollHeight))}px`;
-  textarea.style.overflowY = textarea.scrollHeight > 84 ? "auto" : "hidden";
+  const computedMaxHeight = Number.parseFloat(window.getComputedStyle(textarea).maxHeight);
+  const maxHeight = Number.isFinite(computedMaxHeight) ? computedMaxHeight : 150;
+  textarea.style.height = `${Math.min(maxHeight, Math.max(45, textarea.scrollHeight))}px`;
+  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+}
+
+function publishDockHeight(dock: HTMLDivElement | null) {
+  const root = dock?.closest<HTMLElement>(".field-root");
+  if (!dock || !root) return;
+  const height = Math.ceil(dock.getBoundingClientRect().height);
+  if (height > 0) root.style.setProperty("--field-dock-h", `${height}px`);
 }
 
 export function FieldDock({
@@ -41,8 +59,11 @@ export function FieldDock({
   target,
   focused,
   focusSignal,
+  anySheetOpen,
+  scrollOnFocus,
   onModeChange,
   onScreenChange,
+  onRestoreDraft,
   onBadgePress,
   onFocusChange,
   onTargetConsumed,
@@ -55,8 +76,11 @@ export function FieldDock({
   target: ComposerTarget;
   focused: boolean;
   focusSignal: number;
+  anySheetOpen: boolean;
+  scrollOnFocus: boolean;
   onModeChange: (mode: FieldDockMode) => void;
   onScreenChange: (screen: FieldScreen) => void;
+  onRestoreDraft: () => void;
   onBadgePress?: (screen: FieldScreen, badge: FieldBadge) => void;
   onFocusChange: (focused: boolean) => void;
   onTargetConsumed: () => void;
@@ -65,58 +89,61 @@ export function FieldDock({
 }) {
   const room = useRoom();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const dockRef = useRef<HTMLElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
   const seenFocusSignal = useRef(0);
-  const blurredByEscape = useRef(false);
 
   useLayoutEffect(() => {
     if (focusSignal === seenFocusSignal.current || mode !== "reply") return;
     seenFocusSignal.current = focusSignal;
-    textareaRef.current?.focus();
-    sizeTextarea(textareaRef.current);
-  }, [focusSignal, mode]);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    sizeTextarea(textarea);
+    if (scrollOnFocus) {
+      window.requestAnimationFrame(() =>
+        textarea.scrollIntoView({ block: "nearest", inline: "nearest" }),
+      );
+    }
+  }, [focusSignal, mode, scrollOnFocus]);
 
-  useEffect(() => {
-    if (mode !== "reply") blurredByEscape.current = false;
-  }, [mode]);
+  useLayoutEffect(() => {
+    if (mode === "reply") sizeTextarea(textareaRef.current);
+    publishDockHeight(dockRef.current);
+  }, [mode, room.composerText]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dock = dockRef.current;
-    const root = dock?.closest<HTMLElement>(".field-root");
-    if (!dock || !root) return;
-    const publishHeight = () => {
-      const height = Math.ceil(dock.getBoundingClientRect().height);
-      if (height > 0) root.style.setProperty("--field-dock-h", `${height}px`);
-    };
-    publishHeight();
-    const observer = "ResizeObserver" in window ? new ResizeObserver(publishHeight) : null;
-    observer?.observe(dock);
-    return () => observer?.disconnect();
-  }, [mode]);
+    if (!dock || !("ResizeObserver" in window)) return;
+    const observer = new ResizeObserver(() => publishDockHeight(dock));
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (mode !== "reply" || focused || !blurredByEscape.current) return;
+    if (mode !== "reply" || focused || anySheetOpen) return;
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      blurredByEscape.current = false;
       onModeChange("nav");
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
-  }, [focused, mode, onModeChange]);
+  }, [anySheetOpen, focused, mode, onModeChange]);
 
   const submit = () => {
     const text = room.composerText.trim();
     if (!text) return;
     injectReply(text, target);
     onTargetConsumed();
-    textareaRef.current?.blur();
   };
 
-  if (mode === "nav") {
-    return (
-      <nav ref={dockRef} className="fdock fdock-nav" aria-label="Field screens">
+  const targeted = target.kind === "craft";
+  const hasDraft = room.composerText.trim().length > 0;
+
+  return (
+    <div ref={dockRef} className="fdock">
+      <nav className="fdock-nav" aria-label="Field screens" hidden={mode !== "nav"}>
         {TABS.map(({ id, label, Icon }) => {
           const badge = badges[id];
           return (
@@ -133,47 +160,37 @@ export function FieldDock({
               <Icon size={20} aria-hidden />
               <span>{label}</span>
               {badge ? <Led tone={badge.tone} pulse={badge.pulse} className="fdock-dot" /> : null}
-              {id === "coms" && room.micHot ? <Led tone="red" className="fdock-mic-hot-dot" /> : null}
+              {id === "coms" && room.micHot ? (
+                <Led tone="red" className="fdock-mic-hot-dot" />
+              ) : null}
               {badge ? <span className="sr-only">{badge.label}</span> : null}
               {id === "coms" && room.micHot ? <span className="sr-only">Mac mic hot</span> : null}
             </button>
           );
         })}
-      </nav>
-    );
-  }
-
-  const targeted = target.kind !== "mikey";
-  return (
-    <form
-      ref={(node) => { dockRef.current = node; }}
-      className={`fdock fdock-reply${focused ? " is-focused" : ""}`}
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit();
-      }}
-    >
-      <button type="button" className="fcomp-key fdock-tabs" aria-label="Show screen tabs" onClick={() => {
-        blurredByEscape.current = false;
-        onFocusChange(false);
-        onModeChange("nav");
-      }}>
-        <LayoutGrid size={18} aria-hidden />
-      </button>
-      <div className="fdock-field">
-        {focused && targeted ? (
-          <div className="fdock-target">
-            <span>▸ ANSWERING {target.craft.callsign} · {target.craft.ticket}</span>
-            <button
-              type="button"
-              aria-label={`Stop answering ${target.craft.callsign}`}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={onTargetDismissed}
-            >
-              ×
-            </button>
-          </div>
+        {hasDraft ? (
+          <button
+            type="button"
+            className="fdock-draft"
+            aria-label="DRAFT — restore saved reply"
+            onClick={onRestoreDraft}
+          >
+            <span className="fdock-draft-icon">
+              <PenLine size={18} aria-hidden />
+              <span className="fdock-draft-dot" aria-hidden />
+            </span>
+            <span>DRAFT</span>
+          </button>
         ) : null}
+      </nav>
+      <form
+        className="screenbed fdock-reply"
+        hidden={mode !== "reply"}
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+      >
         <textarea
           ref={textareaRef}
           rows={1}
@@ -182,12 +199,17 @@ export function FieldDock({
           aria-label="Type a room message"
           onChange={(event) => {
             setComposer(event.currentTarget.value);
-            if (event.currentTarget === document.activeElement) sizeTextarea(event.currentTarget);
+            sizeTextarea(event.currentTarget);
           }}
           onFocus={(event) => {
-            blurredByEscape.current = false;
+            const textarea = event.currentTarget;
             onFocusChange(true);
-            sizeTextarea(event.currentTarget);
+            sizeTextarea(textarea);
+            if (scrollOnFocus) {
+              window.requestAnimationFrame(() =>
+                textarea.scrollIntoView({ block: "nearest", inline: "nearest" }),
+              );
+            }
           }}
           onBlur={() => {
             onFocusChange(false);
@@ -196,7 +218,6 @@ export function FieldDock({
             if (event.key === "Escape") {
               event.preventDefault();
               event.stopPropagation();
-              blurredByEscape.current = true;
               event.currentTarget.blur();
             } else if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
@@ -204,20 +225,58 @@ export function FieldDock({
             }
           }}
         />
-      </div>
-      <button
-        type="button"
-        className={`fcomp-key fdock-mic${room.micHot ? " is-hot" : ""}`}
-        aria-label={room.micHot ? "Mic hot on the Mac" : "Open voice reply"}
-        disabled={room.micHot}
-        onClick={onOpenVoice}
-      >
-        <Mic size={18} aria-hidden />
-        {room.micHot ? <span>MIC HOT</span> : null}
-      </button>
-      <button type="submit" className="fcomp-key sendkey" aria-label="Send message" disabled={!room.composerText.trim()}>
-        <ArrowUp size={18} strokeWidth={2.5} aria-hidden />
-      </button>
-    </form>
+        <div className="fdock-actions">
+          <button
+            type="button"
+            className="fcomp-key fdock-close"
+            aria-label="Close composer, keep draft"
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={() => {
+              textareaRef.current?.blur();
+              onFocusChange(false);
+              onModeChange("nav");
+            }}
+          >
+            <ChevronDown size={18} aria-hidden />
+          </button>
+          <span className="fdock-action-spacer" />
+          {targeted ? (
+            <div className="fdock-target">
+              <span>
+                ▸ {target.craft.callsign} · {target.craft.ticket}
+              </span>
+              <button
+                type="button"
+                aria-label={`Stop answering ${target.craft.callsign}`}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={onTargetDismissed}
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className={`fcomp-key fdock-mic${room.micHot ? " is-hot" : ""}`}
+            aria-label={room.micHot ? "Mic hot on the Mac" : "Open voice reply"}
+            disabled={room.micHot}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={onOpenVoice}
+          >
+            <Mic size={18} aria-hidden />
+            {room.micHot ? <span>MIC HOT</span> : null}
+          </button>
+          <button
+            type="submit"
+            className="fcomp-key sendkey"
+            aria-label="Send message"
+            disabled={!room.composerText.trim()}
+            onPointerDown={(event) => event.preventDefault()}
+          >
+            <ArrowUp size={18} strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

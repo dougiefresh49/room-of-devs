@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { flushSync } from "react-dom";
 import { roomShortLabel } from "../chrome/MastheadTabs";
 import { coupleRoom, focusCraftForAnswer } from "../mock/scenario";
-import { useFleet, useRoom } from "../mock/store";
+import { getRoom, useFleet, useRoom } from "../mock/store";
 import type { ComposerTarget, RoomId } from "../mock/types";
 import "../styles/field.css";
 import { ComsScreen } from "./ComsScreen";
@@ -130,7 +130,11 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   });
   const [seenHeldKeys, setSeenHeldKeys] = useState<Set<string>>(() => new Set());
   const localOrderChange = useRef(false);
-  const hangarHistory = useRef<{ roomId: RoomId; screen: FieldScreen } | null>(null);
+  const hangarHistory = useRef<{
+    roomId: RoomId;
+    screen: FieldScreen;
+    dockMode: FieldDockMode;
+  } | null>(null);
   const sheetOpener = useRef<HTMLElement | null>(null);
   const sheetCloseAction = useRef<(() => void) | null>(null);
   const restoreSheetFocus = useRef(true);
@@ -154,15 +158,22 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
       setScreens((current) => ({ ...current, [roomId]: next }));
       setDockMode(next === "coms" ? "reply" : "nav");
       setDockFocused(false);
-      setReplyTargetCraftId(null);
+      const reopensCurrentComposer = screen === "coms" && next === "coms";
+      if (room.composerText.trim().length === 0 && !reopensCurrentComposer) {
+        setReplyTargetCraftId(null);
+      }
       if (next === "glance" || next === "coms" || next === "orders") {
         setPending(roomId, next, false);
       }
     },
-    [roomId, setPending],
+    [room.composerText, roomId, screen, setPending],
   );
 
   const currentHeldKey = heldKeys[roomId] ?? null;
+  const clearTargetIfIdle = useCallback(() => {
+    if (getRoom().composerText.trim().length === 0) setReplyTargetCraftId(null);
+  }, []);
+
   const markHeldSeen = useCallback(() => {
     if (!currentHeldKey) return;
     setSeenHeldKeys((current) => {
@@ -189,12 +200,12 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   );
 
   const enterHangar = useCallback(() => {
-    if (!hangarOpen) hangarHistory.current = { roomId, screen };
+    if (!hangarOpen) hangarHistory.current = { roomId, screen, dockMode };
     setDockMode("nav");
     setDockFocused(false);
-    setReplyTargetCraftId(null);
+    clearTargetIfIdle();
     setHangarOpen(true);
-  }, [hangarOpen, roomId, screen]);
+  }, [clearTargetIfIdle, dockMode, hangarOpen, roomId, screen]);
 
   const openHangar = useCallback(() => {
     setDockMode("nav");
@@ -241,10 +252,10 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
       setScreens((current) => ({ ...current, [history.roomId]: history.screen }));
     }
     setHangarOpen(false);
-    setDockMode(history?.screen === "coms" ? "reply" : "nav");
+    setDockMode(history?.dockMode ?? "nav");
     setDockFocused(false);
-    setReplyTargetCraftId(null);
-  }, []);
+    clearTargetIfIdle();
+  }, [clearTargetIfIdle]);
 
   const coupleFromField = useCallback((nextRoomId: RoomId) => {
     setSheetCraftId(null);
@@ -401,6 +412,10 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           ? "mood-arrival"
           : "";
   const anySheetOpen = sheetCraftId != null || placeOpen || floorOpen || voiceOpen;
+  const handleDockModeChange = useCallback((mode: FieldDockMode) => {
+    setDockMode(mode);
+    if (mode === "nav") setDockFocused(false);
+  }, []);
 
   useLayoutEffect(() => {
     const screenElement = document.querySelector<HTMLElement>(".field-root .fscr");
@@ -465,9 +480,13 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           target={composerTarget}
           focused={dockFocused}
           focusSignal={dockFocusSignal}
-          onModeChange={(mode) => {
-            setDockMode(mode);
-            if (mode === "nav") setDockFocused(false);
+          anySheetOpen={anySheetOpen}
+          scrollOnFocus={bare}
+          onModeChange={handleDockModeChange}
+          onRestoreDraft={() => {
+            if (hangarOpen) setHangarOpen(false);
+            setScreen("coms");
+            setDockFocusSignal((value) => value + 1);
           }}
           onFocusChange={setDockFocused}
           onTargetConsumed={() => setReplyTargetCraftId(null)}

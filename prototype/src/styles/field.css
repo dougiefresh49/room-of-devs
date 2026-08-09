@@ -1503,15 +1503,16 @@ body:has(.field-root.is-bare) {
   bottom: 0;
   left: 0;
   min-width: 0;
-  border-top: 1px solid var(--gun-edge);
-  background: linear-gradient(180deg, rgba(9, 10, 12, .97), rgba(9, 10, 12, .99));
 }
 .field-root:has(.field-sheet-open) .fdock { display: none; }
 .field-root .field-sheet-open[aria-hidden] { display: none; }
+.field-root .fdock > [hidden] { display: none !important; }
 .field-root .fdock-nav {
   display: flex;
   min-height: 58px;
   padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--gun-edge);
+  background: linear-gradient(180deg, rgba(9, 10, 12, .97), rgba(9, 10, 12, .99));
 }
 .field-root .fdock-nav > button {
   position: relative;
@@ -1530,18 +1531,24 @@ body:has(.field-root.is-bare) {
   cursor: pointer;
 }
 .field-root .fdock-nav > button.is-active { border-top-color: var(--amber); color: var(--amber); }
-.field-root .fdock-nav > button > span:not(.sr-only) { margin-top: 3px; font: 8.5px var(--mono); letter-spacing: .14em; }
+.field-root .fdock-nav > button > span:not(.sr-only):not(.fdock-draft-icon) { margin-top: 3px; font: 8.5px var(--mono); letter-spacing: .14em; }
+.field-root .fdock-nav > button.fdock-draft { flex: 0 0 52px; border-left: 1px solid var(--gun-edge); color: var(--steel); }
+.field-root .fdock-draft-icon { position: relative; display: grid; place-items: center; }
+.field-root .fdock-draft-dot { position: absolute; top: -3px; right: -5px; width: 6px; height: 6px; margin: 0 !important; border-radius: 50%; background: var(--amber); box-shadow: 0 0 7px rgba(255, 179, 71, .75); }
 .field-root .fdock-dot { position: absolute; top: 4px; right: calc(50% - 18px); width: 6px; height: 6px; }
 .field-root .fdock-mic-hot-dot { position: absolute; top: 4px; left: calc(50% - 18px); width: 6px; height: 6px; }
 .field-root .fdock .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .field-root .fdock-reply {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px 44px;
-  min-height: 58px;
-  align-items: end;
-  gap: 8px;
-  padding: 7px 10px calc(7px + env(safe-area-inset-bottom));
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0 0 env(safe-area-inset-bottom);
+  border: 1px solid var(--gun-edge);
+  border-radius: 16px 5px 0 0;
+  background: linear-gradient(180deg, var(--screen), var(--screen2));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
 }
+.field-root .fdock-reply::after { display: none; animation: none; }
 .field-root .fcomp-key {
   display: grid;
   width: 44px;
@@ -1558,41 +1565,45 @@ body:has(.field-root.is-bare) {
 }
 .field-root .fcomp-key.sendkey { border-color: var(--amber-dim); background: var(--amber); color: #181206; }
 .field-root .fcomp-key:disabled { cursor: default; opacity: .45; }
-.field-root .fdock-field { min-width: 0; }
-.field-root .fdock-field textarea {
+.field-root .fdock-reply > textarea {
+  position: relative;
+  z-index: 6;
   display: block;
   width: 100%;
-  height: 40px;
-  min-height: 40px;
-  max-height: 84px;
+  height: 45px;
+  min-height: 45px;
+  max-height: min(150px, 30dvh);
+  box-sizing: border-box;
   resize: none;
-  padding: 8px 9px;
-  border: 1px solid rgba(255, 179, 71, .25);
-  border-radius: 8px 2px 2px 2px;
+  padding: 12px;
+  border: 0;
+  border-radius: 0;
   outline: 0;
-  background: var(--screen);
+  background: transparent;
   color: #f0e7d8;
-  font: 14px/1.45 var(--ui);
+  font: 15px/1.4 var(--ui);
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
 }
-.field-root .fdock-field textarea::placeholder { color: var(--steel-dim); opacity: 1; }
-.field-root .fdock-reply:not(.is-focused) .fdock-field textarea {
-  height: 40px !important;
-  overflow-y: hidden !important;
-}
+.field-root .fdock-reply > textarea::placeholder { color: var(--steel-dim); opacity: 1; }
+.field-root .fdock-actions { position: relative; z-index: 6; display: flex; height: 44px; min-width: 0; align-items: center; gap: 8px; padding: 0 12px; }
+.field-root .fdock-action-spacer { min-width: 0; flex: 1; }
 .field-root .fdock-target {
   display: flex;
-  height: 16px;
+  min-width: 0;
+  max-width: 150px;
+  height: 44px;
   align-items: center;
   gap: 4px;
   overflow: hidden;
   color: var(--amber-dim);
-  font: 8.5px/16px var(--mono);
+  font: 8.5px/1.2 var(--mono);
   letter-spacing: .05em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .field-root .fdock-target > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.field-root .fdock-target > button { width: 20px; height: 16px; flex: none; padding: 0; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; font: 12px/16px var(--mono); }
+.field-root .fdock-target > button { width: 24px; height: 44px; flex: none; padding: 0; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; font: 12px/44px var(--mono); }
 .field-root .fdock-mic.is-hot {
   border-color: var(--red);
   background: rgba(255, 83, 64, .14);
