@@ -259,47 +259,51 @@ export function handRaise(craftId = "c-0451") {
 
 /** HELD QUESTION on craft N. */
 export function heldQuestion(craftId = "c-0449") {
-  setRoom((s) => ({
-    ...s,
-    rev: s.rev + 1,
-    mood: "normal",
-    focusCraftId: craftId,
-    crafts: mapCraft(s.crafts, craftId, (c) => ({
-      ...c,
-      state: "needs-you",
-      open: true,
-      salience: Math.min(c.salience, 20),
-      holdSeconds: c.holdSeconds || 120,
-      lastStamp: fmtHold(c.holdSeconds || 120),
-    })),
-    heldQuestion: {
-      craftId,
-      prompt: "ship the salience threshold as a live config, or park it?",
-      options: [
-        {
-          id: "ship",
-          label: "SHIP IT",
-          detail: "wire the draggable tab to config",
-          speakHint: "SHIP IT",
-          armed: true,
-        },
-        {
-          id: "park",
-          label: "PARK",
-          detail: "leave threshold read-only for now",
-          speakHint: "PARK IT",
-          armed: false,
-        },
-        {
-          id: "later",
-          label: "LATER",
-          detail: "queue behind plan 0008",
-          speakHint: "LATER",
-          armed: false,
-        },
-      ],
-    },
-  }));
+  setRoom((s) => {
+    const initialHoldSeconds = s.crafts.find((craft) => craft.id === craftId)?.holdSeconds || 120;
+    return {
+      ...s,
+      rev: s.rev + 1,
+      mood: "normal",
+      focusCraftId: craftId,
+      crafts: mapCraft(s.crafts, craftId, (c) => ({
+        ...c,
+        state: "needs-you",
+        open: true,
+        salience: Math.min(c.salience, 20),
+        holdSeconds: initialHoldSeconds,
+        lastStamp: fmtHold(initialHoldSeconds),
+      })),
+      heldQuestion: {
+        craftId,
+        heldSince: Date.now() - initialHoldSeconds * 1000,
+        prompt: "ship the salience threshold as a live config, or park it?",
+        options: [
+          {
+            id: "ship",
+            label: "SHIP IT",
+            detail: "wire the draggable tab to config",
+            speakHint: "SHIP IT",
+            armed: true,
+          },
+          {
+            id: "park",
+            label: "PARK",
+            detail: "leave threshold read-only for now",
+            speakHint: "PARK IT",
+            armed: false,
+          },
+          {
+            id: "later",
+            label: "LATER",
+            detail: "queue behind plan 0008",
+            speakHint: "LATER",
+            armed: false,
+          },
+        ],
+      },
+    };
+  });
 }
 
 /** ANSWER by keycap — resolves held question. */
@@ -825,10 +829,6 @@ export function crossRoomArrival() {
 
 /** Exercise the same audio transition as every other mock playback. */
 export function floorHandoff() {
-  if (getFleet().audioFloor.roomId) {
-    stopPlayback();
-    return;
-  }
   speakMikey("Floor handoff check. Every transport reads this same mock clip.", "FLOOR HANDOFF");
 }
 
@@ -1112,7 +1112,17 @@ export type ScenarioTrigger = {
 };
 
 export const TRIGGERS: ScenarioTrigger[] = [
-  { id: "open-hangar", label: "OPEN HANGAR", run: () => setView("hangar") },
+  {
+    id: "open-hangar",
+    label: "OPEN HANGAR",
+    run: () => {
+      if (document.querySelector(".field-root")) {
+        window.dispatchEvent(new CustomEvent("field:open-hangar"));
+      } else {
+        setView("hangar");
+      }
+    },
+  },
   {
     id: "couple-podlink",
     label: "COUPLE ROOM ▸ PODLINK",

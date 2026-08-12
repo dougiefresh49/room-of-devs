@@ -1,5 +1,6 @@
 import type { Craft } from "../mock/types";
 import { useRoom } from "../mock/store";
+import { useHeldSeconds } from "./useHeldSeconds";
 
 function polar(cx: number, cy: number, salience: number, angleDeg: number, maxR: number) {
   const r = (salience / 100) * maxR;
@@ -20,6 +21,7 @@ export interface FieldPlotProps {
 
 export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
   const room = useRoom();
+  const heldSeconds = useHeldSeconds(room.heldQuestion?.heldSince ?? null);
   const cx = 150;
   const cy = 112;
   const maxR = 96;
@@ -94,7 +96,8 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
               ? "blip grn"
               : "blip";
         const showLabel = c.state === "needs-you" || c.watched || c.state === "spawning";
-        const label = c.state === "needs-you" ? `${c.callsign} ${fmtHoldShort(c.holdSeconds)}` : c.callsign;
+        const craftHoldSeconds = room.heldQuestion?.craftId === c.id ? heldSeconds : c.holdSeconds;
+        const label = c.state === "needs-you" ? `${c.callsign} ${fmtHoldShort(craftHoldSeconds)}` : c.callsign;
         const flip = x > cx;
         const anchor = flip ? "end" : "start";
         const rawX = flip ? x - 10 : x + 10;
@@ -117,6 +120,15 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
               }
             }}
           >
+            <circle
+              className="blip-hit"
+              cx={x}
+              cy={y + 1}
+              r="22"
+              fill="transparent"
+              pointerEvents="all"
+              aria-hidden="true"
+            />
             {c.watched ? (
               <circle
                 cx={x}
@@ -155,7 +167,7 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
                 fontSize="8.5"
                 fill={c.state === "needs-you" ? "#ff5340" : "#ffb347"}
                 letterSpacing="1"
-                style={{ pointerEvents: "none" }}
+                style={{ pointerEvents: c.state === "needs-you" || c.watched ? "all" : "none" }}
               >
                 {label}
               </text>

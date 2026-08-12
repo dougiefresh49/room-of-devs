@@ -170,7 +170,7 @@ export function CommsLog({
           >
             {!block.you ? (
               <div className="comms-who">
-                {block.who.slice(0, 3)}
+                <span title={block.who}>{block.who}</span>
                 {nowPlaying && onAirKey && block.rows.includes(onAirKey) ? (
                   <button type="button" onClick={onOpenFloor} aria-label="Open audio floor">
                     <Waveform active bars={4} />

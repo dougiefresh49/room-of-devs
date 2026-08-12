@@ -93,30 +93,8 @@ export function GaugesScreen() {
         ) : null}
       </div>
 
-      <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
-        GUARD BOARD
-      </div>
-
-      <div className="gboard">
-        {boardGuards.map((g) => (
-          <CutFrame
-            key={g.id}
-            scale="s"
-            className={
-              g.windows.some((w) => w.fraction >= 0.85) ? "gtile-wrap hot" : "gtile-wrap"
-            }
-            innerClassName="gtile"
-          >
-            <div className="gname">{g.label}</div>
-            {g.windows.map((w) => (
-              <GuardBar key={w.window} w={w} />
-            ))}
-          </CutFrame>
-        ))}
-      </div>
-
       <details className="fdials" open>
-        <summary>DIALS · READ-ONLY ▾</summary>
+        <summary>ROOM DIALS · CEREMONY / VOICE / BRAIN · READ-ONLY ▾</summary>
         <div className="knobs">
           <div className="knob k1">
             <div className="kface" />
@@ -146,6 +124,28 @@ export function GaugesScreen() {
           </div>
         </div>
       </details>
+
+      <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
+        GUARD BOARD
+      </div>
+
+      <div className="gboard">
+        {boardGuards.map((g) => (
+          <CutFrame
+            key={g.id}
+            scale="s"
+            className={
+              g.windows.some((w) => w.fraction >= 0.85) ? "gtile-wrap hot" : "gtile-wrap"
+            }
+            innerClassName="gtile"
+          >
+            <div className="gname">{g.label}</div>
+            {g.windows.map((w) => (
+              <GuardBar key={w.window} w={w} />
+            ))}
+          </CutFrame>
+        ))}
+      </div>
 
       <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">
         <span>VOICE CHARS TODAY</span>

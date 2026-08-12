@@ -53,7 +53,7 @@ export function FieldPlaceSheet({
         <button type="button" className="nodesheet-pull" aria-label="Close room menu" onClick={() => onOpenChange(false)}>
           <span aria-hidden />
         </button>
-        <SheetTitle className="visually-hidden">Room and screens</SheetTitle>
+        <SheetTitle className="visually-hidden">Rooms</SheetTitle>
         <div className="froom-pop-cap">COUPLED</div>
         {coupled ? <RoomRow room={coupled} coupled onPress={() => onOpenChange(false)} /> : null}
         <div className="froom-rule" />

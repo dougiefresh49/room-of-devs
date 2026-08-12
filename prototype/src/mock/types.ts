@@ -48,6 +48,8 @@ export interface HeldOption {
 
 export interface HeldQuestion {
   craftId: string;
+  /** Epoch ms when the mock hold began; every HELD clock derives from this fact. */
+  heldSince: number;
   prompt: string;
   options: HeldOption[];
 }

@@ -49,6 +49,7 @@ function makeRichFixtures(roomId: RoomId): RoomState {
     tapIn: null,
     heldQuestion: {
       craftId: "c-0449",
+      heldSince: now - 401_000,
       prompt: "fold the mobile header into shared @room/ui?",
       options: [
         {

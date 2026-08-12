@@ -4,6 +4,7 @@ import { useRoom } from "../mock/store";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { CommsLog, type CommsRow } from "./CommsLog";
 import { ComsHeader } from "./ComsHeader";
+import { useHeldSeconds } from "./useHeldSeconds";
 
 interface ComsScreenProps {
   onOpenNode: (craftId: string) => void;
@@ -16,6 +17,7 @@ function formatHold(seconds: number): string {
 
 export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
   const room = useRoom();
+  const heldSeconds = useHeldSeconds(room.heldQuestion?.heldSince ?? null);
   const heldCraft = room.heldQuestion
     ? room.crafts.find((craft) => craft.id === room.heldQuestion?.craftId)
     : null;
@@ -63,7 +65,7 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
             onClick={() => onOpenNode(heldCraft.id)}
           >
             <Led tone="red" />
-            <b>{heldCraft.callsign} HOLDING · {heldCraft.ticket} · {formatHold(heldCraft.holdSeconds)}</b>
+            <b>{heldCraft.callsign} HOLDING · {heldCraft.ticket} · {formatHold(heldSeconds)}</b>
             <i aria-hidden>▸</i>
           </button>
         ) : null}
@@ -94,7 +96,7 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
       {rows.length === 0 ? (
         <div className="coms-empty">
           <b>TELL MIKEY WHAT TO BUILD</b>
-          <span>Say it out loud. He writes the ticket and puts a dev on it.</span>
+          <span>Type it below — Mikey writes the ticket and picks the crew. Voice runs on the Mac RIG.</span>
         </div>
       ) : null}
     </div>

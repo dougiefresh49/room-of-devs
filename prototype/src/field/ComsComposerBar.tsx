@@ -153,9 +153,12 @@ export function ComsComposerBar({
             }
             if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
             if (event.nativeEvent.isComposing) return;
-            // Coarse pointers (phones): Enter keeps its default newline; the
-            // send key is the only way to send. Fine pointers: Enter sends.
-            if (window.matchMedia("(pointer: coarse)").matches) return;
+            // Phone-class input keeps Enter as a newline. Evaluate at the
+            // keystroke because pointer capability can change at runtime.
+            if (
+              window.matchMedia("(pointer: coarse)").matches ||
+              navigator.maxTouchPoints > 0
+            ) return;
             event.preventDefault();
             submit();
           }}

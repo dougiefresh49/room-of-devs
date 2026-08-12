@@ -220,6 +220,12 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     enterHangar();
   }, [enterHangar, sheetCraftId]);
 
+  useEffect(() => {
+    const onDeckOpenHangar = () => openHangar();
+    window.addEventListener("field:open-hangar", onDeckOpenHangar);
+    return () => window.removeEventListener("field:open-hangar", onDeckOpenHangar);
+  }, [openHangar]);
+
   const finishSheetClose = useCallback(() => {
     const action = sheetCloseAction.current;
     const opener = sheetOpener.current;
@@ -330,13 +336,13 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           break;
         case "tap-in":
         case "spawn":
-          routeTo("coms", () => setScreen("coms"));
+          if (screen !== "coms") setPending(roomId, "coms", true);
           break;
         case "commission-opened":
           openHangar();
           break;
         case "speech":
-          routeTo("coms", () => setScreen("coms"));
+          if (screen !== "coms") setPending(roomId, "coms", true);
           break;
         case "cross-room":
           routeTo("glance", () => setScreen("glance"));
@@ -347,20 +353,32 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
           break;
       }
     }
-  }, [canAutoNavigate, fleet, heldKeys, openHangar, room, roomId, setPending, setScreen]);
+  }, [canAutoNavigate, fleet, heldKeys, openHangar, room, roomId, screen, setPending, setScreen]);
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      // Topmost sheet first: the screens sheet sits above screen content.
-      if (screensOpen) {
-        event.preventDefault();
-        event.stopPropagation();
-        setScreensOpen(false);
-      } else if (sheetCraftId) {
+      // Close the topmost visible takeover before descending the ladder.
+      if (sheetCraftId) {
         event.preventDefault();
         event.stopPropagation();
         closeNode();
+      } else if (voiceOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setVoiceOpen(false);
+      } else if (floorOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setFloorOpen(false);
+      } else if (screensOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setScreensOpen(false);
+      } else if (placeOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setPlaceOpen(false);
       } else if (hangarOpen) {
         event.preventDefault();
         event.stopPropagation();
@@ -369,7 +387,7 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     };
     window.addEventListener("keydown", onEscape, true);
     return () => window.removeEventListener("keydown", onEscape, true);
-  }, [closeNode, hangarOpen, restoreFromHangar, screensOpen, sheetCraftId]);
+  }, [closeNode, floorOpen, hangarOpen, placeOpen, restoreFromHangar, screensOpen, sheetCraftId, voiceOpen]);
 
   const unseenHeld = Boolean(
     room.heldQuestion && currentHeldKey && !seenHeldKeys.has(currentHeldKey),

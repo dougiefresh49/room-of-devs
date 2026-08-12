@@ -622,8 +622,9 @@ body:has(.field-root.is-bare) {
   gap: 5px;
 }
 .field-root .gauge-info-trigger {
-  width: 16px;
-  height: 16px;
+  position: relative;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -636,6 +637,13 @@ body:has(.field-root.is-bare) {
   line-height: 1;
   cursor: pointer;
   opacity: 0.8;
+}
+.field-root .gauge-info-trigger::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255, 179, 71, .22);
+  border-radius: 50%;
+  content: "";
 }
 .field-root .gauge-info-trigger:hover,
 .field-root .gauge-info-trigger:focus-visible {
@@ -1008,10 +1016,17 @@ body:has(.field-root.is-bare) {
   gap: 7px;
   margin-bottom: 4px;
   color: var(--amber-dim);
-  font: 9px var(--mono);
+  font: 10px var(--mono);
   letter-spacing: 0.18em;
   line-height: 1.2;
   text-transform: uppercase;
+}
+.field-root .comms-who > span:first-child {
+  display: block;
+  max-width: 7ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .field-root .comms-who button {
   display: flex;
@@ -1050,7 +1065,11 @@ body:has(.field-root.is-bare) {
   border-left: 2px solid var(--amber);
   box-shadow: -6px 0 18px -10px rgba(255, 179, 71, 0.9);
 }
-.field-root .comms-text { display: block; }
+.field-root .comms-text,
+.field-root .comms-say.you .comms-text {
+  display: block;
+  white-space: pre-wrap;
+}
 .field-root .comms-text.is-clamped {
   display: -webkit-box;
   max-height: 270px;
@@ -1076,8 +1095,8 @@ body:has(.field-root.is-bare) {
   align-items: center;
   gap: 8px;
   margin: 14px 0 10px;
-  color: var(--steel-dim);
-  font: var(--f-cap) var(--mono);
+  color: #9da4ab;
+  font: 10px var(--mono);
   letter-spacing: 0.1em;
   white-space: nowrap;
 }
@@ -1170,7 +1189,7 @@ body:has(.field-root.is-bare) {
 .field-root .fberth-shell > button { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
 .field-root .fberth {
   display: grid;
-  grid-template-columns: 28px 32px minmax(0, 1fr) 54px;
+  grid-template-columns: 26px 32px minmax(0, 1fr) 60px;
   grid-template-rows: 32px 16px;
   align-items: center;
   gap: 2px 6px;
@@ -1183,9 +1202,10 @@ body:has(.field-root.is-bare) {
 .field-root .fberth-main small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .field-root .fberth-main b { color: var(--steel); font: 9px var(--stencil); letter-spacing: 0.08em; }
 .field-root .fberth-main small { margin-top: 3px; color: var(--steel-dim); font: var(--f-sec) var(--mono); }
-.field-root .fberth-salience { display: flex; align-items: center; gap: 3px; }
-.field-root .fberth-salience .rig-salience { min-width: 0; }
-.field-root .fberth-salience b { color: var(--amber); font: var(--f-micro) var(--mono); }
+.field-root .fberth-salience { display: flex; min-width: 0; align-items: center; gap: 3px; }
+.field-root .fberth-salience .rig-salbar { min-width: 0; flex: 1; gap: 2px; }
+.field-root .fberth-salience .rig-salbar-seg { width: 3px; }
+.field-root .fberth-salience b { flex: none; color: var(--amber); font: var(--f-micro) var(--mono); white-space: nowrap; }
 .field-root .fberth-flags { grid-column: 3 / 5; display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
 .field-root .fberth.is-scratch { opacity: 0.55; }
 .field-root .fhangar-commission {
@@ -1277,6 +1297,7 @@ body:has(.field-root.is-bare) {
   scrollbar-width: thin;
   scrollbar-color: var(--amber-dim) transparent;
 }
+.field-nodesheet.is-full .nodesheet-body { padding-bottom: 8px; }
 .field-nodesheet.is-full .nodesheet-task {
   display: block;
   overflow: visible;
@@ -1398,12 +1419,53 @@ body:has(.field-root.is-bare) {
 .nodesheet-keycap .rig-keycap-hint { font: 9px var(--mono); }
 .nodesheet-open-full { width: 100%; min-height: 44px; margin-top: 10px; border: 1px dashed #3a3f45; background: transparent; color: var(--steel-dim); cursor: pointer; font: 9px var(--mono); letter-spacing: .14em; }
 .nodesheet-context { padding-top: 16px; }
+.nodesheet-back {
+  min-height: 44px;
+  margin: -8px 0 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--steel-dim);
+  cursor: pointer;
+  font: 9px var(--mono);
+  letter-spacing: .12em;
+}
 .nodesheet-cap { padding-bottom: 7px; border-bottom: 1px solid rgba(255, 179, 71, 0.18); color: var(--steel-dim); font: var(--f-cap) var(--stencil); letter-spacing: 0.16em; }
 .nodesheet-tail { padding: 8px; background: rgba(0, 0, 0, 0.32); color: var(--amber); font: var(--f-sec)/1.6 var(--mono); }
 .nodesheet-tail span { margin-right: 6px; color: var(--steel-dim); }
 .nodesheet-spend { padding: 9px 2px; color: var(--steel); font: var(--f-sec) var(--mono); letter-spacing: 0.05em; }
 .nodesheet-diff { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; border: 1px dashed #3a3f45; color: var(--steel-dim); font: var(--f-sec) var(--mono); }
 .nodesheet-diff b { color: var(--amber-dim); }
+.nodesheet-board-status {
+  flex: none;
+  padding: 3px 5px;
+  border: 1px solid #343940;
+  border-radius: 5px 1px 1px 1px;
+  background: rgba(0, 0, 0, .2);
+  color: var(--steel-dim);
+  font-size: 8.5px;
+  letter-spacing: .04em;
+}
+.nodesheet-answerbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: none;
+  gap: 6px;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 179, 71, .22);
+  background: linear-gradient(180deg, rgba(20, 19, 17, .96), #141311);
+}
+.nodesheet-keycap.rig-keycap.is-compact {
+  grid-template-columns: 22px minmax(0, 1fr);
+  min-height: 48px;
+  gap: 4px;
+  margin: 0;
+  padding: 5px;
+  font: 8.5px/1.15 var(--mono);
+}
+.nodesheet-keycap.is-compact .rig-keycap-glyph { width: 22px; height: 22px; }
+.nodesheet-keycap.is-compact .rig-keycap-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nodesheet-keycap.is-compact .rig-keycap-hint { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .field-nodesheet,
   .field-bounds-sheet {
@@ -1456,7 +1518,7 @@ body:has(.field-root.is-bare) {
 .field-root .ftop-room {
   display: flex;
   min-width: 120px;
-  min-height: 40px;
+  min-height: 44px;
   max-width: 48%;
   align-items: center;
   gap: 7px;
@@ -1500,6 +1562,16 @@ body:has(.field-root.is-bare) {
   touch-action: manipulation;
   transform: translateX(-50%);
 }
+.field-root .ftop-screens::before {
+  position: absolute;
+  z-index: -1;
+  inset: 7px 0;
+  border: 1px solid var(--gun-edge);
+  border-radius: 9px 3px 3px 3px;
+  background: linear-gradient(180deg, rgba(58, 64, 70, .58), rgba(31, 35, 40, .7));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+  content: "";
+}
 .field-root .ftop-screens b {
   font: 800 11px var(--stencil);
   letter-spacing: .18em;
@@ -1510,11 +1582,13 @@ body:has(.field-root.is-bare) {
   height: 8px;
   flex: none;
 }
+.field-root .ftop-screens > svg { width: 12px; height: 12px; color: var(--steel); }
 .field-root .ftop-pip {
   display: flex;
   width: auto;
+  min-width: 44px;
   max-width: 84px;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: flex-end;
   gap: 5px;
@@ -1562,18 +1636,40 @@ body:has(.field-root.is-bare) {
 .field-root .fcomposer::after { display: none; animation: none; }
 .field-root .fcomposer-target {
   display: flex;
-  height: 16px;
+  min-height: 44px;
   min-width: 0;
   align-items: center;
   gap: 4px;
-  padding: 0 12px;
-  margin-top: 6px;
+  padding: 0 6px 0 12px;
   color: var(--amber-dim);
   font: 8.5px/1.2 var(--mono);
   letter-spacing: .05em;
 }
 .field-root .fcomposer-target > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.field-root .fcomposer-target > button { width: 28px; height: 16px; flex: none; padding: 0; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; font: 12px/16px var(--mono); }
+.field-root .fcomposer-target > button {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--steel-dim);
+  cursor: pointer;
+  font: 16px/1 var(--mono);
+}
+.field-root .fcomposer-target > button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 4px;
+  border: 1px solid #343940;
+  border-radius: 7px 2px 2px 2px;
+  background: rgba(0, 0, 0, .22);
+  content: "";
+}
 .field-root .fcomposer-row {
   display: flex;
   min-width: 0;
@@ -1680,7 +1776,7 @@ body:has(.field-root.is-bare) {
   cursor: pointer;
   text-align: left;
 }
-.field-root .coms-heldrow b { overflow: hidden; font: 9px var(--stencil); letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
+.field-root .coms-heldrow b { overflow: hidden; color: #d1d5d9; font: 10px var(--stencil); letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
 .field-root .coms-heldrow i { color: var(--red); font-style: normal; }
 .field-root .coms-receipts { flex: none; margin-top: 6px; }
 .field-root .coms-receipt { overflow: hidden; padding: 6px 8px; border: 1px dashed var(--amber-dim); background: var(--amber-ghost); color: var(--amber); font: 10px/1.4 var(--mono); text-overflow: ellipsis; white-space: nowrap; }

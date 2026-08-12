@@ -5,6 +5,7 @@ import { AvatarFace } from "../avatars/AvatarFace";
 import { answer, focusCraftForAnswer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
+import { useHeldSeconds } from "./useHeldSeconds";
 
 function fmtHold(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -40,6 +41,7 @@ export function NodeSheet({
   const closeFinished = useRef(false);
   const pullStart = useRef<{ x: number; y: number } | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const heldSeconds = useHeldSeconds(question?.heldSince ?? null, craft?.holdSeconds ?? 0);
 
   const finishClose = useCallback(() => {
     if (closeFinished.current) return;
@@ -58,9 +60,16 @@ export function NodeSheet({
     return () => window.clearTimeout(fallback);
   }, [finishClose, open]);
 
-  // The full form lands in the same single scroll body, scrolled to top.
+  // Each direction remounts the scroll body; the frame reset catches the
+  // post-layout height change as well as the immediate content swap.
   useLayoutEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    const body = bodyRef.current;
+    if (!body) return;
+    body.scrollTop = 0;
+    const frame = window.requestAnimationFrame(() => {
+      if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [showFull]);
 
   useLayoutEffect(() => {
@@ -92,7 +101,7 @@ export function NodeSheet({
 
   const held = craft.state === "needs-you";
   const settled = craft.state === "settled";
-  const stateLabel = held ? `HELD ${fmtHold(craft.holdSeconds)}` : settled ? "SETTLED" : "WORKING";
+  const stateLabel = held ? `HELD ${fmtHold(heldSeconds)}` : settled ? "SETTLED" : "WORKING";
   const stateTone = held ? "red" : settled ? "green" : "amber";
   const questionOnly = question != null && !showFull;
 
@@ -101,6 +110,23 @@ export function NodeSheet({
     setMinHeight(sheet ? Math.ceil(sheet.getBoundingClientRect().height) : null);
     setShowFull(true);
   };
+
+  const chooseAnswer = (optionId: string) => {
+    answer(optionId);
+    onAnswered();
+  };
+
+  const answerKeycaps = (compact = false) => question?.options.map((option, index) => (
+    <Keycap
+      key={option.id}
+      glyph={String(index + 1)}
+      label={option.label}
+      hint={`SAY “${option.speakHint}”`}
+      armed={option.armed}
+      onPress={() => chooseAnswer(option.id)}
+      className={`nodesheet-keycap${compact ? " is-compact" : ""}`}
+    />
+  ));
 
   return (
     <Sheet
@@ -124,7 +150,7 @@ export function NodeSheet({
         <button
           type="button"
           className="nodesheet-pull"
-          aria-label="Disengage and close node"
+          aria-label="Close node"
           onPointerDown={(event) => {
             pullStart.current = { x: event.clientX, y: event.clientY };
             event.currentTarget.setPointerCapture(event.pointerId);
@@ -161,31 +187,18 @@ export function NodeSheet({
             <div className="nodesheet-state">
               <Tag tone={stateTone}>{stateLabel}</Tag>
               <button type="button" className="nodesheet-disengage" onClick={onRequestClose}>
-                DISENGAGE ▾
+                CLOSE ▾
               </button>
             </div>
           </div>
           {!questionOnly ? <p className="nodesheet-task">{craft.task}</p> : null}
         </header>
 
-        <div ref={bodyRef} className="nodesheet-body">
+        <div key={showFull ? "full" : "question"} ref={bodyRef} className="nodesheet-body">
           {questionOnly && question ? (
             <section className="nodesheet-answer" aria-label="Held question answers">
               <p>{question.prompt}</p>
-              {question.options.map((option, index) => (
-                <Keycap
-                  key={option.id}
-                  glyph={String(index + 1)}
-                  label={option.label}
-                  hint={`SAY “${option.speakHint}”`}
-                  armed={option.armed}
-                  onPress={() => {
-                    answer(option.id);
-                    onAnswered();
-                  }}
-                  className="nodesheet-keycap"
-                />
-              ))}
+              {answerKeycaps()}
               <button type="button" className="nodesheet-open-full" onClick={openFull}>
                 OPEN FULL NODE ▸
               </button>
@@ -193,6 +206,11 @@ export function NodeSheet({
           ) : null}
 
           {!questionOnly ? <section className="nodesheet-context">
+            {question ? (
+              <button type="button" className="nodesheet-back" onClick={() => setShowFull(false)}>
+                ◂ BACK TO QUESTION
+              </button>
+            ) : null}
             <div className="nodesheet-cap">LIVE TAIL</div>
             <div className="nodesheet-tail">
               {craft.tail.slice(-4).map((line, index) => (
@@ -207,10 +225,16 @@ export function NodeSheet({
             </div>
             <div className="nodesheet-diff">
               <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
-              <span>ON THE BIG BOARD ▸</span>
+              <span className="nodesheet-board-status">ON THE BIG BOARD</span>
             </div>
           </section> : null}
         </div>
+
+        {showFull && question ? (
+          <section className="nodesheet-answerbar" aria-label="Held question answers">
+            {answerKeycaps(true)}
+          </section>
+        ) : null}
       </SheetContent>
     </Sheet>
   );

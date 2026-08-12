@@ -3800,6 +3800,11 @@ footer {
 }
 body:has(.field-root) .deck-fab { display: none; }
 html.deck-forced .deck-fab { display: block !important; }
+html.deck-forced body:has(.field-root) .deck-fab {
+  top: calc(var(--field-screen-top, 0px) + 52px);
+  right: max(8px, calc(100vw - var(--field-screen-left, 0px) - var(--field-screen-width, 100vw) + 8px));
+  bottom: auto;
+}
 .deck-touch-hint {
   margin: 0 4px 8px;
   color: var(--steel-dim);

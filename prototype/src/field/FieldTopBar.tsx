@@ -110,7 +110,7 @@ export function FieldTopBar({
         onClick={onOpenScreens}
       >
         <b>{hangarOpen ? "HANGAR" : screen.toUpperCase()}</b>
-        <ChevronDown size={10} aria-hidden />
+        <ChevronDown size={12} aria-hidden />
         {aggregate ? (
           <Led tone={aggregate.tone} pulse={aggregate.pulse} className="ftop-screens-led" />
         ) : null}
