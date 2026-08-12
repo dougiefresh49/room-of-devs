@@ -531,7 +531,7 @@ body:has(.field-root.is-bare) {
 }
 .field-root .knobs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   justify-items: center;
   gap: 14px 8px;
   padding: 12px 2px 8px;
