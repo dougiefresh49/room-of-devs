@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetTitle } from "@room/ui";
 import { Keycap, Tag } from "@room/ui/rig";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { answer, focusCraftForAnswer } from "../mock/scenario";
 import { useRoom } from "../mock/store";
@@ -35,8 +35,11 @@ export function NodeSheet({
   const craft = room.crafts.find((item) => item.id === craftId);
   const question = room.heldQuestion?.craftId === craftId ? room.heldQuestion : null;
   const [showFull, setShowFull] = useState(false);
+  // Captured question-form height: the sheet never gets SMALLER on OPEN FULL NODE.
+  const [minHeight, setMinHeight] = useState<number | null>(null);
   const closeFinished = useRef(false);
   const pullStart = useRef<{ x: number; y: number } | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const finishClose = useCallback(() => {
     if (closeFinished.current) return;
@@ -48,11 +51,17 @@ export function NodeSheet({
     if (open) {
       closeFinished.current = false;
       setShowFull(false);
+      setMinHeight(null);
       return;
     }
     const fallback = window.setTimeout(finishClose, 240);
     return () => window.clearTimeout(fallback);
   }, [finishClose, open]);
+
+  // The full form lands in the same single scroll body, scrolled to top.
+  useLayoutEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [showFull]);
 
   useLayoutEffect(() => {
     focusCraftForAnswer(craftId);
@@ -87,6 +96,12 @@ export function NodeSheet({
   const stateTone = held ? "red" : settled ? "green" : "amber";
   const questionOnly = question != null && !showFull;
 
+  const openFull = (event: MouseEvent<HTMLButtonElement>) => {
+    const sheet = event.currentTarget.closest<HTMLElement>(".field-nodesheet");
+    setMinHeight(sheet ? Math.ceil(sheet.getBoundingClientRect().height) : null);
+    setShowFull(true);
+  };
+
   return (
     <Sheet
       open
@@ -97,8 +112,9 @@ export function NodeSheet({
       <SheetContent
         side="bottom"
         showClose={false}
-        className={`screenbed field-nodesheet field-sheet-open${open ? "" : " is-closing"}`}
+        className={`screenbed field-nodesheet field-sheet-open${questionOnly ? "" : " is-full"}${open ? "" : " is-closing"}`}
         overlayClassName={`field-sheet-overlay${open ? "" : " is-closing"}`}
+        style={minHeight != null && !questionOnly ? { minHeight } : undefined}
         aria-modal="true"
         onCloseAutoFocus={(event) => event.preventDefault()}
         onAnimationEnd={(event) => {
@@ -152,47 +168,49 @@ export function NodeSheet({
           {!questionOnly ? <p className="nodesheet-task">{craft.task}</p> : null}
         </header>
 
-        {questionOnly && question ? (
-          <section className="nodesheet-answer" aria-label="Held question answers">
-            <p>{question.prompt}</p>
-            {question.options.map((option, index) => (
-              <Keycap
-                key={option.id}
-                glyph={String(index + 1)}
-                label={option.label}
-                hint={`SAY “${option.speakHint}”`}
-                armed={option.armed}
-                onPress={() => {
-                  answer(option.id);
-                  onAnswered();
-                }}
-                className="nodesheet-keycap"
-              />
-            ))}
-            <button type="button" className="nodesheet-open-full" onClick={() => setShowFull(true)}>
-              OPEN FULL NODE ▸
-            </button>
-          </section>
-        ) : null}
+        <div ref={bodyRef} className="nodesheet-body">
+          {questionOnly && question ? (
+            <section className="nodesheet-answer" aria-label="Held question answers">
+              <p>{question.prompt}</p>
+              {question.options.map((option, index) => (
+                <Keycap
+                  key={option.id}
+                  glyph={String(index + 1)}
+                  label={option.label}
+                  hint={`SAY “${option.speakHint}”`}
+                  armed={option.armed}
+                  onPress={() => {
+                    answer(option.id);
+                    onAnswered();
+                  }}
+                  className="nodesheet-keycap"
+                />
+              ))}
+              <button type="button" className="nodesheet-open-full" onClick={openFull}>
+                OPEN FULL NODE ▸
+              </button>
+            </section>
+          ) : null}
 
-        {!questionOnly ? <section className="nodesheet-context">
-          <div className="nodesheet-cap">LIVE TAIL</div>
-          <div className="nodesheet-tail">
-            {craft.tail.slice(-4).map((line, index) => (
-              <div key={`${line.kind}-${line.text}-${index}`}>
-                <span aria-hidden>{line.kind === "cmd" ? "▸" : "·"}</span>
-                {line.text}
-              </div>
-            ))}
-          </div>
-          <div className="nodesheet-spend">
-            {`${(craft.tokens / 1000).toFixed(1)}k TOK · $${craft.spendUsd.toFixed(2)} · ${craft.turns} TURNS`}
-          </div>
-          <div className="nodesheet-diff">
-            <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
-            <span>ON THE BIG BOARD ▸</span>
-          </div>
-        </section> : null}
+          {!questionOnly ? <section className="nodesheet-context">
+            <div className="nodesheet-cap">LIVE TAIL</div>
+            <div className="nodesheet-tail">
+              {craft.tail.slice(-4).map((line, index) => (
+                <div key={`${line.kind}-${line.text}-${index}`}>
+                  <span aria-hidden>{line.kind === "cmd" ? "▸" : "·"}</span>
+                  {line.text}
+                </div>
+              ))}
+            </div>
+            <div className="nodesheet-spend">
+              {`${(craft.tokens / 1000).toFixed(1)}k TOK · $${craft.spendUsd.toFixed(2)} · ${craft.turns} TURNS`}
+            </div>
+            <div className="nodesheet-diff">
+              <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
+              <span>ON THE BIG BOARD ▸</span>
+            </div>
+          </section> : null}
+        </div>
       </SheetContent>
     </Sheet>
   );

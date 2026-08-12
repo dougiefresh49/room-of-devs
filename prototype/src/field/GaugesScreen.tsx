@@ -115,16 +115,7 @@ export function GaugesScreen() {
         ))}
       </div>
 
-      <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">
-        <span>VOICE CHARS TODAY</span>
-        <Odometer
-          value={spend.voiceCharsToday}
-          digits={5}
-          rolling={burning}
-        />
-      </CutFrame>
-
-      <details className="fdials">
+      <details className="fdials" open>
         <summary>DIALS · READ-ONLY ▾</summary>
         <div className="knobs">
           <div className="knob k1">
@@ -155,6 +146,15 @@ export function GaugesScreen() {
           </div>
         </div>
       </details>
+
+      <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">
+        <span>VOICE CHARS TODAY</span>
+        <Odometer
+          value={spend.voiceCharsToday}
+          digits={5}
+          rolling={burning}
+        />
+      </CutFrame>
     </div>
   );
 }

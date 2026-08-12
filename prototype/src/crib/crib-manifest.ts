@@ -439,7 +439,8 @@ export const instruments: Instrument[] = [
       "prototype/src/field/ComsScreen.tsx",
       "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/FieldHangar.tsx",
-      "prototype/src/field/FieldDock.tsx",
+      "prototype/src/field/FieldScreensSheet.tsx",
+      "prototype/src/field/FieldTopBar.tsx",
       "prototype/src/field/FieldPlaceSheet.tsx",
       "prototype/src/field/OrdersScreen.tsx",
       "prototype/src/field/ComsHeader.tsx",
@@ -725,7 +726,7 @@ export const instruments: Instrument[] = [
     "verdict": "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
     "consumers": [
       "prototype/src/console/ConsoleDock.tsx",
-      "prototype/src/field/FieldDock.tsx"
+      "prototype/src/field/ComsComposerBar.tsx"
     ],
     "surfaces": [
       "console",

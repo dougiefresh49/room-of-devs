@@ -24,7 +24,10 @@ interface CommsLogProps {
   nowPlaying?: NowPlaying | null;
   onOpenFloor?: () => void;
   onAirAliases?: string[];
-  stickyHeader?: ReactNode;
+  /** In-flow row at the thread's chronological end (e.g. the held row). */
+  endAdornment?: ReactNode;
+  /** Stable key for the end adornment — drives near-bottom auto-scroll. */
+  endAdornmentKey?: string | null;
 }
 
 interface CommsGroup {
@@ -82,7 +85,8 @@ export function CommsLog({
   nowPlaying = null,
   onOpenFloor,
   onAirAliases = [],
-  stickyHeader,
+  endAdornment,
+  endAdornmentKey = null,
 }: CommsLogProps) {
   const logRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -134,12 +138,22 @@ export function CommsLog({
     if (log) log.scrollTop = log.scrollHeight;
   }, [rowAppendKey]);
 
+  // A newly arrived end adornment (held row) reveals itself only when the
+  // reader is already near the bottom — never yank someone reading history.
+  // Initial mount is covered by the append effect above (bottom-anchored).
+  useLayoutEffect(() => {
+    if (!endAdornmentKey) return;
+    const log = logRef.current;
+    if (!log) return;
+    const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 120;
+    if (nearBottom) log.scrollTop = log.scrollHeight;
+  }, [endAdornmentKey]);
+
   return (
     <div
       ref={logRef}
       className={`vt comms-log ${className}`.trim()}
     >
-      {stickyHeader}
       {blocks.map((block, blockIndex) =>
         block.kind === "divider" ? (
           <div className="comms-divider" key={`divider-${block.at}-${blockIndex}`}>
@@ -218,6 +232,8 @@ export function CommsLog({
           <div className="comms-say">{footNote}</div>
         </div>
       ) : null}
+
+      {endAdornment}
     </div>
   );
 }

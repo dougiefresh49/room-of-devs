@@ -4,17 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { roomShortLabel } from "../chrome/MastheadTabs";
 import { useAppState, useFleet, useRoom } from "../mock/store";
 import { MacGlyph, PhoneGlyph, formatElapsed } from "../rig-ext/NowPlaying";
-import type { FieldScreen } from "./FieldDock";
+import type { FieldBadge, FieldScreen } from "./types";
 
 export function FieldTopBar({
   screen,
   hangarOpen,
+  screensOpen,
+  aggregate,
   onOpenPlaces,
+  onOpenScreens,
   onOpenFloor,
 }: {
   screen: FieldScreen;
   hangarOpen: boolean;
+  screensOpen: boolean;
+  aggregate: FieldBadge | null;
   onOpenPlaces: () => void;
+  onOpenScreens: () => void;
   onOpenFloor: () => void;
 }) {
   const room = useRoom();
@@ -53,7 +59,7 @@ export function FieldTopBar({
       <button
         type="button"
         className="ftop-room"
-        aria-label={`Room ${roomLabel}; ${redCount} rooms need you; open room and screen menu`}
+        aria-label={`Room menu — ${roomLabel}; ${redCount} rooms need you`}
         onPointerDown={(event) => {
           start.current = { x: event.clientX, y: event.clientY };
           suppressClick.current = false;
@@ -95,7 +101,20 @@ export function FieldTopBar({
         <b>{roomLabel}</b>
         <ChevronDown size={10} aria-hidden />
       </button>
-      <div className="ftop-title">{hangarOpen ? "HANGAR" : screen.toUpperCase()}</div>
+      <button
+        type="button"
+        className="ftop-screens"
+        aria-haspopup="dialog"
+        aria-expanded={screensOpen}
+        aria-label={`Screens menu — ${hangarOpen ? "HANGAR" : screen.toUpperCase()}${aggregate ? `; ${aggregate.label}` : ""}`}
+        onClick={onOpenScreens}
+      >
+        <b>{hangarOpen ? "HANGAR" : screen.toUpperCase()}</b>
+        <ChevronDown size={10} aria-hidden />
+        {aggregate ? (
+          <Led tone={aggregate.tone} pulse={aggregate.pulse} className="ftop-screens-led" />
+        ) : null}
+      </button>
       <button
         type="button"
         className={`ftop-pip${nowPlaying ? " is-playing" : ""}`}

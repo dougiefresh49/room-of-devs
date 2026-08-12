@@ -56,10 +56,10 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
         nowPlaying={room.nowPlaying}
         onAirAliases={onAirAliases}
         onOpenFloor={onOpenFloor}
-        stickyHeader={room.heldQuestion && heldCraft ? (
+        endAdornment={room.heldQuestion && heldCraft ? (
           <button
             type="button"
-            className="screenbed coms-banner"
+            className="coms-heldrow"
             onClick={() => onOpenNode(heldCraft.id)}
           >
             <Led tone="red" />
@@ -67,6 +67,7 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
             <i aria-hidden>▸</i>
           </button>
         ) : null}
+        endAdornmentKey={room.heldQuestion && heldCraft ? `held:${heldCraft.id}` : null}
       />
 
       {latestBirth ? (

@@ -68,10 +68,10 @@
   color: inherit;
   font: inherit;
 }
-.field-root.mood-mic-open .fscr .inner > *:not(.fdock) {
+.field-root.mood-mic-open .fscr .inner > *:not(.fcomposer) {
   opacity: 0.55;
 }
-.field-root.mood-mic-open .fdock {
+.field-root.mood-mic-open .fcomposer {
   opacity: 1;
 }
 .field-root.mood-the-lull .trow {
@@ -100,8 +100,9 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: var(--field-dock-h, 58px);
-  scroll-padding-bottom: var(--field-dock-h, 58px);
+  /* Composer height exists only while COMS is active; other screens get 0. */
+  padding-bottom: var(--field-composer-h, 0px);
+  scroll-padding-bottom: var(--field-composer-h, 0px);
   -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 18px), transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 18px), transparent 100%);
   scrollbar-width: thin;
@@ -222,7 +223,6 @@
 }
 .field-root.is-bare {
   --field-topbar-h: 44px;
-  --field-dock-h: 58px;
   min-height: 100dvh;
   align-items: stretch;
   padding: 0;
@@ -530,8 +530,10 @@ body:has(.field-root.is-bare) {
   color: var(--amber);
 }
 .field-root .knobs {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  gap: 14px 8px;
   padding: 12px 2px 8px;
 }
 .field-root .knob {
@@ -1252,8 +1254,9 @@ body:has(.field-root.is-bare) {
   max-height: min(62dvh, calc(var(--field-screen-height) * 0.62)) !important;
   flex-direction: column;
   gap: 0 !important;
-  overflow-y: auto;
-  padding: 0 12px 16px !important;
+  /* Non-scrolling shell: pull + header stay pinned, .nodesheet-body scrolls. */
+  overflow: hidden;
+  padding: 0 12px 0 !important;
   border: 1px solid var(--amber-dim) !important;
   background: linear-gradient(180deg, #25221c, #141311) !important;
   color: var(--steel) !important;
@@ -1261,6 +1264,28 @@ body:has(.field-root.is-bare) {
 }
 .field-nodesheet[data-state="open"] { animation: field-sheet-in 180ms ease-out both; }
 .field-nodesheet.is-closing { animation: field-sheet-out 160ms ease-in both; }
+/* Full node form: taller cap, standard type ladder — never a shrunken variant. */
+.field-nodesheet.is-full {
+  max-height: min(88dvh, calc(var(--field-screen-height) * 0.88)) !important;
+}
+.field-nodesheet .nodesheet-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
+}
+.field-nodesheet.is-full .nodesheet-task {
+  display: block;
+  overflow: visible;
+  font: 15px/1.5 var(--ui);
+  -webkit-line-clamp: unset;
+}
+.field-nodesheet.is-full .nodesheet-tail { font: 10.5px/1.6 var(--mono); }
+.field-nodesheet.is-full .nodesheet-spend,
+.field-nodesheet.is-full .nodesheet-diff { font: 10.5px var(--mono); }
 @keyframes field-sheet-in {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -1459,14 +1484,31 @@ body:has(.field-root.is-bare) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.field-root .ftop-title {
+/* Screens chooser — the folded nav. ≥44px hit box, aggregate LED alongside. */
+.field-root .ftop-screens {
   position: absolute;
   left: 50%;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
   color: var(--amber);
+  cursor: pointer;
+  touch-action: manipulation;
+  transform: translateX(-50%);
+}
+.field-root .ftop-screens b {
   font: 800 11px var(--stencil);
   letter-spacing: .18em;
-  pointer-events: none;
-  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.field-root .ftop-screens .ftop-screens-led {
+  width: 8px;
+  height: 8px;
+  flex: none;
 }
 .field-root .ftop-pip {
   display: flex;
@@ -1496,7 +1538,8 @@ body:has(.field-root.is-bare) {
 .field-root .ftop-pip .rig-waveform { width: 22px; height: 16px; }
 .field-root .ftop-pip .sseg { color: var(--amber); font-size: 10px; }
 
-.field-root .fscr .fdock {
+/* Persistent COMS composer — the only bottom chrome, one slim row. */
+.field-root .fscr .fcomposer {
   position: absolute;
   z-index: 70;
   right: 0;
@@ -1504,72 +1547,46 @@ body:has(.field-root.is-bare) {
   left: 0;
   min-width: 0;
 }
-.field-root:has(.field-sheet-open) .fdock { display: none; }
+.field-root:has(.field-sheet-open) .fcomposer { display: none; }
 .field-root .field-sheet-open[aria-hidden] { display: none; }
-.field-root .fdock > [hidden] { display: none !important; }
-.field-root .fdock-nav {
+.field-root .fcomposer {
   display: flex;
-  min-height: 58px;
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--gun-edge);
-  background: linear-gradient(180deg, rgba(9, 10, 12, .97), rgba(9, 10, 12, .99));
-}
-.field-root .fdock-nav > button {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  min-height: 54px;
-  flex: 1;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 0 0;
-  border: 0;
-  border-top: 2px solid transparent;
-  background: transparent;
-  color: var(--steel-dim);
-  cursor: pointer;
-}
-.field-root .fdock-nav > button.is-active { border-top-color: var(--amber); color: var(--amber); }
-.field-root .fdock-nav > button > span:not(.sr-only):not(.fdock-draft-icon) { margin-top: 3px; font: 8.5px var(--mono); letter-spacing: .14em; }
-.field-root .fdock-nav > button.fdock-draft { flex: 0 0 52px; border-left: 1px solid var(--gun-edge); color: var(--steel); }
-.field-root .fdock-draft-icon { position: relative; display: grid; place-items: center; }
-.field-root .fdock-draft-dot { position: absolute; top: -3px; right: -5px; width: 6px; height: 6px; margin: 0 !important; border-radius: 50%; background: var(--amber); box-shadow: 0 0 7px rgba(255, 179, 71, .75); }
-.field-root .fdock-dot { position: absolute; top: 4px; right: calc(50% - 18px); width: 6px; height: 6px; }
-.field-root .fdock-mic-hot-dot { position: absolute; top: 4px; left: calc(50% - 18px); width: 6px; height: 6px; }
-.field-root .fdock .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-.field-root .fdock-reply {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
+  margin: 0;
   padding: 0 0 env(safe-area-inset-bottom);
   border: 1px solid var(--gun-edge);
   border-radius: 16px 5px 0 0;
   background: linear-gradient(180deg, var(--screen), var(--screen2));
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
 }
-.field-root .fdock-reply::after { display: none; animation: none; }
-.field-root .fcomp-key {
-  display: grid;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  place-items: center;
-  padding: 0;
-  border: 1px solid #3a3f45;
-  border-radius: 6px 2px 2px 2px;
-  background: rgba(0, 0, 0, .2);
-  color: var(--steel-dim);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
-  cursor: pointer;
+.field-root .fcomposer::after { display: none; animation: none; }
+.field-root .fcomposer-target {
+  display: flex;
+  height: 16px;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  margin-top: 6px;
+  color: var(--amber-dim);
+  font: 8.5px/1.2 var(--mono);
+  letter-spacing: .05em;
 }
-.field-root .fcomp-key.sendkey { border-color: var(--amber-dim); background: var(--amber); color: #181206; }
-.field-root .fcomp-key:disabled { cursor: default; opacity: .45; }
-.field-root .fdock-reply > textarea {
+.field-root .fcomposer-target > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field-root .fcomposer-target > button { width: 28px; height: 16px; flex: none; padding: 0; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; font: 12px/16px var(--mono); }
+.field-root .fcomposer-row {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 2px;
+  padding-right: 6px;
+}
+.field-root .fcomposer-row > textarea {
   position: relative;
   z-index: 6;
   display: block;
-  width: 100%;
+  min-width: 0;
+  flex: 1;
   height: 45px;
   min-height: 45px;
   max-height: min(150px, 30dvh);
@@ -1585,32 +1602,40 @@ body:has(.field-root.is-bare) {
   scrollbar-width: thin;
   scrollbar-color: var(--amber-dim) transparent;
 }
-.field-root .fdock-reply > textarea::placeholder { color: var(--steel-dim); opacity: 1; }
-.field-root .fdock-actions { position: relative; z-index: 6; display: flex; height: 44px; min-width: 0; align-items: center; gap: 8px; padding: 0 12px; }
-.field-root .fdock-action-spacer { min-width: 0; flex: 1; }
-.field-root .fdock-target {
-  display: flex;
-  min-width: 0;
-  max-width: 150px;
+.field-root .fcomposer-row > textarea::placeholder { color: var(--steel-dim); opacity: 1; }
+/* Keys: 44px interactive box with a 36px visible face inside, bottom-aligned. */
+.field-root .fckey {
+  display: grid;
+  width: 44px;
+  min-width: 44px;
   height: 44px;
-  align-items: center;
-  gap: 4px;
-  overflow: hidden;
-  color: var(--amber-dim);
-  font: 8.5px/1.2 var(--mono);
-  letter-spacing: .05em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--steel-dim);
+  cursor: pointer;
 }
-.field-root .fdock-target > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.field-root .fdock-target > button { width: 24px; height: 44px; flex: none; padding: 0; border: 0; background: transparent; color: var(--steel-dim); cursor: pointer; font: 12px/44px var(--mono); }
-.field-root .fdock-mic.is-hot {
+.field-root .fckey-face {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #3a3f45;
+  border-radius: 6px 2px 2px 2px;
+  background: rgba(0, 0, 0, .2);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+}
+.field-root .fckey.is-send .fckey-face { border-color: var(--amber-dim); background: var(--amber); color: #181206; }
+.field-root .fckey:disabled { cursor: default; opacity: .45; }
+.field-root .fckey.is-hot { opacity: 1; }
+.field-root .fckey.is-hot .fckey-face {
   border-color: var(--red);
   background: rgba(255, 83, 64, .14);
   color: var(--red);
-  opacity: 1;
 }
-.field-root .fdock-mic.is-hot span { font: 7px var(--mono); letter-spacing: .02em; }
+.field-root .fckey.is-hot .fckey-face b { font: 6.5px var(--mono); letter-spacing: .02em; }
 
 .field-root .fplot-legend {
   display: flex;
@@ -1639,17 +1664,15 @@ body:has(.field-root.is-bare) {
 .field-root .coms-header-copy span { margin-left: 5px; color: var(--amber-dim); font: 8.5px var(--mono); white-space: nowrap; }
 .field-root .coms-header .rig-waveform { width: 72px; height: 16px; }
 .field-root .coms-thread { margin-top: 0; }
-.field-root .coms-banner {
-  position: sticky;
-  z-index: 4;
-  top: 0;
+/* In-flow held row at the thread's chronological end — scrolls with content. */
+.field-root .coms-heldrow {
   display: grid;
   grid-template-columns: 8px minmax(0, 1fr) auto;
   width: 100%;
   min-height: 40px;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-top: 8px;
   padding: 5px 7px;
   border: 1px solid var(--red);
   background: rgba(50, 13, 10, .96);
@@ -1657,19 +1680,19 @@ body:has(.field-root.is-bare) {
   cursor: pointer;
   text-align: left;
 }
-.field-root .coms-banner b { overflow: hidden; font: 9px var(--stencil); letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
-.field-root .coms-banner i { color: var(--red); font-style: normal; }
+.field-root .coms-heldrow b { overflow: hidden; font: 9px var(--stencil); letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
+.field-root .coms-heldrow i { color: var(--red); font-style: normal; }
 .field-root .coms-receipts { flex: none; margin-top: 6px; }
 .field-root .coms-receipt { overflow: hidden; padding: 6px 8px; border: 1px dashed var(--amber-dim); background: var(--amber-ghost); color: var(--amber); font: 10px/1.4 var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 .field-root .coms-receipts .trow { width: 100%; margin-top: 5px; text-align: left; }
 .field-root .coms-empty { display: grid; gap: 5px; padding: 14px; color: var(--steel-dim); font: 13px/1.45 var(--ui); }
 .field-root .coms-empty b { color: var(--amber); font-family: var(--stencil); letter-spacing: .1em; }
 
-.field-root .fdials { margin-top: 14px; }
+.field-root .fdials { margin-top: 12px; }
 .field-root .fdials summary { min-height: 44px; padding: 13px 2px; color: var(--steel-dim); cursor: pointer; font: 800 8.5px var(--stencil); letter-spacing: .2em; list-style: none; }
 .field-root .fdials summary::-webkit-details-marker { display: none; }
 
-.field-root .fhangar { inset: var(--field-topbar-h, 44px) 0 var(--field-dock-h, 58px); padding: 8px 12px; }
+.field-root .fhangar { inset: var(--field-topbar-h, 44px) 0 0; padding: 8px 12px; }
 
 .field-bounds-sheet {
   position: fixed !important;
@@ -1699,6 +1722,31 @@ body:has(.field-root.is-bare) {
 .field-placesheet .froom-hangar-entry { grid-template-columns: 18px minmax(0, 1fr) auto !important; }
 .field-placesheet .froom-rule { height: 1px; margin: 3px 4px; background: rgba(255, 179, 71, .16); }
 .field-placesheet .froom-link { display: flex; min-height: 44px; align-items: center; gap: 8px; padding: 5px; color: var(--steel-dim); font: 9px var(--mono); letter-spacing: .08em; }
+
+/* Screens sheet — the folded nav rows (same primitive as the place sheet). */
+.field-screenssheet { max-height: min(70dvh, calc(var(--field-screen-height) * .7)) !important; padding: 0 12px 12px !important; }
+.field-screenssheet > button:not(.nodesheet-pull) {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--steel);
+  cursor: pointer;
+  font: 800 11px var(--stencil);
+  letter-spacing: .12em;
+  text-align: left;
+}
+.field-screenssheet > button:not(.nodesheet-pull):focus-visible { outline: 1px solid var(--amber-dim); }
+.field-screenssheet > button.is-active { color: var(--amber); }
+.field-screenssheet > button svg { flex: none; }
+.field-screenssheet .fss-name { min-width: 0; flex: 1; }
+.field-screenssheet .fss-draft { display: inline-flex; flex: none; align-items: center; gap: 4px; color: var(--amber); font: 8.5px var(--mono); letter-spacing: .1em; }
+.field-screenssheet .rig-led { width: 8px; height: 8px; flex: none; }
+.field-screenssheet > button em { flex: none; color: var(--amber); font: 9px var(--mono); font-style: normal; }
 
 .field-floorsheet { max-height: min(88dvh, calc(var(--field-screen-height) * .88)) !important; padding: 0 14px 18px !important; text-align: center; }
 .field-floorsheet .ffloor-persona { display: flex; align-items: center; justify-content: center; gap: 7px; }
@@ -1767,4 +1815,8 @@ body:has(.field-root.is-bare) {
 @container (max-width: 360px) {
   .field-root .trow { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .field-root .trow .rig-tag { grid-column: 2 / 4; justify-self: end; }
+  /* Three top-bar zones must never collide: room chip yields to the title. */
+  .field-root .ftop-room { min-width: 0; max-width: 118px; }
+  .field-root .ftop-room b { max-width: 52px; }
+  .field-root .ftop-screens { padding: 0 6px; }
 }
