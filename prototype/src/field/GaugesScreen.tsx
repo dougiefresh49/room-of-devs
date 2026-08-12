@@ -47,7 +47,39 @@ export function GaugesScreen() {
 
   return (
     <div className="screen-body gauges-body" data-part="F-05">
-      <div className="dotmx ghost gboard-cap gauge-cap-info">
+      <details className="fdials" open>
+        <summary>ROOM DIALS · CEREMONY / VOICE / BRAIN · READ-ONLY ▾</summary>
+        <div className="knobs">
+          <div className="knob k1">
+            <div className="kface" />
+            <div className="kl">1 · CEREMONY</div>
+            <div className="kv">FULL</div>
+            <div className="khome">
+              <b>HOME: PLAN CARD</b>
+            </div>
+          </div>
+          <div className="knob k2">
+            <div className="kface" />
+            <div className="kl">2 · VOICE</div>
+            <div className="kv">MIKEY</div>
+            <div className="khome">
+              <b>HOME: FACEPLATE</b>
+            </div>
+          </div>
+          <div className="knob k3">
+            <div className="kface" />
+            <div className="kl">3 · BRAIN</div>
+            <div className="kv">FLASH→OPUS</div>
+            <div className="khome">
+              <b>
+                HOME: TURN CHIP · {turnChip.model} ${turnChip.costUsd.toFixed(3)}
+              </b>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div className="dotmx ghost gboard-cap gauge-cap-info" style={{ marginTop: 12 }}>
         <span>SPEND DIALS</span>
         <Popover>
           <PopoverTrigger className="gauge-info-trigger" aria-label="About spend dials">
@@ -92,38 +124,6 @@ export function GaugesScreen() {
           />
         ) : null}
       </div>
-
-      <details className="fdials" open>
-        <summary>ROOM DIALS · CEREMONY / VOICE / BRAIN · READ-ONLY ▾</summary>
-        <div className="knobs">
-          <div className="knob k1">
-            <div className="kface" />
-            <div className="kl">1 · CEREMONY</div>
-            <div className="kv">FULL</div>
-            <div className="khome">
-              <b>HOME: PLAN CARD</b>
-            </div>
-          </div>
-          <div className="knob k2">
-            <div className="kface" />
-            <div className="kl">2 · VOICE</div>
-            <div className="kv">MIKEY</div>
-            <div className="khome">
-              <b>HOME: FACEPLATE</b>
-            </div>
-          </div>
-          <div className="knob k3">
-            <div className="kface" />
-            <div className="kl">3 · BRAIN</div>
-            <div className="kv">FLASH→OPUS</div>
-            <div className="khome">
-              <b>
-                HOME: TURN CHIP · {turnChip.model} ${turnChip.costUsd.toFixed(3)}
-              </b>
-            </div>
-          </div>
-        </div>
-      </details>
 
       <div className="dotmx ghost gboard-cap" style={{ marginTop: 12 }}>
         GUARD BOARD
