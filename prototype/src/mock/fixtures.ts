@@ -127,9 +127,9 @@ function makeRichFixtures(roomId: RoomId): RoomState {
         {
           id: "elevenlabs",
           label: "ELEVENLABS",
-          // 30-day billing cycle, $ used / $ cap. No session reset.
+          // Token bank: +1K granted monthly, bank caps at 3K. No session reset.
           sessionFraction: null,
-          windows: [{ window: "30D", fraction: 0.41, readout: "$4.10 / $10" }],
+          windows: [{ window: "BANK · +1K/MO", fraction: 1.23 / 3, readout: "1.2K / 3K TOK" }],
         },
         {
           id: "gemini",

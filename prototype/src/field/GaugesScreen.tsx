@@ -54,9 +54,10 @@ export function GaugesScreen() {
             ⓘ
           </PopoverTrigger>
           <PopoverContent className="gauge-info-popover" align="start" sideOffset={6}>
-            <p><b>AMBER ARC</b> — the provider&apos;s window meter, keeps climbing until its cycle resets.</p>
-            <p><b>BLUE ARC</b> — this session&apos;s usage; resets each session. Only Claude and Codex have sessions.</p>
-            <p><b>CURSOR / ELEVENLABS</b> — 30-day rolling cycles.</p>
+            <p><span className="swatch amber" /><b>AMBER ARC</b> — the provider&apos;s window meter, keeps climbing until its cycle resets.</p>
+            <p><span className="swatch blue" /><b className="blue">BLUE ARC</b> — this session&apos;s usage; resets each session. Only Claude and Codex have sessions.</p>
+            <p><b>CURSOR</b> — 30-day rolling cycle.</p>
+            <p><b>ELEVENLABS</b> — tokens: +1K granted monthly, bank caps at 3K.</p>
             <p><b>GEMINI</b> — month-to-date spend against OUR OWN goal, not a provider cap. Real billing-cycle data TBD.</p>
           </PopoverContent>
         </Popover>
