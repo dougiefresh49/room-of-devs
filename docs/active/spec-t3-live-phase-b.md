@@ -218,3 +218,28 @@ signing-key access, loopback-only + no-redirect, failures leak nothing.
   commands) — keep the team path byte-for-byte; add tests around the ack
   marker.
 - Never kill/restart T3; never write its sqlite directly.
+
+## OWNER: final activation (the one gated step)
+
+Everything is built, deployed, and validated EXCEPT the single real reply POST
+(it wakes a T3 agent + spends your Anthropic quota, so it was not auto-run
+overnight). To finish verification:
+
+1. On the mobile room page, open an SDK (T3) session's chat. The composer is
+   now enabled (it was provisioned overnight — `replyable: true`).
+2. Type a short reply and send. It should land in that T3 thread (check the T3
+   app). If you want a zero-consequence target, reply to a throwaway thread.
+3. Watch it arrive live (Phase A): go live MUTED to watch the response as text
+   for free, or unmuted for audio.
+
+If a reply fails, the composer shows a specific reason (not_provisioned,
+auth_expired, t3_unreachable, thread_missing, dispatch_rejected, t3_timeout).
+
+**The bearer:** stored 0600 at `~/.cursor/tts/secrets/t3-bearer`, scoped to
+only `orchestration:read`+`operate`, ~30-day expiry (re-run
+`scripts/t3-provision-bearer.sh` to rotate). To REVOKE it entirely:
+`ELECTRON_RUN_AS_NODE=1 "<T3.app>/Contents/MacOS/<bin>" \
+"<T3.app>/Contents/Resources/app.asar/apps/server/dist/bin.mjs" \
+auth session revoke e33b57d3-e429-4a1d-8d7e-06bb879c751d --base-dir "$HOME/.t3"`
+then delete the bearer file. (Its session id is e33b57d3-…; both bootstrap
+admin sessions from provisioning are already revoked.)
