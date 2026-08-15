@@ -32,6 +32,21 @@ const LIVE_THREAD_BUMP_MS = 2500;
 export type LiveTransition = "idle" | "starting" | "ending";
 export type MuteTransition = "idle" | "muting" | "unmuting";
 
+/** A reply accepted by the daemon but not yet visible in `/thread`. */
+export interface PendingReply {
+  text: string;
+  /** Client wall-clock ms when the send was accepted. */
+  at: number;
+}
+
+/** Injected replies take seconds to land in the transcript (tmux typing / T3
+ *  turn adoption). Pending echoes older than this are dropped as failed. */
+const PENDING_REPLY_TTL_MS = 3 * 60_000;
+
+function normalizeWs(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
 export interface ConvoSnapshot {
   /** Open conversation session id, or null when the sheet is closed. */
   sessionId: string | null;
@@ -47,6 +62,13 @@ export interface ConvoSnapshot {
   ackFlashUntil: number | null;
   /** Bumps to force a `/thread` refetch for the open session. */
   threadRev: number;
+  /**
+   * Optimistic echoes for the OPEN session: replies the daemon accepted that
+   * the transcript hasn't shown yet. The sheet reconciles these against fresh
+   * `/thread` items (drop on match or TTL) — the one deliberate exception to
+   * "nothing is spliced client-side", bounded and self-clearing.
+   */
+  pendingReplies: readonly PendingReply[];
   /**
    * In-flight set_live transition for the OPEN session. While not "idle" every
    * Go-live / End-live control is disabled and further dispatches are ignored,
@@ -77,6 +99,8 @@ class ConvoStore {
   private readonly muteTxnToken = new Map<string, number>();
   /** Live text-freshness tracking for throttled threadRev bumps. */
   private readonly liveFreshTrack = new Map<string, string>();
+  /** Optimistic reply echoes per session, pruned on transcript match/TTL. */
+  private readonly pendingReplies = new Map<string, PendingReply[]>();
   private lastLiveThreadBumpAt = 0;
   private liveThreadBumpTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -147,6 +171,40 @@ class ConvoStore {
   }
 
   /** Force a `/thread` refetch (used right after a reply is accepted). */
+  /** Record an accepted reply so the chat shows it before the transcript does. */
+  addPendingReply(sessionId: string, text: string): void {
+    const list = this.pendingReplies.get(sessionId) ?? [];
+    list.push({ text, at: Date.now() });
+    this.pendingReplies.set(sessionId, list);
+    if (sessionId === this.sessionId) this.emit();
+  }
+
+  /**
+   * Drop pending echoes the transcript now covers (a user item whose
+   * normalized text contains the echo's — tmux injection may wrap the text)
+   * plus any past TTL. Called by the sheet whenever fresh `/thread` items land.
+   */
+  reconcilePendingReplies(
+    sessionId: string,
+    items: ReadonlyArray<{ role: string; text: string }>,
+  ): void {
+    const list = this.pendingReplies.get(sessionId);
+    if (!list?.length) return;
+    const userTexts = items
+      .filter((it) => it.role === "user")
+      .map((it) => normalizeWs(it.text));
+    const cutoff = Date.now() - PENDING_REPLY_TTL_MS;
+    const next = list.filter((p) => {
+      if (p.at < cutoff) return false;
+      const needle = normalizeWs(p.text);
+      return !userTexts.some((t) => t.includes(needle));
+    });
+    if (next.length === list.length) return;
+    if (next.length) this.pendingReplies.set(sessionId, next);
+    else this.pendingReplies.delete(sessionId);
+    if (sessionId === this.sessionId) this.emit();
+  }
+
   bumpThread(): void {
     this.threadRev++;
     this.emit();
@@ -331,6 +389,7 @@ class ConvoStore {
       ackAts: sid ? (this.ackEvents.get(sid) ?? []) : [],
       ackFlashUntil: flash,
       threadRev: this.threadRev,
+      pendingReplies: sid ? (this.pendingReplies.get(sid) ?? []) : [],
       liveTransition: sid ? (this.liveTransitions.get(sid) ?? "idle") : "idle",
       muteTransition: sid ? (this.muteTransitions.get(sid) ?? "idle") : "idle",
     };

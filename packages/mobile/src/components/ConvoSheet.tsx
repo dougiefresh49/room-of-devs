@@ -111,6 +111,10 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   const sessionId = state.sessionId;
   const agent = sessionId ? agents.find((a) => a.sessionId === sessionId) : undefined;
   const { items } = useThread(sessionId, state.threadRev);
+  // Drop optimistic reply echoes the fresh transcript now covers (or TTL).
+  useEffect(() => {
+    if (sessionId) convo.reconcilePendingReplies(sessionId, items);
+  }, [sessionId, items]);
   // The 1s clock (timer + ack-beat expiry) only runs while live / going live —
   // so a plain non-live chat never re-renders its thread on a ticker.
   const now = useNow(!!sessionId && (!!agent?.live?.on || state.callView));
@@ -235,6 +239,9 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
       const r = await requestWithTimeout({ type: "reply", sessionId, text } as Command);
       if (r.ok) {
         convo.resetLiveClips(sessionId);
+        // Echo immediately — injection takes seconds to reach the transcript,
+        // so without this the sent message vanishes until a later refetch.
+        convo.addPendingReply(sessionId, text);
         convo.bumpThread(); // /thread is the source of truth — refetch now
         clearDraft(sessionId);
         audioController.announce(`Reply sent to ${name}`);
@@ -324,6 +331,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
             <ChatView
               agent={agent}
               items={items}
+              pendingReplies={state.pendingReplies}
               replayAll={replayAll}
               liveOn={liveOn}
               callView={callView}

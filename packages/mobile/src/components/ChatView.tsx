@@ -12,7 +12,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { AgentView } from "@room/protocol";
-import type { LiveTransition } from "../convo-state.js";
+import type { LiveTransition, PendingReply } from "../convo-state.js";
 import type { ReplayEntry, ThreadItem } from "../api.js";
 import { findReplayForFinal } from "../thread.js";
 import { IconArrowLeft, IconChevron, IconSpeaker, IconSpeakerOff } from "../icons.js";
@@ -25,6 +25,8 @@ import { Composer } from "./Composer.js";
 interface ChatViewProps {
   agent: AgentView;
   items: ThreadItem[];
+  /** Optimistic echoes of accepted replies not yet in the transcript. */
+  pendingReplies: readonly PendingReply[];
   replayAll: ReplayEntry[];
   liveOn: boolean;
   callView: boolean;
@@ -45,11 +47,19 @@ interface ChatViewProps {
   onSend: (text: string) => Promise<boolean>;
 }
 
-type Row = { kind: "msg"; at: number; item: ThreadItem } | { kind: "ack"; at: number; key: string };
+type Row =
+  | { kind: "msg"; at: number; item: ThreadItem }
+  | { kind: "ack"; at: number; key: string }
+  | { kind: "pending"; at: number; text: string };
+
+function normalizeWs(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
 
 export function ChatView({
   agent,
   items,
+  pendingReplies,
   replayAll,
   liveOn,
   callView,
@@ -94,9 +104,17 @@ export function ChatView({
     for (const at of ackAts) {
       out.push({ kind: "ack", at: Date.parse(at) || 0, key: at });
     }
+    // Optimistic echoes, render-filtered against the transcript so a fresh
+    // refetch never shows the same message twice (store reconcile lags a beat).
+    const userTexts = items.filter((it) => it.role === "user").map((it) => normalizeWs(it.text));
+    for (const p of pendingReplies) {
+      const needle = normalizeWs(p.text);
+      if (userTexts.some((t) => t.includes(needle))) continue;
+      out.push({ kind: "pending", at: p.at, text: p.text });
+    }
     out.sort((a, b) => a.at - b.at);
     return out;
-  }, [items, ackAts]);
+  }, [items, ackAts, pendingReplies]);
 
   // Anchor to the bottom after any content change — but ONLY when the user was
   // already at/near the bottom (captured before this layout by onScroll). Runs
@@ -250,6 +268,16 @@ export function ChatView({
                 className="self-center rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-fg-muted"
               >
                 🔊 acknowledged
+              </div>
+            ) : row.kind === "pending" ? (
+              <div
+                key={`pending-${row.at}`}
+                className="max-w-[86%] self-end whitespace-pre-wrap break-words rounded-2xl rounded-br-md border border-transparent bg-accent/15 px-3 py-2 text-[14px] leading-relaxed text-fg opacity-75"
+              >
+                {row.text}
+                <div className="mt-0.5 text-right text-[10px] font-medium text-fg-muted">
+                  sending…
+                </div>
               </div>
             ) : (
               <ThreadBubble
