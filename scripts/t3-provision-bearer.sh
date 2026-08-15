@@ -103,13 +103,15 @@ chmod 600 "$bootstrap_file"
 # The short-lived admin token exists only in this restricted temp file and in
 # the child processes' stdin/memory. CLI diagnostics are suppressed so a
 # future upstream error cannot accidentally reproduce credentials in logs.
+# NOTE: --token-only would override --json and print a bare token (no
+# sessionId), so we cannot revoke the bootstrap session afterward. Use --json
+# alone; the parser below reads only token + sessionId and discards the rest.
 if ! ELECTRON_RUN_AS_NODE=1 "$t3_bin" "$server_cli" \
   auth session issue \
   --base-dir "$HOME/.t3" \
   --subject room-of-devs-daemon \
   --label "Room of Devs (bootstrap)" \
   --ttl 5m \
-  --token-only \
   --json 2>/dev/null | node -e '
     let input = "";
     process.stdin.setEncoding("utf8");
