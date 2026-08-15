@@ -158,19 +158,12 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
     const liveSession =
       !!sessionId && isLiveSession(sessionId) && !isLiveMuted(sessionId);
 
-    // Playback mode gates the watcher's auto-play only — manual plays
-    // ("once" mode via Play Latest / menu clicks) always go through. The item
-    // stays in queue/ so it can be played manually later.
-    if (auto && !liveSession) {
-      const mode = effectivePlaybackMode();
-      if (mode !== "auto") {
-        log("server", `queued without auto-play (mode=${mode}): ${name}`);
-        return;
-      }
-    }
-
+    // Intermediates are retired (not parked) when live ended/muted or a newer
+    // clip supersedes them — handled BEFORE the playback-mode gate so a stale
+    // live-cc file never lingers in queue/ (where it would derive a phantom
+    // hand-raise) under announce/off modes.
     if (isIntermediate) {
-      // Live toggled off after enqueue — retire without spending a cent.
+      // Live toggled off/muted after enqueue — retire without spending a cent.
       if (!liveSession) {
         log("server", `live off — dropping intermediate ${name}`);
         moveToPlayed(filePath);
@@ -179,6 +172,17 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
       if (sessionId && hasNewerLiveItem(name, sessionId)) {
         log("server", `stale intermediate (newer live clip queued): ${name}`);
         moveToPlayed(filePath);
+        return;
+      }
+    }
+
+    // Playback mode gates the watcher's auto-play only — manual plays
+    // ("once" mode via Play Latest / menu clicks) always go through. The item
+    // stays in queue/ so it can be played manually later.
+    if (auto && !liveSession) {
+      const mode = effectivePlaybackMode();
+      if (mode !== "auto") {
+        log("server", `queued without auto-play (mode=${mode}): ${name}`);
         return;
       }
     }
