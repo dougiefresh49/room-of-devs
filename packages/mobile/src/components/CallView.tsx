@@ -250,18 +250,16 @@ export function CallView({
           {liveMuted ? <IconSpeakerOff /> : <IconSpeaker />}
         </button>
 
-        {injectable ? (
-          <button
-            type="button"
-            onClick={onSendText}
-            aria-label="Send a text"
-            className="grid size-14 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
-          >
-            <IconMessage />
-          </button>
-        ) : (
-          <div className="size-14 shrink-0" aria-hidden="true" />
-        )}
+        {/* injectable → compose a reply; sdk → just view the live text thread
+            (no reply until Phase B). Both slide back to the chat surface. */}
+        <button
+          type="button"
+          onClick={onSendText}
+          aria-label={injectable ? "Send a text" : "Show conversation text"}
+          className="grid size-14 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
+        >
+          <IconMessage />
+        </button>
       </div>
     </div>
   );

@@ -100,9 +100,9 @@ function enqueueIntermediate(sessionId: string, text: string): void {
   if (loadMutedSessions().includes(sessionId)) return;
   if (text.trim().length < MIN_INTERMEDIATE_CHARS) return;
   if (isDuplicate(sessionId, text)) return;
-  // Text-freshness heartbeat: stamp even when live-muted (watch-only path).
-  const nowIso = new Date().toISOString();
-  updateLiveEntry(sessionId, { lastEmitAt: nowIso });
+  // Muted = watch-only: the freshness heartbeat is stamped at the text
+  // observation point in processEntry (covers held finals too); here we just
+  // refuse to enqueue anything billable.
   if (loadLiveSessions()[sessionId]?.muted === true) return;
   try {
     const now = Date.now();
@@ -186,6 +186,12 @@ function processEntry(t: Tailer, entry: TranscriptEntry, emit: Emit = enqueueInt
       if (b?.type === "text" && typeof b.text === "string" && b.text.trim()) {
         if (t.heldText) emit(t.sessionId, t.heldText);
         t.heldText = b.text;
+        // Text-freshness heartbeat: any new assistant text — intermediate OR
+        // a held turn-final — means /thread has new content to show. Stamped
+        // at the observation point (not just on emit) so the mobile chat
+        // refetches even for muted watch-only and single-block replies. Free:
+        // a timestamp write, never a synthesis trigger.
+        updateLiveEntry(t.sessionId, { lastEmitAt: new Date().toISOString() });
       } else if (b?.type === "tool_use") {
         if (t.heldText) {
           emit(t.sessionId, t.heldText);
