@@ -12,7 +12,26 @@ Owner drop zone — bugs, findings, ideas, "next I want…". One bullet each,
 no format rules. Sessions triage these: bugs → fixes/known issues, ideas →
 the backlog, work → `active/` specs or Next up. Empty is the goal state.
 
-- _(empty)_
+- 2026-08-12 (owner): THIS FILE has become "a giant mess… just a giant dump
+  of content" — too much for a human, likely lost on agents too. Rework the
+  status/publish flow toward Theo-style HTML communication: STATUS stays a
+  thin TOC/index, content moves to linked per-topic docs, rendered
+  postplan view for reading. UPDATE 2026-08-13: the fleet `html-status`
+  skill SHIPPED, and its acceptance probe already produced a working
+  rework of THIS file (727 lines → 70-line index + 13 topic docs,
+  browser-verified; evidence attached to fleet issue #8). Next session
+  here: apply that rework for real via the skill.
+- 2026-08-11: orchestration field-test lessons COMPLETE — full retro merged
+  (5 root-caused escapes, verifier-artifact principle, pool-based
+  budgeting) into
+  [reference/orchestration-field-test-2026-08.md](reference/orchestration-field-test-2026-08.md),
+  spend method in
+  [reference/measuring-agent-spend.md](reference/measuring-agent-spend.md),
+  and the run's reusable artifacts vendored verbatim in
+  [reference/field-test-artifacts/](reference/field-test-artifacts/)
+  (delegate-spec exemplar, stream-json delegation pattern, watchdog
+  sketch, figma-snapshot vendoring kit, QA checklist + evidence-branch
+  format, quota calibrations). Feed into the room framework work.
 
 ## Now
 
@@ -638,6 +657,19 @@ permission prompt that fires on first panel PTT recording, self-serve.)
      picks winner(s) → synthesis → build spec.
    - ~~ALL-PROJECTS VIEW — not yet prototyped~~ → folded into Round D
      problem A above.
+   - **FIELD composer polish (owner, 2026-08-12, deferred — "fine for
+     now"):** (a) the message input's grow-as-you-type behavior is wonky
+     vs. the Gemini/Claude-app reference composers (per-line jumps
+     instead of smooth growth, odd wrapping of short lines); (b) add an
+     attachments button (screenshots etc.) to the composer — plumb as
+     mock-only in the prototype, real upload path is a framework
+     concern.
+   - **FIELD node/character cards confuse the owner (2026-08-12):**
+     "I don't understand these tiny minor character cards. I can't look
+     at very much" — the GLANCE full-node sheet (avatar + T-#### · TMUX
+     · CLR row, LIVE TAIL, DIFF strip) needs an explanation pass or a
+     rethink. Revisit when prototype work resumes; owner is fatigued on
+     the prototype and wants framework build next.
    - **Helix orb (console CORE hex ball) looks rough after the r4
      recharge-glow change** — owner: "not so great, leave a note to come
      back to it." Revisit the shading/glow treatment; the encodings
@@ -668,6 +700,7 @@ mode, Donnie avatar art cleanup, and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-08-14 | **T3 Code sessions stay in the room + Settle-aware eviction** — SDK-harness sessions (T3 desktop, `entrypoint: sdk-*`) get an `sdk: true` marker in their state card; SessionEnd `reason=other` (T3's 30-min idle reaper, confirmed in pingdotgg/t3code `ProviderSessionReaper.ts`) and the daemon pid-reaper now KEEP those cards until 12h of inactivity (`SDK_CARD_TTL_MS`). T3's Settle button emits no harness-visible signal (settle = `settledOverride` reclassify + `thread.session.stop`, same `reason=other`), so the room reads T3's local store directly (`~/.t3/userdata/state.sqlite`, read-only: `resume_cursor_json.$.resume` → thread settled/archived/deleted): settled threads evict immediately via both the SessionEnd hook and each reaper sweep (`t3-thread-state.ts`). Terminal-session lifecycle unchanged. Verified free: hook sims (settled cleaned / unsettled kept / non-sdk cleaned) + reaper fakes (settled reaped, fresh sdk kept, 13h-stale sdk reaped) |
 | 2026-08-02 | **Round D built into the prototype** — THE HANGAR (fleet zoom rung, floor bus, traffic strip, berth tabs, ⌘K switcher), commissioning bay with live-bound manifest + cost-honest dials, THE TOOL CRIB at /crib (generated 35-instrument manifest, provenance stamps, stock lamps, work orders), SERVICE SCHEMATIC at /map (harness lighting, wire terminals, gap rivets, shift-click part-number deep links); cmdk/dialog/tooltip/sonner/tabs/collapsible adopted — all three dead shadcn primitives now have consumers |
 | 2026-07-30 | **RIG P2 "the console" shipped** — panel main window is the RIG console (token flip desktop-only, faceplate + Donnie bay, thread nodes + open-node history, crew manifest, watch chips); input parity landed: desktop typed chat (incl. the panel-ws inject fix) + attachments; ~520 lines of legacy style.css deleted |
 | 2026-07-30 | **THE RIG: design target locked + P1 "metal shop" shipped** — design-ui-target.md signed off; --rig-* tokens, 12 RIG primitives + gallery in @room/ui, dock strip reskinned (salience LED bar, ticker, lamps); verified via gallery + codex dock screenshots |

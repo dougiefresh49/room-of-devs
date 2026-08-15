@@ -10,6 +10,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 QUEUE_DIR="$TTS_DIR/queue"
 PLAYED_DIR="$TTS_DIR/played"
 PENDING_FILE="$TTS_DIR/.pending-announce"
@@ -61,8 +63,8 @@ else:
 PY
 fi
 
-if [ -f "$SERVER_DIR/src/state.ts" ] && command -v pnpm &>/dev/null; then
-    (cd "$SERVER_DIR" && pnpm exec tsx src/state.ts recompute "$SESSION_ID") || true
+if [ -f "$SERVER_DIR/src/state.ts" ] && tsx_available; then
+    (cd "$SERVER_DIR" && run_tsx src/state.ts recompute "$SESSION_ID") || true
 fi
 
 log "Cleared $COUNT queued item(s) for ${SHORT}"

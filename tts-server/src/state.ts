@@ -16,7 +16,6 @@ import {
   PLAYED_DIR,
   SESSION_VOICES_PATH,
   getActiveSessions,
-  lookupSessionName,
 } from "./config.js";
 import { isProcessing } from "./playback-locks.js";
 import { log } from "./logger.js";
@@ -39,6 +38,18 @@ interface StateFile {
   state: SessionState;
   raisedAt: string | null;
   updatedAt: string;
+  // SDK-harness sessions (T3 Code): the backing claude process dies on the
+  // app's idle teardown while the thread stays open/resumable, so their cards
+  // outlive the pid — kept until SDK_CARD_TTL_MS of inactivity.
+  sdk?: boolean;
+}
+
+/** How long an sdk-harness card may sit inactive (dead pid) before pruning. */
+export const SDK_CARD_TTL_MS = 12 * 60 * 60 * 1000;
+
+/** True if this card belongs to an SDK-harness (T3 Code) session. */
+export function isSdkCard(sessionId: string): boolean {
+  return readState(sessionId)?.sdk === true;
 }
 
 function statePath(sessionId: string): string {
@@ -128,10 +139,13 @@ export function setSessionState(
     if (state === "hand_raised") raisedAt = existing?.raisedAt ?? now;
     else if (state === "speaking") raisedAt = existing?.raisedAt ?? null;
 
-    const name =
-      opts?.name ?? lookupSessionName(sessionId) ?? existing?.name ?? sessionId.slice(0, 12);
+    const info = getActiveSessions().find((s) => s.sessionId === sessionId);
+    const name = opts?.name ?? info?.name ?? existing?.name ?? sessionId.slice(0, 12);
+    // Sticky: the registry file vanishes on teardown, so carry the flag forward.
+    const sdk = existing?.sdk === true || (info?.entrypoint ?? "").startsWith("sdk");
 
     const data: StateFile = { sessionId, name, state, raisedAt, updatedAt: now };
+    if (sdk) data.sdk = true;
     const tmp = `${statePath(sessionId)}.tmp.${process.pid}`;
     writeFileSync(tmp, JSON.stringify(data, null, 2));
     renameSync(tmp, statePath(sessionId));
@@ -253,6 +267,10 @@ export function seedStateOnStartup(): void {
       if (!f.endsWith(".json")) continue;
       const sid = f.slice(0, -5);
       if (!liveIds.has(sid)) {
+        // Keep sdk-harness cards (T3 threads) until their inactivity TTL —
+        // their process being gone is normal, not a dead session.
+        const age = sessionStateAgeMs(sid);
+        if (isSdkCard(sid) && age != null && age < SDK_CARD_TTL_MS) continue;
         try {
           unlinkSync(join(STATE_DIR, f));
           log("state", `Pruned dead session state: ${sid.slice(0, 12)}`);

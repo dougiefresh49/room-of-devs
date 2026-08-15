@@ -9,6 +9,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 SCRIPTS_DIR="$TTS_DIR/scripts"
 SERVER_DIR="$TTS_DIR/tts-server"
 REPLAY_DIR="$TTS_DIR/replay"
@@ -45,7 +47,7 @@ fi
 replay_newest() {
     log "Replaying newest saved audio from replay/"
     cd "$SERVER_DIR"
-    exec pnpm exec tsx src/signal.ts replay "" 1
+    tsx_exec src/signal.ts replay "" 1
 }
 
 # Idle restart ("say that again"): newest replay IS the last message.

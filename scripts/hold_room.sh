@@ -19,6 +19,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 CONFIG="$TTS_DIR/config.json"
 SCRIPTS_DIR="$TTS_DIR/scripts"
 SERVER_DIR="$TTS_DIR/tts-server"
@@ -102,7 +104,7 @@ case "$ARG" in
         # Nudge the deferred-announce path so hands raised during the hold get
         # announced by name on lift (free local `say`, no API calls).
         if [ -f "$SERVER_DIR/src/announce.ts" ]; then
-            (cd "$SERVER_DIR" && pnpm exec tsx src/announce.ts fire) >/dev/null 2>&1 || true
+            (cd "$SERVER_DIR" && run_tsx src/announce.ts fire) >/dev/null 2>&1 || true
         fi
         ;;
     ""|[0-9]*)

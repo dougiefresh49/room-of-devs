@@ -46,6 +46,56 @@ if [ "$REASON" = "clear" ] || [ "$REASON" = "resume" ]; then
     exit 0
 fi
 
+# SDK-harness sessions (T3 Code): the app tears down the backing process on
+# idle while the thread stays open/resumable — keep the room card (the
+# daemon's reaper prunes it after the sdk inactivity TTL). Exception: T3's
+# Settle button also stops the session; a settled/archived/deleted thread in
+# T3's local store means the owner is done → clean now. (Settle emits no
+# harness-visible signal — reason=other either way — so we read T3's db.)
+if [ -f "$STATE_DIR/$SESSION_ID.json" ]; then
+    VERDICT=$(STATE_FILE="$STATE_DIR/$SESSION_ID.json" SESSION_ID="$SESSION_ID" python3 - <<'PY' 2>/dev/null || echo cleanup
+import json, os, sqlite3
+
+try:
+    sdk = json.load(open(os.environ["STATE_FILE"], encoding="utf-8")).get("sdk") is True
+except Exception:
+    sdk = False
+if not sdk:
+    print("cleanup")
+    raise SystemExit(0)
+
+db = os.path.expanduser("~/.t3/userdata/state.sqlite")
+if os.path.exists(db):
+    try:
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=1)
+        rows = con.execute(
+            "SELECT t.settled_override, t.archived_at, t.deleted_at"
+            " FROM provider_session_runtime r"
+            " JOIN projection_threads t ON t.thread_id = r.thread_id"
+            " WHERE json_extract(r.resume_cursor_json,'$.resume') = ?",
+            (os.environ["SESSION_ID"],),
+        ).fetchall()
+        con.close()
+        if rows and all(
+            so == "settled" or arch is not None or dele is not None
+            for so, arch, dele in rows
+        ):
+            print("settled")
+            raise SystemExit(0)
+    except sqlite3.Error:
+        pass
+print("keep")
+PY
+)
+    if [ "$VERDICT" = "keep" ]; then
+        log "Kept sdk-harness card for $SESSION_ID (reason=$REASON — thread resumable)"
+        exit 0
+    fi
+    if [ "$VERDICT" = "settled" ]; then
+        log "T3 thread settled — cleaning card for $SESSION_ID (reason=$REASON)"
+    fi
+fi
+
 STATE_DIR="$STATE_DIR" SESSION_VOICES="$SESSION_VOICES" TEAM_MAP="$TEAM_MAP" \
 SESSION_ID="$SESSION_ID" python3 - <<'PY'
 import json, os, subprocess

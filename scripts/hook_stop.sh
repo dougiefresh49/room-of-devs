@@ -8,6 +8,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 SERVER_DIR="$TTS_DIR/tts-server"
 SCRIPTS_DIR="$TTS_DIR/scripts"
 LOG_FILE="$TTS_DIR/logs/hook.log"
@@ -23,9 +25,9 @@ if [ -f "$LISTENING_FLAG" ]; then
 fi
 
 # Prefer Node.js ingest (faster, no python subprocess overhead)
-if [ -f "$SERVER_DIR/src/ingest.ts" ] && command -v pnpm &>/dev/null; then
+if [ -f "$SERVER_DIR/src/ingest.ts" ] && tsx_available; then
     cd "$SERVER_DIR"
-    exec pnpm exec tsx src/ingest.ts
+    tsx_exec src/ingest.ts
 fi
 
 # Fallback to bash script

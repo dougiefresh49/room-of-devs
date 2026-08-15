@@ -8,6 +8,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 SERVER_DIR="$TTS_DIR/tts-server"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 HOOK_LOG_MAX_BYTES=$((5 * 1024 * 1024))
@@ -70,9 +72,9 @@ fi
 
 # Route through Node.js signal handler for in-character TTS.
 # H-5: question text travels via temp file, not argv (ps-visible).
-if [ -f "$SERVER_DIR/src/signal.ts" ] && command -v pnpm &>/dev/null; then
+if [ -f "$SERVER_DIR/src/signal.ts" ] && tsx_available; then
     cd "$SERVER_DIR"
     TEXT_FILE=$(mktemp "${TMPDIR:-/tmp}/hook-ask-text.XXXXXX")
     printf '%s' "$QUESTION_TEXT" > "$TEXT_FILE"
-    exec pnpm exec tsx src/signal.ts ask-user "$SESSION_ID" --text-file "$TEXT_FILE"
+    tsx_exec src/signal.ts ask-user "$SESSION_ID" --text-file "$TEXT_FILE"
 fi

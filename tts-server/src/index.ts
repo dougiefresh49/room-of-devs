@@ -31,8 +31,10 @@ import { getPhrasesForVoice, playRandomPhrase } from "./phrases.js";
 import {
   seedStateOnStartup,
   cleanupSession,
+  isSdkCard,
   listStateSessionIds,
   sessionStateAgeMs,
+  SDK_CARD_TTL_MS,
 } from "./state.js";
 import { reconcileSessionLineage } from "./session-lineage.js";
 import { isLiveSession } from "./live-mode.js";
@@ -44,6 +46,7 @@ import { startMobileHttp, stopMobileHttp } from "./mobile-http.js";
 import { startDnd, stopDnd } from "./dnd.js";
 import { startInterpreter, stopInterpreter } from "./interpreter/service.js";
 import { registryPidBySessionId, isPidAlive } from "./session-catalog.js";
+import { t3DoneSessionIds } from "./t3-thread-state.js";
 import { rotateLogIfLarge, runStartupRetention, runPeriodicMaintenance } from "./maintenance.js";
 import { emitNotice } from "./services/commands.js";
 import { bumpSnapshot } from "./state-watch.js";
@@ -508,7 +511,17 @@ const reaperTimer = setInterval(() => {
   try {
     runPeriodicMaintenance();
     const pids = registryPidBySessionId();
-    for (const sid of listStateSessionIds()) {
+    const allSids = listStateSessionIds();
+    // T3 Settle/archive/delete is the explicit "done with this thread" signal
+    // sdk sessions never deliver via hooks — read it from T3's own store.
+    const t3Done = t3DoneSessionIds(allSids.filter(isSdkCard));
+    for (const sid of allSids) {
+      if (t3Done.has(sid)) {
+        reaperMisses.delete(sid);
+        log("server", `Reaping settled T3 card ${sid.slice(0, 12)}`);
+        cleanupSession(sid);
+        continue;
+      }
       const age = sessionStateAgeMs(sid);
       if (age != null && age < REAPER_MIN_AGE_MS) {
         reaperMisses.delete(sid);
@@ -517,6 +530,12 @@ const reaperTimer = setInterval(() => {
       const pid = pids.get(sid);
       const alive = pid != null && isPidAlive(pid);
       if (alive) {
+        reaperMisses.delete(sid);
+        continue;
+      }
+      // SDK-harness (T3) sessions: dead pid is the app's normal idle teardown,
+      // not a closed thread — keep the card until the inactivity TTL.
+      if (isSdkCard(sid) && age != null && age < SDK_CARD_TTL_MS) {
         reaperMisses.delete(sid);
         continue;
       }

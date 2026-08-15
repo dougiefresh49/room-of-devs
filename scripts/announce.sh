@@ -21,6 +21,8 @@ fi
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 CONFIG="${TTS_DIR}/config.json"
 SESSION_VOICES="${TTS_DIR}/session_voices.json"
 MUTED="${TTS_DIR}/muted_sessions.json"
@@ -86,9 +88,9 @@ defer() {
 # busy → defer the hand; rc 0/1 means the chime played or there was nothing to
 # play. This closes the check-then-play race the old read-only lock check had.
 if ls "${PHRASES_DIR}/${VOICE}"/announce_*.mp3 >/dev/null 2>&1; then
-  if [ -f "$SERVER_DIR/src/phrases.ts" ] && command -v pnpm >/dev/null 2>&1; then
+  if [ -f "$SERVER_DIR/src/phrases.ts" ] && tsx_available; then
     rc=0
-    (cd "$SERVER_DIR" && pnpm exec tsx src/phrases.ts play "$VOICE" announce) >/dev/null 2>&1 || rc=$?
+    (cd "$SERVER_DIR" && run_tsx src/phrases.ts play "$VOICE" announce) >/dev/null 2>&1 || rc=$?
     if [ "$rc" = "2" ]; then
       defer
     else

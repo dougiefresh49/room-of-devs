@@ -9,6 +9,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 SESSION_VOICES="$TTS_DIR/session_voices.json"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 
@@ -52,7 +54,7 @@ else
     log "Set voice for session $SESSION_ID → $VOICE_ID"
     # Pre-generate phrases for this voice in the background (if not already cached)
     SERVER_DIR="$TTS_DIR/tts-server"
-    if [ -f "$SERVER_DIR/src/phrases.ts" ] && command -v pnpm &>/dev/null; then
-        (cd "$SERVER_DIR" && pnpm exec tsx src/phrases.ts "$VOICE_ID") &>/dev/null &
+    if [ -f "$SERVER_DIR/src/phrases.ts" ] && tsx_available; then
+        (cd "$SERVER_DIR" && run_tsx src/phrases.ts "$VOICE_ID") &>/dev/null &
     fi
 fi

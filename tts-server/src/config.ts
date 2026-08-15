@@ -346,6 +346,8 @@ export interface SessionInfo {
   name: string;
   cwd: string;
   status: string;
+  /** Harness entrypoint from the registry file: "cli" for terminals, "sdk-*" for app-embedded (T3 Code) sessions. */
+  entrypoint: string;
 }
 
 export function getActiveSessions(): SessionInfo[] {
@@ -363,6 +365,7 @@ export function getActiveSessions(): SessionInfo[] {
             name: data.name || data.sessionId.slice(0, 12),
             cwd: data.cwd || "",
             status: data.status || "",
+            entrypoint: data.entrypoint || "",
           });
         }
       } catch {

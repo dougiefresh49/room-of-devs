@@ -9,6 +9,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 SERVER_DIR="$TTS_DIR/tts-server"
 LOG_FILE="$TTS_DIR/logs/hook.log"
 
@@ -20,11 +22,11 @@ if [ -z "$QUEUE_FILE" ] || [ ! -f "$QUEUE_FILE" ]; then
     exit 1
 fi
 
-if [ -f "$SERVER_DIR/src/index.ts" ] && command -v pnpm &>/dev/null; then
+if [ -f "$SERVER_DIR/src/index.ts" ] && tsx_available; then
     cd "$SERVER_DIR"
-    exec pnpm exec tsx src/index.ts once "$QUEUE_FILE"
+    tsx_exec src/index.ts once "$QUEUE_FILE"
 fi
 
-log "ERROR: pnpm or tts-server not found — cannot play $QUEUE_FILE (run setup.sh, install pnpm)"
-echo "Error: pnpm or tts-server not found — run setup.sh and install pnpm" >&2
+log "ERROR: tsx or tts-server not found — cannot play $QUEUE_FILE (run setup.sh)"
+echo "Error: tsx or tts-server not found — run setup.sh" >&2
 exit 1

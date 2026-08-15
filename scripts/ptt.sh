@@ -12,6 +12,8 @@ set -euo pipefail
 # Q-14: honor exported TTS_DIR (shared resolver).
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tts-dir.sh"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/tsx-run.sh"
 PTT_DIR="$TTS_DIR/ptt"
 SCRIPTS_DIR="$TTS_DIR/scripts"
 LOG_FILE="$TTS_DIR/logs/hook.log"
@@ -293,9 +295,9 @@ route_transcript() {
     # Fallback: legacy voice.ts CLI (FLOOR_EXIT=10 contract unchanged).
     if [ -f "$VOICE_TS" ]; then
         if [ -n "$target" ]; then
-            (cd "$TTS_SERVER_DIR" && pnpm exec tsx src/voice.ts route --target "$target" "$transcript") || route_exit=$?
+            (cd "$TTS_SERVER_DIR" && run_tsx src/voice.ts route --target "$target" "$transcript") || route_exit=$?
         else
-            (cd "$TTS_SERVER_DIR" && pnpm exec tsx src/voice.ts route "$transcript") || route_exit=$?
+            (cd "$TTS_SERVER_DIR" && run_tsx src/voice.ts route "$transcript") || route_exit=$?
         fi
     else
         log "voice.ts missing — transcript only: $transcript"
