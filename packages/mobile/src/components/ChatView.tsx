@@ -19,6 +19,7 @@ import { IconArrowLeft, IconChevron, IconSpeaker, IconSpeakerOff } from "../icon
 import { Avatar } from "./Avatar.js";
 import { ThreadBubble } from "./ThreadBubble.js";
 import { PlaybackStrip } from "./PlaybackStrip.js";
+import { isReplyComposerEligible } from "../agent-ext.js";
 import { Composer } from "./Composer.js";
 
 interface ChatViewProps {
@@ -295,7 +296,7 @@ export function ChatView({
       </div>
 
       <PlaybackStrip sessionId={agent.sessionId} />
-      {agent.injectable ? (
+      {isReplyComposerEligible(agent) ? (
         <Composer
           key={agent.sessionId}
           sessionId={agent.sessionId}

@@ -742,9 +742,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       sendJson(res, 400, { ok: false });
       return;
     }
-    // Reply needs a real exit-code result — dedicated sync path (not fire-and-forget).
+    // Reply needs a real dispatch result — dedicated awaited path.
     if (bodyType === "reply") {
-      const result = handleReplyAction(body);
+      const result = await handleReplyAction(body);
       if (!result) {
         sendJson(res, 400, { ok: false });
         return;

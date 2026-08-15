@@ -42,6 +42,11 @@ import {
   clearPendingPhoneAck,
 } from "../live-mode.js";
 import {
+  sendT3Reply,
+  t3ReplyProvisioned,
+  type T3ReplyFailureCode,
+} from "../t3-reply.js";
+import {
   parseCommand,
   isKnownCommandType,
   type Command,
@@ -545,15 +550,27 @@ export function validateAndResume(
   return "ok";
 }
 
-// ── Reply (phone → tmux inject) ─────────────────────────────────────────
+// ── Reply (phone → tmux/T3) ─────────────────────────────────────────────
 
-export type ReplyStatus = "ok" | "not_in_team" | "pane_not_ready" | "failed";
+// A T3 dispatch may cold-start the SDK session before its UserPromptSubmit
+// fires, well past the ~1s tmux-inject path. Hold the phone-ack marker long
+// enough to cover that (still one-shot: consumed by the next UPS for the
+// session, and never re-armed).
+const T3_REPLY_ACK_FRESH_MS = 5 * 60_000;
 
-/**
- * Synchronous mobile reply: inject_prompt.sh --now <sessionId> <text>.
- * Returns null on validation failure (caller should 400).
- */
-export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null {
+export type ReplyStatus =
+  | "ok"
+  | "not_in_team"
+  | "pane_not_ready"
+  | "failed"
+  | T3ReplyFailureCode;
+
+interface ValidReply {
+  sessionId: string;
+  text: string;
+}
+
+function validateReply(raw: unknown): ValidReply | null {
   raw = splitCommandEnvelope(raw).body;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const msg = raw as Record<string, unknown>;
@@ -572,7 +589,12 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
     return null;
   }
   if (!sessionInSnapshot(msg.sessionId)) return null;
+  return { sessionId: msg.sessionId, text };
+}
 
+/** Existing team reply path. Keep the marker/inject ordering byte-for-byte. */
+function injectTeamReply(msg: ValidReply): { status: ReplyStatus } {
+  const text = msg.text;
   // Marker BEFORE injecting: the UserPromptSubmit hook can fire while the
   // inject script is still returning — a late marker would miss the ack (and
   // linger to claim a wrong later prompt). Cleared below if injection fails.
@@ -586,6 +608,50 @@ export function handleReplyAction(raw: unknown): { status: ReplyStatus } | null 
   // there is the point: the reply would have been executed as a command.
   if (status === 4) return { status: "pane_not_ready" };
   return { status: "failed" };
+}
+
+export function handleTeamReplyAction(raw: unknown): { status: ReplyStatus } | null {
+  const msg = validateReply(raw);
+  if (!msg) return null;
+  return injectTeamReply(msg);
+}
+
+/** Ordered, exhaustive reply routing. Returns null only for malformed input. */
+export async function handleReplyAction(
+  raw: unknown,
+): Promise<{ status: ReplyStatus } | null> {
+  const msg = validateReply(raw);
+  if (!msg) return null;
+
+  if (isTeamSession(msg.sessionId)) return injectTeamReply(msg);
+
+  if (isSdkCard(msg.sessionId) && t3ReplyProvisioned()) {
+    // Same credit guard as tmux inject: the turn's UserPromptSubmit must
+    // consume a cached phone ack instead of spending Gemini + ElevenLabs. T3
+    // may cold-start the session before UPS fires, so the marker gets a longer
+    // freshness window than the ~1s tmux path.
+    if (!markPendingPhoneAck(msg.sessionId, T3_REPLY_ACK_FRESH_MS)) {
+      // No marker written → a successful dispatch would bill a dynamic
+      // response. Refuse rather than risk it.
+      return { status: "t3_unreachable" };
+    }
+    try {
+      const result = await sendT3Reply(msg.sessionId, msg.text);
+      if (result.ok) return { status: "ok" };
+      // Keep the marker when the dispatch MIGHT have landed (network/timeout at
+      // or after the POST) — the turn could still run and hit UPS. Only clear
+      // on a failure proven to be before/at a rejected dispatch.
+      if (!result.ambiguous) clearPendingPhoneAck();
+      return { status: result.code };
+    } catch {
+      // sendT3Reply never throws, but if it somehow did we can't prove the
+      // dispatch didn't land — keep the marker.
+      return { status: "t3_unreachable" };
+    }
+  }
+
+  if (isSdkCard(msg.sessionId)) return { status: "not_provisioned" };
+  return { status: "not_in_team" };
 }
 
 // ── Terminal / team session management ──────────────────────────────────

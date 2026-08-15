@@ -28,6 +28,11 @@ import {
   readFreshPhoneAck,
   type PhoneAck,
 } from "./live-mode.js";
+import {
+  T3_AUTH_REV_PATH,
+  invalidateT3BearerCache,
+  t3ReplyProvisioned,
+} from "./t3-reply.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
@@ -228,6 +233,7 @@ export function buildSnapshot(): AgentView[] {
   const liveMap = loadLiveSessions();
   const queueIndex = indexQueueDir();
   const playedIndex = indexPlayedDir();
+  const t3Provisioned = t3ReplyProvisioned();
   const agents: AgentView[] = [];
 
   try {
@@ -268,6 +274,7 @@ export function buildSnapshot(): AgentView[] {
         queuedPreview: queuedPreviewFrom(queueIndex.get(shortSession)),
         injectable: inTeam,
         sdk: state.sdk === true,
+        replyable: inTeam || (state.sdk === true && t3Provisioned),
         live: liveEntry?.on
           ? {
               on: true,
@@ -360,6 +367,7 @@ export function startStateWatch(): void {
         PAUSED_FLAG_PATH,
         LIVE_SESSIONS_PATH,
         PHONE_ACK_PATH,
+        T3_AUTH_REV_PATH,
       ].map((p) => basename(p)),
     );
     const relevant = (path: string) =>
@@ -368,9 +376,14 @@ export function startStateWatch(): void {
       ignoreInitial: true,
       depth: 0,
     });
-    watcher.on("add", (p) => relevant(p) && scheduleNotify());
-    watcher.on("change", (p) => relevant(p) && scheduleNotify());
-    watcher.on("unlink", (p) => relevant(p) && scheduleNotify());
+    const onChange = (path: string): void => {
+      if (!relevant(path)) return;
+      if (basename(path) === basename(T3_AUTH_REV_PATH)) invalidateT3BearerCache();
+      scheduleNotify();
+    };
+    watcher.on("add", onChange);
+    watcher.on("change", onChange);
+    watcher.on("unlink", onChange);
     watcher.on("error", (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
       log("state-watch", `watcher error: ${msg}`);

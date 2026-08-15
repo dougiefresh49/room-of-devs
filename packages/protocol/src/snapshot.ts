@@ -68,6 +68,8 @@ export const AgentViewSchema = v.object({
   injectable: v.boolean(),
   /** SDK-harness (T3 Code) session. Additive — readers default false. */
   sdk: v.optional(v.boolean()),
+  /** Reply capability across team inject and provisioned SDK dispatch. */
+  replyable: v.optional(v.boolean()),
   live: v.nullable(AgentLiveSchema),
 });
 export type AgentView = v.InferOutput<typeof AgentViewSchema>;

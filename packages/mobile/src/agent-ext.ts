@@ -4,7 +4,7 @@
  */
 import type { AgentView } from "@room/protocol";
 
-export type AgentViewExt = AgentView & { sdk?: boolean };
+export type AgentViewExt = AgentView & { sdk?: boolean; replyable?: boolean };
 
 export type AgentLiveExt = NonNullable<AgentView["live"]> & {
   muted?: boolean;
@@ -14,6 +14,17 @@ export type AgentLiveExt = NonNullable<AgentView["live"]> & {
 export function isChatEligible(agent: AgentView): boolean {
   const ext = agent as AgentViewExt;
   return agent.injectable || ext.sdk === true;
+}
+
+/** Phase B optional field — may be absent until protocol lane merges. */
+export function readReplyable(agent: AgentView): boolean | undefined {
+  const ext = agent as AgentViewExt;
+  return ext.replyable;
+}
+
+/** Composer + call "Send a text" gate — deploy-skew fallback to injectable. */
+export function isReplyComposerEligible(agent: AgentView): boolean {
+  return readReplyable(agent) ?? agent.injectable;
 }
 
 export function readLiveMuted(agent: AgentView): boolean {

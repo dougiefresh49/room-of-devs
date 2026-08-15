@@ -129,12 +129,23 @@ export function clearLiveSession(sessionId: string): void {
   log("live", `live mode cleared for ${sessionId.slice(0, 12)}`);
 }
 
-/** Reply-from-phone marker (30s TTL). */
-export function markPendingPhoneAck(sessionId: string): void {
+/**
+ * Reply-from-phone marker. Default 30s TTL (team tmux inject, where the
+ * UserPromptSubmit fires within ~1s). A T3 dispatch may cold-start a session
+ * before UPS fires, so its caller passes a longer `freshMs`. Returns false if
+ * the marker could not be written — the sdk reply path treats that as fatal
+ * (dispatching without a marker would bill a dynamic voice response).
+ */
+export function markPendingPhoneAck(sessionId: string, freshMs = PHONE_ACK_FRESH_MS): boolean {
   try {
-    atomicWrite(PENDING_PHONE_ACK_PATH, { sessionId, at: new Date().toISOString() });
+    atomicWrite(PENDING_PHONE_ACK_PATH, {
+      sessionId,
+      at: new Date().toISOString(),
+      freshMs,
+    });
+    return true;
   } catch {
-    /* best-effort */
+    return false;
   }
 }
 
@@ -153,13 +164,17 @@ export function consumePendingPhoneAck(sessionId: string): boolean {
     const raw = JSON.parse(readFileSync(PENDING_PHONE_ACK_PATH, "utf-8")) as {
       sessionId?: string;
       at?: string;
+      freshMs?: number;
     };
     if (raw?.sessionId !== sessionId) return false;
     const age = Date.now() - Date.parse(raw.at ?? "");
     // Consume regardless of freshness — a stale marker must not linger and
-    // claim some future unrelated prompt.
+    // claim some future unrelated prompt. The marker carries its own freshness
+    // window (T3 dispatches use a longer one to cover session cold-start).
+    const freshMs =
+      typeof raw.freshMs === "number" && raw.freshMs > 0 ? raw.freshMs : PHONE_ACK_FRESH_MS;
     atomicWrite(PENDING_PHONE_ACK_PATH, {});
-    return Number.isFinite(age) && age >= 0 && age < PHONE_ACK_FRESH_MS;
+    return Number.isFinite(age) && age >= 0 && age < freshMs;
   } catch {
     return false;
   }

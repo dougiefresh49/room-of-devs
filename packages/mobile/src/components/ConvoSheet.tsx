@@ -20,7 +20,7 @@ import { convo, useConvo } from "../convo-state.js";
 import { useThread } from "../thread.js";
 import { clearDraft } from "../drafts.js";
 import { getLiveMutePref, setLiveMutePref } from "../prefs.js";
-import { isChatEligible, readLiveMuted } from "../agent-ext.js";
+import { isChatEligible, isReplyComposerEligible, readLiveMuted } from "../agent-ext.js";
 import type { ReplayEntry } from "../api.js";
 import { CallView } from "./CallView.js";
 import { ChatView } from "./ChatView.js";
@@ -33,6 +33,17 @@ import { ChatView } from "./ChatView.js";
  * responds). The transport's own 10s TransportError normally wins first.
  */
 const REQUEST_TIMEOUT_MS = 11_000;
+
+const REPLY_FAILURE_ANNOUNCE: Record<string, string> = {
+  not_in_team: "Not in team — respawn from +",
+  pane_not_ready: "Agent isn't running — respawn from +",
+  not_provisioned: "T3 reply not set up — run t3-provision-bearer.sh",
+  auth_expired: "T3 login expired — re-provision",
+  t3_unreachable: "T3 app not reachable",
+  thread_missing: "Could not find the T3 thread",
+  dispatch_rejected: "T3 rejected the reply",
+  t3_timeout: "T3 reply timed out",
+};
 function requestWithTimeout(cmd: Command): Promise<CommandResult> {
   return Promise.race([
     client.request(cmd),
@@ -230,13 +241,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
         return true;
       }
       // Draft is preserved (Composer only clears on `true`) so the user can retry.
-      audioController.announce(
-        r.code === "not_in_team"
-          ? "Not in team — respawn from +"
-          : r.code === "pane_not_ready"
-            ? "Agent isn't running — respawn from +"
-            : "Couldn't send",
-      );
+      audioController.announce(REPLY_FAILURE_ANNOUNCE[r.code ?? ""] ?? "Couldn't send");
       return false;
     } catch {
       // Timed out / transport down (e.g. wedged daemon) — settle visibly.
@@ -303,7 +308,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
                 liveBusy={liveBusy}
                 liveMuted={liveMuted}
                 muteBusy={muteBusy}
-                injectable={agent.injectable}
+                replyable={isReplyComposerEligible(agent)}
                 onEndLive={handleEndLive}
                 onToggleMute={handleToggleMute}
                 onSendText={() => convo.setCallView(false)}

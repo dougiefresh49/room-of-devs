@@ -61,7 +61,8 @@ interface CallViewProps {
   liveBusy: boolean;
   liveMuted: boolean;
   muteBusy: boolean;
-  injectable: boolean;
+  /** True when the user can compose a reply (replyable ?? injectable). */
+  replyable: boolean;
   onEndLive: () => void;
   onToggleMute: () => void;
   onSendText: () => void;
@@ -78,7 +79,7 @@ export function CallView({
   liveBusy,
   liveMuted,
   muteBusy,
-  injectable,
+  replyable,
   onEndLive,
   onToggleMute,
   onSendText,
@@ -221,7 +222,7 @@ export function CallView({
         </div>
       </div>
 
-      {/* dock: End · timer · mute · Send a text (injectable only) */}
+      {/* dock: End · timer · mute · Send a text (replyable sessions only) */}
       <div className="flex shrink-0 items-center justify-between gap-3 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
         <button
           type="button"
@@ -250,12 +251,11 @@ export function CallView({
           {liveMuted ? <IconSpeakerOff /> : <IconSpeaker />}
         </button>
 
-        {/* injectable → compose a reply; sdk → just view the live text thread
-            (no reply until Phase B). Both slide back to the chat surface. */}
+        {/* replyable → compose a reply; sdk without Phase B → view thread only. */}
         <button
           type="button"
           onClick={onSendText}
-          aria-label={injectable ? "Send a text" : "Show conversation text"}
+          aria-label={replyable ? "Send a text" : "Show conversation text"}
           className="grid size-14 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
         >
           <IconMessage />

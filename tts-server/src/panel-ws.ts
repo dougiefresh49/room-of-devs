@@ -43,6 +43,7 @@ import {
   focusTerminal,
   killTeam,
   handleReplyAction,
+  handleTeamReplyAction,
   dispatch,
   onNotice,
   runScript,
@@ -659,10 +660,14 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
   }
 
   if (msg.type === "reply") {
-    // Desktop typed chat (RIG P2): same synchronous inject path mobile-http
-    // uses — dispatch() has no reply case, so without this the command would
-    // no-op and still ack ok.
-    const result = handleReplyAction(msg);
+    // Phase B is mobile-only for SDK cards. Keeping the panel on the existing
+    // synchronous team path avoids spanning its module-scoped request
+    // correlation across an await; a later panel phase can replace that slot.
+    if (!isTeamSession(msg.sessionId)) {
+      sendError(ws, "not_team", msg.sessionId);
+      return;
+    }
+    const result = handleTeamReplyAction(msg);
     if (!result) {
       sendError(ws, "bad_message", msg.sessionId);
     } else if (result.status === "not_in_team") {
