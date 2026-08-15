@@ -1,6 +1,9 @@
+> SHIPPED 2026-08-15 (commits 6160808, 81aca93, e1eb3de). This is the
+> current architecture for T3/sdk live mode. Phase B (replies) is separate.
+
 # Spec: T3 live mode — Phase A (watch/listen live for SDK sessions + live-mute)
 
-Status: ACTIVE (2026-08-15), rev 2 — incorporates Sol + grok plan reviews
+Status: SHIPPED 2026-08-15, rev 2 — incorporates Sol + grok plan reviews
 (/tmp/review-sol-phase-a.md, /tmp/review-grok-phase-a.md). Built overnight by
 delegates against this spec. Phase B (replies into T3 threads) is a separate
 spec written after this ships.
