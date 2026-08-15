@@ -1,6 +1,6 @@
 # Spec: T3 replies — Phase B (reply into a T3 thread from the room)
 
-Status: ACTIVE (2026-08-15), rev 2 — incorporates Sol + grok plan reviews
+Status: ACTIVE (2026-08-15), rev 2 — Security review: PASSED clean (no high-confidence vulns; SQLi/cmd-inj/path/token-leak/SSRF/auth-bypass/TOCTOU all verified defended) — incorporates Sol + grok plan reviews
 (/tmp/review-sol-phase-b.md, /tmp/review-grok-b.md). Depends on Phase A
 (shipped). Research basis: Sol /tmp/t3-auth-report.md (installed T3 nightly
 commit 8c628f14993c, verified live).
