@@ -230,14 +230,29 @@ export function handValidatePanelMessage(raw: unknown): PanelMessage | "bad_mess
     }
     case "set_live":
       if (
-        keys.length !== 3 ||
         typeof msg.sessionId !== "string" ||
         !msg.sessionId.trim() ||
         typeof msg.on !== "boolean"
       ) {
         return "bad_message";
       }
-      return { type: "set_live", sessionId: msg.sessionId, on: msg.on };
+      if (keys.length === 3) {
+        return { type: "set_live", sessionId: msg.sessionId, on: msg.on };
+      }
+      if (keys.length === 4 && typeof msg.muted === "boolean") {
+        return { type: "set_live", sessionId: msg.sessionId, on: msg.on, muted: msg.muted };
+      }
+      return "bad_message";
+    case "set_live_mute":
+      if (
+        keys.length !== 3 ||
+        typeof msg.sessionId !== "string" ||
+        !msg.sessionId.trim() ||
+        typeof msg.muted !== "boolean"
+      ) {
+        return "bad_message";
+      }
+      return { type: "set_live_mute", sessionId: msg.sessionId, muted: msg.muted };
     case "set_voice":
       if (
         keys.length !== 3 ||

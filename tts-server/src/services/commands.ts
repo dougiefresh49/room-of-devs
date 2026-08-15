@@ -26,7 +26,7 @@ import {
   removeSessionFromTeamMap,
   loadTeamMap,
 } from "../team-map.js";
-import { purgeSessionQueue, cleanupSession } from "../state.js";
+import { purgeSessionQueue, cleanupSession, isSdkCard } from "../state.js";
 import { runStatusSay } from "../status-say.js";
 import { isResumableSession, knownDirs } from "../session-catalog.js";
 import { startPlayReplay } from "../audio.js";
@@ -35,7 +35,12 @@ import {
   supersedePhoneGrant,
   markPhonePlaybackDone,
 } from "../now-playing.js";
-import { setLiveSession, markPendingPhoneAck, clearPendingPhoneAck } from "../live-mode.js";
+import {
+  setLiveSession,
+  setLiveMuted,
+  markPendingPhoneAck,
+  clearPendingPhoneAck,
+} from "../live-mode.js";
 import {
   parseCommand,
   isKnownCommandType,
@@ -655,6 +660,7 @@ const MOBILE_ACTION_TYPES = new Set([
   "spawn_session",
   "resume_session",
   "set_live",
+  "set_live_mute",
 ]);
 
 /** Transport-facing guard over the allowlist above. */
@@ -665,12 +671,15 @@ export function isMobileActionType(type: string): boolean {
 export function dispatch(msg: PanelMessage): void {
   switch (msg.type) {
     case "set_live":
-      // Live narration only makes sense for a session we can converse with.
-      if (msg.on && !isTeamSession(msg.sessionId)) {
-        emitNotice("Live mode needs a team session");
+      // Live narration for team (tmux) or SDK-harness (T3) sessions.
+      if (msg.on && !(isTeamSession(msg.sessionId) || isSdkCard(msg.sessionId))) {
+        emitNotice("Live mode needs a team or T3 session");
         return;
       }
-      setLiveSession(msg.sessionId, msg.on);
+      setLiveSession(msg.sessionId, msg.on, { muted: msg.muted });
+      return;
+    case "set_live_mute":
+      setLiveMuted(msg.sessionId, msg.muted);
       return;
     case "grant":
       runScript(

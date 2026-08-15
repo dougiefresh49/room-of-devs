@@ -15,7 +15,7 @@ import type { PlayerSnapshot } from "../audio/controller.js";
 import { usePlayer } from "../audio/react.js";
 import type { ThreadItem } from "../api.js";
 import { lastFinalTextSince } from "../thread.js";
-import { IconMessage, IconPhoneOff } from "../icons.js";
+import { IconMessage, IconPhoneOff, IconSpeaker, IconSpeakerOff } from "../icons.js";
 import { Avatar } from "./Avatar.js";
 import { KaraokeLine } from "./KaraokeLine.js";
 
@@ -59,7 +59,11 @@ interface CallViewProps {
   liveStartedAt: number | null;
   /** A set_live transition is in flight — disable End-live. */
   liveBusy: boolean;
+  liveMuted: boolean;
+  muteBusy: boolean;
+  injectable: boolean;
   onEndLive: () => void;
+  onToggleMute: () => void;
   onSendText: () => void;
 }
 
@@ -72,7 +76,11 @@ export function CallView({
   elapsed,
   liveStartedAt,
   liveBusy,
+  liveMuted,
+  muteBusy,
+  injectable,
   onEndLive,
+  onToggleMute,
   onSendText,
 }: CallViewProps) {
   // The 80ms karaoke tick is subscribed HERE (a leaf), so it never re-renders
@@ -104,13 +112,13 @@ export function CallView({
       : working
         ? {
             mode: "working",
-            tag: "Working",
-            tagClass: "text-state-working",
-            ringClass: "is-working",
+            tag: liveMuted ? "Watching" : "Working",
+            tagClass: liveMuted ? "text-fg-muted" : "text-state-working",
+            ringClass: liveMuted ? "" : "is-working",
           }
         : {
             mode: "idle",
-            tag: "Done",
+            tag: liveMuted ? "Watching" : "Done",
             tagClass: "text-fg-muted",
             ringClass: done ? "is-final" : "",
           };
@@ -179,7 +187,7 @@ export function CallView({
           ) : card.mode === "working" ? (
             <div className="min-h-0 overflow-y-auto text-[15px] leading-relaxed text-fg">
               <div className="flex items-center gap-2">
-                <span className="min-w-0 truncate">{activity?.label || "working"}</span>
+                <span className="min-w-0 truncate">{activity?.label || (liveMuted ? "watching" : "working")}</span>
                 <span className="cv-dots shrink-0 text-accent" aria-hidden="true">
                   <i>.</i>
                   <i>.</i>
@@ -187,47 +195,73 @@ export function CallView({
                 </span>
               </div>
               <div className="mt-2 text-[12px] text-fg-muted">
-                {ackFlash
-                  ? "🔊 acknowledged"
-                  : tools
-                    ? `${tools} tool${tools === 1 ? "" : "s"} so far`
-                    : "listening in…"}
+                {liveMuted
+                  ? "audio off · text only"
+                  : ackFlash
+                    ? "🔊 acknowledged"
+                    : tools
+                      ? `${tools} tool${tools === 1 ? "" : "s"} so far`
+                      : "listening in…"}
               </div>
             </div>
           ) : (
             <div className="min-h-0 overflow-y-auto text-[15px] leading-relaxed text-fg">
-              {done || <span className="text-fg-muted">Listening…</span>}
+              {liveMuted ? (
+                <div>
+                  <div>{activity?.label || "watching"}</div>
+                  <div className="mt-2 text-[12px] text-fg-muted">audio off · text only</div>
+                </div>
+              ) : done ? (
+                done
+              ) : (
+                <span className="text-fg-muted">Listening…</span>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* dock: End · timer · Send a text */}
-      <div className="flex shrink-0 items-center justify-between gap-4 px-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
+      {/* dock: End · timer · mute · Send a text (injectable only) */}
+      <div className="flex shrink-0 items-center justify-between gap-3 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-8">
         <button
           type="button"
           onClick={onEndLive}
           disabled={liveBusy}
           aria-disabled={liveBusy}
           aria-label="End live"
-          className="grid size-14 place-items-center rounded-full bg-danger text-white shadow-lg shadow-danger/30 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger disabled:opacity-60 [&_svg]:size-6"
+          className="grid size-14 shrink-0 place-items-center rounded-full bg-danger text-white shadow-lg shadow-danger/30 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger disabled:opacity-60 [&_svg]:size-6"
         >
           <IconPhoneOff />
         </button>
 
-        <div className="flex-1 text-center">
+        <div className="min-w-0 flex-1 text-center">
           <div className="text-[15px] font-semibold tabular-nums text-fg">{elapsed}</div>
-          <div className="text-[11px] text-fg-muted">live</div>
+          <div className="text-[11px] text-fg-muted">{liveMuted ? "watching" : "live"}</div>
         </div>
 
         <button
           type="button"
-          onClick={onSendText}
-          aria-label="Send a text"
-          className="grid size-14 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
+          onClick={onToggleMute}
+          disabled={muteBusy}
+          aria-disabled={muteBusy}
+          aria-label={liveMuted ? "Unmute live narration" : "Mute live narration"}
+          className="grid size-14 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 [&_svg]:size-[22px]"
         >
-          <IconMessage />
+          {liveMuted ? <IconSpeakerOff /> : <IconSpeaker />}
         </button>
+
+        {injectable ? (
+          <button
+            type="button"
+            onClick={onSendText}
+            aria-label="Send a text"
+            className="grid size-14 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-fg transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-[22px]"
+          >
+            <IconMessage />
+          </button>
+        ) : (
+          <div className="size-14 shrink-0" aria-hidden="true" />
+        )}
       </div>
     </div>
   );

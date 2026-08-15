@@ -47,6 +47,15 @@
     "file": "a/b.mp3"
   },
   {
+    "type": "set_live_mute",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808"
+  },
+  {
+    "type": "set_live_mute",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "muted": "yes"
+  },
+  {
     "type": "reply",
     "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
     "text": ""

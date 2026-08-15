@@ -11,14 +11,15 @@
  * Idle agents get "Replay last" (chunk D) → plays that agent's newest cached
  * clip through the AudioController (App resolves the entry + primes audio).
  *
- * Injectable (team/tmux) sessions also get "Chat" (chunk E) → opens the
- * conversation sheet (chat + live call). Non-injectable sessions keep the
- * classic grant/replay behavior with no chat/call surface (spec §B3).
+ * Injectable (team/tmux) and SDK (T3) sessions get "Chat" (chunk E) → opens the
+ * conversation sheet (chat + live call). Other sessions keep the classic
+ * grant/replay behavior with no chat/call surface (spec §B3).
  */
 import type { AgentView, NowPlaying } from "@room/protocol";
 import { AgentChips, GrantButton, LiveBadge, QueuedPreview, StateBadge } from "@room/ui";
 import { isPhoneFrame } from "@room/room-client";
 import type { OutputDevice } from "../prefs.js";
+import { isChatEligible } from "../agent-ext.js";
 import { Avatar } from "./Avatar.js";
 
 interface AgentCardProps {
@@ -48,7 +49,7 @@ export function AgentCard({
   const displayName = agent.label || agent.name;
   const raised = agent.state === "hand_raised";
   const speaking = agent.state === "speaking";
-  const injectable = agent.injectable;
+  const chatEligible = isChatEligible(agent);
   const onPhone = isPhoneFrame(nowPlaying, clock) && nowPlaying?.sessionId === agent.sessionId;
   const grantSub = output === "phone" ? "on this phone" : "on Mac";
 
@@ -125,16 +126,16 @@ export function AgentCard({
               button on both surfaces. Mobile has no push-to-talk, so no hold
               handlers are passed and this stays a plain tap-to-grant. */}
           <GrantButton pending={grantPending} subLabel={grantSub} onGrant={onGrant} />
-          {injectable ? <div className="grid grid-cols-1">{chatBtn}</div> : null}
+          {chatEligible ? <div className="grid grid-cols-1">{chatBtn}</div> : null}
         </div>
       ) : (
-        // Idle/working/speaking: Replay last (unless speaking) + Chat (injectable).
+        // Idle/working/speaking: Replay last (unless speaking) + Chat (injectable/sdk).
         (() => {
           const showReplay = !speaking;
-          if (!showReplay && !injectable) return null;
+          if (!showReplay && !chatEligible) return null;
           return (
             <div
-              className={`mt-3 grid gap-2 ${showReplay && injectable ? "grid-cols-2" : "grid-cols-1"}`}
+              className={`mt-3 grid gap-2 ${showReplay && chatEligible ? "grid-cols-2" : "grid-cols-1"}`}
             >
               {showReplay ? (
                 <button
@@ -145,7 +146,7 @@ export function AgentCard({
                   Replay last
                 </button>
               ) : null}
-              {injectable ? chatBtn : null}
+              {chatEligible ? chatBtn : null}
             </div>
           );
         })()

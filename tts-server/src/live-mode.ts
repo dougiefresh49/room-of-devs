@@ -22,6 +22,10 @@ export interface LiveEntry {
   toolCount: number;
   turnStartedAt: string | null;
   lastActivity: { label: string; at: string } | null;
+  /** Live-narration mute — watch text, no auto synthesis. Absent on old files ⇒ false. */
+  muted: boolean;
+  /** Heartbeat for emit decisions (ISO). Absent on old files ⇒ null. */
+  lastEmitAt: string | null;
 }
 
 type LiveMap = Record<string, LiveEntry>;
@@ -32,11 +36,30 @@ function atomicWrite(path: string, data: unknown): void {
   renameSync(tmp, path);
 }
 
+function normalizeEntry(raw: Partial<LiveEntry> & { on?: boolean }): LiveEntry | null {
+  if (!raw || raw.on !== true) return null;
+  return {
+    on: true,
+    since: typeof raw.since === "string" ? raw.since : new Date().toISOString(),
+    toolCount: typeof raw.toolCount === "number" ? raw.toolCount : 0,
+    turnStartedAt: raw.turnStartedAt ?? null,
+    lastActivity: raw.lastActivity ?? null,
+    muted: raw.muted === true,
+    lastEmitAt: typeof raw.lastEmitAt === "string" ? raw.lastEmitAt : null,
+  };
+}
+
 export function loadLiveSessions(): LiveMap {
   try {
     if (!existsSync(LIVE_SESSIONS_PATH)) return {};
     const raw = JSON.parse(readFileSync(LIVE_SESSIONS_PATH, "utf-8"));
-    return raw && typeof raw === "object" ? (raw as LiveMap) : {};
+    if (!raw || typeof raw !== "object") return {};
+    const out: LiveMap = {};
+    for (const [id, entry] of Object.entries(raw as Record<string, unknown>)) {
+      const normalized = normalizeEntry((entry ?? {}) as Partial<LiveEntry>);
+      if (normalized) out[id] = normalized;
+    }
+    return out;
   } catch {
     return {};
   }
@@ -47,7 +70,17 @@ export function isLiveSession(sessionId: string | undefined): boolean {
   return loadLiveSessions()[sessionId]?.on === true;
 }
 
-export function setLiveSession(sessionId: string, on: boolean): void {
+/** True when live narration is muted for this session (watch-only). */
+export function isLiveMuted(sessionId: string | undefined): boolean {
+  if (!sessionId) return false;
+  return loadLiveSessions()[sessionId]?.muted === true;
+}
+
+export function setLiveSession(
+  sessionId: string,
+  on: boolean,
+  opts?: { muted?: boolean },
+): void {
   const map = loadLiveSessions();
   if (on) {
     map[sessionId] = {
@@ -56,6 +89,8 @@ export function setLiveSession(sessionId: string, on: boolean): void {
       toolCount: 0,
       turnStartedAt: null,
       lastActivity: null,
+      muted: opts?.muted === true,
+      lastEmitAt: null,
     };
   } else {
     delete map[sessionId];
@@ -64,10 +99,20 @@ export function setLiveSession(sessionId: string, on: boolean): void {
   log("live", `live mode ${on ? "ON" : "off"} for ${sessionId.slice(0, 12)}`);
 }
 
-/** Tailer heartbeat: bump tool count / turn start without toggling. */
+/** Patch live-mute without clearing toolCount / lastActivity / etc. No-op if absent. */
+export function setLiveMuted(sessionId: string, muted: boolean): void {
+  const map = loadLiveSessions();
+  const entry = map[sessionId];
+  if (!entry?.on) return;
+  map[sessionId] = { ...entry, muted };
+  atomicWrite(LIVE_SESSIONS_PATH, map);
+  log("live", `live mute ${muted ? "ON" : "off"} for ${sessionId.slice(0, 12)}`);
+}
+
+/** Tailer heartbeat: bump tool count / turn start / emit stamp without toggling. */
 export function updateLiveEntry(
   sessionId: string,
-  patch: Partial<Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity">>,
+  patch: Partial<Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity" | "muted" | "lastEmitAt">>,
 ): void {
   const map = loadLiveSessions();
   const entry = map[sessionId];

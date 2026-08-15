@@ -82,6 +82,7 @@ interface StateFile {
   state: SessionState;
   raisedAt: string | null;
   updatedAt: string;
+  sdk?: boolean;
 }
 
 type NotifyCallback = () => void;
@@ -252,6 +253,7 @@ export function buildSnapshot(): AgentView[] {
         if (Number.isFinite(age) && age > 90 * 60 * 1000) shownState = "idle";
       }
       const inTeam = teamIds.has(sessionId);
+      const liveEntry = liveMap[sessionId];
       agents.push({
         sessionId,
         name: displayName,
@@ -265,12 +267,15 @@ export function buildSnapshot(): AgentView[] {
         isTeam: inTeam,
         queuedPreview: queuedPreviewFrom(queueIndex.get(shortSession)),
         injectable: inTeam,
-        live: liveMap[sessionId]?.on
+        sdk: state.sdk === true,
+        live: liveEntry?.on
           ? {
               on: true,
-              toolCount: liveMap[sessionId].toolCount ?? 0,
-              turnStartedAt: liveMap[sessionId].turnStartedAt ?? null,
-              lastActivity: liveMap[sessionId].lastActivity ?? null,
+              toolCount: liveEntry.toolCount ?? 0,
+              turnStartedAt: liveEntry.turnStartedAt ?? null,
+              lastActivity: liveEntry.lastActivity ?? null,
+              muted: liveEntry.muted === true,
+              lastEmitAt: liveEntry.lastEmitAt ?? null,
             }
           : null,
       });

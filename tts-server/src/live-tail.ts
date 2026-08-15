@@ -100,6 +100,10 @@ function enqueueIntermediate(sessionId: string, text: string): void {
   if (loadMutedSessions().includes(sessionId)) return;
   if (text.trim().length < MIN_INTERMEDIATE_CHARS) return;
   if (isDuplicate(sessionId, text)) return;
+  // Text-freshness heartbeat: stamp even when live-muted (watch-only path).
+  const nowIso = new Date().toISOString();
+  updateLiveEntry(sessionId, { lastEmitAt: nowIso });
+  if (loadLiveSessions()[sessionId]?.muted === true) return;
   try {
     const now = Date.now();
     const epoch = Math.floor(now / 1000);

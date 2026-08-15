@@ -81,6 +81,26 @@ export const IconSend = () => glyph(<path d="M12 20V5m0 0-6 6m6-6 6 6" />);
 /** Speech bubble (call dock "send a text"). */
 export const IconMessage = () => glyph(<path d="M4 5h16v11H8l-4 4z" />);
 
+/** Speaker on (live narration unmuted). */
+export const IconSpeaker = () =>
+  glyph(
+    <>
+      <path d="M11 5 6 9H3v6h3l5 4z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18 6a8.5 8.5 0 0 1 0 12" />
+    </>,
+  );
+
+/** Speaker off (live narration muted). */
+export const IconSpeakerOff = () =>
+  glyph(
+    <>
+      <path d="M11 5 6 9H3v6h3l5 4z" />
+      <path d="m22 9-6 6" />
+      <path d="m16 9 6 6" />
+    </>,
+  );
+
 /** Hang-up / end-live glyph (tilted handset with a strike). */
 export const IconPhoneOff = () =>
   glyph(

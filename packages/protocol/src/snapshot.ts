@@ -44,6 +44,10 @@ export const AgentLiveSchema = v.object({
   toolCount: v.number(),
   turnStartedAt: v.nullable(v.string()),
   lastActivity: v.nullable(v.object({ label: v.string(), at: v.string() })),
+  /** Live-narration mute — watch text, no auto synthesis. Additive; default false. */
+  muted: v.optional(v.boolean()),
+  /** Heartbeat for emitted/held intermediate text (ISO). Additive; default null. */
+  lastEmitAt: v.optional(v.nullable(v.string())),
 });
 export type AgentLive = v.InferOutput<typeof AgentLiveSchema>;
 
@@ -62,6 +66,8 @@ export const AgentViewSchema = v.object({
   queuedPreview: v.nullable(v.string()),
   /** team_map.json presence only — no tmux probes on snapshot builds. */
   injectable: v.boolean(),
+  /** SDK-harness (T3 Code) session. Additive — readers default false. */
+  sdk: v.optional(v.boolean()),
   live: v.nullable(AgentLiveSchema),
 });
 export type AgentView = v.InferOutput<typeof AgentViewSchema>;

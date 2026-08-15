@@ -19,6 +19,8 @@ import { audioController } from "../audio/controller.js";
 import { convo, useConvo } from "../convo-state.js";
 import { useThread } from "../thread.js";
 import { clearDraft } from "../drafts.js";
+import { getLiveMutePref, setLiveMutePref } from "../prefs.js";
+import { isChatEligible, readLiveMuted } from "../agent-ext.js";
 import type { ReplayEntry } from "../api.js";
 import { CallView } from "./CallView.js";
 import { ChatView } from "./ChatView.js";
@@ -121,6 +123,14 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
   const elapsed = fmtElapsed(state.liveStartedAt, now);
   const ackFlash = state.ackFlashUntil != null && now < state.ackFlashUntil;
   const liveBusy = state.liveTransition !== "idle";
+  const muteBusy = state.muteTransition !== "idle";
+  const chatEligible = isChatEligible(agent);
+  const liveMuted =
+    state.muteTransition === "muting"
+      ? true
+      : state.muteTransition === "unmuting"
+        ? false
+        : readLiveMuted(agent);
 
   const handleGoLive = async () => {
     // One live transition at a time: the guard returns null if a Go/End is
@@ -132,8 +142,14 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     audioController.primeAck();
     convo.beginLive(sessionId);
     convo.setCallView(true);
+    const initialMuted = getLiveMutePref(sessionId);
     try {
-      const r = await requestWithTimeout({ type: "set_live", sessionId, on: true } as Command);
+      const r = await requestWithTimeout({
+        type: "set_live",
+        sessionId,
+        on: true,
+        muted: initialMuted,
+      } as Command);
       if (!convo.isLiveTransitionCurrent(sessionId, token)) return; // superseded
       if (!r.ok) {
         convo.endLive(sessionId);
@@ -166,6 +182,30 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
       }
     } finally {
       convo.endLiveTransition(sessionId, token);
+    }
+  };
+
+  const handleToggleMute = async () => {
+    const targetMuted = !liveMuted;
+    const token = convo.beginMuteTransition(sessionId, targetMuted);
+    if (token === null) return;
+    setLiveMutePref(sessionId, targetMuted);
+    try {
+      const r = await requestWithTimeout({
+        type: "set_live_mute",
+        sessionId,
+        muted: targetMuted,
+      } as unknown as Command);
+      if (!convo.isMuteTransitionCurrent(sessionId, token)) return;
+      if (!r.ok) {
+        audioController.announce(targetMuted ? "Couldn't mute live" : "Couldn't unmute live");
+      }
+    } catch {
+      if (convo.isMuteTransitionCurrent(sessionId, token)) {
+        audioController.announce(targetMuted ? "Couldn't mute live" : "Couldn't unmute live");
+      }
+    } finally {
+      convo.endMuteTransition(sessionId, token);
     }
   };
 
@@ -247,7 +287,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
         <SheetTitle className="sr-only">{`Conversation with ${name}`}</SheetTitle>
         <div className="relative mx-auto h-full max-w-xl overflow-hidden">
           {/* CALL surface — the "forward" screen: off-right until callView. */}
-          {agent.injectable ? (
+          {chatEligible ? (
             <div
               className={`cv-slide absolute inset-0 ${callView ? "translate-x-0" : "translate-x-full"}`}
               aria-hidden={!callView}
@@ -261,7 +301,11 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
                 elapsed={elapsed}
                 liveStartedAt={state.liveStartedAt}
                 liveBusy={liveBusy}
+                liveMuted={liveMuted}
+                muteBusy={muteBusy}
+                injectable={agent.injectable}
                 onEndLive={handleEndLive}
+                onToggleMute={handleToggleMute}
                 onSendText={() => convo.setCallView(false)}
               />
             </div>
@@ -282,8 +326,12 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
               ackAts={state.ackAts}
               liveBusy={liveBusy}
               liveTransition={state.liveTransition}
+              liveMuted={liveMuted}
+              muteBusy={muteBusy}
+              chatEligible={chatEligible}
               onGoLive={handleGoLive}
               onEndLive={handleEndLive}
+              onToggleMute={handleToggleMute}
               onBackToCall={() => convo.setCallView(true)}
               onCollapse={() => convo.close()}
               onPlay={handlePlay}

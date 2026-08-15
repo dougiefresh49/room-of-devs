@@ -24,10 +24,13 @@
 import { useSyncExternalStore } from "react";
 import type { PanelSnapshot } from "@room/protocol";
 import { nowPlayingKey } from "@room/room-client";
+import { liveFreshFingerprint } from "./agent-ext.js";
 
 const ACK_FLASH_MS = 4000;
+const LIVE_THREAD_BUMP_MS = 2500;
 
 export type LiveTransition = "idle" | "starting" | "ending";
+export type MuteTransition = "idle" | "muting" | "unmuting";
 
 export interface ConvoSnapshot {
   /** Open conversation session id, or null when the sheet is closed. */
@@ -51,6 +54,11 @@ export interface ConvoSnapshot {
    * duplicate/conflicting set_live commands.
    */
   liveTransition: LiveTransition;
+  /**
+   * In-flight set_live_mute transition for the OPEN session. While not "idle"
+   * the mute control is disabled and shows the target state.
+   */
+  muteTransition: MuteTransition;
 }
 
 class ConvoStore {
@@ -64,6 +72,13 @@ class ConvoStore {
   /** In-flight set_live transition per session + its monotonic token. */
   private readonly liveTransitions = new Map<string, LiveTransition>();
   private readonly liveTxnToken = new Map<string, number>();
+  /** In-flight set_live_mute transition per session + its monotonic token. */
+  private readonly muteTransitions = new Map<string, MuteTransition>();
+  private readonly muteTxnToken = new Map<string, number>();
+  /** Live text-freshness tracking for throttled threadRev bumps. */
+  private readonly liveFreshTrack = new Map<string, string>();
+  private lastLiveThreadBumpAt = 0;
+  private liveThreadBumpTimer: ReturnType<typeof setTimeout> | null = null;
 
   // per-frame dedup
   private lastNowPlayingKey: string | null = null;
@@ -90,6 +105,7 @@ class ConvoStore {
   close(): void {
     this.sessionId = null;
     this.callView = false;
+    this.clearLiveThreadBumpTimer();
     this.emit();
   }
 
@@ -171,6 +187,59 @@ class ConvoStore {
     this.emit();
   }
 
+  // --- set_live_mute transition guard ------------------------------------
+
+  muteTransitionOf(sessionId: string): MuteTransition {
+    return this.muteTransitions.get(sessionId) ?? "idle";
+  }
+
+  beginMuteTransition(sessionId: string, muted: boolean): number | null {
+    if ((this.muteTransitions.get(sessionId) ?? "idle") !== "idle") return null;
+    const token = (this.muteTxnToken.get(sessionId) ?? 0) + 1;
+    this.muteTxnToken.set(sessionId, token);
+    this.muteTransitions.set(sessionId, muted ? "muting" : "unmuting");
+    this.emit();
+    return token;
+  }
+
+  isMuteTransitionCurrent(sessionId: string, token: number): boolean {
+    return this.muteTxnToken.get(sessionId) === token;
+  }
+
+  endMuteTransition(sessionId: string, token: number): void {
+    if (this.muteTxnToken.get(sessionId) !== token) return;
+    if ((this.muteTransitions.get(sessionId) ?? "idle") === "idle") return;
+    this.muteTransitions.set(sessionId, "idle");
+    this.emit();
+  }
+
+  private clearLiveThreadBumpTimer(): void {
+    if (this.liveThreadBumpTimer !== null) {
+      clearTimeout(this.liveThreadBumpTimer);
+      this.liveThreadBumpTimer = null;
+    }
+  }
+
+  private scheduleLiveThreadBump(): void {
+    const now = Date.now();
+    const since = now - this.lastLiveThreadBumpAt;
+    if (since >= LIVE_THREAD_BUMP_MS) {
+      this.flushLiveThreadBump();
+      return;
+    }
+    if (this.liveThreadBumpTimer !== null) return;
+    this.liveThreadBumpTimer = setTimeout(() => {
+      this.liveThreadBumpTimer = null;
+      this.flushLiveThreadBump();
+    }, LIVE_THREAD_BUMP_MS - since);
+  }
+
+  private flushLiveThreadBump(): void {
+    this.lastLiveThreadBumpAt = Date.now();
+    this.threadRev++;
+    this.emit();
+  }
+
   // --- snapshot integration (called every applied frame) ------------------
 
   onSnapshot(snap: PanelSnapshot | null): void {
@@ -215,6 +284,25 @@ class ConvoStore {
       this.lastNowPlayingKey = null;
     }
 
+    // Live text freshness: while the open session is live-on, bump threadRev on
+    // intermediate activity (throttled trailing — never drop the last change).
+    const openSid = this.sessionId;
+    if (openSid && snap) {
+      const openAgent = snap.agents.find((a) => a.sessionId === openSid);
+      if (openAgent?.live?.on) {
+        const fp = liveFreshFingerprint(openAgent);
+        const prev = this.liveFreshTrack.get(openSid);
+        if (prev !== undefined && prev !== fp) {
+          this.liveFreshTrack.set(openSid, fp);
+          this.scheduleLiveThreadBump();
+        } else if (prev === undefined) {
+          this.liveFreshTrack.set(openSid, fp);
+        }
+      } else {
+        this.liveFreshTrack.delete(openSid);
+      }
+    }
+
     // Reply ack routed to this phone → beat + thread chip (page-load-local).
     const ack = snap?.phoneAck ?? null;
     if (ack && ack.at && ack.at !== this.lastAckAt) {
@@ -244,6 +332,7 @@ class ConvoStore {
       ackFlashUntil: flash,
       threadRev: this.threadRev,
       liveTransition: sid ? (this.liveTransitions.get(sid) ?? "idle") : "idle",
+      muteTransition: sid ? (this.muteTransitions.get(sid) ?? "idle") : "idle",
     };
   }
 

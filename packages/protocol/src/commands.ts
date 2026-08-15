@@ -150,6 +150,15 @@ export const SetLiveCommandSchema = v.strictObject({
   type: v.literal("set_live"),
   sessionId: NonEmptyString,
   on: v.boolean(),
+  /** Initial live-mute when turning on; ignored for off. */
+  muted: v.optional(v.boolean()),
+  ...envelope,
+});
+
+export const SetLiveMuteCommandSchema = v.strictObject({
+  type: v.literal("set_live_mute"),
+  sessionId: NonEmptyString,
+  muted: v.boolean(),
   ...envelope,
 });
 
@@ -228,6 +237,7 @@ export const CommandSchema = v.variant("type", [
   SpawnSessionCommandSchema,
   ResumeSessionCommandSchema,
   SetLiveCommandSchema,
+  SetLiveMuteCommandSchema,
   SetVoiceCommandSchema,
   SetNicknameCommandSchema,
   SetSettingCommandSchema,
@@ -263,6 +273,7 @@ export const COMMAND_TYPES = [
   "spawn_session",
   "resume_session",
   "set_live",
+  "set_live_mute",
   "set_voice",
   "set_nickname",
   "set_setting",

@@ -24,6 +24,8 @@ type LiveEntry = {
   toolCount: number;
   turnStartedAt: string | null;
   lastActivity: { label: string; at: string } | null;
+  muted: boolean;
+  lastEmitAt: string | null;
 };
 type LiveMap = Record<string, LiveEntry>;
 type NowPlaying = {
@@ -129,28 +131,46 @@ function releaseHarnessLock(): void {
   } catch {}
 }
 
-function commandUp(name?: string): void {
+function commandUp(args: string[]): void {
+  let sdk = false;
+  const nameParts: string[] = [];
+  for (const a of args) {
+    if (a === "--sdk") sdk = true;
+    else nameParts.push(a);
+  }
+  const name = nameParts.join(" ").trim();
   const id = `mock-${Date.now()}-${process.pid}`;
   const now = new Date().toISOString();
   mkdirSync(STATE_DIR, { recursive: true });
   mkdirSync(TRANSCRIPT_DIR, { recursive: true });
-  atomicWrite(join(STATE_DIR, `${id}.json`), {
+  const card: Record<string, unknown> = {
     sessionId: id,
-    name: name?.trim() || "Mock Live",
+    name: name || "Mock Live",
     state: "working",
     raisedAt: null,
     updatedAt: now,
-  });
+  };
+  if (sdk) card.sdk = true;
+  atomicWrite(join(STATE_DIR, `${id}.json`), card);
   writeFileSync(transcriptPath(id), "", { flag: "wx" });
   const map = liveMap();
-  map[id] = { on: true, since: now, toolCount: 0, turnStartedAt: now, lastActivity: null };
+  map[id] = {
+    on: true,
+    since: now,
+    toolCount: 0,
+    turnStartedAt: now,
+    lastActivity: null,
+    muted: false,
+    lastEmitAt: null,
+  };
   atomicWrite(LIVE_PATH, map);
-  // Register in team_map so the snapshot marks the mock injectable (Chat/reply
-  // UI renders). The tmux session is fake, so replies fail server-side — the
-  // intended zero-cost error path. Keyed by id: collision-proof, easy to sweep.
-  const team = readJson<Record<string, unknown>>(TEAM_MAP_PATH, {});
-  team[id] = { tmux: `cr-${id}`, sessionId: id, createdAt: now };
-  atomicWrite(TEAM_MAP_PATH, team);
+  // Team sessions get a team_map entry so the snapshot marks injectable.
+  // SDK (--sdk) mocks a T3-style card: no team_map, sdk:true on the state card.
+  if (!sdk) {
+    const team = readJson<Record<string, unknown>>(TEAM_MAP_PATH, {});
+    team[id] = { tmux: `cr-${id}`, sessionId: id, createdAt: now };
+    atomicWrite(TEAM_MAP_PATH, team);
+  }
   console.log(id);
 }
 
@@ -198,8 +218,11 @@ function sleep(ms: number): Promise<void> {
 
 async function commandStream(idArg: string | undefined, args: string[]): Promise<void> {
   const id = requireMockId(idArg);
-  if (!liveMap()[id]?.on || !existsSync(join(STATE_DIR, `${id}.json`)))
+  const entry = liveMap()[id];
+  if (!entry?.on || !existsSync(join(STATE_DIR, `${id}.json`)))
     fail(`live session not found: ${id}`);
+  if (entry.muted === true)
+    fail(`live session is muted: ${id} (unmute before streaming)`);
   let output: "phone" | "mac" = "phone";
   let rate = 16_000;
   for (let i = 0; i < args.length; i++) {
@@ -421,13 +444,13 @@ function commandCheckTailer(): void {
 
 function usage(): never {
   fail(
-    "usage: mock-live.ts up [name] | activity <id> <label> | tools <id> <n> | stream <id> [--output phone|mac] [--rate 16000] | final <id> <text> | down [id|--all] | check-tailer",
+    "usage: mock-live.ts up [--sdk] [name] | activity <id> <label> | tools <id> <n> | stream <id> [--output phone|mac] [--rate 16000] | final <id> <text> | down [id|--all] | check-tailer",
   );
 }
 
 const [command, ...args] = process.argv.slice(2);
 try {
-  if (command === "up") commandUp(args.join(" "));
+  if (command === "up") commandUp(args);
   else if (command === "activity") commandActivity(args[0], args.slice(1));
   else if (command === "tools") commandTools(args[0], args[1]);
   else if (command === "stream") await commandStream(args[0], args.slice(1));

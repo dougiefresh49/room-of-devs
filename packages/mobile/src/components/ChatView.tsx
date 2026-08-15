@@ -6,15 +6,16 @@
  * (callView off), a single-row "live pin" sits atop the thread (back-to-call ·
  * name · timer · End) — never a second identity header.
  *
- * Ownership rule (§B1): when live is ON, the working UI lives ONLY in the call
- * card — this thread shows no working row.
+ * Ownership rule (§B1): when live is ON and unmuted, the working UI lives ONLY
+ * in the call card — this thread shows no working row. While live-muted, the
+ * working row stays visible here (text-only watch mode).
  */
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { AgentView } from "@room/protocol";
 import type { LiveTransition } from "../convo-state.js";
 import type { ReplayEntry, ThreadItem } from "../api.js";
 import { findReplayForFinal } from "../thread.js";
-import { IconArrowLeft, IconChevron } from "../icons.js";
+import { IconArrowLeft, IconChevron, IconSpeaker, IconSpeakerOff } from "../icons.js";
 import { Avatar } from "./Avatar.js";
 import { ThreadBubble } from "./ThreadBubble.js";
 import { PlaybackStrip } from "./PlaybackStrip.js";
@@ -31,8 +32,12 @@ interface ChatViewProps {
   /** A set_live transition is in flight — disable Go-live / End controls. */
   liveBusy: boolean;
   liveTransition: LiveTransition;
+  liveMuted: boolean;
+  muteBusy: boolean;
+  chatEligible: boolean;
   onGoLive: () => void;
   onEndLive: () => void;
+  onToggleMute: () => void;
   onBackToCall: () => void;
   onCollapse: () => void;
   onPlay: (entry: ReplayEntry) => void;
@@ -51,8 +56,12 @@ export function ChatView({
   ackAts,
   liveBusy,
   liveTransition,
+  liveMuted,
+  muteBusy,
+  chatEligible,
   onGoLive,
   onEndLive,
+  onToggleMute,
   onBackToCall,
   onCollapse,
   onPlay,
@@ -94,7 +103,7 @@ export function ChatView({
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
-  }, [agent.sessionId, rows.length, working, liveOn]);
+  }, [agent.sessionId, rows.length, working, liveOn, liveMuted]);
 
   // Keyboard show/hide (visualViewport) or any resize re-anchors to the bottom
   // when parked there, so the newest messages stay in view above the composer.
@@ -150,29 +159,43 @@ export function ChatView({
           </div>
         </div>
 
-        {agent.injectable ? (
-          <button
-            type="button"
-            onClick={liveOn ? onEndLive : onGoLive}
-            disabled={liveBusy}
-            aria-disabled={liveBusy}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 ${
-              liveOn
-                ? "border-accent bg-accent/15 text-accent shadow-[0_0_14px_color-mix(in_srgb,var(--room-accent)_22%,transparent)]"
-                : "border-accent/40 bg-accent/5 text-accent/90 hover:bg-accent/10"
-            }`}
-          >
-            <span
-              className={`size-[7px] rounded-full ${liveOn ? "bg-accent cv-breathe" : "bg-accent/50"}`}
-            />
-            {liveTransition === "starting"
-              ? "Going live…"
-              : liveTransition === "ending"
-                ? "Ending…"
-                : liveOn
-                  ? "Live"
-                  : "Go live"}
-          </button>
+        {chatEligible ? (
+          <>
+            {liveOn ? (
+              <button
+                type="button"
+                onClick={onToggleMute}
+                disabled={muteBusy}
+                aria-disabled={muteBusy}
+                aria-label={liveMuted ? "Unmute live narration" : "Mute live narration"}
+                className="grid size-9 shrink-0 place-items-center rounded-lg border border-line-strong text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 [&_svg]:size-[18px]"
+              >
+                {liveMuted ? <IconSpeakerOff /> : <IconSpeaker />}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={liveOn ? onEndLive : onGoLive}
+              disabled={liveBusy}
+              aria-disabled={liveBusy}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 ${
+                liveOn
+                  ? "border-accent bg-accent/15 text-accent shadow-[0_0_14px_color-mix(in_srgb,var(--room-accent)_22%,transparent)]"
+                  : "border-accent/40 bg-accent/5 text-accent/90 hover:bg-accent/10"
+              }`}
+            >
+              <span
+                className={`size-[7px] rounded-full ${liveOn ? "bg-accent cv-breathe" : "bg-accent/50"}`}
+              />
+              {liveTransition === "starting"
+                ? "Going live…"
+                : liveTransition === "ending"
+                  ? "Ending…"
+                  : liveOn
+                    ? "Live"
+                    : "Go live"}
+            </button>
+          </>
         ) : null}
 
         <button
@@ -242,8 +265,8 @@ export function ChatView({
           )
         )}
 
-        {/* working row — chat-owned only when live is OFF (§B1 ownership rule) */}
-        {working && !liveOn ? (
+        {/* working row — hidden only when live is ON and unmuted (§B1 + mute watch) */}
+        {working && (!liveOn || liveMuted) ? (
           <div className="mt-1 self-center text-center">
             <div className="text-[13px] font-medium text-fg-muted">
               {name} is working
@@ -258,10 +281,13 @@ export function ChatView({
               <div className="mt-0.5 max-w-[85%] truncate text-[11px] text-fg-muted">
                 {activity || "working"}
                 {tools ? ` · ${tools} tool${tools === 1 ? "" : "s"}` : ""}
+                {liveOn && liveMuted ? " · audio off" : ""}
               </div>
-            ) : agent.injectable ? (
+            ) : chatEligible ? (
               <div className="mt-0.5 text-[11px] text-fg-faint">
-                tap Go live to listen in while they work
+                {liveOn && liveMuted
+                  ? "watching — text only"
+                  : "tap Go live to listen in while they work"}
               </div>
             ) : null}
           </div>
@@ -269,14 +295,18 @@ export function ChatView({
       </div>
 
       <PlaybackStrip sessionId={agent.sessionId} />
-      {/* key by session: remounting loads that session's draft + resets the
-          uncontrolled field (Wispr-Flow-stable within a session). */}
-      <Composer
-        key={agent.sessionId}
-        sessionId={agent.sessionId}
-        placeholder={`Reply to ${name}…`}
-        onSend={onSend}
-      />
+      {agent.injectable ? (
+        <Composer
+          key={agent.sessionId}
+          sessionId={agent.sessionId}
+          placeholder={`Reply to ${name}…`}
+          onSend={onSend}
+        />
+      ) : chatEligible ? (
+        <div className="shrink-0 border-t border-line bg-bg-elevated px-4 py-3 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-[13px] text-fg-muted">
+          Replies for T3 sessions come with Phase B — use the T3 app.
+        </div>
+      ) : null}
     </div>
   );
 }

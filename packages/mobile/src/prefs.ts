@@ -31,6 +31,8 @@ const FLAG_MODEL = "mobile_flag_model";
 const SPEED_KEY = "mobile_speed_mult";
 const LISTENED_KEY = "mobile_listened_files";
 const CLEARED_KEY = "mobile_cleared_files";
+/** Per-session live-narration mute intent (default unmuted when absent). */
+const LIVE_MUTE_PREF_KEY = "mobile_live_mute_pref_v1";
 
 const INITIAL_HIDDEN_DEV_NAMES = ["job-search-2026"];
 const LAUNCH_MODELS: readonly LaunchModel[] = ["", "fable", "opus", "sonnet", "haiku"];
@@ -279,6 +281,37 @@ export function pruneToFiles(files: readonly string[]): void {
 }
 
 /** The spawn/resume flag block, exactly as mobile.html's launchFlags(). */
+// --- live-mute sticky pref (per session) -----------------------------------
+
+function loadLiveMutePrefs(): Record<string, boolean> {
+  try {
+    const raw = read(LIVE_MUTE_PREF_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    const out: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof k === "string" && typeof v === "boolean") out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** Last user mute intent for go-live initial state (default false). */
+export function getLiveMutePref(sessionId: string): boolean {
+  return loadLiveMutePrefs()[sessionId] === true;
+}
+
+/** Record mute intent at dispatch time (not snapshot ack). */
+export function setLiveMutePref(sessionId: string, muted: boolean): void {
+  const prefs = loadLiveMutePrefs();
+  if (muted) prefs[sessionId] = true;
+  else delete prefs[sessionId];
+  write(LIVE_MUTE_PREF_KEY, JSON.stringify(prefs));
+}
+
 export function launchFlags(): {
   skipPermissions: boolean;
   remoteControl: boolean;

@@ -13,6 +13,7 @@
       "isTeam": false,
       "queuedPreview": null,
       "injectable": false,
+      "sdk": false,
       "live": null
     },
     {
@@ -28,7 +29,15 @@
       "isTeam": true,
       "queuedPreview": "Sanitized queued preview text for fixture purposes — agent 1 has a raised hand with pending audio.",
       "injectable": true,
-      "live": null
+      "sdk": false,
+      "live": {
+        "on": true,
+        "toolCount": 2,
+        "turnStartedAt": "2026-07-22T04:30:00.000Z",
+        "lastActivity": { "label": "Read: foo.ts", "at": "2026-07-22T04:30:45.000Z" },
+        "muted": false,
+        "lastEmitAt": "2026-07-22T04:30:50.000Z"
+      }
     },
     {
       "sessionId": "97921813-f3b4-4f4b-98ce-b652ece7696f",
@@ -43,6 +52,7 @@
       "isTeam": false,
       "queuedPreview": "Sanitized queued preview text for fixture purposes — agent 2 has a raised hand with pending audio.",
       "injectable": false,
+      "sdk": false,
       "live": null
     },
     {
@@ -58,6 +68,7 @@
       "isTeam": false,
       "queuedPreview": null,
       "injectable": false,
+      "sdk": true,
       "live": null
     },
     {
@@ -73,6 +84,7 @@
       "isTeam": false,
       "queuedPreview": null,
       "injectable": false,
+      "sdk": false,
       "live": null
     },
     {
@@ -88,6 +100,7 @@
       "isTeam": false,
       "queuedPreview": null,
       "injectable": false,
+      "sdk": false,
       "live": null
     }
   ],

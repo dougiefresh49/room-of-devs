@@ -37,7 +37,7 @@ import {
   SDK_CARD_TTL_MS,
 } from "./state.js";
 import { reconcileSessionLineage } from "./session-lineage.js";
-import { isLiveSession } from "./live-mode.js";
+import { isLiveSession, isLiveMuted } from "./live-mode.js";
 import { startLiveTail, stopLiveTail } from "./live-tail.js";
 import { maybeFireDeferredAnnounce } from "./announce.js";
 import { startHid, stopHid } from "./hid-device.js";
@@ -154,7 +154,9 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
     const isIntermediate = item.source === "live-cc";
     // Live sessions auto-deliver everything to the phone — final responses
     // included — regardless of playback mode (the owner opted in explicitly).
-    const liveSession = !!sessionId && isLiveSession(sessionId);
+    // Live-muted sessions fall back to announce/hand-raise (not auto-stream).
+    const liveSession =
+      !!sessionId && isLiveSession(sessionId) && !isLiveMuted(sessionId);
 
     // Playback mode gates the watcher's auto-play only — manual plays
     // ("once" mode via Play Latest / menu clicks) always go through. The item
@@ -249,6 +251,17 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
         log("server", `Phone grant ${activeGrant} window open — leaving ${name} queued`);
         return;
       }
+    }
+
+    // Queued-before-mute race: live-cc items must not synthesize if live
+    // ended or was muted after enqueue (closes the flip-race window).
+    if (
+      isIntermediate &&
+      (!sessionId || !isLiveSession(sessionId) || isLiveMuted(sessionId))
+    ) {
+      log("server", `live muted/off — dropping intermediate ${name}`);
+      moveToPlayed(filePath);
+      return;
     }
 
     const voiceId = resolveVoiceId(sessionId);
