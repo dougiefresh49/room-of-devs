@@ -162,6 +162,16 @@ export const SetLiveMuteCommandSchema = v.strictObject({
   ...envelope,
 });
 
+/** Synthesize + play an arbitrary agent message on demand (billable — one
+ *  Gemini + one ElevenLabs call). Explicit user tap only; never automated. */
+export const SpeakTextCommandSchema = v.strictObject({
+  type: v.literal("speak_text"),
+  sessionId: NonEmptyString,
+  text: v.pipe(v.string(), v.minLength(1), v.maxLength(4000)),
+  output: v.optional(v.picklist(["mac", "phone"])),
+  ...envelope,
+});
+
 export const SetVoiceCommandSchema = v.strictObject({
   type: v.literal("set_voice"),
   sessionId: NonEmptyString,
@@ -238,6 +248,7 @@ export const CommandSchema = v.variant("type", [
   ResumeSessionCommandSchema,
   SetLiveCommandSchema,
   SetLiveMuteCommandSchema,
+  SpeakTextCommandSchema,
   SetVoiceCommandSchema,
   SetNicknameCommandSchema,
   SetSettingCommandSchema,
@@ -274,6 +285,7 @@ export const COMMAND_TYPES = [
   "resume_session",
   "set_live",
   "set_live_mute",
+  "speak_text",
   "set_voice",
   "set_nickname",
   "set_setting",

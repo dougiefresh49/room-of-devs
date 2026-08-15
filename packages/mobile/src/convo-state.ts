@@ -101,6 +101,10 @@ class ConvoStore {
   private readonly liveFreshTrack = new Map<string, string>();
   /** Optimistic reply echoes per session, pruned on transcript match/TTL. */
   private readonly pendingReplies = new Map<string, PendingReply[]>();
+  /** Open agent's last observed state — transitions trigger a /thread refetch. */
+  private openAgentState: string | null = null;
+  /** Sessions whose live-muted mode we auto-started on a chat send. */
+  private readonly autoLiveSessions = new Set<string>();
   private lastLiveThreadBumpAt = 0;
   private liveThreadBumpTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -123,14 +127,32 @@ class ConvoStore {
   open(sessionId: string, opts: { asCall?: boolean } = {}): void {
     this.sessionId = sessionId;
     this.callView = !!opts.asCall;
+    this.openAgentState = null;
     this.emit();
   }
 
   close(): void {
     this.sessionId = null;
     this.callView = false;
+    this.openAgentState = null;
     this.clearLiveThreadBumpTimer();
     this.emit();
+  }
+
+  /**
+   * Auto-live bookkeeping: live-muted sessions we started implicitly on a
+   * chat send (so responses stream in as text). Cleared when the user takes
+   * ownership (manual Go live / End live / unmute) — the sheet's close
+   * handler only ends live for sessions still marked here.
+   */
+  markAutoLive(sessionId: string): void {
+    this.autoLiveSessions.add(sessionId);
+  }
+  clearAutoLive(sessionId: string): void {
+    this.autoLiveSessions.delete(sessionId);
+  }
+  isAutoLive(sessionId: string): boolean {
+    return this.autoLiveSessions.has(sessionId);
   }
 
   setCallView(on: boolean): void {
@@ -347,6 +369,17 @@ class ConvoStore {
     const openSid = this.sessionId;
     if (openSid && snap) {
       const openAgent = snap.agents.find((a) => a.sessionId === openSid);
+      // State transitions (working → hand_raised/idle etc.) refetch even
+      // WITHOUT live: in announce mode a final never produces a now-playing
+      // frame, so this is the only signal that the response landed — without
+      // it the chat stays stale and a pending echo reads "sending…" forever.
+      if (openAgent && openAgent.state !== this.openAgentState) {
+        if (this.openAgentState !== null) {
+          this.threadRev++;
+          dirty = true;
+        }
+        this.openAgentState = openAgent.state;
+      }
       if (openAgent?.live?.on) {
         const fp = liveFreshFingerprint(openAgent);
         const prev = this.liveFreshTrack.get(openSid);

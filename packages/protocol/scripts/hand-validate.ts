@@ -253,6 +253,24 @@ export function handValidatePanelMessage(raw: unknown): PanelMessage | "bad_mess
         return "bad_message";
       }
       return { type: "set_live_mute", sessionId: msg.sessionId, muted: msg.muted };
+    case "speak_text": {
+      if (
+        typeof msg.sessionId !== "string" ||
+        !msg.sessionId.trim() ||
+        typeof msg.text !== "string" ||
+        msg.text.length < 1 ||
+        msg.text.length > 4000
+      ) {
+        return "bad_message";
+      }
+      if (keys.length === 3) {
+        return { type: "speak_text", sessionId: msg.sessionId, text: msg.text };
+      }
+      if (keys.length === 4 && (msg.output === "mac" || msg.output === "phone")) {
+        return { type: "speak_text", sessionId: msg.sessionId, text: msg.text, output: msg.output };
+      }
+      return "bad_message";
+    }
     case "set_voice":
       if (
         keys.length !== 3 ||

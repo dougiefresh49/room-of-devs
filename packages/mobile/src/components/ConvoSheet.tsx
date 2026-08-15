@@ -19,7 +19,7 @@ import { audioController } from "../audio/controller.js";
 import { convo, useConvo } from "../convo-state.js";
 import { useThread } from "../thread.js";
 import { clearDraft } from "../drafts.js";
-import { getLiveMutePref, setLiveMutePref } from "../prefs.js";
+import { getLiveMutePref, setLiveMutePref, getPrefs } from "../prefs.js";
 import { isChatEligible, isReplyComposerEligible, readLiveMuted } from "../agent-ext.js";
 import type { ReplayEntry } from "../api.js";
 import { CallView } from "./CallView.js";
@@ -153,6 +153,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     // commits after we hold the transition.
     const token = convo.beginLiveTransition(sessionId, "starting");
     if (token === null) return;
+    convo.clearAutoLive(sessionId); // user takes ownership of live
     audioController.prime();
     audioController.primeAck();
     convo.beginLive(sessionId);
@@ -185,6 +186,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     if (token === null) return;
     // Stop phone audio first, clear live state (slides to chat), then tell the
     // daemon — order per §B2.
+    convo.clearAutoLive(sessionId);
     audioController.stop();
     convo.endLive(sessionId);
     try {
@@ -204,6 +206,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     const targetMuted = !liveMuted;
     const token = convo.beginMuteTransition(sessionId, targetMuted);
     if (token === null) return;
+    if (!targetMuted) convo.clearAutoLive(sessionId); // unmute = user-owned live
     setLiveMutePref(sessionId, targetMuted);
     try {
       const r = await requestWithTimeout({
@@ -229,6 +232,60 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     void audioController.play(entry, { gated: false });
   };
 
+  // Chat-bubble play affordances (§owner 2026-08-15): grant plays the queued
+  // update (the normal billed grant path); speak_text re-synthesizes an older
+  // final that has no replay clip (billable — the UI marks it "generate").
+  const output = getPrefs().output;
+  const handleGrant = () => {
+    audioController.prime();
+    audioController.primeAck();
+    client.grant(sessionId, output);
+  };
+  const handleSpeakText = (text: string) => {
+    audioController.prime();
+    audioController.primeAck();
+    void requestWithTimeout({
+      type: "speak_text",
+      sessionId,
+      text: text.slice(0, 4000),
+      output,
+    } as unknown as Command).then(
+      (r) => {
+        if (!r.ok) audioController.announce("Couldn't play that message");
+      },
+      () => audioController.announce("Couldn't play that message"),
+    );
+  };
+
+  // Implicit live-muted on chat send: responses then stream in as free text
+  // (live heartbeat → throttled /thread refetch) exactly like the T3 app.
+  // Only for sessions with no live at all; the user owns any live they set up.
+  const startAutoLiveMuted = () => {
+    if (!chatEligible || liveOn || liveBusy) return;
+    convo.markAutoLive(sessionId);
+    void requestWithTimeout({
+      type: "set_live",
+      sessionId,
+      on: true,
+      muted: true,
+    } as unknown as Command).then(
+      (r) => {
+        if (!r.ok) convo.clearAutoLive(sessionId);
+      },
+      () => convo.clearAutoLive(sessionId),
+    );
+  };
+
+  // Closing the sheet ends only the live WE auto-started (still muted — an
+  // unmuted live means the user chose audio and keeps running like a call).
+  const endAutoLiveOnClose = () => {
+    if (!convo.isAutoLive(sessionId)) return;
+    convo.clearAutoLive(sessionId);
+    if (agent?.live?.on && readLiveMuted(agent)) {
+      void requestWithTimeout({ type: "set_live", sessionId, on: false } as Command).catch(() => {});
+    }
+  };
+
   const handleSend = async (text: string): Promise<boolean> => {
     if (text.length > 4000) {
       audioController.announce("Reply too long");
@@ -243,6 +300,7 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
         // so without this the sent message vanishes until a later refetch.
         convo.addPendingReply(sessionId, text);
         convo.bumpThread(); // /thread is the source of truth — refetch now
+        startAutoLiveMuted(); // watch the response come in as free live text
         clearDraft(sessionId);
         audioController.announce(`Reply sent to ${name}`);
         return true;
@@ -261,7 +319,10 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     <Sheet
       open
       onOpenChange={(next) => {
-        if (!next) convo.close();
+        if (!next) {
+          endAutoLiveOnClose();
+          convo.close();
+        }
       }}
     >
       {/*
@@ -346,8 +407,13 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
               onEndLive={handleEndLive}
               onToggleMute={handleToggleMute}
               onBackToCall={() => convo.setCallView(true)}
-              onCollapse={() => convo.close()}
+              onCollapse={() => {
+                endAutoLiveOnClose();
+                convo.close();
+              }}
               onPlay={handlePlay}
+              onGrant={handleGrant}
+              onSpeakText={handleSpeakText}
               onSend={handleSend}
             />
           </div>

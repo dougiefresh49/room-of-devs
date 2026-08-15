@@ -13,7 +13,7 @@
  * phone grant is mid-synthesis; spawn validation rejects before any script
  * runs; reply marks the phone-ack BEFORE injecting.
  */
-import { existsSync, readFileSync, realpathSync, statSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
@@ -113,6 +113,38 @@ function minimalSpawnEnv(): NodeJS.ProcessEnv {
     if (value !== undefined) env[key] = value;
   }
   return env;
+}
+
+/**
+ * Speak an arbitrary agent message on demand (chat-bubble "generate" tap).
+ * BILLABLE (one Gemini + one ElevenLabs call) — explicit user tap only.
+ * The item is staged OUTSIDE queue/ so the watcher never sees it (no
+ * auto-play race, no phantom hand-raise) and handed to play_node.sh, the same
+ * once-play machinery grants use: session voice, stream lock, replay save.
+ */
+function speakTextNow(sessionId: string, text: string, output?: "mac" | "phone"): void {
+  try {
+    const stageDir = join(TTS_DIR, "say");
+    mkdirSync(stageDir, { recursive: true });
+    const name =
+      buildSnapshot().find((a) => a.sessionId === sessionId)?.name ?? sessionId.slice(0, 12);
+    const path = join(stageDir, `${Date.now()}-say-${sessionId.slice(0, 12)}.json`);
+    const item = {
+      text,
+      conversation_id: sessionId,
+      generation_id: "",
+      model: "",
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      thread_title: name,
+      spoken: false,
+      source: "say",
+    };
+    writeFileSync(path, JSON.stringify(item, null, 2));
+    log("commands", `speak_text: ${sessionId.slice(0, 12)} (${text.length} chars, ${output ?? "mac"})`);
+    runScript("play_node.sh", [path], output === "phone" ? { CR_OUTPUT: "phone" } : undefined);
+  } catch (err: any) {
+    log("commands", `speak_text failed: ${err?.message ?? err}`);
+  }
 }
 
 export function runScript(name: string, args: string[], extraEnv?: Record<string, string>): void {
@@ -727,6 +759,7 @@ const MOBILE_ACTION_TYPES = new Set([
   "resume_session",
   "set_live",
   "set_live_mute",
+  "speak_text",
 ]);
 
 /** Transport-facing guard over the allowlist above. */
@@ -764,6 +797,9 @@ export function dispatch(msg: PanelMessage): void {
       return;
     case "status_say":
       runStatusSay(msg.sessionId);
+      return;
+    case "speak_text":
+      speakTextNow(msg.sessionId, msg.text, msg.output);
       return;
     case "replay":
       runSignalReplay();
@@ -817,7 +853,10 @@ export function dispatchPanelAction(raw: unknown): boolean {
     return startPlayReplay(msg.file, msg.offsetSec ?? 0);
   }
 
-  if ((msg.type === "grant" || msg.type === "status_say") && !sessionInSnapshot(msg.sessionId)) {
+  if (
+    (msg.type === "grant" || msg.type === "status_say" || msg.type === "speak_text") &&
+    !sessionInSnapshot(msg.sessionId)
+  ) {
     return false;
   }
 

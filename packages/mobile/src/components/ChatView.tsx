@@ -17,7 +17,7 @@ import type { ReplayEntry, ThreadItem } from "../api.js";
 import { findReplayForFinal } from "../thread.js";
 import { IconArrowLeft, IconChevron, IconSpeaker, IconSpeakerOff } from "../icons.js";
 import { Avatar } from "./Avatar.js";
-import { ThreadBubble } from "./ThreadBubble.js";
+import { ThreadBubble, type BubblePlayAction } from "./ThreadBubble.js";
 import { PlaybackStrip } from "./PlaybackStrip.js";
 import { isReplyComposerEligible } from "../agent-ext.js";
 import { Composer } from "./Composer.js";
@@ -44,6 +44,10 @@ interface ChatViewProps {
   onBackToCall: () => void;
   onCollapse: () => void;
   onPlay: (entry: ReplayEntry) => void;
+  /** Grant the queued unheard update (billable — normal grant path). */
+  onGrant: () => void;
+  /** Re-synthesize an older final with no saved clip (billable). */
+  onSpeakText: (text: string) => void;
   onSend: (text: string) => Promise<boolean>;
 }
 
@@ -76,6 +80,8 @@ export function ChatView({
   onBackToCall,
   onCollapse,
   onPlay,
+  onGrant,
+  onSpeakText,
   onSend,
 }: ChatViewProps) {
   const name = agent.label || agent.name;
@@ -115,6 +121,24 @@ export function ChatView({
     out.sort((a, b) => a.at - b.at);
     return out;
   }, [items, ackAts, pendingReplies]);
+
+  // Which play affordance an agent FINAL bubble gets (owner 2026-08-15): the
+  // newest final while the update is still queued → grant it; anything with a
+  // saved clip → free replay; other finals → billable on-demand synthesis.
+  const lastFinal = useMemo(() => {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      if (it.role === "agent" && it.final) return it;
+    }
+    return null;
+  }, [items]);
+  const playActionFor = (item: ThreadItem): BubblePlayAction | null => {
+    if (item.role !== "agent" || !item.final) return null;
+    if (item === lastFinal && agent.state === "hand_raised") return { kind: "update" };
+    const replay = findReplayForFinal(replayAll, agent.sessionId, item.text);
+    if (replay) return { kind: "replay", entry: replay };
+    return { kind: "generate", text: item.text };
+  };
 
   // Anchor to the bottom after any content change — but ONLY when the user was
   // already at/near the bottom (captured before this layout by onScroll). Runs
@@ -283,12 +307,10 @@ export function ChatView({
               <ThreadBubble
                 key={`msg-${row.at}-${row.item.role}-${row.item.text.slice(0, 24)}`}
                 item={row.item}
-                replay={
-                  !liveOn && row.item.role === "agent" && row.item.final
-                    ? findReplayForFinal(replayAll, agent.sessionId, row.item.text)
-                    : null
-                }
-                onPlay={onPlay}
+                play={playActionFor(row.item)}
+                onPlayReplay={onPlay}
+                onGrant={onGrant}
+                onSpeakText={onSpeakText}
               />
             ),
           )

@@ -14,6 +14,8 @@ function glyph(paths: JSX.Element): JSX.Element {
   );
 }
 
+export const IconSparkle = () =>
+  glyph(<path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8z" />);
 export const IconPause = () => glyph(<path d="M8 5v14M16 5v14" />);
 export const IconPlay = () => glyph(<path d="M8 5l11 7-11 7z" />);
 export const IconStop = () => glyph(<path d="M7 7h10v10H7z" />);

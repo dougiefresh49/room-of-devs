@@ -91,6 +91,17 @@
     "muted": true
   },
   {
+    "type": "speak_text",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "text": "The build finished and all checks passed."
+  },
+  {
+    "type": "speak_text",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "text": "The build finished and all checks passed.",
+    "output": "phone"
+  },
+  {
     "type": "set_voice",
     "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
     "character": "Splinter"

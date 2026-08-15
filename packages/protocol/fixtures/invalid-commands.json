@@ -56,6 +56,17 @@
     "muted": "yes"
   },
   {
+    "type": "speak_text",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "text": ""
+  },
+  {
+    "type": "speak_text",
+    "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
+    "text": "hello",
+    "output": "loudspeaker"
+  },
+  {
     "type": "reply",
     "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
     "text": ""
