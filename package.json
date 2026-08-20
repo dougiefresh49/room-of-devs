@@ -12,11 +12,6 @@
     "format": "biome format --write .",
     "format:check": "biome format ."
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "node-hid"
-    ]
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",
     "marked": "^18.0.7"

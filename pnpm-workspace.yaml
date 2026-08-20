@@ -4,5 +4,5 @@ packages:
   - packages/*
   - prototype
 allowBuilds:
-  esbuild: set this to true or false
-  node-hid: set this to true or false
+  esbuild: true
+  node-hid: true
