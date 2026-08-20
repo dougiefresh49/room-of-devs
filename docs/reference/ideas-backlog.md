@@ -108,3 +108,12 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
   `docs/active/concepts-round-c-*/` precisely so a theme system can
   offer them later — the UI architecture already routes color through
   tokens.css, which is the natural seam. Not a day-1 feature.
+- **Voicebox MCP steal list** (noted 2026-08-20): studied how Voicebox
+  wires agents to voices via MCP; 11 liftable mechanisms ranked in
+  [voicebox-mcp-study.md](voicebox-mcp-study.md) — top picks: per-client
+  binding via self-declared id header, strict persona resolution chain
+  (explicit → binding → default → hard error), a gated `POST /speak` +
+  `room_speak` MCP tool so codex/cursor-agent get voices, hot/cold
+  persona prompt split (compose vs rewrite) for gemini.ts, and
+  cancel-at-dequeue so mute refunds queued spend. Hooks stay primary;
+  MCP is additive.
