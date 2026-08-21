@@ -45,7 +45,22 @@ real lines as few-shot context for the rewrite — works with Gemini as-is.
   YT rips — Demucs-clean corpus audio is strictly better), and (b) a
   per-character **voice bible** — real catchphrases/rhythms mined into the
   Gemini rewrite prompts (text tokens only).
-- **Casting reels** built 2026-08-20 for the text-designed EL voices:
+- **Casting reels — OWNER-BLESSED 2026-08-20 (late):** MMPR-1993 v2 all 11
+  good (Jason needed an owner-seeded prototype: 8 verified clips → 72 confirmed,
+  176 fight-grunts evicted; morphed/suited audio is unnamed because the naming
+  pass works by face — see comic-reader `docs/morphed-voice-modes.md`).
+  TMNT-1990 v3 "MUCH better… all just the single characters": the film was
+  RE-CUT from its existing whisperx.json under current rules (273 → 910 clips,
+  non-destructive `TMNT-1990-recut` ep), every clip assigned by voice against
+  owner-named cluster centroids + a window-seeded Leonardo (the diarizer had
+  merged Leo into Donnie's SPEAKER_03), then a cluster-aware 2-way pass.
+  Reels live in `clips/montages/Casting-MMPR-1993-v2/` and
+  `Casting-TMNT-1990-v3 (recut)/` (manifests map every position → clip);
+  labeler page `/reels`. Song clusters excluded via `exclusions-movies.json`.
+  NEXT (owner-gated, uses EL voice slots): ElevenLabs instant re-clones from
+  the blessed reels. Option for more 1990 Leo/Mikey: Secret of the Ooze has
+  the same voice actors (Tochi, Rist) — same pass would roughly double both.
+- **Original casting-reel note** (2026-08-20 for the text-designed EL voices:
   `clips/montages/Casting-MMPR-1993/` (Jason, Billy, Zack, Kimberly,
   Trini, Tommy, Lord Zedd, Rita Repulsa, Goldar, Alpha 5, Zordon) and
   `Casting-TMNT-1990/` (Raphael, Leonardo, + a SPEAKER_05 mystery reel
