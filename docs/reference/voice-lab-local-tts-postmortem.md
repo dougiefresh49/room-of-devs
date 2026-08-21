@@ -60,7 +60,8 @@ real lines as few-shot context for the rewrite — works with Gemini as-is.
   NEXT (owner-gated, uses EL voice slots): ElevenLabs instant re-clones from
   the blessed reels. Option for more 1990 Leo/Mikey: Secret of the Ooze has
   the same voice actors (Tochi, Rist) — same pass would roughly double both.
-- **Original casting-reel note** (2026-08-20 for the text-designed EL voices:
+- **Original v1 casting reels** (2026-08-20, superseded — archived under
+  `montages/archive/`) were for the text-designed EL voices:
   `clips/montages/Casting-MMPR-1993/` (Jason, Billy, Zack, Kimberly,
   Trini, Tommy, Lord Zedd, Rita Repulsa, Goldar, Alpha 5, Zordon) and
   `Casting-TMNT-1990/` (Raphael, Leonardo, + a SPEAKER_05 mystery reel
