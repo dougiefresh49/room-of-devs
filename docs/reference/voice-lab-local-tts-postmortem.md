@@ -87,3 +87,17 @@ real lines as few-shot context for the rewrite — works with Gemini as-is.
   intentionally decided not to denoise our training data"); flat ref →
   flat read. No expression tags (emergent only). 1.14× realtime on
   M4 Pro via MPS at 1.5B.
+
+
+## Addendum 2026-08-21 — "feed it ElevenLabs output" theory, tested and closed
+
+Owner theory: bank the ElevenLabs-generated room replays and use them as the
+reference for a local Voicebox (Qwen3-TTS 1.7B) clone, so the EL cast could be
+archived locally instead of occupying voice slots. Test: Raphael 1990 v3 — two
+~25 s slices of continuous, studio-clean EL output (slowed from the baked-in
+1.2× to 1.0×, transcripts taken from the word alignment so they were exact),
+same line rendered by both, A/B on the labeler. Owner verdict: "still junk".
+
+This was the best-case reference the local model can ever get (straight
+dialogue, no clips, no source noise), so the result confirms the original
+finding: the local model is the ceiling, not the reference. Do not reopen.
