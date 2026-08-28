@@ -117,3 +117,20 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
   persona prompt split (compose vs rewrite) for gemini.ts, and
   cancel-at-dequeue so mute refunds queued spend. Hooks stay primary;
   MCP is additive.
+- **Jarvis (jaredrhod/fullstack-agent) steal list** (noted 2026-08-24):
+  study in [study-fullstack-agent-jarvis.md](study-fullstack-agent-jarvis.md),
+  spot-checked against the repos (AGPL: re-implement, never paste). All
+  fifteen ranked borrows are ROOM work, not fleet: spoken permission
+  gate composed in code (`_human_what`, exact-match yes set,
+  deny-with-reason, `spoke_from` ask-ownership), `present` verb +
+  read-back, eased state-fade scalars + amplitude envelope on the wire,
+  "first sentence alone, then 2-batch" TTS chunking with flush at
+  tool-call boundary, demo/shot harness. Sequencing in the study §7.
+  Fleet got only two lines from it (conductor-wizard rules → fleet #20,
+  compaction-aware corefile split → fleet #24).
+- **Grill as an audio conversation** (owner note 2026-08-24): the
+  interview/grilling shape (fleet #32: frontier rounds, one recommended
+  answer per question) wants to run as a spoken exchange in the room,
+  one question at a time through a persona, answers via PTT/phone. Pairs
+  with the spoken permission gate above; same reply plumbing.
+- `elevenlabs.ts fetchCredits()` is caller-less on purpose: it is the hook for a future panel credits chip (noted 2026-08-27 when the Known-issues section left CLAUDE.md).

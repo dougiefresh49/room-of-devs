@@ -619,6 +619,29 @@ permission prompt that fires on first panel PTT recording, self-serve.)
 
 ## Next up (likely order)
 
+-1. **Memory rework (owner call 2026-08-27, in progress).** Theo's
+   "Turn off Claude Code's Memory" (2026-08-25) replicated here: of the
+   32 memory files, 27 were never opened in the surviving month of
+   transcripts (7 of 17 sessions read one, 11 wrote one). So: auto-memory
+   OFF for this repo; the memory dir archived to
+   `~/.claude/memory-archive/cursor-read-aloud-2026-08-27/` and deleted,
+   after folding the few standing rules that lived only there into
+   CLAUDE.md; CLAUDE.md rewritten in Theo's directional shape (what it
+   is, what makes it special, glossary, things the model kept doing
+   wrong, taste) with every dated "(owner call ...)" parenthetical
+   stripped; `docs/decisions.md` kept as a parking lot for open/assumed
+   questions and new calls only (no history backfill; the 97-row seed
+   was scrapped as an archive nobody would read). Round B already put
+   four of the "kept doing wrong" rules behind PreToolUse hooks
+   (install-dir edits, credit caps, enqueue loops, `.env` reads), so the
+   rewrite defers to those. Follow-ups: run Lauren Tan's hierarchy over
+   the rules that are still prose only (playback-state mutation during
+   tests, the deploy-step-per-layer mistakes); the STATUS thin-index
+   rework (fleet #8) and pruning `docs/active/` of shipped-work plans
+   are still pending.
+   Reasoning trail: study-capstan-george.md §4/§6 for the log, the Theo
+   memory video analysis for the rest.
+
 0. **THE RIG standalone prototype** per
    [spec-rig-prototype.md](active/spec-rig-prototype.md) — siloed
    React+shadcn app, mock snapshot + scenario triggers, ALL target
