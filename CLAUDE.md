@@ -1,396 +1,148 @@
 # Room of Devs (cursor-read-aloud)
 
-Personal macOS tool that turns AI coding agents into a "room of devs" with
-character voices. Claude Code sessions appear as persona cards (TMNT cast &
-co.); when an agent finishes a turn its response is read aloud with its
-ElevenLabs voice — on the Mac or streamed to a phone. Reply-capable (tmux)
-agents support replies from the phone and a live "call" mode that narrates
-intermediate progress. Family-of-one software: not for sale, but it IS
-long-lived — maintainability matters now (see Refactor status).
+## What it is
 
-## Tech Stack
+A personal macOS tool that turns AI coding agents into a "room of devs" with character voices. Claude Code sessions appear as persona cards (TMNT cast and co.); when an agent finishes a turn, Gemini rewrites the response into the character's voice and ElevenLabs speaks it, on the Mac or streamed to the owner's phone. Family-of-one software: not for sale, but long-lived, so maintainability matters. GitHub repo `dougiefresh49/room-of-devs`; the local folder keeps its old name on purpose (hooks and sessions point at it).
 
-- **Daemon** (`tts-server/`): Node + TypeScript run via `tsx` (no build
-  step), chokidar file watching, `ws` for the panel WebSocket, SSE + plain
-  HTTP for the mobile page. Playback via `ffplay`/`afplay`.
-- **Shared client** (`packages/room-client/`): framework-free store over
-  `PanelSnapshot` + WS/SSE transports ((epoch, rev)-gated snapshots,
-  requestId/CommandResult correlation, grant optimism). Bundled into the
-  panel by Vite; the daemon must NEVER import it. Mobile adopts it in the
-  Phase 5 SPA.
-- **AI**: Gemini (`@google/genai`, `gemini-3.1-flash-lite`) rewrites agent
-  text into character voice; ElevenLabs streams TTS (billed per character —
-  the expensive one).
-- **Shared UI** (`packages/ui/`): semantic design tokens (`tokens.css` is
-  the color authority — state colors, `--room-accent`), Tailwind v4 theme
-  mapping (no preflight while legacy CSS coexists), vendored shadcn/Radix
-  primitives, domain leaf components (StateBadge, AgentChips, TransportBar,
-  SummaryText), and the sanitized `Markdown` renderer (react-markdown +
-  rehype-sanitize, platform link policy). Components take domain values +
-  callbacks only — no fetch/WS/Tauri/audio inside.
-- **Desktop panel** (`panel/`): Tauri 2 + Vite + TypeScript + React 19.
-  Fully React since Phase 4: component tree in `src/app/` over external
-  stores (`view-state`, `server-data`, `ui-state` + the shared
-  room-client store); all Tauri calls behind `src/platform/` (components
-  never import @tauri-apps/\*). TWO windows, one bundle, two JS realms:
-  `main` = normal activating NSWindow with the standard titlebar; `dock`
-  = NSPanel (float level, non-activating, all-Spaces) converted once at
-  startup. Rust (`lib.rs`) is the mode authority — `set_room_mode` swaps
-  visibility + activation policy (Regular/Accessory); realms coordinate
-  via daemon snapshots only. Lipsync/blink run in `src/stage/` (one rAF
-  loop + 70ms watchdog, img refs — avatar frames NEVER go through React
-  renders). Grant/PTT lives solely in `usePttGrant` (event firewall incl.
-  portaled popover content). The cross-realm grant belt
-  (`grant-guard.ts`, localStorage) prevents double-dispatch around mode
-  switches; the daemon's claim markers stay the billing authority.
-- **Mobile room** (`packages/mobile/`, `@room/mobile`): Vite + React 19 SPA
-  served token-gated at `/` (and `/app`) by mobile-http from the committed
-  `dist/` (owner policy: dist is committed, rebuilt with
-  `pnpm --filter @room/mobile build`). Same architecture rules as the
-  panel: RoomClient store (SseTransport, `source:"mobile"`), components
-  never fetch; audio lives in one adapter (`src/audio/controller.ts` —
-  prime/live-stream/handoff/speaker-gate; only a client whose device
-  toggle is "phone" auto-plays routed audio). The legacy single-file
-  `mobile.html` was deleted in Phase 6 (2026-07-23) — it lives in git
-  history if a behavior reference is ever needed.
-- **Glue** (`scripts/`): bash utilities + Claude Code hooks. (The SwiftBar
-  menu-bar plugin was retired in Phase 6 — the panel is the only Mac UI.)
-- **State/IPC**: JSON + lock/pid files under `~/.cursor/tts/` — this is the
-  IPC layer between hook processes and the daemon, not incidental style.
+Pipeline: Claude Code hooks (Stop / UserPromptSubmit / AskUserQuestion / SessionEnd) queue JSON into `~/.cursor/tts/queue/`; the daemon (`tts-server/`, Node + TypeScript via `tsx`, chokidar) rewrites with Gemini, streams ElevenLabs TTS, and plays it (`ffplay`/`afplay`) or serves it to the phone. Room state (`state/*.json`, `team_map.json`, `.now-playing.json`) is watched and broadcast as one `PanelSnapshot` to the panel (WebSocket) and the mobile SPA (SSE). tmux team sessions (`team.sh`) accept replies injected from phone or panel (`inject_prompt.sh`); live mode tails a session's transcript and speaks intermediate progress. T3 Code sessions (Theo's coding app, which the owner runs from the phone) join the room as SDK cards. Surfaces: the Tauri panel (`panel/`, two windows from one bundle, `main` and the floating `dock`), the mobile SPA (`packages/mobile/`, token-gated at `/`), tmux teams, live/call mode on the phone.
 
-## Architecture flow
+The repo is not what runs. `scripts/setup.sh` installs scripts, config and Room.app into `~/.cursor/tts/`; `tts-server.sh restart` syncs `tts-server/src/*.ts` (plus the protocol package and mobile `dist/`) into the install before launching. Edit the repo, then deploy the layer.
 
-Claude Code hooks (Stop / UserPromptSubmit / AskUserQuestion / SessionEnd)
-→ queue JSON in `~/.cursor/tts/queue/` → daemon watcher → Gemini rewrite →
-ElevenLabs stream → Mac speakers or phone stream (`/live-audio/`). Room
-state (`state/*.json`, `team_map.json`, `.now-playing.json`) is watched and
-broadcast to the panel (WS) and mobile page (SSE) as one `PanelSnapshot`.
-tmux team sessions (`team.sh`) accept injected replies
-(`inject_prompt.sh`); live mode tails the session transcript
-(`live-tail.ts`) and speaks intermediates while enabled.
+## What makes this special
 
-## The two-location gotcha
+**Voice-first, character-first.** The room reads as animated characters on top of an agentic workflow, never as a task board. The avatar is on screen and animated; cards carry data, but a card grid is not the primary surface, and a card is the session working a task, never the task itself. Anything that makes the product feel like a work tracker is heading the wrong way.
 
-The repo is NOT what runs. `scripts/setup.sh` installs to `~/.cursor/tts/`
-(scripts, config, Room.app bundle), and `tts-server.sh
-start|restart` syncs `tts-server/src/*.ts` from the repo before
-launching. So:
+**Credit-conscious.** Every queue item bills one Gemini call and one ElevenLabs synthesis (per character, the expensive one). Credit safety is the owner's top priority; each double-fire protection exists because it was once a real double bill. ElevenLabs and Gemini stay: local TTS and local rewrite LLMs were auditioned and lost by ear, and real spend is single-digit dollars a month, so don't reopen that lane to save pennies.
 
-- Edit files **in the repo**, never in `~/.cursor/tts/`.
-- TypeScript changes take effect after
-  `~/.cursor/tts/scripts/tts-server.sh restart`. That sync also stages the
-  shared wire contract `packages/protocol/src/` → installed `src/protocol/`
-  (in the repo, `tts-server/src/protocol` is a symlink to it). The installed
-  daemon must never resolve modules back into the repo workspace — protocol
-  deps (valibot) are direct deps of tts-server/package.json for that reason.
-- Mobile SPA changes need `pnpm --filter @room/mobile build` FIRST (dist is
-  committed; the sync rsyncs `packages/mobile/dist/` → installed
-  `mobile-dist/` and is FATAL if the repo dist is missing), then the same
-  `tts-server.sh restart`. Editing `packages/mobile/src` without rebuilding
-  deploys nothing.
-- `scripts/*.sh` or hook changes take effect after re-running
-  `scripts/setup.sh`.
-- Panel changes need a rebuild (`pnpm tauri build --debug` in `panel/`,
-  cargo comes from `~/.rustup/toolchains/stable-aarch64-apple-darwin/bin`),
-  then `setup.sh` installs the bundle — and a RUNNING Room.app must be
-  relaunched; setup.sh does not restart it.
-- Runtime state lives in `~/.cursor/tts/`: `queue/`, `played/`, `failed/`,
-  `replay/`, `state/`, `logs/hook.log`, `logs/server.log`, `config.json`,
-  `live_sessions.json`, `team_map.json`.
-- Re-running setup.sh `rm -rf`'s the installed tts-server dir — never let a
-  long-lived process be born with its cwd there (bit us via tmux once).
+**One owner, phone as much as Mac.** The owner listens and replies from a phone as often as from the desk. Mobile is not a shrunk desktop: its jobs are be-spoken-to, answer-from-pocket, glance, start-by-voice, and "walk to the Mac" is an honest handoff. Output routing is Spotify-Connect style: pick a device anywhere, it applies everywhere.
 
-## API credit efficiency (top priority)
+**THE RIG design language.** The locked visual target is industrial (Titanfall 2): machined gunmetal and amber, asymmetric corner grammar, hex texture, data on digital displays, chrome sparingly, no 3D chased in CSS. `docs/active/design-ui-target.md` is the system of record; the system's own vocabulary (spine, core, salience, plot) is the design inspiration.
 
-Every queue item costs one Gemini call and one ElevenLabs synthesis. Rules
-for any work in this repo:
+**Voice above orchestration.** One always-on concierge voice (Mikey) above the interpreter; orchestration threads are mortal and reconstructable from the spine; workers are silent. Nothing important lives only in a context window.
 
-- Verify the pipeline live only with SHORT text (< 200 chars) via
-  `echo "short test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Test"`, or
-  process one file with `pnpm exec tsx src/index.ts once <queue-file>`. One
-  run is enough — never loop live synthesis.
-- **Live-mode testing may spend a little** (owner call 2026-07-22): to test
-  live/call features end-to-end, spawn or reuse a dedicated team session on
-  a cheap model (`sonnet`/`haiku` — e.g. in the agent-usage-bar project),
-  keep its prompts short ("reply in one sentence"), cap a run at a handful
-  of clips, and prefer delegating the whole interact→listen→verify→fix loop
-  to codex computer use so the owner isn't the test rig. This is a bounded
-  lane, not a loosening of the rules above: no unbounded/repeated synthesis
-  loops, and anything testable without spend still goes the free route
-  first. A no-spend mock live harness is planned in the refactor
-  (docs/shipped/spec-ui-refactor.md, Phase 5).
-- If the thing being verified isn't synthesis itself, test WITHOUT burning
-  credits: `processWithGemini` and `streamTTS` skip gracefully when API
-  keys are absent; `signal.ts replay` re-plays saved audio free;
-  `live-tail.ts once <transcript>` dry-runs the tailer.
-- Don't regenerate cached phrase MP3s (`phrases.ts` skips existing files).
-- Don't raise the `truncateForTTS` caps, change `gemini_model`, or change
-  `elevenlabs_model_id` without asking.
-- Guard the double-fire protections: ingest dedup hash, mute checks BEFORE
-  API calls, live-mode gates + the hold-one buffer in `live-tail.ts`
-  (speaking a turn-final there double-bills — the Stop path owns it),
-  processing markers/locks in `audio.ts`, cached-only acks.
+**Filesystem as IPC.** The JSON, lock, pid and marker files under `~/.cursor/tts/` are the contract between hook processes and the daemon, not incidental style. Change them deliberately.
 
-## Common commands
+## Glossary
+
+- **Persona / character**: voice + avatar + phrase set (`characters.json`, gitignored); globally unique, one tmux session per persona.
+- **Room**: every live session as one snapshot. **Card**: one session.
+- **Team session**: tmux `cr-<Persona>` from `team.sh`, reply-capable via `inject_prompt.sh`, runs with `--dangerously-skip-permissions`.
+- **SDK card**: a T3 Code session (`sdk:true`), kept on a TTL through T3's idle teardown, evicted when T3 settles the thread.
+- **Live mode**: per-session daemon flag (`live_sessions.json`); the transcript tailer (`live-tail.ts`) speaks intermediates to the phone. **Call mode**: the mobile call view while live (`CallView.tsx`); chat view is the thread plus composer.
+- **Grant**: letting a queued item speak, on the Mac or grant-to-phone (the phone plays the replay file, the Mac stays quiet). **PTT**: push-to-talk voice input (`voice_ptt.sh`, `usePttGrant`); the daemon's claim markers are the billing authority.
+- **queue/ played/ failed/ replay/**: items waiting, done, given up, and the MP3 + JSON sidecar saved per playback (replays re-play free).
+- **Snapshot**: `PanelSnapshot` (`packages/protocol`), the one wire shape both UIs consume; staleness gated on `(epoch, rev)` (epoch = daemon boot, rev = monotonic within a boot).
+- **The two locations**: the repo (edit here) and `~/.cursor/tts/` (the installed runtime: scripts, config, queue, logs, state, secrets).
+- **Spine**: GitHub issues as the durable task record (labels `state/*`, one per issue, plus `gear/*`); `tts-server/scripts/tap-in.ts` reads it.
+- **RIG**: the locked design target. **THE CORE**: its spend gauge (pulse = burn now, lit fraction = the month's draw).
+- **Salience**: one number per session, 0-100 "% clear of needing you", plus a threshold that gates speaking (the dock approximates it locally).
+- **Interpreter**: the daemon's voice-command layer (`tts-server/src/interpreter/`): intent files in `~/.cursor/tts/intents/`, rule router, then LLM, then a command plan.
+
+## Things the model kept doing wrong
+
+- **Editing `~/.cursor/tts/` instead of the repo.** The install is overwritten on every deploy, so edits there vanish. Hook-enforced (`scripts/hooks/block-install-edit.sh`).
+- **Forgetting the deploy step for the layer touched.** Daemon TS: `~/.cursor/tts/scripts/tts-server.sh restart`. Mobile SPA: `pnpm --filter @room/mobile build` FIRST (dist is committed; the sync is fatal without it), then the same restart. Shell scripts and hooks: `./scripts/setup.sh`. Panel: `./scripts/panel-dev-install.sh` (cargo from `~/.rustup/toolchains/stable-aarch64-apple-darwin/bin`); a running Room.app must be relaunched, setup.sh does not do it.
+- **Burning API credit to verify.** Live synthesis only with short text (under 200 chars), once: `echo "short test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Test"`. Never loop; two enqueues in one Bash command are hook-blocked (`block-enqueue-loop.sh`). When synthesis isn't the thing under test, go free: `processWithGemini`/`streamTTS` skip without API keys, `signal.ts replay "" 1` replays saved audio, `live-tail.ts once <transcript>` dry-runs the tailer, `tts-server/scripts/mock-live.ts` drives live mode with zero synthesis (docs/reference/testing-live-mode.md), `tap-in.ts --dry` skips the LLM. Live/call features that truly need audio get a bounded paid lane: a team session on a cheap model (sonnet), one-sentence prompts, a handful of clips, codex driving the loop.
+- **Mutating live playback state during tests.** `.playback-paused`, pid files and `.stream-lock` are load-bearing for a real player (deleting the pause flag without SIGCONT left ffplay suspended and wedged the grant queue). Check `pgrep ffplay` and the lock first; use fake session ids and staged `.now-playing.json` / state files; test pause paths through `pause.sh`. Test scripts that write into `src/` save and restore.
+- **A process born with its cwd in the installed tts-server dir.** setup.sh `rm -rf`s it; a tmux server inherited it once and every later spawn died on getcwd. `team.sh` cds to `$HOME` first.
+- **Weakening double-fire protections.** Never loosen: the ingest dedup hash; mute checks BEFORE API calls; live-mode gates (re-read after every wait) and the hold-one buffer in `live-tail.ts` (a turn-final spoken there double-bills; the Stop path owns it); processing markers and the stream lock in `playback-locks.ts`; cached-only acks; the phone-ack marker stamped before an SDK reply dispatch.
+- **Changing credit caps casually.** `truncateForTTS` caps, `gemini_model` and `elevenlabs_model_id` change only when the owner asks. Hook-enforced (`block-credit-caps.sh`; `CREDIT_OVERRIDE=1` on request). Don't regenerate cached phrase MP3s (`phrases.ts` skips existing files).
+- **Reading a worktree `.env`.** Delegates never need live keys; hook-blocked (`block-env-read.sh`) unless `LIVE_API_OK` is set.
+- **Touching runtime state without asking.** Ask before clearing queues, deleting replay history, or editing `~/.cursor/tts/config.json`. Launching the app, screenshots and one short test clip need no asking.
+- **Leaving a browser test tab on `/` with output = phone.** Every such tab acts as "the phone" and plays routed audio (the owner heard it twice). Reset the toggle to Mac and leave the page before ending the session.
+- **tmux `=name` targets.** Exact-match works for session targets only; `send-keys`/`capture-pane` need the pane id from `tmux list-panes -t "=SESSION" -F '#{pane_id}'` (else `cr-Don` matches `cr-Donnie`).
+
+## Surfaces and verification
+
+Surfaces: the panel `main` window (normal activating NSWindow); the panel `dock` (NSPanel, float level, non-activating, all Spaces; Rust `lib.rs set_room_mode` is the mode authority); the mobile SPA (`/` and `/app`, token from `mobile_url.sh`); the phone audio path (`/live-audio/` chunked stream, `/replay-audio/` with Range, one speaker gate per client); tmux teams (spawn, resume, reply, live). Check the ones you touched. Output is audio plus two UIs, so "does it work" means trigger and observe:
+
+1. Deploy the layer you changed.
+2. Trigger cheaply with `enqueue_manual.sh` and short text.
+3. Observe instead of listening: `logs/hook.log` traces ingest, gemini, elevenlabs, audio; `replay/` gains an MP3 + sidecar; queue files move to `played/`; `curl` `/snapshot`, `/thread/<id>`, `/action` with the mobile token. Panel visuals stage free with a fake speaking session.
+4. UI checks need real computer use: delegate to codex (`codex-computer-use` skill) and let it own the whole interact-diagnose-verify loop, reporting once. A one-shot chrome-devtools screenshot is the fallback; claude-in-chrome times out on the SSE stream.
+5. Live/call flows: mock-live harness first, the bounded paid lane only for what the mock cannot show.
 
 ```bash
 ~/.cursor/tts/scripts/tts-server.sh restart   # deploy daemon + mobile changes
 ./scripts/setup.sh                            # install scripts/hooks/panel bundle (no API calls)
-./scripts/setup.sh --refresh-voices           # + ElevenLabs voice cache/SFX refresh (opt-in, billable)
+./scripts/setup.sh --refresh-voices           # + ElevenLabs voice cache/SFX refresh (billable, opt-in)
 pnpm typecheck                                # type check all packages (root workspace)
 pnpm check-fixtures                           # validate protocol fixtures vs schemas
 echo "test" | ~/.cursor/tts/scripts/enqueue_manual.sh "Verify"   # cheap pipeline poke
-pnpm exec tsx src/signal.ts replay "" 1       # free replay of last message
+pnpm exec tsx src/signal.ts replay "" 1       # free replay of last message (in tts-server/)
 tail -40 ~/.cursor/tts/logs/hook.log          # full pipeline trace
-./scripts/panel-dev-install.sh                # panel: build → verify fresh → install → relaunch
+./scripts/panel-dev-install.sh                # panel: build, verify fresh, install, relaunch
 cd panel && pnpm tauri dev                    # panel: ordinary component work (HMR)
+pnpm --filter @room/prototype dev             # RIG prototype on :5180 (mock data)
 ```
 
-## Code style
+## Where code lives
 
-- Concise, simple solutions; propose the simpler path when one exists.
-- **UI code is componentized** — React (or similar) with shared components
-  and design tokens across the panel and mobile page. No UI built from
-  innerHTML template strings. (Owner call 2026-07-21; the old "no
-  frameworks" rule is dead — it produced 3k-line monoliths, since deleted.)
-- Keep files focused; a file approaching ~500 lines is a smell worth
-  raising, not a norm.
-- Server-side filesystem state (JSON/lock/pid files) remains the IPC
-  contract with the hook processes — change it deliberately, not casually.
-- Databases: not forbidden, not sought. Local or hosted (e.g. Supabase) is
-  fine IF it clearly earns its place (speed, capability); don't introduce
-  one for state the filesystem layer already handles well.
-- No CI/test-suite theater, but changed behavior gets verified (see
-  Verifying below) and type checks stay clean.
+- `tts-server/`: the daemon. `index.ts` queue processing, `ingest.ts`, `gemini.ts`, `elevenlabs.ts`, `state-watch.ts` (snapshot builder), `panel-ws.ts` / `mobile-http.ts` (thin adapters over `services/commands.ts`), `live-mode.ts` + `live-tail.ts`, the audio split (`playback-locks.ts`, `now-playing.ts`, `replay-store.ts`, `stream-playback.ts`), `hid-*.ts` (arcade buttons), `interpreter/`, `t3-*.ts`; `scripts/` holds `mock-live.ts`, `fake-agent.ts`, `tap-in.ts`.
+- `packages/protocol/`: Valibot schemas for every wire type plus fixtures; `tts-server/src/protocol` is a symlink to it.
+- `packages/room-client/`: framework-free store over `PanelSnapshot`, WS and SSE transports, (epoch, rev) gating, request correlation, grant optimism.
+- `packages/ui/`: `tokens.css` (the color authority), Tailwind v4 theme mapping, vendored shadcn/Radix primitives, domain leaf components, the sanitized `Markdown` renderer, `rig/` (RIG primitives).
+- `packages/mobile/`: the phone SPA (React 19 + Vite).
+- `panel/`: Tauri 2 + React 19. `src/app/` components over external stores, `src/platform/`, `src/stage/` (lipsync/blink), `src-tauri/` Rust.
+- `prototype/`: the standalone RIG prototype over a mock store; never imported by panel, mobile or daemon.
+- `scripts/`: bash glue, Claude Code hooks (`hook_*.sh`), `team.sh`, `inject_prompt.sh`, `setup.sh`, `tts-server.sh`, guards in `hooks/`.
 
-## Refactor status (2026-07-23)
+Package boundaries are rules:
 
-REFACTOR COMPLETE — Phases 0-7 SHIPPED: shared protocol/client/ui
-packages, server services + recovery, React panel (two windows), mobile
-Vite SPA cut over to `/`, legacy audit + deletion (caller manifest in
-docs/archive/reviews/refactor-2026-07/legacy-manifest.md; mobile.html, SwiftBar,
-raycast, orphan scripts removed — PTT plumbing exempt and kept), and the
-Phase 7 server splits (audio.ts and hid.ts each behind a facade — see
-Known issues note). Context in session memory ("Refactor Mandate");
-judgment calls in docs/archive/reviews/refactor-2026-07/decisions-overnight.md.
-Free live-mode regression tooling: tts-server/scripts/mock-live.ts +
-docs/reference/testing-live-mode.md.
+- The daemon never imports `room-client` or `ui`; the installed daemon never resolves modules back into the repo (protocol deps like valibot are direct deps of `tts-server/package.json`).
+- Components take domain values and callbacks only: no fetch, WS, Tauri or audio inside. All Tauri calls live behind `panel/src/platform/`.
+- Avatar frames never go through React renders: `src/stage/` swaps `img` refs from one rAF loop with a 70ms watchdog.
+- Grant/PTT lives solely in `usePttGrant`; `grant-guard.ts` is the cross-realm belt around mode switches; the two windows coordinate through daemon snapshots only.
+- Mobile audio lives in `src/audio/controller.ts`; only a client whose device toggle is "phone" auto-plays routed audio. Mobile `dist/` is committed and rebuilt explicitly; the deploy sync never builds it.
+- Shared `tailwind.css` ships no preflight; only the mobile package enables it.
 
-## General preferences
+## Taste
 
-- Use pnpm, never npm.
-- Delegation roster: cursor-agent, codex, and Claude models only. Don't
-  delegate to agy/Antigravity (owner call, 2026-07-07 — flaky headless).
-- If asked to do too much work at once, stop and state that clearly.
-- If computer use is helpful for completing or verifying work, shell out to
-  gpt-5.6 with Codex (see the `codex-computer-use` skill). One-shot
-  claude-in-chrome checks are fine; multi-step interactive MCP ping-pong
-  from the main session is not. (Owner 2026-07-31: ChatGPT desktop app
-  restarted, codex screenshots should work again; if they don't, the
-  chrome-devtools CDP screenshot pass is an acceptable fallback — the
-  claude-in-chrome extension times out on the prototype's animations.)
+- Concise, simple solutions; propose the simpler path when one exists. If asked to do too much at once, say so plainly instead of thinning every part.
+- UI is componentized: React with shared components and design tokens across panel and mobile. No innerHTML template strings, no raw DOM lookups. A file approaching ~500 lines is a smell worth raising.
+- Prototypes are siloed mock-data builds, never edits to the live app, but they still build on the shared component library (`@room/ui` plus shadcn primitives) from the first round: "extends the shared library" is the bar, not "matches the aesthetic". Flag plan text that says otherwise.
+- Concept rounds: lead the brief with "an animated character on top of an agentic workflow", never work/board/status vocabulary. Prefer over-reach: ask boards for a "what I'd cut" note instead of a cost tiebreaker, never cost-gate a concept round, seed different directions, keep the avatar animated (Postplan strips scripts, so motion is CSS or SVG animate).
+- No database unless it measurably earns its place; the filesystem layer is the IPC and handles current state well.
+- pnpm, never npm. No CI or test-suite theater, but changed behavior gets verified and `pnpm typecheck` stays clean.
+- User-facing text is taste work: both UIs, character copy, and the Gemini system prompts in `gemini.ts` and `dynamic-response.ts`.
+- Prose and docs: no em dashes or en dashes; commas, colons, or sentences.
 
-## Session token hygiene
+## Working with models and delegates
 
-Long sessions are the Fable cost driver, not delegated agents. Per-task
-cost ≈ context size × wakeup count (every background-task notification
-re-reads the whole conversation — cached, but a 300-450k context across
-13 wakeups burned ~25% of a weekly Fable budget on 2026-07-22).
+Rankings, higher = better. Cost reflects what we actually pay (subscriptions with generous limits rank cheap). Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design and copy.
 
-- **During big multi-stage efforts (a refactor phase, a feature round
-  with several delegate/verify wakeups), the main session stops
-  authoring code** (owner call 2026-07-22): chunks beyond small surgical
-  edits are written by a delegate against a written spec —
-  Terra/grok/composer for well-specced work; an Agent-tool
-  `fable`/`opus` SUBAGENT when a chunk genuinely needs frontier judgment
-  (fresh context, none of the session history billed with it). The main
-  session does: specs, credit-guard-adjacent edits, targeted diff
-  review, merges. Ordinary small tasks: writing code directly is fine.
-- **Codebase recon goes to composer-2.5** (cursor-agent) or an Explore
-  subagent: finding references, mapping call sites, summarizing big
-  files. Don't pull 2000-line files into the main context when a
-  delegate can return the 20 lines that matter.
-- Batch verification into ONE delegated round with the complete
-  checklist; let codex own the whole interact→diagnose→verify loop and
-  report once. Every extra round-trip is a full-context wakeup.
-- End of a shipped feature/round → tell the owner it's a good `/clear`
-  point. Mid-task bloat → `/compact` (especially once recon reads are
-  stale after a design is locked). Never let sessions run for days.
-- Sequential pipelines (spec→build→review→fix) at one wakeup per stage are
-  fine; don't add wakeups for things a delegate can verify itself.
+| model         | cost | intelligence | taste | reachable via                                                                |
+| ------------- | ---- | ------------ | ----- | ---------------------------------------------------------------------------- |
+| composer-2.5  | 8    | 5            | 5     | cursor-agent CLI (`agent`)                                                   |
+| grok-4.5      | 8    | 6            | 6     | cursor-agent CLI (`--model cursor-grok-4.5-high`; `-medium`/`-low` lighter) |
+| gpt-5.6 Sol   | 7    | 8            | 5     | codex CLI (`codex -m` Sol tier; the local default)                           |
+| gpt-5.6 Terra | 8    | 7            | 5     | codex CLI (Terra tier; bare "gpt-5.6" in prose means Terra)                  |
+| gpt-5.6 Luna  | 8    | 4            | 4     | codex CLI (Luna tier)                                                        |
+| sonnet-5      | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'`                                             |
+| opus-5        | 7    | 8            | 8     | Agent/Workflow `model: 'opus'`                                               |
+| fable-5       | 2    | 9            | 9     | Agent/Workflow `model: 'fable'`                                              |
 
-## Picking the right models for workflows and subagents
+- Fable is the scarce resource: it drives the main session and burns the weekly budget fast. Opus and Sonnet are cheap and capable; use them liberally as subagents. codex has plenty of headroom: lean on it, Sol for deep work (`-c model_reasoning_effort="high"`), Luna only for trivia. Throttle a provider only when `ai-usage` shows it near its cap; check `ai-usage` before a big delegation round.
+- composer/grok via cursor-agent for mechanical and multi-file work (grok for the trickier jobs): `agent --worktree -p --force "prompt"`, non-fast variants. cursor-agent runs only composer/grok: any other model through it bills the small Cursor API pool (the `api` metric, not `models`), so frontier lanes stay on the Agent tool unless the owner reopens that route.
+- Never Haiku. Never agy/Antigravity (flaky headless).
+- Defaults, not limits: redo a cheaper model's output with a smarter model when it misses the bar, without asking. When axes conflict on anything that ships: intelligence > taste > cost. User-facing work needs taste 7 or better (sonnet minimum, opus/fable preferred); visual concept work goes to opus/fable only.
+- Reviews: fable or opus, optionally codex (Sol for deep reviews) or composer as an independent perspective (`codex-review` skill).
 
-Rankings, higher = better. Cost reflects what we actually pay
-(subscriptions with generous limits rank cheap), not list price.
-Intelligence is how hard a problem you can hand the model unsupervised.
-Taste covers UI/UX, code quality, API design, and copy.
+Session token hygiene: per-task cost is roughly context size times wakeup count. During big multi-stage efforts the main session writes specs, credit-guard-adjacent edits, targeted diff reviews and merges; delegates author the code (composer/grok/Terra for well-specced chunks, a fresh-context fable/opus subagent when a chunk needs frontier judgment). Recon goes to composer or an Explore subagent. Batch verification into ONE delegated round with the complete checklist. Suggest `/clear` after a shipped round, `/compact` mid-task once recon reads are stale. Ordinary small tasks: write the code directly.
 
-| model         | cost | intelligence | taste | reachable via                                                                        |
-| ------------- | ---- | ------------ | ----- | ------------------------------------------------------------------------------------ |
-| composer-2.5  | 8    | 5            | 5     | cursor-agent CLI (`agent`)                                                           |
-| grok-4.5      | 8    | 6            | 6     | cursor-agent CLI (`--model cursor-grok-4.5-high`; `-medium`/`-low` for lighter work) |
-| gpt-5.6 Sol   | 7    | 8\*          | 5     | codex CLI (`codex -m` Sol tier)                                                      |
-| gpt-5.6 Terra | 8    | 7\*          | 5     | codex CLI (default tier)                                                             |
-| gpt-5.6 Luna  | 8    | 4\*          | 4     | codex CLI (`codex -m` Luna tier)                                                     |
-| sonnet-5      | 5    | 5            | 7     | Agent/Workflow `model: 'sonnet'`                                                     |
-| opus-5        | 7    | 8\*          | 8\*   | Agent/Workflow `model: 'opus'`                                                       |
-| fable-5       | 2    | 9            | 9     | Agent/Workflow `model: 'fable'`                                                      |
+Delegate mechanics:
 
-\* Provisional (2026-07-11, unauditioned): GPT-5.6 replaced gpt-5.x with
-three tiers — **Sol** (flagship frontier reasoning), **Terra** (balanced
-daily driver), **Luna** (fast/lightweight for high-volume work). Ranked
-from OpenAI's positioning, not our own testing; audition before relying on
-them for anything intricate. opus-5 (2026-07-27) replaced opus-4.8 as the
-`'opus'` alias — intelligence/taste carried over from 4.8
-plus a notch per Anthropic's positioning; cost 7 — near Sol, far cheaper
-than fable (owner call 2026-07-27). Unauditioned; judge output as usual.
-Prose references to "gpt-5.6" without a tier
-mean Terra. Sol burns subscription limits faster — reach for it where you'd
-otherwise consider fable-5 for a codex-side task; Luna only for
-trivial/mechanical work (composer-2.5 is usually the better pick anyway).
+- Parallel code-writing agents use worktree isolation, split by file ownership so merges are trivial (docs/reference/worktree-parallel-flow.md).
+- Every delegated prompt says: no live Gemini/ElevenLabs calls unless the task is about synthesis; cursor worktrees don't inherit `.env`. UI-building prompts state the shared-component requirement explicitly.
+- Gate for code tasks: `pnpm exec tsc --noEmit` clean in `tts-server/` and `panel/` (when touched), `bash -n` on changed shell scripts.
+- Check `command -v agent` / `command -v codex` first; probe cursor-agent with `agent -p -f "Reply with exactly: OK"` before a big round.
+- Backgrounded `codex exec` needs `< /dev/null` (an open stdin pipe waits forever) and `-s workspace-write`; long runs exceed Bash's 10-minute timeout, so background them.
+- cursor-agent `-p` runs can hang at 0% CPU after committing; check the worktree's git log (`~/.cursor/worktrees/<repo>/<branch>`) before assuming failure. `--output-format stream-json > run.jsonl` shows progress.
 
-How to apply:
+## Docs
 
-- **Budget posture (owner call 2026-07-31): go ham with every model
-  EXCEPT Fable.** Fable weekly usage is the one scarce resource — it is
-  the main-session driver and burns fast (43% of a week on one prototype
-  arc). Opus and Sonnet are mostly free game — inexpensive and very
-  capable; use them liberally as subagents. gpt-5.6 has a TON of headroom
-  with multiple resets — lean on codex hard (including Sol for deep
-  work). Throttle any provider only when `ai-usage` shows it actually
-  approaching capacity, not preemptively.
-- Defaults, not limits — standing permission to escalate: if a cheaper
-  model's output doesn't meet the bar, redo it with a smarter model without
-  asking. Judge the output, not the price tag.
-- Cost is a tie-breaker only; when axes conflict for anything that ships,
-  intelligence > taste > cost.
-- Bulk/mechanical work (clear-spec implementation, formatting sweeps,
-  migrations, batch refactors): composer-2.5 or grok-4.5 via cursor-agent
-  (grok audition 2026-07-08: passed a 9-file cross-module task with
-  distinction; prefer grok for trickier multi-file work, composer for pure
-  mechanical) — effectively free, runs in an isolated worktree.
-- Anything user-facing (both UIs, spoken-text prompts, character copy)
-  needs taste ≥ 7: sonnet-5 minimum, opus-5/fable-5 preferred. The
-  Gemini system prompts in `gemini.ts` and `dynamic-response.ts` directly
-  shape what gets spoken — prompt edits are user-facing work.
-- Reviews of plans/implementations: fable-5 or opus-5, optionally
-  composer-2.5 or gpt-5.6 (Sol for deep reviews) as an extra independent
-  perspective (see the `codex-review` skill).
-- Never use Haiku. For trivial work, composer-2.5 or gpt-5.6 Luna.
-- **Check live quota before big delegation rounds** — the `ai-usage`
-  skill reads the AgentUsageBar app (Claude / OpenAI-Codex / Cursor
-  limits at a glance). If one provider is near its cap, route subagents
-  through another; the rankings above assume headroom exists.
-- **Cursor overflow route for frontier models: SUSPENDED** (owner call
-  2026-07-29 — Opus-via-Cursor burned 57% of the monthly Cursor quota;
-  Anthropic Fable is back, so Fable/Opus go through the Agent tool only,
-  cursor-agent is composer/grok only until the owner re-opens this).
-  Mechanism (owner, 2026-08-01): Cursor meters two pools — only
-  composer/grok draw from the generous "First-party models" quota;
-  every other model (`claude-*`, `gpt-*`) bills the much smaller "API"
-  pool (78% used as of 2026-08-01; a single fable lane moved it ~20
-  points). Check `ai-usage`'s Cursor `api` metric — not `models` —
-  before any frontier-via-cursor lane. Original note kept for when the
-  route re-opens: the Cursor plan can run `claude-fable-5-*`,
-  `claude-opus-5-*`, `gpt-5.6-sol-*` (all 1M-context, tiered low→max,
-  thinking variants) via e.g. `agent --worktree -p --force --model
-  claude-fable-5-thinking-high "..."` instead of the Agent tool. Caveats:
-  Fable via Cursor is flagged **NO ZDR** (no zero-data-retention — fine
-  for this repo, think twice for sensitive code), and `-fast` variants
-  burn extra quota for the same model.
-
-Mechanics:
-
-- **Check CLI availability before delegating** — `command -v agent` /
-  `command -v codex`; fall back to a Claude subagent if missing.
-- composer/grok: `agent --worktree -p --force "prompt"` (see the
-  `cursor-agent` skill). Always `--force` for tasks that write code.
-  Model IDs verified 2026-07-22 (`cursor-agent models`): `composer-2.5`,
-  `cursor-grok-4.5-high|-medium|-low`. Every ID also has a `-fast` variant
-  that burns MORE quota for the same model served faster — default to
-  non-fast; Cursor plan headroom is generous (2x usage promo), so
-  `cursor-grok-4.5-high` is the standard grok pick.
-- gpt-5.6: codex CLI — `codex exec` / `codex review`. As of the
-  2026-08-01 CLI update (0.145.0), `codex review` DOES accept a custom
-  prompt (positional arg, or `-` to read stdin) — the old "no custom
-  prompt" limitation is gone. Local config now defaults to
-  `gpt-5.6-sol` at reasoning effort LOW — for deep work pass
-  `-c model_reasoning_effort="high"`. Long runs exceed Bash's 10-min
-  default timeout — background them.
-- Claude models run via the Agent/Workflow `model` parameter.
-- Parallel implementation agents that write code use worktree isolation;
-  split work by file ownership so merges are trivial. Full parallel-round
-  flow (lanes, hot files, the single-deploy-target rule):
-  docs/reference/worktree-parallel-flow.md.
-
-Repo-specific rules for delegated agents:
-
-- cursor-agent `--worktree` checkouts don't inherit `.env` — copy it from
-  the source checkout if the task needs live API calls (it almost never
-  should; see credit efficiency).
-- Delegated agents must NOT make live Gemini/ElevenLabs calls unless the
-  task is explicitly about synthesis — state this in every delegated
-  prompt.
-- Verification gate for code tasks: `pnpm exec tsc --noEmit` clean in
-  `tts-server/` AND `panel/` (when touched), `bash -n` on changed shell
-  scripts.
-
-## Verifying this app
-
-Output is audio + two UIs, so "does it work" = trigger the pipeline and
-observe side effects:
-
-1. Deploy: `tts-server.sh restart` (+ setup.sh / panel rebuild + Room.app
-   relaunch when those layers changed).
-2. Trigger cheaply: `enqueue_manual.sh` with short text (simulates a hook).
-3. Observe instead of listen: `logs/hook.log` shows ingest → gemini →
-   elevenlabs → audio; `replay/` gets an MP3 + JSON sidecar per playback;
-   queue files move to `played/` on success; `curl` the mobile endpoints
-   (`/snapshot`, `/thread/<id>`, `/action`) with the token from
-   `mobile_url.sh`.
-4. UI checks (panel window, mobile page rendering) need real computer use —
-   delegate to codex via `codex-computer-use`.
-5. `signal.ts replay "" 1` is a free end-to-end audio check.
-6. Live/call-mode flows: use the bounded paid lane above (cheap-model team
-   session + codex driving both UIs) until the mock harness exists.
-
-Launching the app, screenshots, and short test audio are fine without
-asking; ask first before clearing queues, deleting replay history, or
-changing `~/.cursor/tts/config.json`.
-
-## Docs organization (lifecycle folders, 2026-07-23)
-
-`docs/STATUS.md` is the single tracking surface — what shipped, what's
-awaiting the owner, what's next. Its **Inbox section is the owner's drop
-zone**: check it at session start and triage anything there (bugs →
-fixes/known issues, ideas → the backlog, work items → `active/` specs or
-Next up). Update STATUS at the end of every shipped round, then
-`pnpm docs:publish` (renders STATUS + `docs/active/` to HTML
-and updates the owner's phone-viewable Postplan draft — stable URL, draft
-id in `docs/.postplan-draft`; no API/TTS cost).
-
-| Folder            | Meaning                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| `docs/active/`    | Designs/specs for unbuilt work — the queue                              |
-| `docs/shipped/`   | Specs whose feature landed (e.g. `spec-live-mode-v2.md` = current live-mode architecture) |
-| `docs/archive/`   | Superseded specs, old plans, review rounds (incl. `archive/reviews/`)   |
-| `docs/reference/` | Evergreen: `ideas-backlog.md` (check before proposing "new" ideas), `testing-live-mode.md`, vision docs |
-
-Lifecycle rules: new specs start in `active/`; move to `shipped/` when the
-feature deploys (and log it in STATUS.md); superseded docs get a pointer
-banner and move to `archive/`.
-
-## Known issues / technical debt
-
-- Phase 7 splits shipped: `audio.ts` → playback-locks / now-playing /
-  replay-store / player-process / stream-playback, `hid.ts` → hid-report /
-  hid-actions / hid-device / hid-controller / hid-learn. Callers import the
-  owning modules directly; audio.ts keeps only the simple players
-  (playFile/playMp3Buffer/replayLast/startPlayReplay) and hid.ts only the
-  `learn` CLI entry.
-  `elevenlabs.ts fetchCredits()` is caller-less — kept as the hook for a
-  future panel credits chip.
-- Cross-persona spawn race and subagent-finish announce filtering
-  (docs/reference/ideas-backlog.md).
-- No test suite; verification is manual/scripted per the section above.
+- `docs/STATUS.md` is the tracking surface: what shipped, what awaits the owner, what's next. Its Inbox is the owner's drop zone: check it at session start and triage (bugs to fixes, ideas to the backlog, work to `active/` specs or Next up). A thin-index rework (`html-status` skill) is pending; don't grow it further meanwhile.
+- `docs/decisions.md` is the parking lot for open/assumed questions and new owner calls (fleet `decision-record` skill): write the row when a call resolves, never edit an accepted row, supersede it.
+- `docs/active/` unbuilt specs; `docs/shipped/` specs whose feature landed (move it there, log it in STATUS); `docs/archive/` superseded material; `docs/reference/` evergreen (check `ideas-backlog.md` before proposing "new" ideas; `testing-live-mode.md`, `worktree-parallel-flow.md`).
+- GitHub issues are the spine: start fix work from `gh issue view`. The owner reads from the GitHub mobile app, so offer to push when a round lands. `pnpm docs:publish` after a shipped round renders STATUS and `active/` to the owner's phone-viewable Postplan draft (no API cost).
+- Auto-memory is off for this repo (`autoMemoryEnabled: false` in `.claude/settings.json`). Durable workflow knowledge goes in this file, decisions in `docs/decisions.md`, nowhere else.
