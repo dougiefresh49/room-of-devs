@@ -134,3 +134,4 @@ Things the owner wants to explore later — not scheduled, just don't lose them.
   one question at a time through a persona, answers via PTT/phone. Pairs
   with the spoken permission gate above; same reply plumbing.
 - `elevenlabs.ts fetchCredits()` is caller-less on purpose: it is the hook for a future panel credits chip (noted 2026-08-27 when the Known-issues section left CLAUDE.md).
+- Audition gpt-5.6 and grok for image generation before the next art marathon; Nano Banana cost $9 for the July 2026 fragment run (parked idea from the retired auto-memory, noted 2026-08-28).
