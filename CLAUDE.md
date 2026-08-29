@@ -24,7 +24,7 @@ The repo is not what runs. `scripts/setup.sh` installs scripts, config and Room.
 
 ## Glossary
 
-- **Persona / character**: voice + avatar + phrase set (`characters.json`, gitignored); globally unique, one tmux session per persona.
+- **Persona / character**: voice + avatar + phrase set (`characters.json`, gitignored); globally unique, one tmux session per persona. Clone sources, casting reels and voice approvals live in the sibling `~/projects/voice-lab` repo; this repo only consumes ElevenLabs voice ids.
 - **Room**: every live session as one snapshot. **Card**: one session.
 - **Team session**: tmux `cr-<Persona>` from `team.sh`, reply-capable via `inject_prompt.sh`, runs with `--dangerously-skip-permissions`.
 - **SDK card**: a T3 Code session (`sdk:true`), kept on a TTL through T3's idle teardown, evicted when T3 settles the thread.

@@ -4,6 +4,7 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 
 | # | date | decision | status |
 |---|------|----------|--------|
+| 16 | 2026-08-29 | Character voice extraction and casting live in the private `~/projects/voice-lab` repo (audio stays in `~/Movies/library/voice-lab`); the room consumes approved clone sources and ElevenLabs ids from there, comic-reader keeps the EL slot manager for now (voice-lab decisions 2 and 3) | accepted |
 | 15 | 2026-08-27 | Follow-up work found mid-task is filed to the backlog with cold-start context so the owner can run it in another worktree, never queued behind a compact; the main session names a compact point once past ~250k tokens and delegates never comment on context | accepted |
 | 14 | 2026-08-27 | Fable through cursor-agent is the overflow route when the Anthropic Fable budget is nearly out and the Cursor `api` pool is under 80% (`ai-usage`); otherwise cursor-agent runs composer/grok | accepted |
 | 13 | 2026-08-27 | opus-5 was auditioned and lost; use it only when neither Fable nor Sol has budget left (reviews, visual work and frontier subagents go to fable) | accepted |
