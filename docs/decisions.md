@@ -4,6 +4,9 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 
 | # | date | decision | status |
 |---|------|----------|--------|
+| 15 | 2026-08-27 | Follow-up work found mid-task is filed to the backlog with cold-start context so the owner can run it in another worktree, never queued behind a compact; the main session names a compact point once past ~250k tokens and delegates never comment on context | accepted |
+| 14 | 2026-08-27 | Fable through cursor-agent is the overflow route when the Anthropic Fable budget is nearly out and the Cursor `api` pool is under 80% (`ai-usage`); otherwise cursor-agent runs composer/grok | accepted |
+| 13 | 2026-08-27 | opus-5 was auditioned and lost; use it only when neither Fable nor Sol has budget left (reviews, visual work and frontier subagents go to fable) | accepted |
 | 12 | 2026-08-27 | This log holds parked questions and new calls only; owner calls that predate it were folded into CLAUDE.md or dropped, not backfilled as rows, so the fleet "nothing is deleted" convention applies from this date forward | accepted |
 | 11 | 2026-08-27 | Claude Code auto-memory is off for this repo: CLAUDE.md is the one durable layer for the dev workflow, memory files were archived and deleted (Theo's memory audit replicated here: 27 of 32 files never read in the surviving month) | accepted |
 | 10 | 2026-08-27 | Product-side recall (Mikey remembering past conversations) is a room feature, separate from dev-workflow memory; leaning is an append-only log queried over the room's own transcripts and replay sidecars, not a vault | unformed |
