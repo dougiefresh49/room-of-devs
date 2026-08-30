@@ -137,7 +137,8 @@ const PAGE_CSS = `
   code { font-size: .9em; }
   table { border-collapse: collapse; display: block; overflow-x: auto; }
   th, td { border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-           padding: .3rem .55rem; text-align: left; }
+           padding: .3rem .55rem; text-align: left; overflow-wrap: normal; }
+  th:first-child, td:first-child { white-space: nowrap; }
   a { color: #4a8df0; }
   .meta { opacity: .6; font-size: .8rem; margin: .2rem 0 1rem; }
   figure.mermaid { background: #fff; border-radius: 10px; padding: .6rem;
