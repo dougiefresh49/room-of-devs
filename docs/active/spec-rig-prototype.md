@@ -135,3 +135,44 @@ enough to rearrange fast (that's the whole point of the silo).
   (and `packages/ui` ONLY if additive primitive props were needed).
 - Browser round: every deck trigger fired once, screenshot per
   load-bearing state + per surface.
+
+## Status and follow-ups (2026-08-29)
+
+Built so far, all in the silo on port 5180:
+
+- Console v1 live 2026-07-30 (grok-4.5 lane, codex drove all 18 deck
+  triggers in the browser).
+- FIELD UNIT round 2 at `/field` 2026-07-30 per
+  [prototype-kickoff-field-unit.md](../shipped/prototype-kickoff-field-unit.md).
+- Round D 2026-08-02 per
+  [spec-round-d-synthesis.md](../shipped/spec-round-d-synthesis.md):
+  THE HANGAR, commissioning bay, `/crib`, `/map`. Boards and briefs are
+  archived under `../archive/concepts-round-d/` (`final.html` is the
+  merged board).
+
+Open follow-ups, in the owner's words where they were given:
+
+- FIELD composer (2026-08-12, "fine for now"): grow-as-you-type jumps
+  per line instead of growing smoothly and wraps short lines oddly
+  (reference: the Gemini and Claude app composers); add an attachments
+  button, mock-only here, real upload is a framework concern.
+- FIELD node cards (2026-08-12): "I don't understand these tiny minor
+  character cards. I can't look at very much." The GLANCE full-node
+  sheet (avatar, T-#### · TMUX · CLR row, LIVE TAIL, DIFF strip) needs
+  an explanation pass or a rethink.
+- Helix orb (console CORE hex ball) after the r4 recharge-glow change:
+  "not so great, leave a note to come back to it." Revisit the shading
+  and glow; the encodings stay (hexes = aggregate draw, ball = 7-day
+  timer).
+- The next panel rebuild picks up the shared DialGauge needle fix
+  (`8dba2a2`); the dock dial was the only live consumer, no urgency.
+- Round D punted `scroll-area` (optional per spec); the shadcn audit's
+  live-surface items (tabs, collapsible, select, slider adoption in
+  panel and mobile, orphan-dep removal) are a separate round.
+- Cosmetic notes: phone-scale mono type is board-faithful but small and
+  task lines ellipsize hard at 322px; the live P2 hero shows the avatar
+  art's green background through the CRT grade (art cleanup is in the
+  backlog).
+
+The owner is fatigued on the prototype and wants the framework build
+next; these wait for a prototype round.

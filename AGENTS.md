@@ -112,8 +112,9 @@ Package boundaries are rules:
 
 ## Docs
 
-- `docs/STATUS.md` is the tracking surface: what shipped, what awaits the owner, what's next. Its Inbox is the owner's drop zone: check it at session start and triage (bugs to fixes, ideas to the backlog, work to `active/` specs or Next up). A thin-index rework (`html-status` skill) is pending; don't grow it further meanwhile.
+- `docs/STATUS.md` is the tracking surface: what shipped, what awaits the owner, what's next. It is a thin index (fleet `html-status` skill): one line per entry, content lives in the topic docs it links, and it never absorbs content. Its Inbox is the owner's drop zone: check it at session start and triage (bugs to fixes, ideas to the backlog, work to `active/` specs or Next up).
 - `docs/decisions.md` is the parking lot for open/assumed questions and new owner calls (fleet `decision-record` skill): write the row when a call resolves, never edit an accepted row, supersede it.
-- `docs/active/` unbuilt specs; `docs/shipped/` specs whose feature landed (move it there, log it in STATUS); `docs/archive/` superseded material; `docs/reference/` evergreen (check `ideas-backlog.md` before proposing "new" ideas; `testing-live-mode.md`, `worktree-parallel-flow.md`).
+- `docs/active/` unbuilt specs; `docs/shipped/` specs whose feature landed (move it there, log it in STATUS); `docs/archive/` superseded material (a one-line pointer banner at the top says what replaced it); `docs/reference/` evergreen (check `ideas-backlog.md` before proposing "new" ideas; `testing-live-mode.md`, `worktree-parallel-flow.md`).
+- The GitHub wiki stays unused: docs live in-tree so delegates can read them from any worktree.
 - GitHub issues are the spine: start fix work from `gh issue view`. The owner reads from the GitHub mobile app, so offer to push when a round lands. `pnpm docs:publish` after a shipped round renders STATUS and `active/` to the owner's phone-viewable Postplan draft (no API cost).
 - Auto-memory is off for this repo (`autoMemoryEnabled: false` in `.claude/settings.json`). Durable workflow knowledge goes in this file, decisions in `docs/decisions.md`, nowhere else.

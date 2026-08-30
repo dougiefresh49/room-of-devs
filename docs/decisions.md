@@ -4,6 +4,14 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 
 | # | date | decision | status |
 |---|------|----------|--------|
+| 24 | 2026-08-29 | The STATUS "Now" section was deleted rather than ported (git keeps it); the decisions it held without a row were recovered as rows 17-23, dated from the source; row 12's no-backfill stance otherwise stands | accepted |
+| 23 | 2026-08-01 | Round D: the fable board is the base with 14 opus grafts; the hangar is the boot rung; stock lamps report the generated manifest over the spec's prediction | accepted |
+| 22 | 2026-07-30 | The design target locks in a siloed mock-data prototype (`prototype/`) before the live UI is refactored into shared components; incremental reskins of the live app are retired as the approach (the P2 console reskin stays deployed, row 8) | accepted |
+| 21 | 2026-07-29 | THE RIG (industrial, Titanfall 2) is the design target; BLACK // GLASS and the other Round C boards are kept as resurrection material for a future theme system | accepted |
+| 20 | 2026-07-28 | Interpreter roll-ups: tracker-derived ones (what shipped, what's waiting, what's blocked, which ticket, is anyone working) are safe at flash tier; STATUS-prose roll-ups stay gated (a code-shaped gap); `recommend`/`prioritize` escalate to a frontier tier | accepted |
+| 19 | 2026-07-28 | tap-in dumps the whole spine into context (zero retrieval failures in validation); ContextDB stays parked | assumed (reopens when: tap-in retrieval fails on a spine question) |
+| 18 | 2026-07-28 | Tracker vocabulary is `state/*` (one per issue) plus `gear/*`; `type/*` labels deliberately not created | accepted |
+| 17 | 2026-07-28 | Architecture target (#73): Option B generalized (architecture-concepts 04-05): one always-on concierge voice above the interpreter, GitHub issues as the spine, mortal orchestration threads (build, one-off, watcher), silent workers, three dials with brain tier as a routing table plus cost log (never model-self-assessed); rejected Mikey-as-orchestrator, three-voice huddles, and the voice+KB chatbot shape | accepted |
 | 16 | 2026-08-29 | Character voice extraction and casting live in the private `~/projects/voice-lab` repo (audio stays in `~/Movies/library/voice-lab`); the room consumes approved clone sources and ElevenLabs ids from there, comic-reader keeps the EL slot manager for now (voice-lab decisions 2 and 3) | accepted |
 | 15 | 2026-08-27 | Follow-up work found mid-task is filed to the backlog with cold-start context so the owner can run it in another worktree, never queued behind a compact; the main session names a compact point once past ~250k tokens and delegates never comment on context | accepted |
 | 14 | 2026-08-27 | Fable through cursor-agent is the overflow route when the Anthropic Fable budget is nearly out and the Cursor `api` pool is under 80% (`ai-usage`); otherwise cursor-agent runs composer/grok | accepted |
