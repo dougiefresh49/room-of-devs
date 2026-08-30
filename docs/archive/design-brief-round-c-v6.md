@@ -1,5 +1,7 @@
 # Design Brief — Round C, v6 (THE RIG refinement — cohesion pass)
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 _2026-07-29. Delta on v4/v5. Owner reaction to the full play arc:
 **"I like both but really like THE RIG the most."** BLACK // GLASS is
 preserved (see Theme note below), and this round refines THE RIG's

@@ -3,7 +3,7 @@
 _2026-07-30. Phase 1 of [design-ui-target.md](design-ui-target.md) §9.
 Owner signed off on the target 2026-07-30. This spec is the delegate's
 work order; the target §2 is the design authority and
-`docs/active/concepts-round-c-v6/board-rig-refined.html` is the
+`docs/archive/concepts-round-c-v6/board-rig-refined.html` is the
 reference implementation — port its CSS values, don't reinvent them._
 
 ## Scope
@@ -151,7 +151,7 @@ one-line ticker, three Leds (red = any `hand_raised`, amber = any
 
 - `docs/active/design-ui-target.md` §2 (visual system), §3 (dock),
   §10 (house rules).
-- `docs/active/concepts-round-c-v6/board-rig-refined.html` — the CSS
+- `docs/archive/concepts-round-c-v6/board-rig-refined.html` — the CSS
   source of truth. Port values; cite the board class you ported in a
   brief comment where non-obvious (e.g. clip-path polygons).
 - `packages/ui/src/tokens.css`, `tailwind.css` — existing structure.

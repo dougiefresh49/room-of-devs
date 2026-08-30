@@ -1,5 +1,7 @@
 # Design Brief — Round C, v4 (feature build-out on the v3 winners)
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 _2026-07-29. Delta on [design-brief-round-c-v3.md](design-brief-round-c-v3.md)
 and, through it, v2. Owner reaction to v3: **"I like them both a lot"** —
 BOTH lanes survive. This round is ADDITIVE: same two boards, same

@@ -1,5 +1,7 @@
 # Design Brief — Round C, v3 (reference-seeded)
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 _2026-07-29. Delta on [design-brief-round-c-v2.md](design-brief-round-c-v2.md):
 everything in the v2 brief about what the product IS, the settled
 architecture (#73), the required surfaces, avatars-unavoidable, the

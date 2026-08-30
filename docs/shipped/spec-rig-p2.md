@@ -13,7 +13,7 @@
 
 _2026-07-30. Phase 2 of [design-ui-target.md](design-ui-target.md) §9.
 This spec is the delegate's work order; target §2/§3 are the design
-authority and `docs/active/concepts-round-c-v6/board-rig-refined.html`
+authority and `docs/archive/concepts-round-c-v6/board-rig-refined.html`
 is the CSS reference implementation (faceplate ~L944, thread nodes
 ~L1043–1160, reply deck ~L1488, crew manifest ~L1628). Port its values,
 don't reinvent. P1 shipped the `--rig-*` tokens and 12 primitives in
@@ -320,7 +320,7 @@ Components never fetch — all IO in `panel/src/platform/`:
 
 - `docs/active/design-ui-target.md` §2 (visual system), §3 (surfaces),
   §8 (cuts), §10 (house rules).
-- `docs/active/concepts-round-c-v6/board-rig-refined.html` — CSS
+- `docs/archive/concepts-round-c-v6/board-rig-refined.html` — CSS
   source of truth; cite ported board classes in brief comments.
 - `docs/active/spec-rig-p1.md` — what P1 built.
 - Recon facts: reply over panel-ws already live

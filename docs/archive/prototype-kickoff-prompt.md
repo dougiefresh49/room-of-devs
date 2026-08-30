@@ -1,5 +1,7 @@
 # Prototype kickoff prompt (paste into a fresh session)
 
+> Archived 2026-08-29: prototype work started; the standing spec is [active/spec-rig-prototype.md](../active/spec-rig-prototype.md).
+
 _Written 2026-07-29 at the close of the round C play arc. THE RIG won;
 this is the standing prompt to start prototype work._
 
@@ -13,14 +15,14 @@ board to working prototype, in two stages:
 legitimate: a concept HAS been chosen — the old "nothing is locked"
 banner in STATUS should be retired as part of this). Distill from:
 
-- The winning board: `docs/active/concepts-round-c-v6/board-rig-refined.html`
+- The winning board: `docs/archive/concepts-round-c-v6/board-rig-refined.html`
   (live: https://ib8n7y2c05z4.postplan.dev) — visual system of record:
   energy-tower spine with docked/projected plan-cards, the asymmetric
   corner grammar (big radius TL + chamfer BR at 3 scales), hex texture
   layer, amber digital displays with machined chrome SPARINGLY, the
   LONG-RANGE PLOT (confirmed keep), reply deck, held-question keycaps,
   dial homes, pilot/craft legend.
-- The mobile board: `docs/active/concepts-round-c-v5/board-industrial-mobile.html`
+- The mobile board: `docs/archive/concepts-round-c-v5/board-industrial-mobile.html`
   (phone jobs ranked: be-spoken-to → answer-from-pocket → glance →
   start-by-voice; "walk to the Mac" is an honest handoff).
 - The briefs: `design-brief-round-c*.md` (v2 = what the product is;

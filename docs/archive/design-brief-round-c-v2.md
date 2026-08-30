@@ -1,5 +1,7 @@
 # Design brief v2 — the Room is a character, not a task manager
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 **This brief replaces [design-brief-round-c.md](design-brief-round-c.md),
 which failed.** Read the failure first, because avoiding it is most of
 the job.
@@ -211,7 +213,7 @@ Include:
   This is how the owner gets to say "cool, but less" without losing the
   concept.
 
-**Do NOT read `docs/active/concepts-round-c/`** — that's the rejected
+**Do NOT read `docs/archive/concepts-round-c/`** — that's the rejected
 round, and reading it will pull you straight back into the aesthetic
 we're trying to escape. **Do not read the other v2 boards** in this
 folder either; this round is blind on purpose.

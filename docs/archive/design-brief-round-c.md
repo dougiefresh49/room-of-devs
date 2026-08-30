@@ -1,5 +1,7 @@
 # Design brief — Round C concept round (v1, SUPERSEDED)
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 > **SUPERSEDED 2026-07-29 by
 > [design-brief-round-c-v2.md](design-brief-round-c-v2.md).** This brief
 > produced four boards the owner rejected as *"text heavy, nothing
@@ -161,7 +163,7 @@ Everything below is undecided. Disagree with the other boards on purpose.
 ## Part 3 — Rules of the round
 
 1. **One board per agent, drawn blind.** Do **not** read
-   `docs/active/concepts-round-c/` — those are competing entries and
+   `docs/archive/concepts-round-c/` — those are competing entries and
    reading them collapses the round into consensus. Read the
    architecture docs, this brief, and the current UI.
 2. **Deliverable**: one self-contained HTML page (inline CSS, no external

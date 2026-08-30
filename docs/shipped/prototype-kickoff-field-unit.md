@@ -14,7 +14,7 @@ room-client/protocol/panel/daemon imports, no network) and
 / LISTEN / START / GAUGES, one job each) + §8 day-1 cuts (phone PTT
 routes to walk-to-the-rig; keycap+text answering; STOP is free;
 gauges read-only; verb rack as tap rows) +
-`docs/active/concepts-round-c-v5/board-industrial-mobile.html` (the
+`docs/archive/concepts-round-c-v5/board-industrial-mobile.html` (the
 mobile board — CSS reference for the phone screens).
 
 Scope: a `/field` route in `prototype/` rendering a phone-frame

@@ -3,9 +3,9 @@
 _2026-07-29. Round C is closed: **THE RIG (industrial / Titanfall 2) is
 the locked design target.** This document is the system of record for
 prototype work. Sources of truth it distills:
-`concepts-round-c-v6/board-rig-refined.html` (desktop, approved),
-`concepts-round-c-v5/board-industrial-mobile.html` (mobile),
-briefs `design-brief-round-c-v2/v4/v6.md` (incl. the owner's closing
+`../archive/concepts-round-c-v6/board-rig-refined.html` (desktop, approved),
+`../archive/concepts-round-c-v5/board-industrial-mobile.html` (mobile),
+briefs `../archive/design-brief-round-c-v2/v4/v6.md` (incl. the owner's closing
 corrections), and the settled #73 architecture
 (`architecture-concepts/04–09` — not re-litigated here).
 BLACK // GLASS and the other round-C boards are preserved for a future
@@ -382,7 +382,7 @@ From both boards' cut panels, adopted as scope:
 
 Backlogged, not built: **10,000-ft starmap** (one FUTURE callout
 allowed), **theme switching** (BLACK // GLASS preserved in
-`concepts-round-c-v4/v5`).
+`../archive/concepts-round-c-v4/v5`).
 
 ## 9. Prototype phases (cheap-first)
 

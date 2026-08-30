@@ -1,5 +1,5 @@
 /**
- * Checked-in index of docs/active/ui-architecture-map.md.
+ * Checked-in index of docs/shipped/ui-architecture-map.md.
  *
  * The prose document is the authority. This file is deliberately static: the
  * service schematic must never infer architecture from a live room snapshot.
@@ -36,7 +36,7 @@ export interface Gap {
   filledBy?: string;
 }
 
-const DOC = "docs/active/ui-architecture-map.md";
+const DOC = "docs/shipped/ui-architecture-map.md";
 
 export const MAP_NODES: MapNode[] = [
   {

@@ -1,5 +1,7 @@
 # Design Brief — Round D: Rooms, Library, Map
 
+> Archived 2026-08-29: Round D brief; built per [shipped/spec-round-d-synthesis.md](../shipped/spec-round-d-synthesis.md).
+
 2026-07-31. Four independent design lanes (gpt-5.6 Sol, grok-4.5, opus-5,
 fable-5) each produce ONE self-contained HTML concept board answering the
 three design problems below. Boards are judged side by side; the winner
@@ -11,7 +13,7 @@ three design problems below. Boards are judged side by side; the winner
   §2 is the visual system (gunmetal chassis, amber instruments, machined
   corner grammar, CRT faces, dial gauges). Hard rule §2.6: nothing
   animates from invented data.
-- `docs/active/ui-architecture-map.md` — the current architecture map
+- `docs/shipped/ui-architecture-map.md` — the current architecture map
   (569 lines of text). Its opening "60-second version" and its closing
   "Not yet designed" section (the ALL-PROJECTS VIEW entry) are required
   reading for problems A and C.
@@ -92,7 +94,7 @@ generic graph tool.
 
 ## Deliverable — per lane
 
-ONE file: `docs/active/concepts-round-d/<lane>.html` (lane name is given
+ONE file: `docs/archive/concepts-round-d/<lane>.html` (lane name is given
 in your prompt). Self-contained: embedded CSS, no external fonts/assets/
 CDNs, dark RIG palette (copy token values from tokens.css). Vanilla JS
 for tab switching / node selection is fine — no frameworks. Structure:

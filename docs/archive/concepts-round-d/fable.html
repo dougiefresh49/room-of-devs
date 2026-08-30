@@ -3,19 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ROUND D — FINAL · THE HANGAR / TOOL CRIB / SERVICE SCHEMATIC</title>
+<title>ROUND D — FABLE LANE · THE HANGAR / TOOL CRIB / SERVICE SCHEMATIC</title>
 <style>
 /* ============================================================
-   ROUND D — FINAL CONCEPT BOARD
-   Base: the fable lane (owner pick, 2026-08-01).
-   Grafts: opus donor ideas per docs/active/spec-round-d-synthesis.md §0.
+   ROUND D CONCEPT BOARD — LANE: FABLE
+   Three problems, one machined language.
      A · THE HANGAR        — every room berthed; commissioning bay
      B · THE TOOL CRIB     — instrument catalog w/ provenance stamps
      C · SERVICE SCHEMATIC — the architecture as a wiring diagram
-   Visual system per design-ui-target.md §2. §2.6 honored: every
-   animation here is driven by a mocked real-data state or is pure
-   ambience. STATIC BUILD — no JavaScript anywhere on this page;
-   interactive surfaces are shown in their most informative state.
+   Visual system per design-ui-target.md §2 (gunmetal chassis,
+   amber instruments, corner grammar, CRT beds). §2.6 honored:
+   every animation on this board is either driven by a mocked
+   *real-data* state (noted inline) or pure ambience.
    ============================================================ */
 
 /* ---- real avatar frames (webp data URIs, from the v6 reference board) */
@@ -42,7 +41,6 @@
   --screen:#160c02; --screen2:#0f0801;
   --green:#8fe86e; --green-dim:#3d6b2c;
   --red:#ff5340; --haz:#d9a021;
-  --violet:#c9a4ff; --violet-dim:#5b3d8a;
   --cut-l:20px; --cut-m:12px; --cut-s:7px;
   --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
   --stencil:"Avenir Next Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
@@ -58,19 +56,18 @@ body{
     radial-gradient(1200px 500px at 50% -100px, rgba(255,179,71,.05), transparent 70%),
     var(--ink);
   line-height:1.45;
-  padding-bottom:120px;
+  padding-bottom:140px;
 }
 .wrap{max-width:1500px;margin:0 auto;padding:0 28px}
 h1,h2,h3{text-transform:uppercase;letter-spacing:.14em;font-weight:800}
-h2{font-size:15px;color:var(--steel-dim);margin:72px 0 6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+h2{font-size:15px;color:var(--steel-dim);margin:72px 0 6px;display:flex;align-items:center;gap:14px}
 h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gun1),transparent)}
 h2 .idx{color:var(--amber);font-family:var(--mono);font-size:12px;letter-spacing:.05em}
 h3{font-size:12px;color:var(--steel-dim);letter-spacing:.18em;margin:26px 0 10px}
-p.note{color:var(--steel-dim);font-size:13px;max-width:80ch;margin:4px 0 20px;letter-spacing:.02em}
+p.note{color:var(--steel-dim);font-size:13px;max-width:76ch;margin:4px 0 20px;letter-spacing:.02em}
 p.note b{color:var(--amber)}
 .stn{text-transform:uppercase;letter-spacing:.16em;font-weight:800}
 .mono{font-family:var(--mono)}
-code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 
 /* hazard + tags + leds -------------------------------------------------- */
 .haz{height:7px;background:repeating-linear-gradient(-45deg,var(--haz) 0 12px,#151312 12px 24px);opacity:.85;border-radius:2px}
@@ -80,7 +77,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .tag.grn{color:var(--green);border-color:var(--green-dim);background:rgba(143,232,110,.07)}
 .tag.dim{color:var(--steel-dim);border-color:#3a3f45;background:transparent}
 .tag.hot{color:var(--amber-hot);border-color:var(--amber);box-shadow:0 0 8px rgba(255,150,30,.25)}
-.tag.haz{color:var(--haz);border-color:#6b5216;background:rgba(217,160,33,.08);height:auto}
 .led{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1c2024;border:1px solid #000;vertical-align:middle}
 .led.amb{background:radial-gradient(circle at 35% 30%,var(--amber-hot),var(--amber) 60%,#7a4d12);box-shadow:0 0 7px rgba(255,150,30,.7)}
 .led.grn{background:radial-gradient(circle at 35% 30%,#c9ffb0,var(--green) 60%,#27511c);box-shadow:0 0 6px rgba(120,230,90,.55)}
@@ -138,7 +134,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .sseg{font-family:var(--mono);font-weight:700;color:var(--amber);text-shadow:0 0 8px rgba(255,179,71,.55)}
 
 /* keycaps ---------------------------------------------------------------- */
-.keycap{display:inline-flex;align-items:center;gap:8px;
+.keycap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
   font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--amber-hot);
   background:linear-gradient(180deg,#454b53,#2a2e34 60%,#212529);
@@ -148,29 +144,21 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   padding:8px 14px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px 5px rgba(0,0,0,.55);
   user-select:none}
+.keycap:hover{filter:brightness(1.12)}
 .keycap.armedglow{animation:armglow 2.2s ease-in-out infinite}
 @keyframes armglow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px 5px rgba(0,0,0,.55),0 0 14px rgba(255,150,30,.35)}}
 
 /* design-note callout ---------------------------------------------------- */
-.callout{position:relative;margin:14px 0;padding:10px 14px 11px 16px;max-width:84ch;
+.callout{position:relative;margin:14px 0;padding:10px 14px 11px 16px;max-width:78ch;
   border:1px solid #2c3138;border-left:3px solid var(--amber);
   border-radius:8px 2px 2px 2px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);
   background:linear-gradient(180deg,rgba(255,179,71,.04),rgba(255,179,71,.015))}
-.callout .ct{font-size:10px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;font-weight:800;margin-bottom:3px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.callout .ct{font-size:10px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;font-weight:800;margin-bottom:3px}
 .callout p{font-size:12px;color:var(--steel-dim);letter-spacing:.02em}
-.callout p+p{margin-top:7px}
 .callout p b{color:var(--steel)}
 .callout.redline{border-left-color:var(--red)}
 .callout.redline .ct{color:var(--red)}
-/* GRAFT marker — every opus donation on this board wears one */
-.callout.graft{border-left-color:#66a9ff;background:linear-gradient(180deg,rgba(102,169,255,.05),rgba(102,169,255,.015))}
-.callout.graft .ct{color:#9dc4ff}
-.graftag{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:.2em;font-weight:700;
-  color:#9dc4ff;border:1px solid #40507a;background:rgba(102,169,255,.08);
-  border-radius:5px 1px 1px 1px;padding:2px 7px;white-space:nowrap}
-.graftag.inline{vertical-align:1px;margin-left:6px}
 
 /* wire-needs callout ----------------------------------------------------- */
 .wirebed{margin:16px 0;padding:14px 16px;font-family:var(--mono);font-size:10.5px;line-height:1.8;letter-spacing:.03em}
@@ -178,7 +166,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .wirebed b{color:var(--amber-hot);font-weight:700}
 .wirebed i{color:var(--steel-dim);font-style:normal}
 .wirebed .nw{color:var(--green)}
-.wirebed .gr{color:#9dc4ff}
 
 /* faces (real frames) + amber CRT housing -------------------------------- */
 .face{display:block;width:100%;aspect-ratio:1;background-size:contain;background-repeat:no-repeat;background-position:center;
@@ -206,63 +193,42 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .salbar .fill{position:absolute;left:0;top:0;bottom:0;
   background:repeating-linear-gradient(90deg,var(--amber) 0 6px,transparent 6px 9px);
   box-shadow:0 0 8px rgba(255,150,30,.35)}
-.salbar .fill.red{background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 9px);box-shadow:0 0 8px rgba(255,70,50,.4)}
 .salbar .dimseg{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,179,71,.13) 0 6px,transparent 6px 9px)}
 .salbar .notch{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--red);box-shadow:0 0 6px rgba(255,70,50,.8)}
 
-/* PART NUMBER STENCIL — graft C1 ----------------------------------------- */
-.pno{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:7.5px;letter-spacing:.2em;
-  color:#6f7681;border:1px solid #333a41;border-radius:5px 1px 1px 1px;padding:1px 5px;
-  background:rgba(11,13,15,.5);white-space:nowrap}
-.pno::before{content:"⌗";color:#4d545c}
-.pno.hot{color:var(--amber);border-color:var(--amber-dim);background:var(--amber-ghost)}
-.pnofloat{position:absolute;top:7px;right:30px;z-index:7}
-
 /* ========================================================================
-   MASTHEAD + LEGEND
+   MASTHEAD
    ======================================================================== */
 .mast{margin-top:34px}
 .mast .board{padding:22px 26px 18px}
 .mast h1{font-size:22px;letter-spacing:.24em;color:var(--steel)}
 .mast h1 b{color:var(--amber);text-shadow:0 0 12px rgba(255,179,71,.4)}
 .mast .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.mast .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--steel-dim);margin-top:9px;max-width:96ch;line-height:1.7}
-.mast .verdict b{color:var(--amber-hot)}
-.mast .verdict .gr{color:#9dc4ff}
+.mast .sub{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--steel-dim);margin-top:6px}
 .mast .haz{margin-top:16px}
-.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 4px}
-.legcard{padding:11px 13px;border:1px solid #2c3138;border-radius:12px 4px 4px 4px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-  background:linear-gradient(180deg,rgba(20,23,27,.75),rgba(16,18,21,.75))}
-.legcard .lh{display:flex;align-items:center;gap:9px;margin-bottom:6px;flex-wrap:wrap}
-.legcard .ln{font-size:12px;letter-spacing:.18em;font-weight:800;color:var(--steel);text-transform:uppercase}
-.legcard .lr{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--amber);
-  border:1px solid var(--amber-dim);background:var(--amber-ghost);border-radius:4px 1px 1px 1px;padding:1px 6px}
-.legcard .ld{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--steel-dim);line-height:1.7}
+.mastnav{display:flex;gap:10px;margin:18px 4px 0;flex-wrap:wrap}
 
 /* ========================================================================
    A · THE HANGAR
    ======================================================================== */
-.ladder{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--steel-dim);flex-wrap:wrap}
+.ladder{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--steel-dim)}
 .ladder .rung{padding:3px 9px;border:1px solid #33383f;border-radius:5px 1px 1px 1px}
 .ladder .rung.on{color:var(--amber-hot);border-color:var(--amber-dim);background:var(--amber-ghost);box-shadow:0 0 8px rgba(255,150,30,.18)}
 .ladder .rung.new{border-style:dashed;color:var(--amber)}
 .ladder .arr{color:#3a3f45}
-.esckey{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
-  color:#9dc4ff;border:1px solid #40507a;background:rgba(102,169,255,.07);border-radius:5px 1px 1px 1px;padding:3px 8px}
 
 /* traffic strip */
 .traffic{margin:6px 0 16px;padding:12px 14px}
-.traffic .tlab{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.26em;color:var(--steel-dim);margin-bottom:9px;flex-wrap:wrap}
+.traffic .tlab{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.26em;color:var(--steel-dim);margin-bottom:9px}
 .trow{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
-  padding:6px 4px;border-top:1px dashed rgba(255,179,71,.14);flex-wrap:wrap}
+  padding:6px 4px;border-top:1px dashed rgba(255,179,71,.14)}
 .trow:first-of-type{border-top:0}
 .trow .rm{flex:none;width:86px;font-size:8.5px;letter-spacing:.18em;padding:2px 0;text-align:center;
   border:1px solid var(--amber-dim);border-radius:4px 1px 1px 1px;color:var(--amber);background:var(--amber-ghost)}
 .trow .rm.red{border-color:#7a2c22;color:var(--red);background:rgba(255,83,64,.07)}
-.trow .txt{flex:1;min-width:220px;color:var(--amber);opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .txt{flex:1;color:var(--amber);opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trow .txt.dim{opacity:.55}
-.gatecol{flex:none;width:104px;text-align:center}
+.trow .clr{flex:none;width:72px;text-align:right}
 
 /* berth grid + floor bus */
 .hangargrid{display:grid;grid-template-columns:26px 1fr 1fr 1fr;gap:14px;align-items:stretch}
@@ -275,9 +241,9 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .floorbus .buslab{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);
   font-size:8px;letter-spacing:.34em;color:var(--steel-dim);white-space:nowrap;text-transform:uppercase;font-weight:800;
   background:#16181c;padding:2px 10px;z-index:2}
-.berth{position:relative;display:flex;flex-direction:column;gap:0;min-height:246px}
+.berth{position:relative;display:flex;flex-direction:column;gap:0;min-height:238px}
 .berth .inner{flex:1;display:flex;flex-direction:column;gap:10px;padding:12px 14px 12px}
-.berth .bh{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.berth .bh{display:flex;align-items:center;gap:9px}
 .berth .bno{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--steel-dim)}
 .berth .bname{font-size:13px;letter-spacing:.18em;color:var(--steel);font-weight:800;text-transform:uppercase}
 .berth .floorlamp{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--steel-dim)}
@@ -305,24 +271,25 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .berth.scratch .bname{color:var(--steel-dim)}
 .berth.empty{border-style:dashed;border-color:#33383f;background:rgba(35,39,44,.4);align-items:center;justify-content:center;display:flex}
 .berth.empty .inner{align-items:center;justify-content:center;gap:14px}
-.berth.empty .hint{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--steel-dim);text-align:center}
+.berth.empty .hint{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--steel-dim)}
 .diamond{width:14px;height:14px;transform:rotate(45deg);border:1.5px dashed var(--amber);flex:none;margin:4px}
 
 /* A2 switching mock */
-.conshead{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-top:10px;flex-wrap:wrap}
-.btab{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+.conshead{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-top:10px}
+.btab{display:flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
   color:var(--steel-dim);padding:6px 12px;border:1px solid #33383f;border-radius:8px 2px 2px 2px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);background:rgba(20,23,27,.6)}
 .btab.on{color:var(--amber-hot);border-color:var(--amber-dim);background:var(--amber-ghost)}
+.btab:hover{filter:brightness(1.15)}
 .crumb{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--steel-dim)}
 .crumb b{color:var(--amber)}
-.dockmock{display:flex;align-items:center;gap:14px;padding:8px 14px;margin-top:12px;max-width:820px;flex-wrap:wrap}
+.dockmock{display:flex;align-items:center;gap:14px;padding:8px 14px;margin-top:12px;max-width:760px}
 .dockmock .crt{width:36px}
 .dockledbar{position:relative;display:flex;gap:3px;flex:none}
 .dockledbar i{width:7px;height:14px;border-radius:1px;background:rgba(255,179,71,.12)}
 .dockledbar i.on{background:var(--amber);box-shadow:0 0 6px rgba(255,150,30,.5)}
 .dockledbar .notch{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--red);box-shadow:0 0 6px rgba(255,70,50,.8)}
-.dockmock .dtick{flex:1;min-width:240px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--amber);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dockmock .dtick{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--amber);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dockmock .dtick .rm{color:var(--red);font-weight:700}
 
 /* A3 commissioning */
@@ -334,7 +301,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .fld .screenbed .cursor{display:inline-block;width:7px;height:13px;background:var(--amber);vertical-align:-2px;margin-left:2px;animation:cur 1.1s steps(1) infinite}
 @keyframes cur{50%{opacity:0}}
 .cermrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cerm{position:relative;padding:13px 15px;border:1px solid #33383f;border-radius:12px 4px 4px 4px;
+.cerm{cursor:pointer;position:relative;padding:13px 15px;border:1px solid #33383f;border-radius:12px 4px 4px 4px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
   background:linear-gradient(180deg,rgba(20,23,27,.7),rgba(16,18,21,.7))}
 .cerm .cn{font-size:12px;letter-spacing:.18em;font-weight:800;color:var(--steel-dim);text-transform:uppercase}
@@ -346,14 +313,9 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .dialrow{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:12px}
 .dialbox{padding:12px;border:1px solid #2c3138;border-radius:12px 4px 4px 4px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-  background:rgba(18,21,24,.6);display:flex;flex-direction:column;align-items:center;gap:9px}
+  background:rgba(18,21,24,.6);display:flex;flex-direction:column;align-items:center;gap:9px;transition:opacity .2s}
 .dialbox .dlab{font-family:var(--mono);font-size:8px;letter-spacing:.22em;color:var(--steel-dim);text-transform:uppercase;text-align:center}
 .dialbox .dlab b{color:var(--amber);display:block;font-size:9px;margin-bottom:2px}
-/* graft A2 — consequence line, in the unit that bites */
-.cost{width:100%;margin-top:2px;padding-top:8px;border-top:1px dashed #33383f;
-  font-family:var(--mono);font-size:8px;letter-spacing:.1em;line-height:1.75;color:var(--steel-dim);text-align:center}
-.cost b{color:var(--amber-hot)}
-.cost .u{color:#9dc4ff}
 .knob{position:relative;width:58px;height:58px;border-radius:50%;
   background:radial-gradient(circle at 38% 30%,#4b525a,#2a2e34 60%,#1d2126);
   border:1px solid var(--gun-edge);
@@ -366,12 +328,12 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .knobticks{display:flex;justify-content:space-between;width:74px;font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;color:var(--steel-dim)}
 .knobticks .on{color:var(--amber)}
 .castrow{display:flex;gap:9px;align-items:center}
-.castrow .crt{width:44px;opacity:.45}
+.castrow .crt{width:44px;cursor:pointer;opacity:.45}
 .castrow .crt.lead{opacity:1;box-shadow:inset 0 0 18px rgba(0,0,0,.9),0 0 12px rgba(255,150,30,.35)}
 .castrow .crt.pool{opacity:.8}
 .castlab{font-family:var(--mono);font-size:7.5px;letter-spacing:.14em;color:var(--steel-dim);text-align:center;margin-top:3px}
 .connrow{display:flex;gap:9px;flex-wrap:wrap}
-.commcta{display:flex;align-items:center;gap:14px;margin-top:2px;flex-wrap:wrap}
+.commcta{display:flex;align-items:center;gap:14px;margin-top:2px}
 .commcta .keycap{font-size:11px;padding:11px 20px}
 .commright{display:flex;flex-direction:column;gap:14px}
 .voicebox{padding:13px 15px}
@@ -381,18 +343,13 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .vline .say{color:var(--amber);opacity:.92}
 .vline.you .say{color:var(--steel)}
 .interpchip{margin-top:8px}
-/* graft A1 — the manifest pane IS the form's output, live-bound */
 .manifest{padding:14px 16px;font-family:var(--mono);font-size:10px;line-height:1.75;letter-spacing:.02em}
-.manifest .mt{font-size:8.5px;letter-spacing:.2em;color:var(--steel-dim);margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.manifest .mpath{font-size:9.5px;letter-spacing:.04em;color:var(--amber-hot);margin-bottom:9px;
-  border-bottom:1px dashed rgba(255,179,71,.2);padding-bottom:7px}
+.manifest .mt{font-size:8.5px;letter-spacing:.26em;color:var(--steel-dim);margin-bottom:8px}
 .manifest pre{white-space:pre-wrap;color:var(--amber)}
 .manifest pre i{color:var(--steel-dim);font-style:normal}
 .manifest pre b{color:var(--amber-hot);font-weight:700}
-.manifest pre u{color:#9dc4ff;text-decoration:none} /* live-bind marker back to a control */
-.bindkey{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px dashed rgba(255,179,71,.2);
-  font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--steel-dim)}
-.bindkey span u{color:#9dc4ff;text-decoration:none}
+body.oneoff .spine-only{opacity:.28;pointer-events:none}
+body.oneoff .cast-pool-note{display:none}
 
 /* phone frames ------------------------------------------------------------ */
 .phones{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;margin-top:16px}
@@ -406,7 +363,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .phone .pscr{border-radius:20px 6px 6px 6px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
   background:linear-gradient(180deg,var(--screen),var(--screen2));
-  border:1px solid #000;min-height:530px;padding:14px 13px 60px;position:relative;overflow:hidden;
+  border:1px solid #000;min-height:520px;padding:14px 13px 60px;position:relative;overflow:hidden;
   box-shadow:inset 0 0 24px rgba(0,0,0,.85),inset 0 0 60px rgba(255,140,20,.05)}
 .phone .pscr::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)}
@@ -415,7 +372,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 .phead .sp{flex:1}
 .roompills{display:flex;gap:6px;margin-bottom:12px}
 .rpill{flex:1;text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--steel-dim);
-  border:1px solid #3a3f45;border-radius:8px 2px 2px 2px;padding:6px 2px;position:relative}
+  border:1px solid #3a3f45;border-radius:8px 2px 2px 2px;padding:6px 2px;position:relative;cursor:pointer}
 .rpill.on{color:var(--amber-hot);border-color:var(--amber-dim);background:var(--amber-ghost)}
 .rpill .dot{position:absolute;top:3px;right:4px;width:5px;height:5px;border-radius:50%}
 .rpill .dot.red{background:var(--red);box-shadow:0 0 5px rgba(255,70,50,.8);animation:ledpulse 1.6s infinite}
@@ -434,10 +391,12 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 /* ========================================================================
    B · THE TOOL CRIB
    ======================================================================== */
-.cribgrid{display:grid;grid-template-columns:196px 1fr 340px;gap:14px;align-items:start}
+.cribgrid{display:grid;grid-template-columns:196px 1fr 320px;gap:14px;align-items:start}
 .cribrail{display:flex;flex-direction:column;gap:10px}
-.cribsearch{padding:9px 11px;font-family:var(--mono);font-size:11px;display:flex;gap:8px;align-items:center;color:rgba(255,179,71,.45)}
-.drawer{display:flex;align-items:center;gap:9px;padding:10px 12px;
+.cribsearch{padding:8px 11px;font-family:var(--mono);font-size:11px;display:flex;gap:8px;align-items:center}
+.cribsearch input{flex:1;background:transparent;border:0;outline:0;color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.cribsearch input::placeholder{color:rgba(255,179,71,.35)}
+.drawer{cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 12px;
   border:1px solid #2c3138;border-radius:8px 2px 2px 2px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);
   background:linear-gradient(180deg,#33383e,#24282d);
@@ -445,17 +404,17 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   font-size:10px;letter-spacing:.16em;font-weight:800;color:var(--steel-dim);text-transform:uppercase}
 .drawer .cnt{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.05em}
 .drawer.on{color:var(--steel);border-color:var(--amber-dim);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -2px 4px rgba(0,0,0,.4),0 0 10px rgba(255,150,30,.12)}
-.drawer.dead{border-color:#4a3a26}
-.drawer.dead .cnt{color:var(--haz)}
 .drawer .pull{width:22px;height:5px;border-radius:3px;background:linear-gradient(180deg,#6b737c,#3c4249);flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 .surfchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.surfchips .tag{cursor:pointer}
+.surfchips .tag.off{opacity:.35}
 .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:12px}
-.speccard{position:relative;display:flex;flex-direction:column;gap:0;
+.speccard{cursor:pointer;position:relative;display:flex;flex-direction:column;gap:0;
   border:1px solid var(--gun-edge);border-radius:12px 4px 4px 4px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
   background:linear-gradient(178deg,#363b42,#22262b)}
+.speccard:hover{filter:brightness(1.1)}
 .speccard.sel{border-color:var(--amber-dim);box-shadow:0 0 0 1px var(--amber-dim)}
-.speccard .cardno{position:absolute;top:8px;right:10px;z-index:6}
 .speccard .platen{height:96px;margin:9px 9px 0;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px}
 .speccard .sinfo{padding:9px 11px 10px;display:flex;flex-direction:column;gap:6px}
 .speccard .snm{font-size:11px;letter-spacing:.16em;font-weight:800;color:var(--steel);text-transform:uppercase}
@@ -464,13 +423,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   padding:2px 7px;border-radius:4px 1px 1px 1px}
 .provchip.custom{color:var(--steel);border:1px solid #4a5058;background:rgba(199,204,210,.05)}
 .provchip.radix{color:var(--amber);border:1px solid var(--amber-dim);background:var(--amber-ghost)}
-.provchip.cva{color:var(--violet);border:1px solid var(--violet-dim);background:rgba(167,139,250,.07)}
-/* graft B1 — the fourth stamp class */
-.provchip.lib{color:#8fd0ab;border:1px solid #3f5a4a;background:rgba(143,232,110,.06)}
-/* graft B2 — three-state stock lamp */
-.stocklamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--steel-dim)}
-.stocklamp.fragile{color:var(--haz)}
-.stocklamp.gone{color:var(--red)}
+.provchip.cva{color:#c9a4ff;border:1px solid #5b3d8a;background:rgba(167,139,250,.07)}
 .usedleds{display:flex;gap:7px;font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;color:var(--steel-dim);align-items:center}
 .usedleds span{display:flex;align-items:center;gap:3px}
 .usedleds .led{width:6px;height:6px}
@@ -492,7 +445,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   background:linear-gradient(180deg,#120a02,#0a0501);border:1px solid #000;border-radius:2px;
   box-shadow:inset 0 -4px 6px rgba(0,0,0,.8);text-shadow:0 0 6px rgba(255,179,71,.6)}
 .demo-btns{display:flex;flex-direction:column;gap:6px;align-items:center}
-.uibtn{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:5px 13px;border-radius:6px 2px 2px 2px}
+.uibtn{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:5px 13px;border-radius:6px 2px 2px 2px;cursor:default}
 .uibtn.pri{color:#141414;background:var(--amber);font-weight:700}
 .uibtn.sec{color:var(--amber);background:transparent;border:1px solid var(--amber-dim)}
 .uibtn.gho{color:var(--steel-dim);background:transparent;border:1px solid transparent}
@@ -507,67 +460,26 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
   background:var(--amber-ghost)}
 .dialmini{width:76px}
-.mdmini{font-family:var(--mono);font-size:8.5px;color:var(--amber);line-height:1.7;text-align:left}
-.mdmini b{color:var(--amber-hot)}
-.mdmini .lnk{color:#66a9ff;text-decoration:underline}
-.toastmini{font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--steel);
-  border:1px solid #3a3f45;background:linear-gradient(180deg,#22262b,#181b1f);padding:7px 10px;border-radius:8px 2px 2px 2px;
-  box-shadow:0 6px 14px rgba(0,0,0,.5)}
-/* spec plate (the sticky inspector, shown expanded) */
-.inspector{display:flex;flex-direction:column;gap:0}
-.inspector .ihead{display:flex;align-items:center;gap:10px;padding:12px 14px 0;flex-wrap:wrap}
+/* inspector */
+.inspector{position:sticky;top:14px;display:flex;flex-direction:column;gap:0}
+.inspector .ihead{display:flex;align-items:center;gap:10px;padding:12px 14px 0}
 .inspector .inm{font-size:14px;letter-spacing:.2em;font-weight:800;color:var(--steel);text-transform:uppercase}
-.inspector .istage{margin:12px 14px 0;min-height:110px;display:flex;align-items:center;justify-content:center;gap:14px;padding:14px;flex-wrap:wrap}
-.staterack{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;position:relative;z-index:3}
-.staterack .slot{display:flex;flex-direction:column;align-items:center;gap:6px}
-.staterack .sl{font-family:var(--mono);font-size:7px;letter-spacing:.16em;color:rgba(255,179,71,.5);text-transform:uppercase}
-.inspector .ibody{padding:12px 14px 16px;display:flex;flex-direction:column;gap:11px}
+.inspector .istage{margin:12px 14px 0;min-height:120px;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px}
+.inspector .ibody{padding:12px 14px 16px;display:flex;flex-direction:column;gap:10px}
 .irow{display:flex;flex-direction:column;gap:3px}
 .irow .ik{font-family:var(--mono);font-size:8px;letter-spacing:.26em;color:var(--steel-dim);text-transform:uppercase}
-.irow .iv{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--amber);line-height:1.75}
+.irow .iv{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--amber);line-height:1.7}
 .irow .iv i{color:var(--steel-dim);font-style:normal}
 .irow .iv .rej{color:var(--red)}
-/* graft B5 — tolerances table */
-.tol{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:9px;letter-spacing:.05em}
-.tol th{text-align:left;color:var(--steel-dim);font-weight:400;letter-spacing:.18em;font-size:8px;text-transform:uppercase;
-  padding:0 8px 6px 0;border-bottom:1px solid #2b3036}
-.tol td{padding:5px 8px 5px 0;border-bottom:1px solid #1c2025;color:var(--steel);vertical-align:top}
-.tol td.k{color:var(--amber);white-space:nowrap}
-.tol td.d{color:var(--steel-dim)}
-.defect{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--haz);line-height:1.7;
-  border-left:2px solid var(--haz);padding-left:9px}
-/* graft B3 — dead stock bin */
-.deadbin{position:relative;margin-top:16px;background:linear-gradient(178deg,#2a2622,#1b1917 58%,#171513);
-  border:1px solid var(--gun-edge);border-radius:16px 5px 5px 5px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);overflow:hidden}
-.deadbin .dh{display:flex;align-items:center;gap:11px;padding:11px 14px;flex-wrap:wrap}
-.deadbin .dh .dt{font-size:11px;letter-spacing:.22em;color:var(--haz);font-weight:800;text-transform:uppercase}
-.deadbin .dh .dsub{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--steel-dim)}
-.deadrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;padding:0 14px 14px}
-.deaditem{padding:10px 11px;border:1px dashed #4a4038;background:rgba(217,160,33,.03);border-radius:9px 3px 3px 3px}
-.deaditem .n{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--haz);margin-bottom:5px;
-  display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.deaditem .r{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--steel-dim);line-height:1.7}
-.deaditem .r b{color:var(--steel)}
-.deaditem .v{margin-top:6px;display:inline-block}
-/* graft B4 — work orders drawer */
-.workorder{margin-top:14px;padding:13px 15px;background:linear-gradient(180deg,#191d21,#121518);border:1px solid #2b3036;
-  border-left:2px solid var(--amber);border-radius:12px 3px 3px 3px}
-.workorder h5{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--amber);margin-bottom:9px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.workorder ol{list-style:none;counter-reset:wo;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--steel-dim);line-height:1.95}
-.workorder ol li{counter-increment:wo}
-.workorder ol li::before{content:counter(wo,decimal-leading-zero) " ";color:var(--amber-dim)}
-.workorder ol li b{color:var(--steel)}
-.workorder .caveat{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--steel-dim);line-height:1.75;
-  margin-top:10px;padding-top:9px;border-top:1px dashed #2b3036}
-.workorder .caveat b{color:var(--amber)}
+.statesrow{display:flex;gap:8px;flex-wrap:wrap}
+.staterow-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.staterow-item .sl{font-family:var(--mono);font-size:7px;letter-spacing:.16em;color:var(--steel-dim);text-transform:uppercase}
 
 /* ========================================================================
    C · SERVICE SCHEMATIC
    ======================================================================== */
 .schem{position:relative;padding:16px}
-.schemhead{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.schemhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .schembed{position:relative;padding:18px 16px;overflow:hidden;
   background:
     linear-gradient(rgba(255,179,71,.045) 1px,transparent 1px),
@@ -577,113 +489,74 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   border:1px solid #000;border-radius:9px 3px 3px 3px;
   clip-path:polygon(0 0,100% 0,100% calc(100% - var(--cut-s)),calc(100% - var(--cut-s)) 100%,0 100%);
   box-shadow:inset 0 0 30px rgba(0,0,0,.85)}
-.schemgrid{position:relative;display:grid;grid-template-columns:250px 1fr 280px;gap:22px;z-index:2}
+.schemgrid{position:relative;display:grid;grid-template-columns:230px 1fr 250px;gap:22px;z-index:2}
 .schemcol .colh{font-family:var(--mono);font-size:8px;letter-spacing:.3em;color:var(--steel-dim);text-transform:uppercase;
   margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .schemcol .colh::after{content:"";flex:1;height:1px;background:rgba(255,179,71,.15)}
 .snodes{display:flex;flex-direction:column;gap:6px}
-.grouplab{font-family:var(--mono);font-size:7.5px;letter-spacing:.22em;color:#5c636b;margin:8px 0 2px}
-.snode{position:relative;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+.snode{cursor:pointer;position:relative;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--steel-dim);padding:6px 10px;border:1px solid rgba(199,204,210,.22);
   border-radius:6px 2px 2px 2px;background:rgba(11,13,15,.72);
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
-.snode .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.snode .pno{flex:none}
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);transition:all .15s}
+.snode:hover{color:var(--steel);border-color:rgba(199,204,210,.45)}
 .snode.field{border-style:dashed}
 .stratum{border:1px solid rgba(255,179,71,.25);border-radius:10px 3px 3px 3px;padding:10px 12px 12px;margin-bottom:12px;
   background:rgba(255,179,71,.02);position:relative}
 .stratum .sth{font-family:var(--mono);font-size:8px;letter-spacing:.26em;color:var(--amber-dim);text-transform:uppercase;margin-bottom:8px}
 .stratum.spinestr{background:var(--hexfaint),rgba(255,179,71,.02)}
 .stratum .snrow{display:flex;gap:7px;flex-wrap:wrap}
-.cnode{position:relative;display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+.cnode{cursor:pointer;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--amber);padding:6px 11px;border:1px solid var(--amber-dim);
   border-radius:6px 2px 2px 2px;background:rgba(22,12,2,.85);
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);transition:all .15s}
+.cnode:hover{color:var(--amber-hot);box-shadow:0 0 8px rgba(255,150,30,.25)}
 .cnode.gated{color:var(--red);border-color:#7a2c22}
-.dialsrow{display:flex;gap:7px;margin-top:2px;flex-wrap:wrap}
+.dialsrow{display:flex;gap:7px;margin-top:2px}
 .pinblock{display:flex;flex-direction:column;gap:0;border:1px solid rgba(143,232,110,.25);border-radius:8px 2px 2px 2px;overflow:hidden}
-.pin{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;
-  color:var(--green);padding:5px 9px;border-top:1px solid rgba(143,232,110,.12);background:rgba(10,16,8,.5)}
+.pin{cursor:pointer;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  color:var(--green);padding:5px 9px;border-top:1px solid rgba(143,232,110,.12);background:rgba(10,16,8,.5);transition:all .15s}
 .pin:first-child{border-top:0}
-.pin .pn{color:rgba(143,232,110,.5);width:20px;flex:none;font-size:8px}
-.pin .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pin:hover{background:rgba(143,232,110,.08)}
+.pin .pno{color:rgba(143,232,110,.5);width:20px;flex:none;font-size:8px}
 .pin .pad{width:7px;height:7px;flex:none;border:1px solid rgba(143,232,110,.6);background:rgba(143,232,110,.12);border-radius:1px}
 .pin.wish{color:rgba(143,232,110,.55);border-left:2px dashed rgba(143,232,110,.4)}
-/* graft C2 — phase tag on the wishlist terminals */
-.pin .st{margin-left:auto;flex:none;font-size:7.5px;letter-spacing:.14em;color:#4d545c}
-.pin.wish .st{color:var(--green-dim)}
-/* SELECTION STATE — rendered statically with SALIENCE RING selected */
+/* selection states */
 .schemgrid.hasSel .snode:not(.sel):not(.lit),
 .schemgrid.hasSel .cnode:not(.sel):not(.lit),
-.schemgrid.hasSel .pin:not(.sel):not(.lit){opacity:.26}
-.snode.sel,.cnode.sel{color:var(--amber-hot);border-color:var(--amber);
-  box-shadow:0 0 14px rgba(255,150,30,.4);background:rgba(255,179,71,.12)}
-.pin.sel{color:#d7ffc4;background:rgba(143,232,110,.16);box-shadow:0 0 10px rgba(143,232,110,.3)}
+.schemgrid.hasSel .pin:not(.sel):not(.lit){opacity:.28}
+.snode.sel,.cnode.sel{color:var(--amber-hot)!important;border-color:var(--amber)!important;
+  box-shadow:0 0 14px rgba(255,150,30,.4);background:rgba(255,179,71,.12)!important}
+.pin.sel{color:#d7ffc4;background:rgba(143,232,110,.16)!important;box-shadow:0 0 10px rgba(143,232,110,.3)}
 .snode.lit{color:var(--steel);border-color:rgba(255,179,71,.55)}
 .cnode.lit{color:var(--amber-hot);box-shadow:0 0 10px rgba(255,150,30,.3)}
 .pin.lit{color:#c9f5b2;background:rgba(143,232,110,.1)}
 .pin.lit .pad,.pin.sel .pad{background:var(--green);box-shadow:0 0 6px rgba(143,232,110,.7)}
-/* harness stubs — the wire leaving a lit part (the live build draws the full SVG curve) */
-.snode.sel::after,.snode.lit::after{content:"";position:absolute;right:-11px;top:50%;width:11px;height:2px;
-  background:repeating-linear-gradient(90deg,var(--amber) 0 4px,transparent 4px 8px);
-  box-shadow:0 0 5px rgba(255,150,30,.5)}
-.cnode.sel::before,.cnode.lit::before{content:"";position:absolute;left:-9px;top:50%;width:9px;height:2px;
-  background:repeating-linear-gradient(90deg,var(--amber) 0 4px,transparent 4px 8px);
-  box-shadow:0 0 5px rgba(255,150,30,.5)}
-.cnode.sel::after,.cnode.lit::after{content:"";position:absolute;right:-9px;top:50%;width:9px;height:2px;
-  background:repeating-linear-gradient(90deg,var(--green) 0 4px,transparent 4px 8px);
-  box-shadow:0 0 5px rgba(143,232,110,.5)}
-/* graft C3 — the plate shows its own holes */
-.gaps{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.gap{flex:1;min-width:220px;display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px dashed #7a2c22;
-  background:rgba(255,83,64,.045);border-radius:9px 3px 3px 3px}
-.gap .riv{width:12px;height:12px;border-radius:50%;flex:none;margin-top:2px;
-  background:radial-gradient(circle at 35% 30%,#ff8a72,#8c2418 60%,#2a0f0a);box-shadow:0 0 9px rgba(255,83,64,.55)}
-.gap .tx{font-family:var(--mono);font-size:9px;letter-spacing:.05em;color:var(--steel-dim);line-height:1.7}
-.gap .tx b{color:var(--red);letter-spacing:.14em}
-.gap.filled{border-color:var(--amber-dim);background:var(--amber-ghost)}
-.gap.filled .riv{background:radial-gradient(circle at 35% 30%,var(--amber-hot),#a8701c 60%,#2e2009);box-shadow:0 0 9px rgba(255,179,71,.6)}
-.gap.filled .tx b{color:var(--amber)}
+#harness{position:absolute;inset:0;z-index:1;pointer-events:none}
+#harness path{fill:none;stroke:var(--amber);stroke-width:1.3;opacity:.75;
+  filter:drop-shadow(0 0 3px rgba(255,150,30,.5))}
+#harness path.grn{stroke:var(--green);filter:drop-shadow(0 0 3px rgba(143,232,110,.5))}
 /* inspector bed */
 .schinspect{margin-top:14px;padding:14px 16px}
-.schinspect .sit{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.schinspect .sit{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .schinspect .sin{font-size:13px;letter-spacing:.2em;font-weight:800;color:var(--amber-hot);text-transform:uppercase;text-shadow:0 0 10px rgba(255,179,71,.4)}
 .sigrid{display:grid;grid-template-columns:1.1fr 1.1fr .9fr;gap:18px}
 .sigrid .sk{font-family:var(--mono);font-size:8px;letter-spacing:.26em;color:var(--steel-dim);text-transform:uppercase;margin-bottom:5px}
-.sigrid .sv{font-family:var(--mono);font-size:10px;letter-spacing:.03em;color:var(--amber);line-height:1.8;opacity:.92}
+.sigrid .sv{font-family:var(--mono);font-size:10px;letter-spacing:.03em;color:var(--amber);line-height:1.75;opacity:.92}
 .sigrid .sv b{color:var(--amber-hot)}
 .sigrid .sv .pinref{color:var(--green)}
-.schemfoot{display:flex;align-items:center;gap:14px;margin-top:12px;font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:var(--steel-dim);flex-wrap:wrap}
+.schemfoot{display:flex;align-items:center;gap:14px;margin-top:12px;font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:var(--steel-dim)}
 
-/* ========================================================================
-   FOOTER — 4-PHASE BUILD STRIP
-   ======================================================================== */
-.phasestrip{margin-top:70px;padding:0 0 20px;overflow:hidden}
-.phasestrip .haz{border-radius:0}
-.phasehead{display:flex;align-items:center;gap:14px;padding:16px 22px 4px;flex-wrap:wrap}
-.phasehead h4{font-size:13px;letter-spacing:.22em;color:var(--steel);text-transform:uppercase}
-.phasegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:12px 22px 0}
-.ph{position:relative;padding:12px 13px 13px;border:1px solid #2c3138;border-radius:12px 4px 4px 4px;
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-  background:linear-gradient(180deg,rgba(20,23,27,.75),rgba(16,18,21,.75))}
-.ph .pnum{font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;color:var(--amber);margin-bottom:4px}
-.ph h5{font-size:11px;letter-spacing:.16em;color:var(--steel);text-transform:uppercase;margin-bottom:7px;font-weight:800}
-.ph .lane{font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:#9dc4ff;margin-bottom:8px}
-.ph ul{list-style:none}
-.ph li{font-family:var(--mono);font-size:9px;letter-spacing:.03em;color:var(--steel-dim);padding:2px 0 2px 10px;position:relative;line-height:1.65}
-.ph li::before{content:"▸";position:absolute;left:0;color:var(--amber-dim)}
-.ph li b{color:var(--steel)}
-.gatebar{margin:16px 22px 0;padding:10px 13px;border:1px solid #2c3138;border-left:3px solid var(--green-dim);
-  border-radius:8px 2px 2px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--steel-dim);line-height:1.8}
-.gatebar b{color:var(--green)}
+/* footer scope strip ------------------------------------------------------ */
+.scopestrip{margin-top:80px;padding:18px 22px}
+.scopestrip .haz{margin:-18px -22px 16px}
+.scopetable{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.scopetable .sc h4{font-size:11px;letter-spacing:.2em;color:var(--amber);margin-bottom:8px;text-transform:uppercase}
+.scopetable .sc ul{list-style:none}
+.scopetable .sc li{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--steel-dim);padding:3px 0;line-height:1.6}
+.scopetable .sc li b{color:var(--steel)}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
-}
-@media (max-width:1240px){
-  .phasegrid{grid-template-columns:1fr 1fr}
-  .legend{grid-template-columns:1fr}
-  .deadrow{grid-template-columns:1fr}
 }
 @media (max-width:1100px){
   .hangargrid{grid-template-columns:26px 1fr 1fr}
@@ -691,13 +564,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
   .schemgrid{grid-template-columns:1fr}
   .commgrid{grid-template-columns:1fr}
   .sigrid{grid-template-columns:1fr}
-  .dialrow{grid-template-columns:1fr}
-  .snode.sel::after,.snode.lit::after,.cnode.sel::before,.cnode.lit::before,.cnode.sel::after,.cnode.lit::after{display:none}
-}
-@media (max-width:720px){
-  .phasegrid{grid-template-columns:1fr}
-  .hangargrid{grid-template-columns:26px 1fr}
-  .cermrow{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -705,52 +571,27 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 <div class="wrap">
 
 <!-- ==================================================================== -->
-<!-- MASTHEAD + LEGEND -->
+<!-- MASTHEAD -->
 <!-- ==================================================================== -->
 <header class="mast">
   <div class="shadowwrap"><div class="board">
     <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
     <div class="row">
-      <h1>ROUND D — <b>FINAL</b></h1>
-      <span class="tag hot">BASE · FABLE LANE</span>
-      <span class="graftag">GRAFTS · OPUS</span>
-      <span class="tag dim">2026-08-01</span>
+      <h1>ROOM OF DEVS · <b>ROUND D</b></h1>
+      <span class="tag hot">LANE · FABLE-5</span>
+      <span class="tag dim">2026-07-31</span>
       <span style="flex:1"></span>
-      <span class="mono" style="font-size:10px;letter-spacing:.18em;color:var(--steel-dim)">REV <span class="sseg">D-FINAL</span></span>
+      <span class="mono" style="font-size:10px;letter-spacing:.18em;color:var(--steel-dim)">REV <span class="sseg">D-01</span></span>
     </div>
-    <div class="verdict">
-      VERDICT — <b>the fable lane wins the layout and the language</b>; eleven opus ideas are grafted on where fable
-      left a question open, each costing one component or one field rather than a second grammar
-      (<span class="gr">live-bound manifest · per-dial cost lines · belowGate · ESC ladder · parentRoomId ·
-      LIB stamp · three-state stock lamps · dead-stock verdicts · work orders · tolerances · part numbers +
-      shift-click · phase tags · gap rivets</span>). Authority: <code>docs/active/spec-round-d-synthesis.md</code> §0.
-    </div>
-    <div class="legend">
-      <div class="legcard">
-        <div class="lh"><span class="ln">A · The Hangar</span><span class="lr">ZOOM RUNG ⌘0</span></div>
-        <div class="ld">NOT A ROUTE — the fourth rung above PLOT. Berths, one shared traffic queue, the global audio-floor bus, and the commissioning bay. Lives on fleet view state so switching rooms can't carry it.</div>
-      </div>
-      <div class="legcard">
-        <div class="lh"><span class="ln">B · The Tool Crib</span><span class="lr">/crib · :5180</span></div>
-        <div class="ld">The parts catalog: every RIG, shadcn and domain instrument on a spec plate with a provenance stamp, a stock lamp, tolerances, a dead-stock bin and a work-orders drawer. No store access at all.</div>
-      </div>
-      <div class="legcard">
-        <div class="lh"><span class="ln">C · Service Schematic</span><span class="lr">/map · :5180</span></div>
-        <div class="ld">Surfaces ↔ machine layers ↔ wire terminals as a cutaway plate. Opened by the SCHEMATIC keycap, a deck trigger, or shift-click on any stencilled part number. Renders no live data — the one screen allowed to be a document.</div>
-      </div>
+    <div class="sub">ROOMS · LIBRARY · MAP — THREE ANSWERS, ONE MACHINED LANGUAGE. EVERYTHING BELOW IS THE SAME SHOP THAT MILLED THE CONSOLE.</div>
+    <div class="mastnav">
+      <span class="keycap" onclick="document.getElementById('secA').scrollIntoView({behavior:'smooth'})">A · THE HANGAR</span>
+      <span class="keycap" onclick="document.getElementById('secB').scrollIntoView({behavior:'smooth'})">B · THE TOOL CRIB</span>
+      <span class="keycap" onclick="document.getElementById('secC').scrollIntoView({behavior:'smooth'})">C · SERVICE SCHEMATIC</span>
     </div>
     <div class="haz"></div>
   </div></div>
 </header>
-
-<div class="callout" style="max-width:none">
-  <div class="ct">Reading this board</div>
-  <p>This is a <b>static rendering</b> of three interactive surfaces. Where the live prototype uses tabs, click-to-inspect
-  or a wizard step, the most informative state is shown inline and stays there: the schematic with <b>SALIENCE RING
-  selected and the dimming applied</b>, the crib with the <b>DialGauge spec plate expanded</b>, the commissioning bay
-  in its <b>full-ceremony</b> class with the manifest pane live-bound to it. Every callout marked
-  <span class="graftag inline">GRAFT ▸ OPUS</span> is a change from the raw fable board.</p>
-</div>
 
 <!-- ==================================================================== -->
 <!-- SECTION A — THE HANGAR -->
@@ -765,7 +606,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 
   <div class="shadowwrap"><div class="board">
     <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
-    <span class="pno pnofloat">S-15 · HANGAR SHELL</span>
     <div class="bhead">
       <span class="ttl">THE HANGAR // ALL ROOMS</span>
       <span class="tag">4 BERTHS · 1 SCRATCH</span>
@@ -775,7 +615,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
         <span class="rung">PLOT</span><span class="arr">▸</span>
         <span class="rung">RAIL</span><span class="arr">▸</span>
         <span class="rung">NODE</span>
-        <span class="esckey">ESC ▸ CLIMBS ONE RUNG</span>
       </div>
       <span class="mono sseg" style="font-size:12px">21:47:03</span>
     </div>
@@ -783,40 +622,33 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     <!-- shared traffic strip -->
     <div class="screenbed sweep traffic">
       <div class="tlab">
-        <span>SHARED TRAFFIC — ONE SALIENCE QUEUE, ROOM-ATTRIBUTED, WORST FIRST</span>
+        <span>SHARED TRAFFIC — ONE SALIENCE QUEUE, ROOM-ATTRIBUTED</span>
         <span style="flex:1"></span>
-        <span class="pno">S-17 · TRAFFIC STRIP</span>
         <span class="tag hot">AUDIO FLOOR · R-DEVS · SPEAKING</span>
       </div>
       <div class="trow">
         <span class="rm red">R-DEVS</span>
         <span class="txt">T-4471 · DONNIE HOLDING A QUESTION · HELD 06:41</span>
         <span class="tag red">12% CLR</span>
-        <span class="gatecol"><span class="tag red">BELOW GATE</span></span>
         <span class="tag hot">HAS FLOOR</span>
       </div>
       <div class="trow">
         <span class="rm">PODLINK</span>
         <span class="txt">W-2 RELEASE WATCH · ANOMALY LOGGED — 5XX 3× BASELINE</span>
         <span class="tag">64% CLR</span>
-        <span class="gatecol"><span class="tag dim">ABOVE GATE</span></span>
         <span class="tag dim">QUEUED FOR FLOOR</span>
       </div>
       <div class="trow">
         <span class="rm">COMIC-RDR</span>
         <span class="txt dim">T-0912 · TURN FINAL · QUEUED FOR THE LULL</span>
         <span class="tag dim">74% CLR</span>
-        <span class="gatecol"><span class="tag dim">ABOVE GATE</span></span>
         <span class="tag dim">AT THE LULL</span>
-      </div>
-      <div class="trow" style="border-top:1px solid rgba(255,179,71,.2);padding-top:9px">
-        <span class="mono" style="font-size:8.5px;letter-spacing:.2em;color:var(--steel-dim)">ONE GATE, FLEET-WIDE · <span style="color:var(--red)">RED ROWS ARE EXACTLY WHAT MIKEY MAY RAISE UNPROMPTED</span> · THRESHOLD 35%</span>
       </div>
     </div>
 
     <!-- berth grid with floor bus -->
     <div class="hangargrid">
-      <div class="floorbus"><span class="core"></span><span class="buslab">AUDIO FLOOR BUS — ONE VOICE, GLOBAL · S-18</span></div>
+      <div class="floorbus"><span class="core"></span><span class="buslab">AUDIO FLOOR BUS — ONE VOICE, GLOBAL</span></div>
 
       <!-- B-01 -->
       <div class="berth chassis">
@@ -907,7 +739,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
       <!-- scratch berth -->
       <div class="berth chassis scratch" style="grid-column:2">
         <span class="tap"></span>
-        <span class="pno pnofloat" style="right:12px;top:10px">S-16 · BERTH PLATE</span>
         <div class="inner">
           <div class="bh">
             <span class="diamond"></span>
@@ -915,7 +746,6 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
           </div>
           <div class="body">
             <div class="meta">
-              <span class="tag dim" style="align-self:flex-start">FROM R-DEVS</span>
               <span class="counts mono" style="font-size:9px;letter-spacing:.14em;color:var(--steel-dim)">ONE-OFF · NO SPINE · NO CONDUIT · <b style="color:var(--amber)">DIES ON DELIVERY</b></span>
               <div class="salrow">
                 <div class="salbar"><span class="dimseg"></span><span class="fill" style="width:88%"></span></div>
@@ -930,7 +760,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
       <!-- empty berth -->
       <div class="berth chassis empty" style="grid-column:3 / span 2">
         <div class="inner">
-          <span class="keycap armedglow">+ COMMISSION A ROOM</span>
+          <span class="keycap armedglow" onclick="document.getElementById('commission').scrollIntoView({behavior:'smooth'})">+ COMMISSION A ROOM</span>
           <span class="hint">BERTH B-04 · OPEN — MANIFEST NOT YET STRUCK</span>
         </div>
       </div>
@@ -941,16 +771,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     <div class="ct">The call — where it lives</div>
     <p>The hangar is the <b>fourth rung of the zoom ladder</b>, above the plot: HANGAR ↔ PLOT ↔ RAIL ↔ NODE, hard
     cuts, no tween — the ladder stays a contract, not a camera. Plot and below are <b>per-room</b>; the hangar is the
-    only surface where all rooms exist at once. It is not a new window and not a mode: same console shell, one cut up.
-    It lives on <code>fleet.zoom</code>, never on a room's <code>ViewMode</code> — a fleet fact does not belong on a
-    per-room object.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">The ladder finally has an exit <span class="graftag">GRAFT ▸ OPUS · A4</span></div>
-    <p>Fable specified ⌘0–⌘n addressing but no way <i>out</i>. <b>ESC climbs one rung</b> — NODE ▸ RAIL ▸ PLOT ▸
-    HANGAR — and coupling into a berth is a hard cut back down, landing on that room's rail. One keydown handler
-    completes the ladder contract, and the prototype has no keyboard model at all today, so this is net-new capability
-    rather than a rework.</p>
+    only surface where all rooms exist at once. It is not a new window and not a mode: same console shell, one cut up.</p>
   </div>
   <div class="callout">
     <div class="ct">The call — bays, not a starmap</div>
@@ -958,50 +779,35 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     don't render invented data). <b>Berth numbers are stable addresses</b> (⌘1–⌘4 switch, ⌘0 for the hangar), the floor
     bus on the left is the one-global-audio-floor rule made physical, and the traffic strip IS the shared salience
     queue with room attribution — cross-room urgency reads without opening a single room. The starmap callout on the
-    plot retires. <b>Rejected from the donor set:</b> a second hazard-striped audio bar along the bottom (the 26px
-    vertical bus already carries holder + queue), a separate SKIFF LANE (a whole second grammar for 0–2 items), and
-    sol's orbital switchyard (the exact invented-distance framing this callout kills).</p>
+    plot retires.</p>
   </div>
-  <div class="callout graft">
-    <div class="ct">Every traffic row carries the speak gate <span class="graftag">GRAFT ▸ OPUS · A3</span></div>
-    <p>Fable's rows carry clear-% and floor state but nothing that ties them to <code>salience.threshold</code>, which
-    already exists in <code>types.ts</code>. With <code>belowGate</code> printed per row the strip answers the actual
-    operator question — <b>"what is Mikey allowed to interrupt me about?"</b> — because the red rows are exactly that
-    set. The gate is computed <b>once, fleet-wide</b>, not stitched from per-room thresholds; that is the whole reason
-    the shared queue exists. Cost: one boolean. Note what stays static: <b>rows do not scroll</b> — grok's marquee
-    FLOOR QUEUE ticker was rejected for animating on its own account.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">A scratch berth says where it was born <span class="graftag">GRAFT ▸ OPUS · A5</span></div>
+  <div class="callout">
+    <div class="ct">The call — one-off rooms look mortal</div>
     <p>A scratch berth is <b>dashed, spineless, and un-numbered</b>. No plan glyph, no gear tag, no standing cast —
-    Mikey narrates it, and when its craft settles the berth dissolves; nothing bolts on. One-offs are usually born
-    <i>inside</i> a room ("draw me the auth flow"), so the plate now carries <code>parentRoomId</code> and prints
-    <b>FROM R-DEVS</b>. Without it a scratch berth reads as an orphan project. One optional field.</p>
+    Mikey narrates it. When its craft settles, the berth dissolves; nothing bolts on. Full-ceremony berths show their
+    spine as a glyph (live / queued / settled blocks) because the spine is the room's mind and the berth is its face.</p>
   </div>
 
   <h3>A2 · SWITCHING — THE CUT, AND THE AMBIENT TRUTH</h3>
   <p class="note">You will live inside one room most of the day. Berth tabs ride the console header everywhere:
   each carries its room's needs-you LED, so a cross-room arrival is one red dot in your peripheral vision — not a
-  siren, not a modal. Clicking a tab (or a berth) hard-cuts the console to that room's rail. Shown here mid-arrival:
-  <b>podlink's watcher just logged an anomaly while you're in r-devs.</b></p>
+  siren, not a modal. Click a tab (or a berth) and the console hard-cuts to that room's rail. Try it:</p>
 
-  <div class="shadowwrap"><div class="chassis conshead">
-    <span class="keycap" style="font-size:9px;padding:6px 11px">⌘0 HANGAR</span>
-    <span class="btab on"><span class="led amb"></span> R-DEVS</span>
-    <span class="btab"><span class="led red pulse"></span> PODLINK</span>
-    <span class="btab"><span class="led"></span> COMIC-RDR</span>
-    <span class="keycap" style="font-size:9px;padding:6px 11px">SCHEMATIC</span>
-    <span class="crumb"><b>R-DEVS</b> ▸ RAIL</span>
+  <div class="shadowwrap"><div class="chassis conshead" id="conshead">
+    <span class="keycap" style="font-size:9px;padding:6px 11px" onclick="document.getElementById('secA').scrollIntoView({behavior:'smooth'})">⌘0 HANGAR</span>
+    <span class="btab on" data-room="0"><span class="led amb"></span> R-DEVS</span>
+    <span class="btab" data-room="1"><span class="led red pulse"></span> PODLINK</span>
+    <span class="btab" data-room="2"><span class="led"></span> COMIC-RDR</span>
+    <span class="crumb" id="crumb"><b>R-DEVS</b> ▸ RAIL</span>
   </div></div>
 
   <div class="shadowwrap"><div class="chassis dockmock">
-    <span class="pno" style="position:absolute;top:-1px;right:26px">S-13 · DOCK MINI BAR</span>
     <div class="crt"><span class="face blink"></span></div>
-    <div class="dockledbar">
+    <div class="dockledbar" id="dockleds">
       <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
       <span class="notch" style="left:35%"></span>
     </div>
-    <span class="dtick"><span class="rm">PODLINK ▸</span> WATCHER LOGGED AN ANOMALY — QUEUED FOR THE FLOOR</span>
+    <span class="dtick" id="dockticker"><span class="rm">PODLINK ▸</span> WATCHER LOGGED AN ANOMALY — QUEUED FOR THE FLOOR</span>
     <span class="led grn"></span><span class="led amb"></span><span class="led"></span>
   </div></div>
 
@@ -1009,20 +815,17 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     <div class="ct">Dock strip carries the worst room, not the active one</div>
     <p>The NSPanel mini-bar goes global: its LED bar renders the <b>minimum salience across all rooms</b>, and the ticker
     prefixes the owning room (<span class="mono" style="color:var(--red)">PODLINK ▸</span>). The room you're staring at
-    doesn't need an ambient channel — the ones you're not do. This is <b>derived from the per-room rollups, not new
-    wire</b>, which is also why opus's three-LED room spur was dropped: the worst-room rule plus the room prefix
-    already gives attribution, and the dock is ruler-width by design.</p>
+    doesn't need an ambient channel — the ones you're not do. One new wire fact per room, no new surface.</p>
   </div>
 
   <h3 id="commission">A3 · THE COMMISSIONING BAY — START A NEW PROJECT</h3>
   <p class="note">Commissioning is <b>writing a manifest, ceremonially.</b> Name and repo, then one big fork —
-  full-ceremony or one-off — then the three dials, each already living where the architecture says it lives, each
-  printing what it costs. The right side shows the two honest artifacts: the voice path that prefilled the form, and
-  the file the commission actually writes. Shown here in the <b>full-ceremony</b> class.</p>
+  full-ceremony or one-off — then the three dials, each already living where the architecture says it lives.
+  The right side shows the two honest artifacts: the voice path that prefilled the form, and the manifest file
+  the commission actually writes. Toggle the ceremony cards to feel the difference.</p>
 
   <div class="commgrid">
     <div class="shadowwrap"><div class="chassis commform">
-      <span class="pno pnofloat" style="right:12px">S-19 · COMMISSIONING BAY</span>
       <div class="bhead" style="padding:0 0 2px">
         <span class="ttl" style="font-size:12px">COMMISSIONING BAY · B-04</span>
         <span class="tag">WRITES rooms/&lt;name&gt;/manifest.json</span>
@@ -1039,12 +842,12 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 
       <div class="fld"><label>Ceremony class — the fork</label>
         <div class="cermrow">
-          <div class="cerm on">
+          <div class="cerm on" id="cermFull">
             <span class="led amb cled"></span>
             <div class="cn">Full-ceremony room</div>
             <div class="cd">SPINE (GH ISSUES) · STANDING CAST · NUMBERED BERTH · PLANS DOCK &amp; SETTLE · LIVES UNTIL DECOMMISSIONED</div>
           </div>
-          <div class="cerm">
+          <div class="cerm" id="cermOne">
             <span class="led cled"></span>
             <div class="cn">One-off · mortal</div>
             <div class="cd">NO SPINE · NO TICKET · SCRATCH BERTH · MIKEY NARRATES · <b style="color:var(--amber)">DIES ON DELIVERY</b></div>
@@ -1052,33 +855,30 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
         </div>
       </div>
 
-      <div class="fld"><label>The three dials — homes printed on each, consequence printed under the detent</label>
+      <div class="fld"><label>The three dials — set at birth, homes printed on each</label>
         <div class="dialrow">
-          <div class="dialbox">
+          <div class="dialbox spine-only" id="dial1">
             <div class="knob p2"></div>
             <div class="knobticks"><span>BARE</span><span class="on">LIGHT</span><span>FULL</span></div>
             <div class="dlab"><b>DIAL 1 · GEAR DEFAULT</b>HOME: PLAN CARD</div>
-            <div class="cost"><b>LIGHT</b> — PLAN, BUILD, SETTLE.<br>COSTS <span class="u">≈ 2 EXTRA TURNS</span> PER PIECE OF WORK<br>vs BARE. FULL ADDS ≈ 5.</div>
           </div>
-          <div class="dialbox">
+          <div class="dialbox" id="dial2">
             <div class="castrow">
               <div><div class="crt lead"><span class="face leo"></span></div><div class="castlab">LEO · LEAD</div></div>
-              <div><div class="crt pool"><span class="face donnie"></span></div><div class="castlab">DONNIE · POOL</div></div>
+              <div><div class="crt pool spine-only"><span class="face donnie"></span></div><div class="castlab spine-only">DONNIE · POOL</div></div>
               <div><div class="crt"><span class="face splinter"></span></div><div class="castlab">SPLINTER</div></div>
             </div>
             <div class="dlab"><b>DIAL 2 · VOICE / CAST</b>HOME: FACEPLATE</div>
-            <div class="cost">LEO LEADS · CHECKOUT POOL: DONNIE.<br>ALL VOICES BILL <span class="u">ELEVENLABS PER CHARACTER</span> —<br>THE CAST CHANGES WHO, NEVER HOW MUCH.</div>
           </div>
-          <div class="dialbox">
+          <div class="dialbox" id="dial3">
             <div class="knob p1"></div>
             <div class="knobticks"><span class="on">LEAN</span><span>STD</span><span>DEEP</span></div>
             <div class="dlab"><b>DIAL 3 · BRAIN TABLE</b>HOME: TURN CHIP</div>
-            <div class="cost"><b>LEAN</b> — FLASH FLOOR, ROUTING TABLE NOT JUDGMENT.<br>TYPICAL TURN <span class="u">$0.002</span> · DEEP ≈ <span class="u">$0.09</span>.<br>ESCALATIONS ALLOWED, EACH ONE LOGGED.</div>
           </div>
         </div>
       </div>
 
-      <div class="fld"><label>Connectors</label>
+      <div class="fld spine-only"><label>Connectors</label>
         <div class="connrow">
           <span class="tag grn">GH ISSUES ✓</span>
           <span class="tag grn">TMUX ✓</span>
@@ -1088,8 +888,8 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
       </div>
 
       <div class="commcta">
-        <span class="keycap armedglow">STRIKE BERTH B-04 ⏎</span>
-        <span class="mono" style="font-size:8.5px;letter-spacing:.16em;color:var(--steel-dim)">MANIFEST CHECKED IN · SONNER RECEIPT · MIKEY ANNOUNCES THE BERTH AT THE LULL</span>
+        <span class="keycap armedglow" id="commKeycap">STRIKE BERTH B-04 ⏎</span>
+        <span class="mono" style="font-size:8.5px;letter-spacing:.16em;color:var(--steel-dim)" id="commHint">MANIFEST CHECKED IN · MIKEY ANNOUNCES THE BERTH AT THE LULL</span>
       </div>
     </div></div>
 
@@ -1101,50 +901,25 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
         <div class="interpchip"><span class="tag">INTERPRETER · NEW ROOM → DRAFT MANIFEST → CONFIRM · FLASH $0.002 · LOGGED</span></div>
       </div></div>
 
-      <div class="screenbed sweep manifest">
-        <div class="mt">THE MANIFEST — <span style="color:var(--amber)">THIS IS THE FILE, NOT A PREVIEW</span>
-          <span class="graftag" style="margin-left:auto">GRAFT ▸ OPUS · A1</span></div>
-        <div class="mpath">▸ rooms/comic-reader/manifest.json &nbsp;·&nbsp; UNCOMMITTED · 1 FILE · 0 API CALLS</div>
-        <pre>{
-  "room":     <b>"comic-reader"</b>,          <u>◂ DESIGNATION</u>
+      <div class="screenbed sweep manifest" id="manifestBed">
+        <div class="mt">MANIFEST PREVIEW — WHAT THE COMMISSION WRITES</div>
+        <pre id="manifestPre"><i>// rooms/comic-reader/manifest.json — checked in</i>
+{
+  "room":     <b>"comic-reader"</b>,
   "repo":     "~/projects/comic-reader",
-  "ceremony": <b>"full"</b>,                  <u>◂ THE FORK</u>
+  "ceremony": <b>"full"</b>,
   "spine":    { "tracker": "github",
                 "repo": "dougie/comic-reader" },
-  "cast":     { "lead": <b>"leo"</b>,         <u>◂ DIAL 2</u>
+  "cast":     { "lead": <b>"leo"</b>,
                 "checkout": ["donnie"] },
-  "gearDefault": "light",              <u>◂ DIAL 1</u>
-  "brainTable":  "lean",               <u>◂ DIAL 3</u>
+  "gearDefault": "light",     <i>// dial 1</i>
+  "brainTable":  "lean",      <i>// dial 3</i>
   "connectors": ["gh-issues", "tmux"]
 }</pre>
-        <div class="bindkey">
-          <span><u>◂</u> LIVE-BOUND — EVERY CONTROL ON THE BENCH EDITS THIS PANE</span>
-          <span style="color:var(--amber-dim)">ONE-OFF ⇒ <span style="color:var(--amber)">"spine": null</span> AND NOTHING IS WRITTEN AT ALL</span>
-        </div>
       </div>
     </div>
   </div>
 
-  <div class="callout graft">
-    <div class="ct">The bench's output is a file you can read <span class="graftag">GRAFT ▸ OPUS · A1</span></div>
-    <p>Fable showed a manifest <i>preview</i> — a static illustration of what would be written. Opus's version is
-    <b>live-bound</b>: every control edits the pane, and the pane header prints the real path. That kills new-project
-    anxiety ("what did that wizard just configure?") and matches the architecture exactly, because rooms arrive as
-    configuration. Two consequences fall out for free: a <b>second entrance</b> — hand-edit the file, no bench needed —
-    and a <b>free undo</b>, <code>git checkout</code>. Cost: bind one JSON renderer to draft state.</p>
-    <p><b>What was NOT taken:</b> opus's "ceremony is one knob, not two flows" (BARE detent = skiff). It conflates
-    <i>room durability</i> — is a manifest checked in — with <i>per-thread gear default</i>. Fable is right to fork
-    first and dial second; the fork answers "is this a real project", the dial answers "how much process per piece
-    of work".</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">Each dial prints its consequence in the unit that bites <span class="graftag">GRAFT ▸ OPUS · A2</span></div>
-    <p>The dials are the only place a person can accidentally make a project expensive, and cost honesty is already
-    THE CORE's whole thread. Fable prints each dial's architectural <b>home</b> (plan card / faceplate / turn chip) —
-    keep that, and add one consequence line under the active detent: <b>ceremony in extra turns per piece of work,
-    voice in per-character billing, brain tier in dollars per turn</b>. One line of copy per detent, applied at the
-    moment the cost is chosen instead of the moment it is discovered.</p>
-  </div>
   <div class="callout">
     <div class="ct">Rooms are config, not architecture</div>
     <p>The commission writes a file — nothing else. The daemon watches the manifests directory the same way it watches
@@ -1153,7 +928,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     in memory, and the berth dissolves when the craft settles.</p>
   </div>
 
-  <h3>A4 · FIELD VARIANTS</h3>
+  <h3>A4 · FIELD VARIANTS — BONUS</h3>
   <div class="phones">
     <div class="phone">
       <div class="pscr">
@@ -1164,8 +939,8 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
           <span class="rpill">COMIC 74%</span>
         </div>
         <div class="pcard">
-          <div class="pct2">Glance · R-DEVS <span class="mono" style="float:right;color:rgba(255,179,71,.4)">F-01</span></div>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div class="pct2">Glance · R-DEVS</div>
+          <div class="salrow" style="display:flex;gap:8px;align-items:center">
             <span class="sseg" style="font-size:26px">58<span style="font-size:12px">%</span></span>
             <div class="salbar" style="flex:1"><span class="dimseg"></span><span class="fill" style="width:58%"></span><span class="notch" style="left:35%"></span></div>
           </div>
@@ -1178,7 +953,7 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
         </div>
         <div class="pcard" style="border-style:dashed">
           <div class="pct2">Other rooms — attributed, not rendered</div>
-          <div class="prow"><span class="k">PODLINK</span> W-2 ANOMALY · <span style="color:var(--red)">BELOW GATE</span></div>
+          <div class="prow"><span class="k">PODLINK</span> W-2 ANOMALY LOGGED — TAP TO CUT</div>
           <div class="prow" style="opacity:.55"><span class="k">COMIC</span> QUEUED FOR THE LULL</div>
         </div>
         <div class="pdock">
@@ -1193,17 +968,17 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
       <div class="pscr">
         <div class="phead"><span class="led grn"></span> SSE <span class="led"></span> AUD <span class="sp"></span> START</div>
         <div class="pcard">
-          <div class="pct2">Transcript <span class="mono" style="float:right;color:rgba(255,179,71,.4)">F-04</span></div>
+          <div class="pct2">Transcript</div>
           <div class="prow" style="color:var(--steel)"><span class="k">YOU</span> "new room for the comic reader"</div>
           <div class="prow"><span class="k">MIKEY</span> "Berth four, full ceremony, Leo leads — confirm?"</div>
         </div>
         <span class="tag" style="margin-bottom:10px">NEW ROOM → MANIFEST DRAFT → B-04 · FLASH $0.002 · LOGGED</span>
         <div class="pcard">
-          <div class="pct2">rooms/comic-reader/manifest.json — read-only out here</div>
+          <div class="pct2">Manifest draft — read-only out here</div>
           <div class="prow"><span class="k">CEREMONY</span> FULL — SPINE + CAST</div>
-          <div class="prow"><span class="k">GEAR</span> LIGHT · ≈2 EXTRA TURNS</div>
+          <div class="prow"><span class="k">GEAR</span> LIGHT</div>
           <div class="prow"><span class="k">LEAD</span> LEO · CHECKOUT: DONNIE</div>
-          <div class="prow"><span class="k">BRAIN</span> LEAN · $0.002/TURN</div>
+          <div class="prow"><span class="k">BRAIN</span> LEAN TABLE</div>
         </div>
         <div class="pcard" style="border-color:var(--amber-dim);background:var(--amber-ghost)">
           <div class="prow" style="color:var(--amber-hot)"><span class="k">CONFIRM</span> SAY "STRIKE IT" — OR ADJUST DIALS AT THE RIG</div>
@@ -1216,237 +991,195 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
       <div class="plab">FIELD · START — COMMISSION BY VOICE, DIALS LOCK AT THE RIG</div>
     </div>
   </div>
+
+  <div class="screenbed sweep wirebed">
+    <div class="wt">WIRE NEEDS — NEW FIELDS THE HANGAR DEMANDS (EXTENDS prototype/src/mock/types.ts)</div>
+    <b>rooms?: RoomBerth[]</b> — <i>the hangar's whole surface; RoomState becomes per-room, keyed by</i> <b>roomId</b><br>
+    <span class="nw">RoomBerth</span> { id, name, repo, berth: number|null <i>(null = scratch)</i>, ceremony: "full"|"one-off",<br>
+    &nbsp;&nbsp;lead: PersonaId, cast: PersonaId[], gearDefault, brainTable, connectors[],<br>
+    &nbsp;&nbsp;salience: { clearPct, worstCraft }, counts: { working, needsYou, settled, watchers },<br>
+    &nbsp;&nbsp;docked: { live, queued, settled }, ticker: string }<br>
+    <b>activeRoomId</b> · <b>floorRoomId</b> <i>(one global audio floor — exactly one holder or null)</i><br>
+    <b>traffic?: { roomId, craftId, label, salience, floorState: "has"|"queued"|"lull" }[]</b> <i>(the shared queue, worst-first)</i><br>
+    <i>Dock strip consumes</i> min(rooms[].salience.clearPct) <i>+ the owning roomId — derived, not new wire.</i>
+  </div>
 </section>
 
 <!-- ==================================================================== -->
 <!-- SECTION B — THE TOOL CRIB -->
 <!-- ==================================================================== -->
 <section id="secB">
-  <h2><span class="idx">B</span> THE TOOL CRIB — INSTRUMENT CATALOG <span class="tag">/crib · PORT 5180</span></h2>
+  <h2><span class="idx">B</span> THE TOOL CRIB — INSTRUMENT CATALOG</h2>
   <p class="note">Every instrument we've machined, checked into a crib with a <b>spec plate</b>: live rendering across
-  states, a provenance stamp (what it's forged from), a stock lamp, where-used pins, tolerances, and the file path.
-  Browsing model: <b>drawers, not tabs</b> — one rail of category drawers, a search platen, surface filter pins, and a
-  sticky spec plate that reads like a parts catalog page. Provenance and verdicts come straight from
-  <code>docs/reference/shadcn-audit.md</code>; consumer counts come from the audit's own grep. Shown here with the
-  <b>DialGauge plate expanded</b>.</p>
+  states, a provenance stamp (what it's forged from), where-used pins, and the file path. The never-shipped gallery on
+  port 5179 keeps its port and loses its shell — this replaces it. Browsing model: <b>drawers, not tabs</b> — one rail
+  of category drawers, a search platen, surface filter pins, and a sticky inspector that reads like a parts catalog
+  page. Provenance data comes straight from <span class="mono" style="font-size:11px">docs/reference/shadcn-audit.md</span>.
+  Click a card.</p>
 
   <div class="shadowwrap"><div class="board">
     <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
     <div class="bhead">
       <span class="ttl">THE TOOL CRIB // COMPONENT LIBRARY</span>
-      <span class="tag dim">ROUTE /crib · PORT 5180 · NO STORE ACCESS</span>
+      <span class="tag dim">PORT 5179 · DEV ONLY · NO DAEMON</span>
       <span class="sp"></span>
-      <span class="mono" style="font-size:9px;letter-spacing:.16em;color:var(--steel-dim)">
-        ◂ RENDERED FROM crib-manifest.ts · 33 INSTRUMENTS · <span style="color:var(--haz)">1 FRAGILE</span> · <span style="color:var(--red)">3 DEAD STOCK</span></span>
+      <span class="mono" style="font-size:9px;letter-spacing:.16em;color:var(--steel-dim)">33 INSTRUMENTS · <span style="color:var(--red)">3 DEAD STOCK</span></span>
     </div>
 
     <div class="cribgrid">
       <!-- rail -->
       <div class="cribrail">
-        <div class="screenbed cribsearch">▸ SEARCH THE CRIB…</div>
-        <div class="drawer on"><span class="pull"></span> ALL DRAWERS <span class="cnt">33</span></div>
-        <div class="drawer"><span class="pull"></span> RIG INSTRUMENTS <span class="cnt">13</span></div>
-        <div class="drawer"><span class="pull"></span> VENDORED SHADCN <span class="cnt">8</span></div>
-        <div class="drawer"><span class="pull"></span> DOMAIN LEAVES <span class="cnt">9</span></div>
-        <div class="drawer"><span class="pull"></span> PROTO EXTENSIONS <span class="cnt">3</span></div>
-        <div class="drawer dead"><span class="pull"></span> DEAD STOCK BIN <span class="cnt">3</span></div>
-        <div class="drawer dead"><span class="pull"></span> WORK ORDERS <span class="cnt">5</span></div>
+        <div class="screenbed cribsearch">▸ <input id="cribq" placeholder="SEARCH THE CRIB…" oninput="cribFilter()"></div>
+        <div class="drawer on" data-cat="all" onclick="cribCat(this)"><span class="pull"></span> ALL DRAWERS <span class="cnt">33</span></div>
+        <div class="drawer" data-cat="rig" onclick="cribCat(this)"><span class="pull"></span> RIG INSTRUMENTS <span class="cnt">13</span></div>
+        <div class="drawer" data-cat="shadcn" onclick="cribCat(this)"><span class="pull"></span> VENDORED SHADCN <span class="cnt">8</span></div>
+        <div class="drawer" data-cat="domain" onclick="cribCat(this)"><span class="pull"></span> DOMAIN LEAVES <span class="cnt">9</span></div>
+        <div class="drawer" data-cat="ext" onclick="cribCat(this)"><span class="pull"></span> PROTO EXTENSIONS <span class="cnt">3</span></div>
         <div class="surfchips">
-          <span class="tag">CONSOLE</span>
-          <span class="tag">FIELD</span>
-          <span class="tag">PANEL</span>
-          <span class="tag">MOBILE</span>
+          <span class="tag" data-surf="C" onclick="cribSurf(this)">CONSOLE</span>
+          <span class="tag" data-surf="F" onclick="cribSurf(this)">FIELD</span>
+          <span class="tag" data-surf="P" onclick="cribSurf(this)">PANEL</span>
+          <span class="tag" data-surf="M" onclick="cribSurf(this)">MOBILE</span>
         </div>
         <div class="callout" style="margin:4px 0 0">
           <div class="ct">Dead-stock detector</div>
           <p class="mono" style="font-size:9px">The crib manifest is generated: exports of <b>@room/ui</b> grepped
-          against consumers (<code>grep -rn 'from "@room/ui"'</code>). Zero hits = the red stamp. The page renders that
-          file, so the lamps cannot drift without the file drifting first. <b>No count is ever hardcoded in JSX.</b></p>
+          against consumers. Zero hits = the red stamp. Runs at crib build, keeps the audit honest.</p>
         </div>
       </div>
 
       <!-- cards -->
-      <div class="cardsgrid">
+      <div class="cardsgrid" id="cribcards">
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-002</span>
+        <div class="speccard sel" data-id="crtface" data-cat="rig" data-surf="CFPM" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="crt" style="width:64px"><span class="face blink"></span></div></div>
           <div class="sinfo">
             <span class="snm">CrtFace</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 6 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led amb"></i>P</span><span><i class="led amb"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/CrtFace.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-004</span>
+        <div class="speccard" data-id="salbar" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="salbar demo-sal"><span class="dimseg"></span><span class="fill" style="width:58%"></span><span class="notch" style="left:35%"></span></div></div>
           <div class="sinfo">
             <span class="snm">SalienceBar</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 5 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/SalienceBar.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-006</span>
+        <div class="speccard" data-id="led" data-cat="rig" data-surf="CFPM" onclick="cribSelect(this)">
           <div class="screenbed platen"><span class="led grn"></span><span class="led amb"></span><span class="led red pulse"></span><span class="led"></span></div>
           <div class="sinfo">
             <span class="snm">Led</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 11 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led amb"></i>P</span><span><i class="led amb"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/Led.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-007</span>
+        <div class="speccard" data-id="tag" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="demo-tags"><span class="tag">WORKING</span><span class="tag red">NEEDS YOU</span><span class="tag grn">SETTLED</span></div></div>
           <div class="sinfo">
             <span class="snm">Tag</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 9 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/Tag.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-009</span>
+        <div class="speccard" data-id="keycap" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="demo-keycaps"><span class="keycap" style="font-size:9px;padding:7px 11px">OPT 1</span><span class="keycap armedglow" style="font-size:9px;padding:7px 11px">OPT 2 ★</span></div></div>
           <div class="sinfo">
             <span class="snm">Keycap</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 4 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/Keycap.tsx</span>
           </div>
         </div>
 
-        <div class="speccard sel">
-          <span class="pno cardno hot">RIG-011</span>
+        <div class="speccard" data-id="dial" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen">
-            <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="DialGauge specimen">
+            <svg class="dialmini" viewBox="0 0 100 60">
               <path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="7" fill="none"/>
-              <path d="M12 54 A 42 42 0 0 1 88 54" stroke="#ffb347" stroke-width="7" fill="none" stroke-dasharray="76 132" style="filter:drop-shadow(0 0 4px rgba(255,150,30,.5))"/>
-              <line x1="50" y1="54" x2="26" y2="22" stroke="#ffd894" stroke-width="2"/>
+              <path d="M12 54 A 42 42 0 0 1 88 54" stroke="var(--amber)" stroke-width="7" fill="none" stroke-dasharray="76 132" style="filter:drop-shadow(0 0 4px rgba(255,150,30,.5))"/>
+              <line x1="50" y1="54" x2="26" y2="22" stroke="var(--amber-hot)" stroke-width="2"/>
               <circle cx="50" cy="54" r="4" fill="#3b4148" stroke="#12151a"/>
             </svg>
           </div>
           <div class="sinfo">
             <span class="snm">DialGauge</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 4 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/DialGauge.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-012</span>
+        <div class="speccard" data-id="odometer" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="odom"><i>0</i><i>4</i><i>1</i><i>9</i><i>2</i><i>7</i></div></div>
           <div class="sinfo">
             <span class="snm">Odometer</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 2 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/Odometer.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-013</span>
+        <div class="speccard" data-id="waveform" data-cat="rig" data-surf="CFPM" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="wave"><i style="height:8px"></i><i style="height:18px"></i><i style="height:30px"></i><i style="height:14px"></i><i style="height:26px"></i><i style="height:10px"></i><i style="height:22px"></i><i style="height:32px"></i><i style="height:12px"></i><i style="height:20px"></i><i style="height:7px"></i><i style="height:16px"></i></div></div>
           <div class="sinfo">
             <span class="snm">Waveform</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 4 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led amb"></i>P</span><span><i class="led amb"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/Waveform.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">RIG-001</span>
+        <div class="speccard" data-id="cutframe" data-cat="rig" data-surf="CF" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="cutmini"></div></div>
           <div class="sinfo">
             <span class="snm">CutFrame</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 9 CONSUMERS</span>
             <div class="usedleds"><span><i class="led amb"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/rig/CutFrame.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">SHD-002</span>
+        <div class="speccard" data-id="button" data-cat="shadcn" data-surf="F" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="demo-btns"><span class="uibtn pri">PRIMARY</span><span class="uibtn sec">SECONDARY</span><span class="uibtn gho">GHOST</span></div></div>
           <div class="sinfo">
             <span class="snm">button</span>
             <span class="provchip cva">CVA · NO RADIX</span>
-            <span class="stocklamp fragile"><span class="led" style="background:radial-gradient(circle at 35% 30%,#ffe0a0,#d9a021 60%,#5c3f0c);box-shadow:0 0 7px rgba(217,160,33,.7)"></span>FRAGILE · 1 CONSUMER</span>
             <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/primitives/button.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">SHD-005</span>
+        <div class="speccard" data-id="sheet" data-cat="shadcn" data-surf="M" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="sheetmini"></div></div>
           <div class="sinfo">
             <span class="snm">sheet</span>
             <span class="provchip radix">RADIX ▸ DIALOG</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 3 CONSUMERS</span>
             <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led"></i>F</span><span><i class="led"></i>P</span><span><i class="led amb"></i>M</span></div>
             <span class="spath">packages/ui/src/primitives/sheet.tsx</span>
           </div>
         </div>
 
-        <div class="speccard dead">
-          <span class="pno cardno">SHD-007</span>
+        <div class="speccard dead" data-id="tooltip" data-cat="shadcn" data-surf="" onclick="cribSelect(this)">
           <div class="deadstamp">DEAD STOCK · 0 CONSUMERS</div>
           <div class="screenbed platen"><div class="tooltipmini"><span class="tipbub">A HINT NOBODY RENDERS</span>hover me</div></div>
           <div class="sinfo">
             <span class="snm">tooltip</span>
             <span class="provchip radix">RADIX ▸ TOOLTIP</span>
-            <span class="stocklamp gone"><span class="led red"></span>DEAD STOCK · 0 IMPORTS</span>
             <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">packages/ui/src/primitives/tooltip.tsx</span>
           </div>
         </div>
 
-        <div class="speccard dead">
-          <span class="pno cardno">SHD-008</span>
-          <div class="deadstamp">DEAD STOCK · 0 CONSUMERS</div>
-          <div class="screenbed platen"><div class="toastmini">MANIFEST CHECKED IN · B-04</div></div>
-          <div class="sinfo">
-            <span class="snm">toast</span>
-            <span class="provchip lib">LIB ▸ SONNER</span>
-            <span class="stocklamp gone"><span class="led red"></span>DEAD STOCK · 0 IMPORTS</span>
-            <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
-            <span class="spath">packages/ui/src/primitives/sonner.tsx</span>
-          </div>
-        </div>
-
-        <div class="speccard">
-          <span class="pno cardno">DOM-004</span>
-          <div class="screenbed platen"><div class="mdmini"><b>## Settled</b><br>the <code style="color:#ffb347">grant</code> now expires<br><span class="lnk">docs/spec-live-mode.md</span></div></div>
-          <div class="sinfo">
-            <span class="snm">Markdown</span>
-            <span class="provchip lib">LIB ▸ REACT-MARKDOWN</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 3 CONSUMERS</span>
-            <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led"></i>F</span><span><i class="led amb"></i>P</span><span><i class="led amb"></i>M</span></div>
-            <span class="spath">packages/ui/src/components/Markdown.tsx</span>
-          </div>
-        </div>
-
-        <div class="speccard">
-          <span class="pno cardno">DOM-001</span>
+        <div class="speccard" data-id="statebadge" data-cat="domain" data-surf="PM" onclick="cribSelect(this)">
           <div class="screenbed platen"><div class="demo-tags">
             <span class="mono" style="font-size:9px;color:var(--amber)">● WORKING</span>
             <span class="mono" style="font-size:9px;color:#66a9ff">● HAND RAISED</span>
@@ -1455,181 +1188,60 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
           <div class="sinfo">
             <span class="snm">StateBadge</span>
             <span class="provchip custom">FORGED IN-HOUSE</span>
-            <span class="stocklamp"><span class="led grn"></span>IN STOCK · 2 CONSUMERS</span>
             <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led"></i>F</span><span><i class="led amb"></i>P</span><span><i class="led amb"></i>M</span></div>
             <span class="spath">packages/ui/src/components/StateBadge.tsx</span>
           </div>
         </div>
 
-        <div class="speccard">
-          <span class="pno cardno">EXT-001</span>
+        <div class="speccard" data-id="sessiondial" data-cat="ext" data-surf="F" onclick="cribSelect(this)">
           <div class="screenbed platen">
-            <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="SessionDial specimen">
+            <svg class="dialmini" viewBox="0 0 100 60">
               <path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="6" fill="none"/>
-              <path d="M12 54 A 42 42 0 0 1 88 54" stroke="#ffb347" stroke-width="6" fill="none" stroke-dasharray="60 132"/>
+              <path d="M12 54 A 42 42 0 0 1 88 54" stroke="var(--amber)" stroke-width="6" fill="none" stroke-dasharray="60 132"/>
               <path d="M18 54 A 36 36 0 0 1 82 54" stroke="#66a9ff" stroke-width="2.5" fill="none" stroke-dasharray="30 113" style="filter:drop-shadow(0 0 3px rgba(102,169,255,.6))"/>
             </svg>
           </div>
           <div class="sinfo">
             <span class="snm">SessionDial</span>
             <span class="provchip custom">WRAPS RIG ▸ DIALGAUGE</span>
-            <span class="stocklamp fragile"><span class="led" style="background:radial-gradient(circle at 35% 30%,#ffe0a0,#d9a021 60%,#5c3f0c);box-shadow:0 0 7px rgba(217,160,33,.7)"></span>FRAGILE · 1 CONSUMER</span>
             <div class="usedleds"><span><i class="led"></i>C</span><span><i class="led amb"></i>F</span><span><i class="led"></i>P</span><span><i class="led"></i>M</span></div>
             <span class="spath">prototype/src/rig-ext/SessionDial.tsx</span>
           </div>
         </div>
       </div>
 
-      <!-- spec plate — shown expanded -->
+      <!-- inspector -->
       <div class="shadowwrap inspector"><div class="chassis">
-        <div class="ihead">
-          <span class="pno hot">RIG-011</span>
-          <span class="inm">DialGauge</span>
-          <span class="provchip custom">FORGED IN-HOUSE</span>
-        </div>
-        <div class="screenbed istage">
-          <div class="staterack">
-            <div class="slot">
-              <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="fraction 0.42"><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="7" fill="none"/><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#ffb347" stroke-width="7" fill="none" stroke-dasharray="55 132"/><line x1="50" y1="54" x2="32" y2="26" stroke="#ffd894" stroke-width="2"/><circle cx="50" cy="54" r="4" fill="#3b4148" stroke="#12151a"/></svg>
-              <span class="sl">0.42</span>
-            </div>
-            <div class="slot">
-              <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="fraction 0.91 redline"><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="7" fill="none"/><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#ff5340" stroke-width="7" fill="none" stroke-dasharray="120 132" style="filter:drop-shadow(0 0 4px rgba(255,70,50,.5))"/><line x1="50" y1="54" x2="78" y2="34" stroke="#ffd894" stroke-width="2"/><circle cx="50" cy="54" r="4" fill="#3b4148" stroke="#12151a"/></svg>
-              <span class="sl">REDLINE</span>
-            </div>
-            <div class="slot">
-              <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="with session arc"><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="7" fill="none"/><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#ffb347" stroke-width="7" fill="none" stroke-dasharray="70 132"/><path d="M18 54 A 36 36 0 0 1 82 54" stroke="#66a9ff" stroke-width="2.5" fill="none" stroke-dasharray="30 113"/><circle cx="50" cy="54" r="4" fill="#3b4148" stroke="#12151a"/></svg>
-              <span class="sl">+ SESSION</span>
-            </div>
-            <div class="slot">
-              <svg class="dialmini" viewBox="0 0 100 60" role="img" aria-label="cold"><path d="M12 54 A 42 42 0 0 1 88 54" stroke="#2c2013" stroke-width="7" fill="none"/><line x1="50" y1="54" x2="12" y2="54" stroke="#7d848c" stroke-width="2"/><circle cx="50" cy="54" r="4" fill="#3b4148" stroke="#12151a"/></svg>
-              <span class="sl">COLD</span>
-            </div>
-          </div>
-        </div>
-        <div class="ibody">
-          <div class="irow"><div class="ik">States — this row IS the API surface</div>
-            <div class="iv">arc fill 0–1 · redline zone · optional session arc · cold. <i>If a state isn't on the plate, it doesn't exist.</i></div></div>
-
-          <div class="irow"><div class="ik">Tolerances — props <span class="graftag" style="margin-left:6px">GRAFT ▸ OPUS · B5</span></div>
-            <table class="tol">
-              <tr><th>PROP</th><th>TYPE</th><th>NOTE</th></tr>
-              <tr><td class="k">fraction</td><td>number 0–1</td><td class="d">the amber arc</td></tr>
-              <tr><td class="k">sessionFraction</td><td>number | null</td><td class="d">thin blue outer arc; null = none</td></tr>
-              <tr><td class="k">redlineAt</td><td>number</td><td class="d">arc turns red above this</td></tr>
-              <tr><td class="k">label / readout</td><td>string</td><td class="d">stencil + mono</td></tr>
-              <tr><td class="k">size</td><td>"sm" | "md" | "lg"</td><td class="d">64 / 96 / 132px</td></tr>
-            </table>
-          </div>
-
-          <div class="irow"><div class="ik">Stock lamp</div>
-            <div class="iv"><span class="stocklamp"><span class="led grn"></span>IN STOCK · 4 CONSUMERS</span>
-            <i> — green ≥2, amber exactly 1 (one deletion from dead), red 0.</i></div></div>
-
-          <div class="irow"><div class="ik">Where used</div>
-            <div class="iv">prototype/src/console/TheCore.tsx · prototype/src/field/GaugesScreen.tsx · prototype/src/rig-ext/SessionDial.tsx <i>(+1 via wrapper)</i></div></div>
-
-          <div class="irow"><div class="ik">Registry equivalent — verdict printed verbatim</div>
-            <div class="iv"><span class="rej">REJECTED</span> — <i>"the nearest registry analogue is chart's radial family, and none of them would survive the restyle. Leave these alone."</i> — shadcn-audit.md §3</div></div>
-
-          <div class="irow"><div class="ik">Known defect <span class="graftag" style="margin-left:6px">GRAFT ▸ OPUS · B5</span></div>
-            <div class="defect">NEEDLE PIVOT — double <code>transform-origin</code>, fixed 8dba2a2. Regression check: the state rack above.</div></div>
-
-          <div class="irow"><div class="ik">Path</div>
-            <div class="iv">packages/ui/src/rig/DialGauge.tsx</div></div>
-        </div>
+        <div class="ihead"><span class="inm" id="inm">CrtFace</span><span id="iprov"><span class="provchip custom">FORGED IN-HOUSE</span></span></div>
+        <div class="screenbed istage" id="istage"></div>
+        <div class="ibody" id="ibody"></div>
       </div></div>
-    </div>
-
-    <!-- DEAD STOCK BIN — graft B3 -->
-    <div class="deadbin">
-      <div class="haz"></div>
-      <div class="dh">
-        <span class="led red"></span>
-        <span class="dt">Dead stock bin</span>
-        <span class="dsub">VENDORED, PAID FOR, ZERO IMPORTS — AND WHAT HAND-ROLLS IT INSTEAD</span>
-        <span style="flex:1"></span>
-        <span class="graftag">GRAFT ▸ OPUS · B3</span>
-      </div>
-      <div class="deadrow">
-        <div class="deaditem">
-          <div class="n">DIALOG <span class="provchip radix" style="font-size:7px">RADIX ▸ DIALOG</span></div>
-          <div class="r"><b>HAND-ROLLED BY:</b> prototype/src/deck/ControlDeck.tsx — <code>role="dialog"</code> + manual keydown listener.</div>
-          <span class="tag grn v">VERDICT · ADOPT</span>
-        </div>
-        <div class="deaditem">
-          <div class="n">TOAST <span class="provchip lib" style="font-size:7px">LIB ▸ SONNER</span></div>
-          <div class="r"><b>HAND-ROLLED BY:</b> panel/src/app/App.tsx:114 + packages/mobile/src/components/Toast.tsx + two view-state timers.</div>
-          <span class="tag grn v">VERDICT · ADOPT — HIGHEST PAYOFF IN THE AUDIT</span>
-        </div>
-        <div class="deaditem">
-          <div class="n">TOOLTIP <span class="provchip radix" style="font-size:7px">RADIX ▸ TOOLTIP</span></div>
-          <div class="r"><b>HAND-ROLLED BY:</b> dozens of native <code>title=""</code> attributes across all four surfaces.</div>
-          <span class="tag grn v">VERDICT · ADOPT FOR A11Y, OR SCRAP THE DEP — NO THIRD OPTION</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- WORK ORDERS — graft B4 -->
-    <div class="workorder">
-      <h5>WORK ORDERS — audit §3 top five, with real call sites <span class="graftag">GRAFT ▸ OPUS · B4</span></h5>
-      <ol>
-        <li><b>TABS</b> — three hand-rolled tablists, no roving focus: PickerView:397 · SettingsView:558 · PickerSheet:125. <i>Round-D consumer: the crib's own drawer rail.</i></li>
-        <li><b>SONNER</b> — already vendored + dead; wiring it deletes a whole file and two timer states. <i>Round-D consumer: the STRIKE BERTH receipt.</i></li>
-        <li><b>NATIVE-SELECT</b> — four raw &lt;select&gt;s styled ad hoc; low-risk, keeps the OS picker on phone.</li>
-        <li><b>COMMAND (cmdk)</b> — the control deck IS a command palette hand-built from a backtick keydown listener. <i>Round-D consumer #2 on day one: the ⌘K room-switcher palette in the hangar.</i></li>
-        <li><b>SLIDER</b> — bare <code>type="range"</code> on a floating NSPanel is awkward to hit.</li>
-      </ol>
-      <div class="caveat">ADOPTION CAVEAT, PRINTED ON EVERY ORDER: <b>vendor the Radix behavior, drop shadcn's palette, restyle
-      against packages/ui/src/tokens.css. Never run <code>shadcn add</code> with a theme.</b><br>
-      DO NOT ADOPT: badge · card · progress · chart · avatar · theme-* — the audit rules each out explicitly, and the RIG
-      primitives they'd replace are the product.</div>
     </div>
   </div></div>
 
   <div class="callout">
     <div class="ct">The call — a catalog, not a storybook</div>
     <p>No knob panels, no prop playgrounds. Each instrument gets a <b>spec plate</b> — the states it ships, stamped
-    provenance, stock lamp, where-used pins, tolerances, path — because the question this page answers is "what do we
-    have and what is it made of," not "what could this render." <b>The states row IS the API surface.</b> Every state
-    rack is a set of fixed fixtures shown at once; a catalog animates only what the component itself animates, at its
-    true rate. No gauge climbs, no simulated data.</p>
+    provenance, where-used pins, path — because the question this page answers is "what do we have and what is it made
+    of," not "what could this render." The states row IS the API surface; if a state isn't on the plate, it doesn't
+    exist. Demo motion here is honest: the playground is the data feed.</p>
   </div>
-  <div class="callout graft">
-    <div class="ct">Four stamp classes, not three <span class="graftag">GRAFT ▸ OPUS · B1</span></div>
-    <p>Fable's three classes — <b>FORGED IN-HOUSE</b> (steel), <b>RADIX ▸ *</b> (amber), <b>CVA · NO RADIX</b>
-    (violet) — have no home for components the audit explicitly calls "not a registry concept". A taxonomy with a hole
-    mis-stamps real parts, so a fourth class is added: <b class="mono" style="color:#8fd0ab">LIB ▸ &lt;name&gt;</b>
-    (green) for third-party non-shadcn bases — <code>Markdown</code> (react-markdown + rehype-sanitize) and
-    <code>toast</code> (sonner). Where a registry component was <b>considered and rejected</b>, the plate prints the
-    rejection verbatim; a parts book that only records what you chose gets re-litigated every six months.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">The stock lamp makes the catalog a maintenance instrument <span class="graftag">GRAFT ▸ OPUS · B2</span></div>
-    <p>Fable's dead-stock signal is binary. Three states is the fact you actually want: <b>green</b> ≥2 consumers,
-    <b class="mono" style="color:var(--haz)">amber</b> exactly one — <i>one deletion from dead</i> — and <b class="mono" style="color:var(--red)">red</b> zero.
-    <code>button</code> and <code>SessionDial</code> are amber today. It costs nothing: it's the existing <code>Led</code>
-    primitive. Honest side effect worth printing in the crib copy: after this build all three dead primitives have a
-    consumer, so their lamps go red → <b>amber</b> — fragile, not clean. Show that rather than claiming a clean sheet.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">The crib lives at /crib on 5180, and the counts come from a file <span class="graftag">GRAFT ▸ OPUS · B6</span></div>
-    <p>It ships beside <code>/console</code> and <code>/field</code> on the prototype's own dev server rather than the
-    gallery's port 5179 — it reuses the existing path-sniff and avoids a second server. <code>packages/ui/gallery/</code>
-    is superseded: leave it in place with a pointer in its README until the crib lands, then it's a deletion candidate.
-    <b>Cut from the fable board:</b> the hardcoded "33 INSTRUMENTS · 3 DEAD STOCK" counters — every count on this
-    surface renders from the generated <code>crib-manifest.ts</code>, never from prose.</p>
+  <div class="callout">
+    <div class="ct">The call — provenance is a first-class stamp</div>
+    <p>Three stamp classes: <b>FORGED IN-HOUSE</b> (steel — all 13 RIG instruments, deliberately no Radix),
+    <b>RADIX ▸ *</b> (amber — vendored behavior we restyled), <b>CVA · NO RADIX</b> (violet — styling machinery only).
+    Dead stock wears the red band until it's wired in or deleted — the audit found three
+    (<span class="mono" style="font-size:10px">dialog, tooltip, sonner</span>), and this page makes that state
+    impossible to forget. Registry-equivalent verdicts from the audit print on the plate (e.g. "badge — REJECTED,
+    restyle not simplification").</p>
   </div>
 
   <div class="screenbed sweep wirebed">
     <div class="wt">DATA SOURCE — NO WIRE, NO DAEMON</div>
-    <b>crib-manifest.ts</b> <i>(generated by prototype/scripts/build-crib-manifest.ts, run by hand, output checked in)</i><br>
-    <span class="nw">Provenance</span> = { kind:"custom" } | { kind:"radix"; base } | { kind:"cva" } | <span class="gr">{ kind:"lib"; base }</span> <i>(graft B1)</i><br>
-    <span class="nw">Instrument</span> { id, name, drawer, provenance, registryEquivalent?, verdict?, path,<br>
-    &nbsp;&nbsp;consumers[], surfaces[], states[], <span class="gr">props[] {name,type,note}</span>, <span class="gr">defect?</span> }<br>
-    <span class="nw">WorkOrder</span> <span class="gr">{ id, title, callSites[], payoff, caveat }</span> <i>(graft B4)</i><br>
-    <i>Generator unions: @room/ui exports + the audit's own grep for consumers + a hand-kept provenance/verdict table.
-    Makes NO network calls and never runs</i> <b>shadcn add</b>.
+    <b>crib-manifest.ts</b> <i>(generated at build)</i> — { id, name, category, provenance: { base: "radix-dialog"|"cva"|"custom",
+    registryEquivalent?, verdict? }, consumers: { console, field, panel, mobile }[], path, states[], auditNote }<br>
+    <i>Generator = the audit's grep (exports of @room/ui vs consumer imports) + a hand-kept provenance table. The page is
+    static; the only moving part is the dead-stock check.</i>
   </div>
 </section>
 
@@ -1637,131 +1249,108 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
 <!-- SECTION C — SERVICE SCHEMATIC -->
 <!-- ==================================================================== -->
 <section id="secC">
-  <h2><span class="idx">C</span> THE SERVICE SCHEMATIC — WHY IS THAT THING THERE <span class="tag">/map · PORT 5180</span></h2>
+  <h2><span class="idx">C</span> THE SERVICE SCHEMATIC — WHY IS THAT THING THERE</h2>
   <p class="note">The 569-line architecture map, folded into the machine it describes: a <b>wiring diagram bolted
-  inside the service door</b>. Left column — what's on screen, every housing stencilled with its part number. Centre —
-  the architecture in its three strata, voice over spine over mortal, with the three dials as physical knobs, and the
-  doc's known gaps as rivets. Right — the wire terminal block, one screw per <code>types.ts</code> field, phase-tagged.
-  <b>Select any node and its harness lights; everything else drops out.</b> Rendered here with
-  <b>SALIENCE RING (S-06) selected</b>.</p>
+  inside the service door</b>. Left column — what's on screen (console surfaces, five FIELD screens). Center — the
+  architecture in its three strata, voice over spine over mortal work, with the three dials as physical knobs.
+  Right — the wire terminal block, one pin per <span class="mono" style="font-size:11px">types.ts</span> field.
+  <b>Select any node</b> and its harness lights: what it ties to, why it exists, what it draws from the wire.
+  Try SALIENCE RING, or pin 01.</p>
 
   <div class="shadowwrap"><div class="board schem">
     <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
     <div class="schemhead">
       <span class="ttl stn" style="font-size:13px;letter-spacing:.2em">SERVICE SCHEMATIC — UI ↔ ARCHITECTURE ↔ WIRE</span>
-      <span class="tag dim">REV 08-01</span>
-      <span class="tag dim">ESC CLEARS SELECTION</span>
+      <span class="tag dim">REV 07-31</span>
       <span style="flex:1"></span>
       <span class="mono" style="font-size:8.5px;letter-spacing:.22em;color:var(--red)">⚠ DO NOT OPERATE WITH PANEL OPEN</span>
     </div>
 
     <div class="schembed">
-      <div class="schemgrid hasSel">
+      <div class="schemgrid" id="schemgrid">
+        <svg id="harness"></svg>
 
         <!-- surfaces -->
         <div class="schemcol">
-          <div class="colh">I · ON-SCREEN SURFACES — WHAT YOU TOUCH</div>
+          <div class="colh">ON-SCREEN SURFACES</div>
           <div class="snodes">
-            <div class="grouplab">CONSOLE · THE RIG</div>
-            <div class="snode"><span class="lb">Faceplate · Mikey</span><span class="pno">S-01</span></div>
-            <div class="snode"><span class="lb">Donnie Bay</span><span class="pno">S-02</span></div>
-            <div class="snode"><span class="lb">The Spine · Rail</span><span class="pno">S-03</span></div>
-            <div class="snode"><span class="lb">Plan Card</span><span class="pno">S-04</span></div>
-            <div class="snode"><span class="lb">Thread Node</span><span class="pno">S-05</span></div>
-            <div class="snode sel"><span class="lb">Salience Ring</span><span class="pno hot">S-06</span></div>
-            <div class="snode"><span class="lb">The Core · Spend</span><span class="pno">S-07</span></div>
-            <div class="snode"><span class="lb">Reply Deck</span><span class="pno">S-08</span></div>
-            <div class="snode"><span class="lb">Turn Chip</span><span class="pno">S-11</span></div>
-            <div class="snode lit"><span class="lb">Long-Range Plot</span><span class="pno">S-14</span></div>
-            <div class="snode lit"><span class="lb">Dock Strip</span><span class="pno">S-13</span></div>
-            <div class="snode lit"><span class="lb">The Hangar ◂ NEW</span><span class="pno">S-15</span></div>
-            <div class="grouplab">FIELD UNIT · 5 SCREENS</div>
-            <div class="snode field lit"><span class="lb">FIELD · Glance</span><span class="pno">F-01</span></div>
-            <div class="snode field"><span class="lb">FIELD · Answer</span><span class="pno">F-02</span></div>
-            <div class="snode field"><span class="lb">FIELD · Listen</span><span class="pno">F-03</span></div>
-            <div class="snode field"><span class="lb">FIELD · Start</span><span class="pno">F-04</span></div>
-            <div class="snode field"><span class="lb">FIELD · Gauges</span><span class="pno">F-05</span></div>
+            <div class="snode" data-node="faceplate">Faceplate · Mikey</div>
+            <div class="snode" data-node="spinerail">The Spine · Rail</div>
+            <div class="snode" data-node="threadnode">Thread Node</div>
+            <div class="snode" data-node="ring">Salience Ring</div>
+            <div class="snode" data-node="core">The Core · Spend</div>
+            <div class="snode" data-node="deck">Reply Deck</div>
+            <div class="snode" data-node="plot">Long-Range Plot</div>
+            <div class="snode" data-node="dock">Dock Strip</div>
+            <div class="snode" data-node="hangar">The Hangar ◂ NEW</div>
+            <div class="snode field" data-node="fglance">FIELD · Glance</div>
+            <div class="snode field" data-node="fanswer">FIELD · Answer</div>
+            <div class="snode field" data-node="flisten">FIELD · Listen</div>
+            <div class="snode field" data-node="fstart">FIELD · Start</div>
+            <div class="snode field" data-node="fgauges">FIELD · Gauges</div>
           </div>
         </div>
 
         <!-- concepts -->
         <div class="schemcol">
-          <div class="colh">II · THE SETTLED ARCHITECTURE — #73, DOCS 04–09</div>
+          <div class="colh">THE SETTLED ARCHITECTURE — #73, DOCS 04–09</div>
           <div class="stratum">
             <div class="sth">VOICE LAYER — IMMORTAL, STATELESS</div>
             <div class="snrow">
-              <div class="cnode lit">Mikey · Concierge <span class="pno">M-01</span></div>
-              <div class="cnode">Checked-out Voice <span class="pno">M-02</span></div>
-              <div class="cnode lit">Salience Filter <span class="pno">M-03</span></div>
-              <div class="cnode">Interpreter Line <span class="pno">M-04</span></div>
+              <div class="cnode" data-node="mikey">Mikey · Concierge</div>
+              <div class="cnode" data-node="checkout">Checked-out Voice</div>
+              <div class="cnode" data-node="filter">Salience Filter</div>
+              <div class="cnode" data-node="interp">Interpreter Line</div>
             </div>
           </div>
           <div class="stratum spinestr">
             <div class="sth">THE SPINE — THE ROOM'S ONLY DURABLE MIND</div>
             <div class="snrow">
-              <div class="cnode">Spine · GH Issues <span class="pno">M-05</span></div>
-              <div class="cnode">Saved Verbs <span class="pno">M-08</span></div>
-              <div class="cnode">Artifacts <span class="pno">M-09</span></div>
-              <div class="cnode">Room Manifests <span class="pno">M-10</span></div>
+              <div class="cnode" data-node="spine">Spine · GH Issues</div>
+              <div class="cnode" data-node="verbs">Saved Verbs</div>
+              <div class="cnode" data-node="artifacts">Artifacts</div>
+              <div class="cnode" data-node="rooms">Room Manifests</div>
             </div>
           </div>
           <div class="stratum">
             <div class="sth">MORTAL LAYER — PULL WORK, SETTLE, DIE</div>
             <div class="snrow">
-              <div class="cnode">Build Threads <span class="pno">M-06</span></div>
-              <div class="cnode">One-offs <span class="pno">R-04</span></div>
-              <div class="cnode gated">Watchers · GATED #75 <span class="pno">M-11</span></div>
-              <div class="cnode">Silent Workers <span class="pno">M-07</span></div>
+              <div class="cnode" data-node="build">Build Threads</div>
+              <div class="cnode" data-node="oneoffc">One-offs</div>
+              <div class="cnode gated" data-node="watcher">Watchers · GATED #75</div>
+              <div class="cnode" data-node="workers">Silent Workers</div>
             </div>
           </div>
           <div class="dialsrow">
-            <div class="cnode">◉ D1 · Ceremony <span class="pno">R-07</span></div>
-            <div class="cnode">◉ D2 · Voice <span class="pno">R-08</span></div>
-            <div class="cnode">◉ D3 · Brain Tier <span class="pno">R-09</span></div>
-          </div>
-
-          <!-- graft C3 — the plate shows its own holes -->
-          <div class="gaps">
-            <div class="gap filled">
-              <span class="riv"></span>
-              <span class="tx"><b>RIVET 1 · FILLED · ROUND D</b><br>ALL-PROJECTS VIEW — the hangar (S-15) fills this hole. Amber rivet, now part of the plate.</span>
-            </div>
-            <div class="gap">
-              <span class="riv"></span>
-              <span class="tx"><b>RIVET 2 · OPEN</b><br>THE CORE (S-07) and FIELD · GAUGES (F-05) tell one spend story two different ways.</span>
-            </div>
+            <div class="cnode" data-node="d1">◉ D1 · Ceremony</div>
+            <div class="cnode" data-node="d2">◉ D2 · Voice</div>
+            <div class="cnode" data-node="d3">◉ D3 · Brain Tier</div>
           </div>
         </div>
 
         <!-- wire pins -->
         <div class="schemcol">
-          <div class="colh">III · WIRE TERMINALS — types.ts</div>
+          <div class="colh">WIRE TERMINALS — types.ts</div>
           <div class="pinblock">
-            <div class="pin sel"><span class="pn">01</span><span class="pad"></span><span class="fn">salience.*</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">02</span><span class="pad"></span><span class="fn">crafts[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">03</span><span class="pad"></span><span class="fn">plans[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">04</span><span class="pad"></span><span class="fn">heldQuestion</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">05</span><span class="pad"></span><span class="fn">spend.guards[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">06</span><span class="pad"></span><span class="fn">verbs[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">07</span><span class="pad"></span><span class="fn">artifacts[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">08</span><span class="pad"></span><span class="fn">transcript[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">09</span><span class="pad"></span><span class="fn">turnChip / tapIn</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">10</span><span class="pad"></span><span class="fn">audio.route</span><span class="st">LIVE</span></div>
-            <div class="pin lit"><span class="pn">11</span><span class="pad"></span><span class="fn">queuedForLull[]</span><span class="st">LIVE</span></div>
-            <div class="pin"><span class="pn">12</span><span class="pad"></span><span class="fn">donnieCheckout</span><span class="st">LIVE</span></div>
-            <div class="pin wish"><span class="pn">13</span><span class="pad"></span><span class="fn">rooms[] · RoomBerth</span><span class="st">WISH · P1</span></div>
-            <div class="pin wish lit"><span class="pn">14</span><span class="pad"></span><span class="fn">traffic[] · belowGate</span><span class="st">WISH · P1</span></div>
-            <div class="pin wish"><span class="pn">15</span><span class="pad"></span><span class="fn">audioFloor</span><span class="st">WISH · P1</span></div>
-            <div class="pin wish"><span class="pn">16</span><span class="pad"></span><span class="fn">Craft.roomId</span><span class="st">WISH · P1</span></div>
-            <div class="pin wish"><span class="pn">17</span><span class="pad"></span><span class="fn">RoomManifest</span><span class="st">WISH · P2</span></div>
-            <div class="pin wish"><span class="pn">18</span><span class="pad"></span><span class="fn">CommissionDraft</span><span class="st">WISH · P2</span></div>
+            <div class="pin" data-node="p_salience"><span class="pno">01</span><span class="pad"></span> salience.*</div>
+            <div class="pin" data-node="p_crafts"><span class="pno">02</span><span class="pad"></span> crafts[]</div>
+            <div class="pin" data-node="p_plans"><span class="pno">03</span><span class="pad"></span> plans[]</div>
+            <div class="pin" data-node="p_heldq"><span class="pno">04</span><span class="pad"></span> heldQuestion</div>
+            <div class="pin" data-node="p_spend"><span class="pno">05</span><span class="pad"></span> spend.guards[]</div>
+            <div class="pin" data-node="p_verbs"><span class="pno">06</span><span class="pad"></span> verbs[]</div>
+            <div class="pin" data-node="p_artifacts"><span class="pno">07</span><span class="pad"></span> artifacts[]</div>
+            <div class="pin" data-node="p_transcript"><span class="pno">08</span><span class="pad"></span> transcript[]</div>
+            <div class="pin" data-node="p_turnchip"><span class="pno">09</span><span class="pad"></span> turnChip / tapIn</div>
+            <div class="pin" data-node="p_audio"><span class="pno">10</span><span class="pad"></span> audio.route</div>
+            <div class="pin" data-node="p_lull"><span class="pno">11</span><span class="pad"></span> queuedForLull[]</div>
+            <div class="pin" data-node="p_donnie"><span class="pno">12</span><span class="pad"></span> donnieCheckout</div>
+            <div class="pin wish" data-node="p_rooms"><span class="pno">13</span><span class="pad"></span> rooms[] · WISH</div>
+            <div class="pin wish" data-node="p_traffic"><span class="pno">14</span><span class="pad"></span> traffic[] · WISH</div>
           </div>
           <div class="callout" style="margin:12px 0 0">
-            <div class="ct">Pins carry when, not just whether <span class="graftag">GRAFT ▸ OPUS · C2</span></div>
-            <p class="mono" style="font-size:9px">Solid pins exist in the mock today; <b>dashed pins are Round-D
-            wishlist</b>, carried on the same terminal block so the gap is visible. The <b>phase tag</b> says when a
-            field is owed — which turns "what does P1 unblock?" into something you click rather than grep. Selecting a
-            pin <b>reverses the question</b>: who consumes this field.</p>
+            <div class="ct">Dashed pins = wishlist</div>
+            <p class="mono" style="font-size:9px">Solid pins exist in the prototype mock today. Dashed pins are Round-D
+            inventions — the hangar's wire asks, carried on the same terminal block so the gap is visible.</p>
           </div>
         </div>
       </div>
@@ -1770,153 +1359,352 @@ code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
     <!-- inspector bed -->
     <div class="screenbed sweep schinspect">
       <div class="sit">
-        <span class="pno hot">S-06</span>
-        <span class="sin">Salience Ring</span>
-        <span class="tag">CONSOLE SURFACE</span>
+        <span class="sin" id="schname">SALIENCE RING</span>
+        <span class="tag" id="schkind">CONSOLE SURFACE</span>
         <span style="flex:1"></span>
-        <span class="tag dim">design-ui-target.md §6</span>
+        <span class="tag dim" id="schdoc">design-ui-target.md §6</span>
       </div>
       <div class="sigrid">
-        <div><div class="sk">Why it exists</div><div class="sv">Answers the console's one question — <b>how far is this
-          room from needing me</b> — as a single number, with the speak gate visible as a notch on the bar.</div></div>
-        <div><div class="sk">Architecture tie</div><div class="sv">Instrument of the <b>salience filter</b> (the
-          anti-chatterbox box in 04's diagram): speak now / queue for the lull / log silently. v1 formula is
-          daemon-computed from facts it already holds; the smarter roll-up stays gated on #75. Round D makes the same
-          number fleet-wide on the traffic strip.</div></div>
-        <div><div class="sk">Wire needs</div><div class="sv pinref">01 · salience.clearPct<br>01 · salience.threshold<br>01 · contributors[]<br>14 · traffic[].belowGate <i style="color:var(--steel-dim)">(P1)</i></div></div>
+        <div><div class="sk">Why it exists</div><div class="sv" id="schwhy"></div></div>
+        <div><div class="sk">Architecture tie</div><div class="sv" id="schtie"></div></div>
+        <div><div class="sk">Wire needs</div><div class="sv pinref" id="schwire"></div></div>
       </div>
       <div class="schemfoot">
-        <span>SELECT ANY NODE — HARNESS LIGHTS ITS TIES, EVERYTHING ELSE DROPS OUT</span>
+        <span>SELECT ANY NODE — HARNESS LIGHTS ITS TIES</span>
         <span style="flex:1"></span>
-        <span>PROSE AUTHORITY: docs/active/ui-architecture-map.md — THIS PANEL IS ITS INDEX, NOT ITS REPLACEMENT</span>
+        <span>PROSE AUTHORITY: docs/shipped/ui-architecture-map.md — THIS PANEL IS ITS INDEX, NOT ITS REPLACEMENT</span>
       </div>
     </div>
   </div></div>
 
   <div class="callout">
-    <div class="ct">The call — where it lives, and why it isn't a rung</div>
+    <div class="ct">The call — where it lives</div>
     <p>A <b>SCHEMATIC keycap in the console header</b> (and a control-deck trigger) opens it as a full-bleed layer —
-    route <code>/map</code> in the prototype. Not a rung on the zoom ladder: the ladder is operational magnification of
-    live work; the schematic is the service door you open when you've forgotten why a gauge exists. It renders no live
-    data, so it can never lie about the room — it's the one screen allowed to be a document. <b>Dropped from the donor
-    set:</b> opus's <code>/plate</code> naming (fable's <code>/map</code> matches the other lanes and reads better in a
-    keycap) and opus's live LEDs on stratum I — a lamp showing whether a surface is currently rendering would make the
-    map read live data and forfeit the "it can never lie" property.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">Part numbers on every housing — and shift-click deep links <span class="graftag">GRAFT ▸ OPUS · C1</span></div>
-    <p><b>The strongest single idea in the donor set.</b> Every console and field housing carries a stencilled part
-    number (<code>S-01…S-19</code> console, <code>F-01…F-06</code> field, <code>M-01…</code> machine,
-    <code>R-01…</code> rules) — and <b>shift-clicking any housing opens /map with that part already selected</b>. It
-    makes the console its own index and answers "why is that thing there?" <i>from where you asked it</i>. Fable listed
-    it as deferred; it is promoted to its own build phase, because inserting <code>&lt;PartNo/&gt;</code> touches every
-    console and field housing file and therefore must run last.</p>
-  </div>
-  <div class="callout graft">
-    <div class="ct">The plate shows its own holes <span class="graftag">GRAFT ▸ OPUS · C3</span></div>
-    <p>"A map that only shows finished parts quietly lies about the machine." The prose doc ends with a "Not yet
-    designed" section; the plate ends with <b>red rivets in the middle column</b>. Fable's map marks
-    <i>The Hangar ◂ NEW</i> but has no home for known gaps. <b>Rivet 1</b> (all-projects view) ships stamped
-    <b class="mono" style="color:var(--amber)">FILLED · ROUND D</b> — it goes amber and joins the plate.
-    <b>Rivet 2</b> (THE CORE and FIELD · GAUGES telling one spend story two ways) stays red. The gaps list becomes a UI
-    state instead of a maintenance chore.</p>
+    route <span class="mono" style="font-size:11px">/map</span> in the prototype. Not a rung on the zoom ladder: the
+    ladder is operational magnification of live work; the schematic is the service door you open when you've forgotten
+    why a gauge exists. It renders no live data, so it can never lie about the room — it's the one screen allowed to be
+    a document.</p>
   </div>
   <div class="callout">
     <div class="ct">The call — diagram over inspector, 70/30</div>
     <p>The harness IS the answer — most "why" questions are really "what does this touch." The inspector bed below
-    holds exactly three cells (why / architecture tie / wire needs) plus a doc pointer, populated from a checked-in
-    <code>map-data.ts</code> (~35 nodes) that mirrors the prose doc's sections. The doc stays the authority; the drift
-    check is the same grep discipline as the crib. <b>Zero ambient motion on this surface</b> — selection lighting is
-    driven by your click, strata links are static, CRT texture is ambience.</p>
-  </div>
-
-  <div class="screenbed sweep wirebed">
-    <div class="wt">WIRE NEEDS — CONSOLIDATED. PROBLEMS B AND C NEED NOTHING (BOTH RENDER CHECKED-IN FILES)</div>
-    <span class="nw">RoomManifest</span> { room, name, repo, ceremony:"full"|"one-off",<br>
-    &nbsp;&nbsp;spine: {tracker:"github"; repo} | <b>null</b> <i>(null ⇒ scratch — nothing durable is written)</i>,<br>
-    &nbsp;&nbsp;cast:{lead, checkout[]}, gearDefault <i>// dial 1, home PLAN CARD</i>, brainTable <i>// dial 3, home TURN CHIP</i>, connectors[] }<br>
-    <span class="nw">RoomBerth</span> { id, manifest, berth: number|<b>null</b>, <span class="gr">parentRoomId: RoomId|null</span> <i>(graft A5)</i>,<br>
-    &nbsp;&nbsp;salience:{clearPct, worstCraftId}, counts:{working, needsYou, settled, watchers},<br>
-    &nbsp;&nbsp;docked:{live, queued, settled}, ticker }<br>
-    <span class="nw">TrafficRow</span> { roomId, craftId, label, salience, <span class="gr">belowGate: boolean</span> <i>(graft A3 — ONE gate, fleet-wide)</i>, floorState:"has"|"queued"|"lull" }<br>
-    <span class="nw">AudioFloor</span> { roomId|null, persona|null, elapsed, route:"phone"|"mac", queue[{roomId, reason}] } <i>— exactly one holder or null</i><br>
-    <span class="nw">CommissionDraft</span> { berth, name, repo, ceremony, gearDefault, lead, checkout[], brainTable, connectors, source:"rig"|"voice" }<br>
-    <span class="nw">FleetState</span> { zoom:"hangar"|"room", activeRoomId, rooms[], traffic[], audioFloor, threshold, commission }<br>
-    <b>Craft</b> gains <b>roomId: RoomId</b>. <i>RoomState is otherwise untouched — it simply becomes</i> the coupled room's <i>state.</i><br>
-    <i>Snapshot shape: full RoomState for the coupled room only, plus RoomBerth summaries for the rest — do not ship N full rooms.
-    Commission = ONE file write; decommission = delete the file. Dock strip is</i> derived <i>from the rollups — no new wire for it.</i>
+    holds exactly three cells (why / tie / wire) plus a doc pointer, populated from a checked-in
+    <span class="mono" style="font-size:11px">map-data.ts</span> that mirrors the prose doc's sections. The doc stays
+    the authority; drift check is the same grep discipline as the crib. Selecting a <b>wire pin</b> reverses the
+    question — "who consumes this field" — which is exactly what you need before touching the daemon.</p>
   </div>
 </section>
 
 <!-- ==================================================================== -->
-<!-- FOOTER — 4-PHASE BUILD STRIP -->
+<!-- FOOTER — SCOPE STRIP -->
 <!-- ==================================================================== -->
-<div class="shadowwrap"><div class="chassis phasestrip">
+<div class="shadowwrap"><div class="chassis scopestrip">
   <div class="haz"></div>
-  <div class="phasehead">
-    <h4>Build — four phases against <span class="mono" style="color:var(--amber);font-size:12px">prototype/</span></h4>
-    <span class="tag dim">SILOED · MOCK DATA ONLY · NO DAEMON / PANEL / MOBILE CHANGES</span>
-    <span style="flex:1"></span>
-    <span class="tag red">NO LANE MAKES LIVE GEMINI / ELEVENLABS CALLS</span>
-  </div>
-  <div class="phasegrid">
-    <div class="ph">
-      <div class="pnum">PHASE 1 · RUNS FIRST, ALONE</div>
-      <h5>Fleet seam + hangar floor</h5>
-      <div class="lane">LANE · grok-4.5 — the only phase touching shared files</div>
+  <div class="scopetable">
+    <div class="sc">
+      <h4>A · Hangar — build order</h4>
       <ul>
-        <li><b>AppState/FleetState split</b> with <code>useRoom()</code> signature unchanged</li>
-        <li>Per-room fixtures; <code>routes.ts</code> with all four routes stubbed</li>
-        <li>Floor bus, berth grid (scratch + empty), traffic strip with <b>belowGate</b></li>
-        <li>Berth tabs in the console header; <b>⌘0/⌘1–n and ESC-climbs-a-rung</b></li>
-        <li>Worst-room dock strip; CROSS-ROOM ARRIVAL + FLOOR HANDOFF triggers</li>
+        <li><b>Proto round:</b> hangar view + berth cards + traffic strip over mock rooms[]; ⌘-switching; commissioning bay writes to the mock store.</li>
+        <li><b>Cut for v1:</b> live app keeps one room; hangar ships behind the manifest seam (§8 cut 2 evolves, not breaks).</li>
+        <li><b>Deferred:</b> decommission flow, per-room themes, cross-room artifact moves.</li>
       </ul>
     </div>
-    <div class="ph">
-      <div class="pnum">PHASE 2</div>
-      <h5>Commissioning bay + FIELD variants</h5>
-      <div class="lane">LANE · grok-4.5 — append-only region in scenario.ts</div>
+    <div class="sc">
+      <h4>B · Tool crib — build order</h4>
       <ul>
-        <li>Name/repo → ceremony fork → three dials with homes <b>and consequence lines</b></li>
-        <li><b>Live-bound manifest pane</b> with its real path in the header</li>
-        <li><code>STRIKE BERTH</code> with a sonner receipt; the voice-path panel</li>
-        <li>GLANCE room pills + cross-room attribution; START's read-only draft</li>
+        <li><b>Proto round:</b> replace gallery shell on 5179; hand-kept provenance table; dead-stock grep in the build.</li>
+        <li><b>No daemon, no wire</b> — pure dev surface, zero risk lane.</li>
+        <li><b>Deferred:</b> components.json + registry drift diffing (audit option B).</li>
       </ul>
     </div>
-    <div class="ph">
-      <div class="pnum">PHASE 3 · PARALLEL WITH 2</div>
-      <h5>The tool crib</h5>
-      <div class="lane">LANE · composer-2.5 — the safest lane in the round</div>
+    <div class="sc">
+      <h4>C · Schematic — build order</h4>
       <ul>
-        <li>Drawer rail incl. <b>DEAD STOCK</b> + <b>WORK ORDERS</b>; search platen; surface pins</li>
-        <li>Spec plate: states / four-class stamp / stock lamp / where-used / path / <b>tolerances</b> / defect</li>
-        <li>Dead-stock bin with "hand-rolled by" + verdict; work orders from audit §3</li>
-        <li>Generated <code>crib-manifest.ts</code>; pointer line in gallery/README.md</li>
-        <li>Zero daemon dependency, zero shared state; touches <code>routes.ts</code> by one line</li>
+        <li><b>Proto round:</b> /map route + header keycap; map-data.ts with ~30 nodes from the prose doc.</li>
+        <li><b>Static by design</b> — no live snapshot fields rendered; §2.6 trivially satisfied.</li>
+        <li><b>Deferred:</b> deep-links from console surfaces ("what am I?" long-press).</li>
       </ul>
     </div>
-    <div class="ph">
-      <div class="pnum">PHASE 4 · RUNS LAST</div>
-      <h5>Schematic + console deep links</h5>
-      <div class="lane">LANE · grok-4.5 or an opus subagent</div>
-      <ul>
-        <li>Three-column plate; harness lighting on select; inspector bed (why / tie / wire + doc)</li>
-        <li>Terminal strip with solid/dashed pins and <b>phase tags</b>; reverse selection</li>
-        <li><b>Two gap rivets</b>, rivet 1 stamped FILLED · ROUND D</li>
-        <li>Surgical <code>&lt;PartNo/&gt;</code> into every console/field housing + <b>shift-click deep links</b></li>
-        <li>Runs last precisely because that insertion touches files Phases 1–2 own</li>
-      </ul>
-    </div>
-  </div>
-  <div class="gatebar">
-    VERIFICATION GATE, EVERY PHASE — <b>pnpm typecheck</b> clean at the root · <b>pnpm --filter @room/prototype build</b> clean ·
-    every new deck trigger fired once · a screenshot per new surface and per load-bearing state ·
-    <b>prefers-reduced-motion honored</b> · zero diffs outside <code>prototype/</code>
-    (plus <code>packages/ui</code> ONLY for additive primitive props or newly vendored shadcn primitives).
-    UI verification that needs real interaction goes to codex computer use in ONE batched round per phase.
   </div>
 </div></div>
 
 </div><!-- /wrap -->
+
+<script>
+/* ==================================================================== */
+/* A2 — berth tab switching (hard cut demo)                             */
+/* ==================================================================== */
+const ROOMS = [
+  {name:"R-DEVS",   tickRoom:"PODLINK ▸", tick:" WATCHER LOGGED AN ANOMALY — QUEUED FOR THE FLOOR", leds:9},
+  {name:"PODLINK",  tickRoom:"R-DEVS ▸",  tick:" DONNIE STILL HOLDING T-4471 — 12% CLR", leds:10},
+  {name:"COMIC-RDR",tickRoom:"PODLINK ▸", tick:" W-2 ANOMALY LOGGED — QUEUED FOR THE FLOOR", leds:11},
+];
+document.querySelectorAll('.btab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.btab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    const r = ROOMS[+t.dataset.room];
+    document.getElementById('crumb').innerHTML = '<b>'+r.name+'</b> ▸ RAIL';
+    document.getElementById('dockticker').innerHTML = '<span class="rm">'+r.tickRoom+'</span>'+r.tick;
+    const leds = document.querySelectorAll('#dockleds i');
+    leds.forEach((el,i)=>el.classList.toggle('on', i < r.leds));
+  });
+});
+
+/* ==================================================================== */
+/* A3 — ceremony fork toggle                                            */
+/* ==================================================================== */
+const MANIFEST_FULL = `<i>// rooms/comic-reader/manifest.json — checked in</i>
+{
+  "room":     <b>"comic-reader"</b>,
+  "repo":     "~/projects/comic-reader",
+  "ceremony": <b>"full"</b>,
+  "spine":    { "tracker": "github",
+                "repo": "dougie/comic-reader" },
+  "cast":     { "lead": <b>"leo"</b>,
+                "checkout": ["donnie"] },
+  "gearDefault": "light",     <i>// dial 1</i>
+  "brainTable":  "lean",      <i>// dial 3</i>
+  "connectors": ["gh-issues", "tmux"]
+}`;
+const MANIFEST_ONE = `<i>// scratch manifest — in memory, never checked in</i>
+{
+  "room":     <b>"scratch-comic-poke"</b>,
+  "repo":     "~/projects/comic-reader",
+  "ceremony": <b>"one-off"</b>,
+  "spine":    <b>null</b>,   <i>// no ticket, no conduit</i>
+  "cast":     { "lead": "mikey" },  <i>// narrates</i>
+  "brainTable": "lean",
+  "ttl":      <b>"dies on delivery"</b>
+}`;
+function setCeremony(one){
+  document.body.classList.toggle('oneoff', one);
+  document.getElementById('cermFull').classList.toggle('on', !one);
+  document.getElementById('cermOne').classList.toggle('on', one);
+  document.querySelector('#cermFull .cled').className = 'led cled' + (one?'':' amb');
+  document.querySelector('#cermOne .cled').className = 'led cled' + (one?' amb':'');
+  document.getElementById('manifestPre').innerHTML = one ? MANIFEST_ONE : MANIFEST_FULL;
+  document.getElementById('commKeycap').textContent = one ? 'LIGHT THE SCRATCH BERTH ⏎' : 'STRIKE BERTH B-04 ⏎';
+  document.getElementById('commHint').textContent = one
+    ? 'NOTHING WRITTEN · BERTH DISSOLVES WHEN THE CRAFT SETTLES'
+    : 'MANIFEST CHECKED IN · MIKEY ANNOUNCES THE BERTH AT THE LULL';
+}
+document.getElementById('cermFull').addEventListener('click',()=>setCeremony(false));
+document.getElementById('cermOne').addEventListener('click',()=>setCeremony(true));
+
+/* ==================================================================== */
+/* B — tool crib: filter + inspector                                    */
+/* ==================================================================== */
+const CRIB = {
+  crtface:{name:"CrtFace", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","IDLE (blink, desynced period) · SPEAKING (lipsync flip-book) · STOKED (real finishes only)"],
+      ["housing","screen-bed + sepia(.5) hue-rotate(-12°) sat(1.5) — every face reads as amber phosphor"],
+      ["consumers","prototype console + field, panel stage, mobile avatar <i>(frames NEVER re-render through React — stage engine owns the &lt;img&gt;)</i>"],
+      ["registry analogue",'avatar — <span class="rej">DO NOT ADOPT</span> · would fight the lipsync stage engine (audit §3)'],
+      ["path","packages/ui/src/rig/CrtFace.tsx"]]},
+  salbar:{name:"SalienceBar", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","fill 0–100% · red threshold notch · segment pitch fixed (16 segs on the dock)"],
+      ["feeds","salience.clearPct + salienceThreshold — the console's ONE question, as a bar"],
+      ["consumers","console ring readout, dock strip, FIELD glance, hangar berths (round D)"],
+      ["registry analogue",'progress — <span class="rej">REJECTED</span> · segmented amber look would be lost (audit §3)'],
+      ["path","packages/ui/src/rig/SalienceBar.tsx"]]},
+  led:{name:"Led", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","off · green · amber · red · red-pulse <i>(pulse only from a real needs-you fact)</i>"],
+      ["consumers","everywhere — transport LEDs, floor lamps, berth tabs, dock strip"],
+      ["path","packages/ui/src/rig/Led.tsx"]]},
+  tag:{name:"Tag", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","amber (default) · red (needs-you / gated) · green (settled) · dim (inert) · hot (floor holder)"],
+      ["registry analogue",'badge — <span class="rej">REJECTED</span> · carries semantic state colors from tokens.css; migration is a restyle, not a simplification (audit §3)'],
+      ["path","packages/ui/src/rig/Tag.tsx"]]},
+  keycap:{name:"Keycap", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","rest · hover · armed (Mikey's spoken recommendation — the glow) · pressed"],
+      ["semantics","held-question answers are first-class commands; speak-hint printed under the glyph"],
+      ["registry analogue",'kbd — <span class="rej">SKIP</span> · "Keycap already does this with far more character" (audit §3)'],
+      ["path","packages/ui/src/rig/Keycap.tsx"]]},
+  dial:{name:"DialGauge", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","arc fill 0–1 · redline zone · needle"],
+      ["consumers","THE CORE half-moons, FIELD gauges"],
+      ["registry analogue",'chart (Recharts radial) — <span class="rej">REJECTED</span> · phosphor look is the point; Recharts fights custom SVG art (audit §3)'],
+      ["path","packages/ui/src/rig/DialGauge.tsx"]]},
+  odometer:{name:"Odometer", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","static readout · steps(10) roll while spend.burning is true"],
+      ["consumers","THE CORE voice-chars counter, FIELD gauges"],
+      ["path","packages/ui/src/rig/Odometer.tsx"]]},
+  waveform:{name:"Waveform", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","cold (flat) · live (12-bar dance while speakingPersona ≠ null)"],
+      ["honesty","bars derive from the speaking fact, not the audio buffer — presence, not analysis"],
+      ["path","packages/ui/src/rig/Waveform.tsx"]]},
+  cutframe:{name:"CutFrame", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["job","the corner grammar, owned once: big top-left radius + bottom-right chamfer at L/M/S, and the drop-shadow wrapper (clip-path swallows box-shadows)"],
+      ["consumers","every housing in prototype console + field"],
+      ["registry analogue",'card — <span class="rej">NET LOSS</span> · chamfer styling makes it a downgrade (audit §3)'],
+      ["path","packages/ui/src/rig/CutFrame.tsx"]]},
+  button:{name:"button", prov:'<span class="provchip cva">CVA · NO RADIX</span>',
+    rows:[
+      ["status","LIVE — <i>barely.</i> Single consumer (prototype FieldDock); panel + mobile ship raw &lt;button class=icon-btn&gt;"],
+      ["base","class-variance-authority variants only; no Slot/asChild"],
+      ["verdict","adopt wider or fold into Keycap — split ownership of 'a button' is the actual debt (audit §1)"],
+      ["path","packages/ui/src/primitives/button.tsx"]]},
+  sheet:{name:"sheet", prov:'<span class="provchip radix">RADIX ▸ DIALOG</span>',
+    rows:[
+      ["status","MOST-USED PRIMITIVE — 3 consumers, all mobile (PickerSheet, PlayerSheet, ConvoSheet)"],
+      ["base","@radix-ui/react-dialog, re-skinned as a side sheet against tokens.css"],
+      ["watch","drawer (vaul) would add drag-to-dismiss — dep for polish only (audit §3)"],
+      ["path","packages/ui/src/primitives/sheet.tsx"]]},
+  tooltip:{name:"tooltip", prov:'<span class="provchip radix">RADIX ▸ TOOLTIP</span>',
+    rows:[
+      ["status",'<span class="rej">DEAD STOCK — ZERO IMPORTS.</span> Codebase uses native title="" everywhere instead'],
+      ["decision owed","wire it in (accessible styled hints, ~dozens of call sites) or delete it + the orphaned @radix-ui/react-tooltip dep (audit §1)"],
+      ["path","packages/ui/src/primitives/tooltip.tsx"]]},
+  statebadge:{name:"StateBadge", prov:'<span class="provchip custom">FORGED IN-HOUSE</span>',
+    rows:[
+      ["states","working (amber) · hand-raised (blue) · speaking · idle — colors are tokens.css semantics, never raw"],
+      ["consumers","panel room grid, mobile thread rows"],
+      ["registry analogue",'badge — <span class="rej">SKIP</span> · one of five bespoke badges the audit says to leave alone'],
+      ["path","packages/ui/src/components/StateBadge.tsx"]]},
+  sessiondial:{name:"SessionDial", prov:'<span class="provchip custom">WRAPS RIG ▸ DIALGAUGE</span>',
+    rows:[
+      ["job","provider guard dial: amber arc = rolling window draw, thin blue outer arc = THIS session's share (null for providers with no session reset)"],
+      ["consumers","FIELD gauges; candidate for THE CORE convergence (map doc, 'not yet designed' §2)"],
+      ["path","prototype/src/rig-ext/SessionDial.tsx"]]},
+};
+function cribSelect(card){
+  document.querySelectorAll('.speccard').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+  const d = CRIB[card.dataset.id];
+  document.getElementById('inm').textContent = d.name;
+  document.getElementById('iprov').innerHTML = d.prov;
+  const stage = document.getElementById('istage');
+  stage.innerHTML = '';
+  const platen = card.querySelector('.platen');
+  Array.from(platen.children).forEach(ch=>stage.appendChild(ch.cloneNode(true)));
+  document.getElementById('ibody').innerHTML = d.rows.map(r=>
+    '<div class="irow"><div class="ik">'+r[0]+'</div><div class="iv">'+r[1]+'</div></div>').join('');
+}
+let cribCatV='all', cribSurfV=null;
+function cribCat(el){
+  document.querySelectorAll('.drawer').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on'); cribCatV = el.dataset.cat; cribFilter();
+}
+function cribSurf(el){
+  const was = el.classList.contains('off');
+  document.querySelectorAll('.surfchips .tag').forEach(t=>t.classList.remove('off'));
+  if(was || cribSurfV !== el.dataset.surf){
+    cribSurfV = el.dataset.surf;
+    document.querySelectorAll('.surfchips .tag').forEach(t=>{ if(t!==el) t.classList.add('off'); });
+  } else { cribSurfV = null; }
+  cribFilter();
+}
+function cribFilter(){
+  const q = document.getElementById('cribq').value.toLowerCase();
+  document.querySelectorAll('.speccard').forEach(c=>{
+    const okCat = cribCatV==='all' || c.dataset.cat===cribCatV;
+    const okSurf = !cribSurfV || (c.dataset.surf||'').includes(cribSurfV);
+    const okQ = !q || c.dataset.id.includes(q) || c.querySelector('.snm').textContent.toLowerCase().includes(q);
+    c.style.display = (okCat && okSurf && okQ) ? '' : 'none';
+  });
+}
+cribSelect(document.querySelector('.speccard[data-id="crtface"]'));
+
+/* ==================================================================== */
+/* C — service schematic: node selection + harness                      */
+/* ==================================================================== */
+const MAP = {
+  faceplate:{kind:"CONSOLE SURFACE",doc:"map doc · 04",why:"The one thing in the room that never dies and never needs catching up — the 'the room is here and listening' anchor.",tie:"The voice layer of 04. 'Stateless' is load-bearing: Mikey survives every /clear because his mind is the spine. <b>Dial 2's home.</b>",wire:"speakingPersona · mood",ties:["mikey","checkout","d2","p_donnie"]},
+  spinerail:{kind:"CONSOLE SURFACE",doc:"map doc · 04, 08",why:"The room's memory as a place: plans docked on a rail, mortal craft hanging off the live one, new work born at the top.",tie:"IS the task-manager spine of 04; dock states are the settle rule made visual. A spawning card 'reads the spine, not anyone's history' — mortality on-screen.",wire:"plans[] · crafts[].planId · crafts[].oneOff",ties:["spine","build","d1","p_plans","p_crafts"]},
+  threadnode:{kind:"CONSOLE SURFACE",doc:"map doc · 04, §7.1b",why:"The row you act on: fine / blocked-on-you / done. Expanding = attaching to a running thread to look around, without interrupting.",tie:"A node is a mortal orchestration thread — the SESSION, never the task. NEEDS-YOU is one of 04's four operator gates. Open node = tap-in sense (b).",wire:"crafts[].* (tail, diff, spendUsd, holdSeconds…)",ties:["build","workers","filter","p_crafts"]},
+  ring:{kind:"CONSOLE SURFACE",doc:"design-ui-target §6",why:"Answers the console's one question — how far is this room from needing me — as a single number, with the speak gate visible.",tie:"Instrument of the salience filter (the anti-chatterbox box in 04's diagram): speak now / queue for lull / log silently. v1 formula is daemon-computed from facts it already holds.",wire:"salience.clearPct · salience.threshold · contributors[]",ties:["filter","mikey","p_salience"]},
+  core:{kind:"CONSOLE SURFACE",doc:"map doc · 05",why:"Every clip costs real money on different provider clocks. One glance: are we fine on spend, and which guard is tightest.",tie:"The cost-honesty thread: Dial 3 is 'a routing table, not judgment' — every escalation logged with its cost, surfaced here as a live read.",wire:"spend.guards[] · windowResetFraction · voiceCharsToday",ties:["d3","p_spend"]},
+  deck:{kind:"CONSOLE SURFACE",doc:"map doc · 04, 07",why:"Three ways to talk back — composer, PTT, held-question keycaps — with cost and safety printed on them.",tie:"All three feed ONE interpreter line (PTT/text → rules → flash → command service). PTT is the privacy boundary; no open-mic state exists in the snapshot, by design.",wire:"heldQuestion · micHot · grantArmed · composerText",ties:["interp","filter","p_heldq","p_transcript"]},
+  plot:{kind:"CONSOLE SURFACE",doc:"design-ui-target §4",why:"The spatial reading of the same one number: you at center, craft radius = salience, the red ring is the speak gate at map scale.",tie:"Zoom ladder is a contract, not a camera — hard cuts. Dashed one-off diamonds carry Flow 1's rule: no ticket, no conduit, dies on delivery.",wire:"crafts[].salience · plotAngle · oneOff · salience.threshold",ties:["filter","oneoffc","p_crafts","p_salience"]},
+  dock:{kind:"CONSOLE SURFACE",doc:"map doc · §6",why:"The room's peripheral vision — the ambient strip on screen while you work elsewhere. Round D: it goes global (worst room, attributed).",tie:"Same salience number at the smallest magnification. Arrival = one sentence at the lull, no siren — the anti-chatterbox contract rendered as restraint.",wire:"min(rooms[].salience) · dockTicker · dockLedRed",ties:["filter","mikey","p_salience","p_rooms"]},
+  hangar:{kind:"NEW — ROUND D",doc:"this board · §A",why:"The only surface where every room exists at once: berths, the shared traffic queue, the audio floor bus, and the commissioning bay.",tie:"Renders 05's room model literally: a room is a manifest; salience queue shared with attribution; ONE audio floor globally. Fourth rung of the zoom ladder.",wire:"rooms[] · traffic[] · floorRoomId · activeRoomId",ties:["rooms","filter","mikey","p_rooms","p_traffic"]},
+  fglance:{kind:"FIELD SCREEN",doc:"map doc · §5",why:"The 'is anything on fire' screen — two seconds, pocket to answer. Round D adds room pills with needs-you dots.",tie:"Salience at phone scale; header LEDs are the honest transport story (SSE = connected, AUD = this phone holds the gate).",wire:"salience.* · crafts[] · audio.route · rooms[] (pills)",ties:["filter","p_salience","p_audio","p_rooms"]},
+  fanswer:{kind:"FIELD SCREEN",doc:"map doc · 04",why:"The single most valuable thing the phone does: unblock a thread from the couch, one tap.",tie:"The needs-feedback operator gate answered by keycap; the armed key is Mikey's spoken recommendation; exact-grammar voice match, zero LLM per answer.",wire:"heldQuestion.* · crafts[].holdSeconds · grantArmed",ties:["interp","mikey","p_heldq"]},
+  flisten:{kind:"FIELD SCREEN",doc:"map doc · §5",why:"The face IS the now-playing surface. Interruption is a right, not a request — STOP is free because the clip is already paid for.",tie:"Queued-for-lull line = the salience filter's middle outcome made visible. Donnie swap is the checked-out voice at mobile scope.",wire:"speakingPersona · queuedForLull[] · audio · donnieCheckout",ties:["checkout","filter","p_lull","p_audio","p_donnie"]},
+  fstart:{kind:"FIELD SCREEN",doc:"map doc · 04",why:"Start real work from anywhere, by talking — and watch the routing happen out loud, so it's auditable rather than magic.",tie:"The interpreter's fan-out on screen: question → tap-in vs new work → ticket → spawn. Round D: NEW ROOM → manifest draft rides the same chip.",wire:"tapIn · transcript[] · verbs[] · crafts[] (spawning)",ties:["interp","verbs","rooms","p_transcript","p_verbs"]},
+  fgauges:{kind:"FIELD SCREEN",doc:"map doc · 05",why:"Spend awareness away from the desk — read-only by design: no pocket-dial disasters on billing-adjacent controls.",tie:"Doubles as the in-product index to the three dials, each naming where it actually lives (plan card / faceplate / turn chip).",wire:"spend.guards[] · turnChip",ties:["d1","d2","d3","p_spend","p_turnchip"]},
+  mikey:{kind:"VOICE LAYER",doc:"04-generalized-model",why:"One always-on concierge voice above everything. Immortal because stateless; his mind is externalized into the spine.",tie:"Faceplate hero, dock chip, every spoken sentence. Tap-in answers come back AS Mikey for pennies — heavy threads never woken.",wire:"speakingPersona · mood",ties:["faceplate","dock","ring","p_donnie"]},
+  checkout:{kind:"VOICE LAYER",doc:"04 · 'checked-out voice'",why:"Sometimes you want a 1:1 walkthrough. The borrowed voice is visibly temporary — purpose, elapsed, returns on 'thanks Donnie'.",tie:"The ONLY second voice — no huddles, no agents talking to each other (07, item 2). Settles with a written summary onto the ticket, then dies.",wire:"donnieCheckout {purpose, elapsed}",ties:["faceplate","flisten","p_donnie"]},
+  filter:{kind:"VOICE LAYER",doc:"04 · salience filter",why:"The anti-chatterbox: every would-be utterance is scored — speak now / queue for the lull / log silently.",tie:"Rendered by the ring, LED bars, plot radius, dock notch. ONE daemon-computed number per thread; threshold from config.",wire:"salience.* · queuedForLull[]",ties:["ring","plot","dock","p_salience","p_lull"]},
+  interp:{kind:"VOICE LAYER",doc:"04 · two flows",why:"Classifies everything you say — command / question / new work / talk-back / one-off — before anything spends or spawns.",tie:"PTT/text → rules → flash router → command service. The reply deck and the FIELD dock both feed it; START shows its verdicts out loud.",wire:"transcript[] · tapIn · turnChip",ties:["deck","fstart","d3","p_transcript","p_turnchip"]},
+  spine:{kind:"THE SPINE",doc:"08-spine-mechanics",why:"The room's only durable mind: tracker = index, repo = body, transcripts = raw history. Nothing important lives in a context window.",tie:"The rail renders it; the settle rule (conclusions → spine, craft scrapped) is why mortality is safe.",wire:"plans[]",ties:["spinerail","build","verbs","artifacts","p_plans"]},
+  verbs:{kind:"THE SPINE",doc:"05 · saved verbs",why:"The room learns tools from conversation: ad-hoc flow → named, parameterized verb, git-versioned in the spine.",tie:"Naming is consent — saving is offered, never silent. Watcher verbs racked but GATED #75. Verb rack + FIELD START rows render it.",wire:"verbs[] {utterance, params, gatedIssue}",ties:["spine","watcher","fstart","p_verbs"]},
+  artifacts:{kind:"THE SPINE",doc:"design-ui-target §7.2",why:"'Draw me the auth flow' → a one-off renders a versioned SVG → an artifact card docks by the plan. 'Keep that' graduates it to the spine.",tie:"The interpreter classifies a one-off; the artifact registers in the snapshot; unkept artifacts die with their craft — dashed diamond on the plot.",wire:"artifacts[] {title, craftId, status, svg}",ties:["spine","oneoffc","p_artifacts"]},
+  rooms:{kind:"THE SPINE",doc:"05 · rooms",why:"A room = repo(s) + spine + cast + gear default, as a checked-in manifest file. Adopting rooms is config, not architecture.",tie:"Round D gives this its UI: the hangar renders manifests as berths; commissioning writes one; decommissioning deletes one.",wire:"rooms[] · activeRoomId · floorRoomId (wishlist)",ties:["hangar","spine","p_rooms","p_traffic"]},
+  build:{kind:"MORTAL LAYER",doc:"04",why:"The standard thread: pulls a ticket from the spine, does the work at its ceremony gear, writes conclusions back, dies.",tie:"Thread nodes are these; plan cards are what they fly. Persona on top is a pilot, not a model.",wire:"crafts[] (state, planId, spendUsd…)",ties:["threadnode","spinerail","spine","d1","p_crafts"]},
+  oneoffc:{kind:"MORTAL LAYER",doc:"04 · flow 1",why:"No ticket, no conduit — ask, deliver, die. Cheap by construction; nothing to clean up.",tie:"Dashed diamonds on the plot; scratch berths in the hangar; the artifact flow's vehicle.",wire:"crafts[].oneOff",ties:["plot","hangar","artifacts","p_crafts"]},
+  watcher:{kind:"MORTAL LAYER",doc:"05 · watchers",why:"Long-lived-but-mortal, cheap, mostly silent, push-on-anomaly. Polling needs no big brain; diagnosis borrows one on demand.",tie:"HARD GATE: no watchers until the spine is validated (#75). Racked verbs wear the red tag everywhere they appear.",wire:"verbs[].gatedIssue · (roll-up gated on #75)",ties:["verbs","spine","p_verbs"]},
+  workers:{kind:"MORTAL LAYER",doc:"04",why:"Sub-agents under an orchestration thread. Silent by rule — they never speak, never surface; their work rolls up through the thread.",tie:"Why thread nodes show ONE line of truth instead of a chat log: workers have no voice-layer existence at all.",wire:"(none — deliberately invisible on the wire)",ties:["threadnode","build"]},
+  d1:{kind:"DIAL",doc:"04 · dials",why:"How much process a thread runs: bare / light / full Ptheory. Set per plan; default set per room at commissioning.",tie:"Home: the gear tag on the plan card. Round D adds the birth-time default knob in the commissioning bay.",wire:"plans[].gearTag · rooms[].gearDefault",ties:["spinerail","hangar","fgauges","p_plans"]},
+  d2:{kind:"DIAL",doc:"04 · dials",why:"Who's speaking: Mikey, or a checked-out second voice — never both, never a huddle.",tie:"Home: the faceplate + Donnie bay. Commissioning picks the cast: lead + checkout pool.",wire:"speakingPersona · donnieCheckout · rooms[].cast",ties:["faceplate","checkout","hangar","p_donnie"]},
+  d3:{kind:"DIAL",doc:"05 · third dial",why:"How smart this one turn gets: rules → flash → borrowed frontier brain. A routing table in config, not model self-assessment.",tie:"Home: the turn chip. Every escalation is a logged event with its cost — THE CORE is where the log surfaces.",wire:"turnChip {model, costUsd} · tapIn",ties:["core","interp","fgauges","p_turnchip"]},
+  p_salience:{kind:"WIRE PIN 01",doc:"types.ts",why:"salience: { clearPct, threshold, contributors[] } + per-craft salience. THE number — one integer per thread, daemon-computed.",tie:"First real daemon change of the target (§6): additive, optional, older clients ignore it.",wire:"consumed by: ring · plot · dock · glance · hangar berths",ties:["ring","plot","dock","fglance","filter","hangar"]},
+  p_crafts:{kind:"WIRE PIN 02",doc:"types.ts",why:"crafts[] — the mortal threads: state, persona, ticket, tail, diff, spend, hold time. The console's rows and the plot's blips.",tie:"A craft is the SESSION, never the task — the wire shape enforces the grammar.",wire:"consumed by: thread nodes · plot · spine rail · glance",ties:["threadnode","plot","spinerail","build","oneoffc"]},
+  p_plans:{kind:"WIRE PIN 03",doc:"types.ts",why:"plans[] — tickets docked on the rail: dock state, steps, gear tag, schematic. The spine's snapshot mirror.",tie:"P4 in the target's phase table: open tracker issues w/ state/gear labels become this section.",wire:"consumed by: spine rail · plan cards · hangar spine glyphs",ties:["spinerail","spine","d1","hangar"]},
+  p_heldq:{kind:"WIRE PIN 04",doc:"types.ts",why:"heldQuestion — the needs-feedback gate as data: prompt, options, speak hints, the armed recommendation.",tie:"Answer-by-keycap becomes a first-class command in P5 (mobile /action allowlist included).",wire:"consumed by: reply deck keycaps · FIELD answer",ties:["deck","fanswer","interp"]},
+  p_spend:{kind:"WIRE PIN 05",doc:"types.ts",why:"spend.guards[] — per-provider windows (session buckets, rolling 30D, the Gemini goal) + burn state.",tie:"The provider-window model got sharper than the CORE's visual — the owed revisit is logged in the map doc.",wire:"consumed by: THE CORE · FIELD gauges",ties:["core","fgauges","d3"]},
+  p_verbs:{kind:"WIRE PIN 06",doc:"types.ts",why:"verbs[] — the room's learned vocabulary: utterance, params, on/off, gating issue.",tie:"Saved verbs live in the spine as files; this is their snapshot projection.",wire:"consumed by: verb rack · FIELD start rows",ties:["verbs","fstart","watcher"]},
+  p_artifacts:{kind:"WIRE PIN 07",doc:"types.ts",why:"artifacts[] — diagram flow output: id, title, owning craft, kept/pending/discarded, canned SVG.",tie:"Additive registry per §7.2; 'keep that' flips status and graduates it to the ticket.",wire:"consumed by: artifact cards · summary pane",ties:["artifacts","oneoffc"]},
+  p_transcript:{kind:"WIRE PIN 08",doc:"types.ts",why:"transcript[] — the you/Mikey exchange the interpreter annotates: classification chips ride these rows.",tie:"What makes routing auditable rather than magic — the fan-out is printed between the lines.",wire:"consumed by: reply deck · FIELD start · voice-first commissioning",ties:["deck","fstart","interp"]},
+  p_turnchip:{kind:"WIRE PIN 09",doc:"types.ts",why:"turnChip {model, costUsd} + tapIn {question, interpreter, answer} — the receipt for every turn.",tie:"Dial 3's rendering: routing table, not judgment; the place you catch the router escalating.",wire:"consumed by: turn chip · FIELD gauges · tap-in expansion",ties:["d3","core","fgauges","interp"]},
+  p_audio:{kind:"WIRE PIN 10",doc:"types.ts",why:"audio {route, gateCountdown} — which device holds the speaker gate; the AUD LED's honest source.",tie:"The daemon's claim markers stay the billing authority; this is their projection.",wire:"consumed by: LISTEN route toggle · glance header LEDs",ties:["flisten","fglance"]},
+  p_lull:{kind:"WIRE PIN 11",doc:"types.ts",why:"queuedForLull[] — turn-final digests parked by the salience filter, waiting for quiet.",tie:"The filter's middle outcome made visible — the dim line under the transcript.",wire:"consumed by: LISTEN queue line · lull choreography",ties:["flisten","filter"]},
+  p_donnie:{kind:"WIRE PIN 12",doc:"types.ts",why:"donnieCheckout {purpose, elapsed} — the second voice's visible temporariness.",tie:"Null except during checkout; the bay and the LISTEN face-swap key off it.",wire:"consumed by: Donnie bay · LISTEN face swap",ties:["checkout","faceplate","flisten","d2"]},
+  p_rooms:{kind:"WIRE PIN 13 · WISHLIST",doc:"this board · §A",why:"rooms[] (RoomBerth) + activeRoomId + floorRoomId — the hangar's entire surface, one additive section.",tie:"RoomState becomes per-room; the manifest seam the architecture promised becomes wire. Dashed until the owner picks Round D's winner.",wire:"consumed by: hangar · berth tabs · dock strip · glance pills",ties:["hangar","rooms","dock","fglance"]},
+  p_traffic:{kind:"WIRE PIN 14 · WISHLIST",doc:"this board · §A",why:"traffic[] — the shared salience queue, worst-first, room-attributed, with floor state per entry.",tie:"05's 'salience queue shared across rooms with attribution', finally shaped. The traffic strip renders it verbatim.",wire:"consumed by: hangar traffic strip · dock ticker",ties:["hangar","rooms","filter"]},
+};
+const grid = document.getElementById('schemgrid');
+const harness = document.getElementById('harness');
+function nodeEl(id){ return grid.querySelector('[data-node="'+id+'"]'); }
+function centerOf(el){
+  const r = el.getBoundingClientRect(), g = grid.getBoundingClientRect();
+  return {l:r.left-g.left, r:r.right-g.left, y:r.top-g.top+r.height/2};
+}
+function selectNode(id){
+  const d = MAP[id]; if(!d) return;
+  grid.classList.add('hasSel');
+  grid.querySelectorAll('.snode,.cnode,.pin').forEach(n=>n.classList.remove('sel','lit'));
+  const selEl = nodeEl(id); selEl.classList.add('sel');
+  (d.ties||[]).forEach(t=>{ const e=nodeEl(t); if(e) e.classList.add('lit'); });
+  // harness
+  harness.innerHTML='';
+  harness.setAttribute('width',grid.scrollWidth); harness.setAttribute('height',grid.scrollHeight);
+  harness.setAttribute('viewBox','0 0 '+grid.scrollWidth+' '+grid.scrollHeight);
+  const a = centerOf(selEl);
+  (d.ties||[]).forEach(t=>{
+    const e = nodeEl(t); if(!e) return;
+    const b = centerOf(e);
+    let x1,x2;
+    if(b.l > a.r){ x1=a.r; x2=b.l; } else if(b.r < a.l){ x1=a.l; x2=b.r; } else { x1=(a.l+a.r)/2; x2=(b.l+b.r)/2; }
+    const mx = (x1+x2)/2;
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M'+x1+' '+a.y+' C'+mx+' '+a.y+','+mx+' '+b.y+','+x2+' '+b.y);
+    if(t.startsWith('p_') || id.startsWith('p_')) p.classList.add('grn');
+    harness.appendChild(p);
+  });
+  // inspector
+  document.getElementById('schname').textContent = grid.querySelector('[data-node="'+id+'"]').textContent.replace('◂ NEW','').trim();
+  document.getElementById('schkind').textContent = d.kind;
+  document.getElementById('schdoc').textContent = d.doc;
+  document.getElementById('schwhy').innerHTML = d.why;
+  document.getElementById('schtie').innerHTML = d.tie;
+  document.getElementById('schwire').innerHTML = d.wire;
+}
+grid.querySelectorAll('[data-node]').forEach(n=>n.addEventListener('click',()=>selectNode(n.dataset.node)));
+let schemSel='ring';
+grid.querySelectorAll('[data-node]').forEach(n=>n.addEventListener('click',()=>{schemSel=n.dataset.node;}));
+window.addEventListener('resize',()=>selectNode(schemSel));
+selectNode('ring');
+</script>
 </body>
 </html>

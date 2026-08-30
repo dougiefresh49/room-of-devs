@@ -1,5 +1,7 @@
 # Design Brief — Round C, v5 (mobile concepts, both lanes)
 
+> Archived 2026-08-29: Round C play-round brief; the settled target is [active/design-ui-target.md](../active/design-ui-target.md).
+
 _2026-07-29. Delta on [design-brief-round-c-v4.md](design-brief-round-c-v4.md).
 Owner reaction to v4: **"looks awesome, I'm really liking both lanes"** —
 no corrections, both aesthetics locked-in-play. v5 takes each lane to the

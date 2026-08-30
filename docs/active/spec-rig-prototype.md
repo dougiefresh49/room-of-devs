@@ -5,7 +5,7 @@ target gets locked (owner correction — see the banner on
 [design-ui-target.md](design-ui-target.md) §9 and the memory note).
 [design-ui-target.md](design-ui-target.md) stays the design authority
 (§2 visual system, §3/§4/§5 surfaces, §7 flows);
-`docs/active/concepts-round-c-v6/board-rig-refined.html` stays the CSS
+`docs/archive/concepts-round-c-v6/board-rig-refined.html` stays the CSS
 reference. This spec defines the prototype vehicle._
 
 ## What this is

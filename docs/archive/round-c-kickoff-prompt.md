@@ -1,6 +1,8 @@
 # Round C kickoff prompt
 
-Paste into a fresh session (or tell it: "read docs/active/round-c-kickoff-prompt.md
+> Archived 2026-08-29: Round C ran and settled into [active/design-ui-target.md](../active/design-ui-target.md).
+
+Paste into a fresh session (or tell it: "read docs/archive/round-c-kickoff-prompt.md
 and execute"). Written 2026-07-27 at the Round B closeout.
 
 ---
@@ -30,18 +32,18 @@ History, so nobody re-derives it: a design target *was* drafted and
 briefly locked on 2026-07-28. The owner correctly killed that — locking an
 exact target before a concept round makes every board the same board. The
 former target now competes as one entry
-(`docs/active/concepts-round-c/candidate-a-work-item.md`).
+(`docs/archive/concepts-round-c/candidate-a-work-item.md`).
 
 Two concept rounds have run:
 
-- **Round v1 (rejected)** — `docs/active/design-brief-round-c.md` and
-  `docs/active/concepts-round-c/`. Owner's verdict: *"text heavy, nothing
+- **Round v1 (rejected)** — `docs/archive/design-brief-round-c.md` and
+  `docs/archive/concepts-round-c/`. Owner's verdict: *"text heavy, nothing
   incorporates the avatars, pure 2014, those designs say task manager."*
   The brief caused it (it said work board / status surface / ledger, and
   rewarded designs needing no new backend). Kept only for its decision
   rows and its pick matrix.
-- **Round v2 (futurist, current)** — `docs/active/design-brief-round-c-v2.md`
-  and `docs/active/concepts-round-c-v2/`: FACEPLATE, THE DEEP, APPROACH,
+- **Round v2 (futurist, current)** — `docs/archive/design-brief-round-c-v2.md`
+  and `docs/archive/concepts-round-c-v2/`: FACEPLATE, THE DEEP, APPROACH,
   THE BRIDGE. Owner likes concepts from these but **has not picked any**.
 
 **Next is a THIRD round**, seeded with visual references the owner will

@@ -1,9 +1,9 @@
 # Build spec — Round D synthesis: HANGAR · TOOL CRIB · SERVICE SCHEMATIC
 
 _2026-08-01. Round D ran four blind design lanes against
-[design-brief-round-d.md](design-brief-round-d.md). The owner picked the
+[design-brief-round-d.md](../archive/design-brief-round-d.md). The owner picked the
 **fable lane** as the winner — best layout, best match to the rest of the
-app. `docs/active/concepts-round-d/fable.html` is the **base**; the other
+app. `docs/archive/concepts-round-d/fable.html` is the **base**; the other
 three boards (opus, grok, sol) are donors only. This spec is the build
 order for `prototype/` (siloed, mock-data only — no daemon/panel/mobile
 changes)._

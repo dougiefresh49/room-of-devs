@@ -11,7 +11,7 @@
 Status: **awaiting owner go-ahead** (owner leaning yes, 2026-07-24).
 Source: deep-module audit run with the `codebase-design` skill
 (mattpocock/skills), 2026-07-24. Supersedes the strawman in
-[ui-architecture-concerns-2026-07-24.md](ui-architecture-concerns-2026-07-24.md).
+[ui-architecture-concerns-2026-07-24.md](../shipped/ui-architecture-concerns-2026-07-24.md).
 
 ## The findings, in one breath
 

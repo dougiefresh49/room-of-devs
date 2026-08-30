@@ -8,7 +8,7 @@ asleep — run hands-off._
 Build Round D into the prototype, all four phases, hands-off overnight.
 The authority is `docs/active/spec-round-d-synthesis.md` (read it fully
 first, including the TL;DR and §0 graft list); the visual reference is
-`docs/active/concepts-round-d/final.html`; design rules are
+`docs/archive/concepts-round-d/final.html`; design rules are
 `docs/active/design-ui-target.md` §2 (incl. §2.6 — nothing animates from
 invented data) and the corner grammar in `prototype/src/styles/shape.css`.
 This is `prototype/` ONLY — siloed mock-data app, port 5180. No daemon,
