@@ -36,12 +36,7 @@ export interface AvatarFaceProps {
 /**
  * Lipsync/blink via rAF + img.src mutation — never React re-render for frames.
  */
-export function AvatarFace({
-  persona,
-  mode = "idle",
-  size = 176,
-  className,
-}: AvatarFaceProps) {
+export function AvatarFace({ persona, mode = "idle", size = 176, className }: AvatarFaceProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const folder = PERSONA_FOLDER[persona];
   const idle = frameUrl(folder, "idle");
@@ -49,9 +44,7 @@ export function AvatarFace({
   const mouthMid = frameUrl(folder, "mouth-mid");
   const blink = frameUrl(folder, "blink");
   const stoked =
-    frameUrl(folder, "stoked-speaking") ??
-    frameUrl(folder, "stoked-mouth-closed") ??
-    idle;
+    frameUrl(folder, "stoked-speaking") ?? frameUrl(folder, "stoked-mouth-closed") ?? idle;
 
   useEffect(() => {
     const img = imgRef.current;
@@ -81,11 +74,11 @@ export function AvatarFace({
         lipPhase = (lipPhase + 1) % 12;
         const src =
           lipPhase < 3
-            ? mouthMid ?? speaking ?? idle
+            ? (mouthMid ?? speaking ?? idle)
             : lipPhase < 7
-              ? speaking ?? idle
+              ? (speaking ?? idle)
               : lipPhase < 10
-                ? mouthMid ?? idle
+                ? (mouthMid ?? idle)
                 : idle;
         img.src = src;
       } else {

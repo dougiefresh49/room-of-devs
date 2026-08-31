@@ -98,8 +98,8 @@ export function MapView({ overlay = false, onClose }: MapViewProps) {
           <span className="map-kicker">SERVICE DOOR · STATIC DOCUMENT</span>
           <h1>SERVICE SCHEMATIC — UI ↔ ARCHITECTURE ↔ WIRE</h1>
           <p className="map-intro">
-            THE STATIC MAP OF EVERY PART OF THE RIG — CLICK A PART TO SEE WHY IT EXISTS AND
-            WHICH WIRE FEEDS IT.
+            THE STATIC MAP OF EVERY PART OF THE RIG — CLICK A PART TO SEE WHY IT EXISTS AND WHICH
+            WIRE FEEDS IT.
           </p>
         </div>
         <div className="map-header-stamps">

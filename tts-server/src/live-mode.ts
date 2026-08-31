@@ -76,11 +76,7 @@ export function isLiveMuted(sessionId: string | undefined): boolean {
   return loadLiveSessions()[sessionId]?.muted === true;
 }
 
-export function setLiveSession(
-  sessionId: string,
-  on: boolean,
-  opts?: { muted?: boolean },
-): void {
+export function setLiveSession(sessionId: string, on: boolean, opts?: { muted?: boolean }): void {
   const map = loadLiveSessions();
   if (on) {
     map[sessionId] = {
@@ -112,7 +108,9 @@ export function setLiveMuted(sessionId: string, muted: boolean): void {
 /** Tailer heartbeat: bump tool count / turn start / emit stamp without toggling. */
 export function updateLiveEntry(
   sessionId: string,
-  patch: Partial<Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity" | "muted" | "lastEmitAt">>,
+  patch: Partial<
+    Pick<LiveEntry, "toolCount" | "turnStartedAt" | "lastActivity" | "muted" | "lastEmitAt">
+  >,
 ): void {
   const map = loadLiveSessions();
   const entry = map[sessionId];

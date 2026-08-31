@@ -57,9 +57,7 @@ export function Faceplate() {
 export function DonnieBay() {
   const room = useRoom();
   const checkoutIsVisible = Boolean(room.donnieCheckout) && room.voicePersona !== "donnie";
-  const standby = room.crew.find(
-    (member) => member.id !== room.voicePersona && !member.piloting,
-  );
+  const standby = room.crew.find((member) => member.id !== room.voicePersona && !member.piloting);
   const bayPersona = checkoutIsVisible ? "donnie" : (standby?.id ?? "mikey");
   const bayCallsign =
     room.crew.find((member) => member.id === bayPersona)?.callsign ?? bayPersona.toUpperCase();

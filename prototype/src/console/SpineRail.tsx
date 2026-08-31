@@ -11,9 +11,7 @@ export function SpineRail() {
   const live = room.plans.find((p) => p.dock === "live");
   const queued = room.plans.filter((p) => p.dock === "queued" || p.dock === "birth");
   const settled = room.plans.filter((p) => p.dock === "settled");
-  const liveCrafts = room.crafts.filter(
-    (c) => c.planId === live?.id && c.state !== "empty",
-  );
+  const liveCrafts = room.crafts.filter((c) => c.planId === live?.id && c.state !== "empty");
   const empty = room.crafts.find((c) => c.state === "empty");
   const oneOffs = room.crafts.filter((c) => c.oneOff);
 
@@ -25,9 +23,7 @@ export function SpineRail() {
           <span>THE SPINE</span>
           <SpineLegendButton />
         </span>
-        <span title="DOCKED 0007–0008 · SETTLED 0004–0006">
-          PLANS 0004–0008
-        </span>
+        <span title="DOCKED 0007–0008 · SETTLED 0004–0006">PLANS 0004–0008</span>
       </div>
       <div className="spine-grid">
         <div className="rail">

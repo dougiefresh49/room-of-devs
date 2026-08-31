@@ -9,10 +9,7 @@ import { PENDING_GRANT_MS } from "@room/room-client";
 import { client } from "../../client.js";
 import { platform } from "../../platform/tauri.js";
 import { runCommand } from "../commands.js";
-import {
-  grantPendingFor,
-  latestCrossRealmPending,
-} from "../grant-guard.js";
+import { grantPendingFor, latestCrossRealmPending } from "../grant-guard.js";
 import { showErrorToast } from "../view-state.js";
 import { usePttGrant } from "../usePttGrant.js";
 
@@ -39,8 +36,7 @@ export function ReplyDeck({ target, connected }: ReplyDeckProps) {
 
   const pendingSid = latestCrossRealmPending();
   const pending =
-    !!target &&
-    (grantPendingFor(client, target.sessionId) || pendingSid === target.sessionId);
+    !!target && (grantPendingFor(client, target.sessionId) || pendingSid === target.sessionId);
   const [grantLeft, setGrantLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!pending) {
@@ -133,9 +129,7 @@ export function ReplyDeck({ target, connected }: ReplyDeckProps) {
               <button
                 type="button"
                 aria-label={`Remove ${a.name}`}
-                onClick={() =>
-                  setAttachments((prev) => prev.filter((x) => x.id !== a.id))
-                }
+                onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
               >
                 ×
               </button>
@@ -255,8 +249,8 @@ export function ReplyDeck({ target, connected }: ReplyDeckProps) {
       {pending && grantLeft != null ? (
         <div className="console-grantchip">
           <span className="gl" />
-          SPEAKER GRANT ARMED · {formatCountdown(grantLeft)} LEFT — DAEMON CLAIM
-          MARKERS STAY THE BILLING AUTHORITY
+          SPEAKER GRANT ARMED · {formatCountdown(grantLeft)} LEFT — DAEMON CLAIM MARKERS STAY THE
+          BILLING AUTHORITY
         </div>
       ) : null}
     </Chassis>

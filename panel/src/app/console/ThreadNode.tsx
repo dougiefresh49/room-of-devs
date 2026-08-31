@@ -63,7 +63,10 @@ function formatAgo(iso: string | null | undefined, clock: number): string | null
   return `LAST EVENT ${m}M AGO`;
 }
 
-function stateTag(agent: AgentView): { tone: "amber" | "red" | "hot" | "dim" | "green"; label: string } {
+function stateTag(agent: AgentView): {
+  tone: "amber" | "red" | "hot" | "dim" | "green";
+  label: string;
+} {
   switch (agent.state) {
     case "hand_raised":
       return { tone: "red", label: "NEEDS YOU" };
@@ -154,10 +157,7 @@ export function ThreadNode({
 
   return (
     <div className={`console-tnode-wrap${raised ? " needy" : ""}`}>
-      <CutFrame
-        scale="m"
-        glow={raised ? "0 0 12px rgba(255,150,30,.35)" : undefined}
-      >
+      <CutFrame scale="m" glow={raised ? "0 0 12px rgba(255,150,30,.35)" : undefined}>
         <div
           ref={nodeRef}
           className={classes}
@@ -175,18 +175,13 @@ export function ThreadNode({
             }}
           >
             <CrtFace size={58} className="console-tnode-face" scanlines>
-              <AvatarImg
-                agent={agent}
-                imgClassName="avatar"
-                fallbackClassName="avatar-fallback"
-              />
+              <AvatarImg agent={agent} imgClassName="avatar" fallbackClassName="avatar-fallback" />
             </CrtFace>
             <div className="console-tnode-mid">
               <div className="console-tnode-row1">
                 <Callsign agent={agent} renaming={renaming} />
                 <span className="console-tid">
-                  {shortId(agent.sessionId)} ·{" "}
-                  {agent.injectable ? "TMUX ✓" : "NO TMUX"}
+                  {shortId(agent.sessionId)} · {agent.injectable ? "TMUX ✓" : "NO TMUX"}
                   {agent.isTeam ? " · TEAM" : ""}
                 </span>
               </div>
@@ -194,9 +189,7 @@ export function ThreadNode({
                 {taskLine(agent)}
               </div>
               <div className="console-tnode-chips">
-                {agent.supersededCount > 0 ? (
-                  <Tag tone="dim">×{agent.supersededCount}</Tag>
-                ) : null}
+                {agent.supersededCount > 0 ? <Tag tone="dim">×{agent.supersededCount}</Tag> : null}
                 {agent.live?.on ? <Tag tone="amber">LIVE</Tag> : null}
                 {agent.muted ? <Tag tone="dim">MUTED</Tag> : null}
                 {onPhone ? <Tag tone="green">PHONE</Tag> : null}
@@ -221,12 +214,7 @@ export function ThreadNode({
 
           {open ? (
             <div className="console-innards no-drag" data-no-grant>
-              <ScreenTerm
-                agent={agent}
-                history={history}
-                loading={histLoading}
-                clock={clock}
-              />
+              <ScreenTerm agent={agent} history={history} loading={histLoading} clock={clock} />
             </div>
           ) : null}
 

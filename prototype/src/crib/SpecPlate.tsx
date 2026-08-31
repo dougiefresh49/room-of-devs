@@ -82,10 +82,7 @@ export function SpecPlate({
               <div className="crib-ik">Stock lamp</div>
               <div className="crib-iv">
                 <StockLamp consumers={instrument.consumers} />
-                <span className="crib-iv-hint">
-                  {" "}
-                  — green ≥2, amber exactly 1, red 0.
-                </span>
+                <span className="crib-iv-hint"> — green ≥2, amber exactly 1, red 0.</span>
               </div>
             </div>
 
@@ -104,7 +101,8 @@ export function SpecPlate({
               <div className="crib-irow">
                 <div className="crib-ik">Registry equivalent — verdict printed verbatim</div>
                 <div className="crib-iv">
-                  <span className="crib-rej">REJECTED</span> — <em>{instrument.verdict}</em> — shadcn-audit.md
+                  <span className="crib-rej">REJECTED</span> — <em>{instrument.verdict}</em> —
+                  shadcn-audit.md
                 </div>
               </div>
             ) : null}
@@ -122,9 +120,9 @@ export function SpecPlate({
             </div>
 
             <p className="crib-honesty">
-              After Round D partial adoption, dialog and command have consumers in the prototype; tooltip and toast may
-              still read red until commissioning wires sonner and stamps use Tooltip. The lamps above come from the
-              generated manifest — not prose.
+              After Round D partial adoption, dialog and command have consumers in the prototype;
+              tooltip and toast may still read red until commissioning wires sonner and stamps use
+              Tooltip. The lamps above come from the generated manifest — not prose.
             </p>
             <p className="crib-honesty">
               <Tag tone="dim">ADOPTION CAVEAT</Tag> {adoptionCaveat}

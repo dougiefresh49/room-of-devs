@@ -248,10 +248,7 @@ export function ThreeDials() {
   const callsign = (persona: PersonaId) =>
     room.crew.find((member) => member.id === persona)?.callsign ?? persona.toUpperCase();
   const availableVoices = useMemo(
-    () =>
-      VOICE.filter(
-        (persona) => !room.crew.find((member) => member.id === persona)?.piloting,
-      ),
+    () => VOICE.filter((persona) => !room.crew.find((member) => member.id === persona)?.piloting),
     [room.crew],
   );
 

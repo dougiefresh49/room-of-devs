@@ -74,8 +74,8 @@ export function InstrumentPlaten({ name }: { name: string }): ReactNode {
     case "Led":
       return (
         <>
-          <Led tone="green" /> <Led tone="amber" pulse={motion} /> <Led tone="red" pulse={motion} pulseSpeed="hot" />{" "}
-          <Led tone="dim" />
+          <Led tone="green" /> <Led tone="amber" pulse={motion} />{" "}
+          <Led tone="red" pulse={motion} pulseSpeed="hot" /> <Led tone="dim" />
         </>
       );
     case "Keycap":

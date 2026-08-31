@@ -22,7 +22,8 @@ export function VoiceNoteSheet({
   const [state, setState] = useState<VoiceState>("unavailable");
   const [seconds, setSeconds] = useState(0);
   const focusComposerOnClose = useRef(false);
-  const canPreview = import.meta.env.DEV && window.localStorage.getItem("rig.field.mockmic") === "1";
+  const canPreview =
+    import.meta.env.DEV && window.localStorage.getItem("rig.field.mockmic") === "1";
 
   useEffect(() => {
     if (open) {
@@ -56,24 +57,45 @@ export function VoiceNoteSheet({
           event.preventDefault();
         }}
       >
-        <button type="button" className="nodesheet-pull" aria-label="Close voice reply" onClick={() => onOpenChange(false)}>
+        <button
+          type="button"
+          className="nodesheet-pull"
+          aria-label="Close voice reply"
+          onClick={() => onOpenChange(false)}
+        >
           <span aria-hidden />
         </button>
         <SheetTitle className="visually-hidden">Voice reply</SheetTitle>
         <div className="fvoice-cap">VOICE REPLY</div>
-        {mock ? <Tag tone="dim" className="fvoice-mock-tag">MOCK</Tag> : null}
+        {mock ? (
+          <Tag tone="dim" className="fvoice-mock-tag">
+            MOCK
+          </Tag>
+        ) : null}
 
         {state === "unavailable" ? (
           <div className="fvoice-unavailable">
             <MicOff size={34} aria-hidden />
             <b>NO MIC ON THIS HANDSET</b>
-            <p>The RIG doesn&apos;t capture audio from the phone. Type it and Mikey speaks for you.</p>
-            <button type="button" className="fvoice-type" onClick={() => {
-              focusComposerOnClose.current = true;
-              onTypeInstead();
-            }}>TYPE IT INSTEAD</button>
+            <p>
+              The RIG doesn&apos;t capture audio from the phone. Type it and Mikey speaks for you.
+            </p>
+            <button
+              type="button"
+              className="fvoice-type"
+              onClick={() => {
+                focusComposerOnClose.current = true;
+                onTypeInstead();
+              }}
+            >
+              TYPE IT INSTEAD
+            </button>
             {canPreview ? (
-              <button type="button" className="fvoice-preview-link" onClick={() => setState("idle")}>
+              <button
+                type="button"
+                className="fvoice-preview-link"
+                onClick={() => setState("idle")}
+              >
                 PREVIEW THE RECORDER (MOCK)
               </button>
             ) : null}
@@ -82,26 +104,44 @@ export function VoiceNoteSheet({
           <div className="fvoice-mock">
             {state === "idle" ? (
               <>
-                <div className="fvoice-icon-well"><Mic size={34} aria-hidden /></div>
+                <div className="fvoice-icon-well">
+                  <Mic size={34} aria-hidden />
+                </div>
                 <b className="fvoice-state-label">TAP TO RECORD</b>
               </>
             ) : state === "recording" ? (
               <>
-                <div className="fvoice-timer"><i aria-hidden /><b className="sseg">{durationLabel(seconds)}</b></div>
+                <div className="fvoice-timer">
+                  <i aria-hidden />
+                  <b className="sseg">{durationLabel(seconds)}</b>
+                </div>
                 <Waveform active bars={28} />
                 <span className="fvoice-level-caption">MOCK LEVELS · NOT A MIC</span>
               </>
             ) : (
               <div className="fvoice-playback">
-                <button type="button" aria-label="Preview mock voice note"><Play size={18} fill="currentColor" /></button>
+                <button type="button" aria-label="Preview mock voice note">
+                  <Play size={18} fill="currentColor" />
+                </button>
                 <Waveform active={false} bars={20} />
                 <b className="sseg">{durationLabel(seconds)}</b>
               </div>
             )}
 
             <div className="fvoice-actions">
-              <button type="button" onClick={state === "idle" ? () => onOpenChange(false) : restart}>
-                {state === "idle" ? <><X size={15} /> CANCEL</> : <><RotateCcw size={15} /> RESTART</>}
+              <button
+                type="button"
+                onClick={state === "idle" ? () => onOpenChange(false) : restart}
+              >
+                {state === "idle" ? (
+                  <>
+                    <X size={15} /> CANCEL
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw size={15} /> RESTART
+                  </>
+                )}
               </button>
               <button
                 type="button"
@@ -112,7 +152,11 @@ export function VoiceNoteSheet({
                   else if (state !== "preview") restart();
                 }}
               >
-                {state === "recording" ? <Square size={22} fill="currentColor" /> : <Mic size={24} />}
+                {state === "recording" ? (
+                  <Square size={22} fill="currentColor" />
+                ) : (
+                  <Mic size={24} />
+                )}
               </button>
               <button
                 type="button"

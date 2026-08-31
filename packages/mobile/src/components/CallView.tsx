@@ -188,7 +188,9 @@ export function CallView({
           ) : card.mode === "working" ? (
             <div className="min-h-0 overflow-y-auto text-[15px] leading-relaxed text-fg">
               <div className="flex items-center gap-2">
-                <span className="min-w-0 truncate">{activity?.label || (liveMuted ? "watching" : "working")}</span>
+                <span className="min-w-0 truncate">
+                  {activity?.label || (liveMuted ? "watching" : "working")}
+                </span>
                 <span className="cv-dots shrink-0 text-accent" aria-hidden="true">
                   <i>.</i>
                   <i>.</i>

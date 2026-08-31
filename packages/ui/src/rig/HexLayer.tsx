@@ -13,19 +13,10 @@ export interface HexLayerProps {
  * Absolutely-positioned hex texture — board `--hex` / `--hexdim` / `--hexfaint`.
  * Texture never layout.
  */
-export function HexLayer({
-  intensity = "dim",
-  banded = false,
-  className,
-}: HexLayerProps) {
+export function HexLayer({ intensity = "dim", banded = false, className }: HexLayerProps) {
   return (
     <div
-      className={cn(
-        "rig-hex",
-        `rig-hex--${intensity}`,
-        banded && "rig-hex--banded",
-        className,
-      )}
+      className={cn("rig-hex", `rig-hex--${intensity}`, banded && "rig-hex--banded", className)}
       aria-hidden
     />
   );

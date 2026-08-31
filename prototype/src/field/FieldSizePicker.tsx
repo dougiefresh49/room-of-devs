@@ -11,8 +11,10 @@ export const FIELD_HANDSET_SIZES: FieldHandsetSize[] = [
 
 export function readFieldHandsetSize(): FieldHandsetSize {
   const stored = window.localStorage.getItem("rig.field.size");
-  return FIELD_HANDSET_SIZES.find(({ width, height }) => stored === `${width}x${height}`)
-    ?? FIELD_HANDSET_SIZES[0]!;
+  return (
+    FIELD_HANDSET_SIZES.find(({ width, height }) => stored === `${width}x${height}`) ??
+    FIELD_HANDSET_SIZES[0]!
+  );
 }
 
 export function FieldSizePicker({

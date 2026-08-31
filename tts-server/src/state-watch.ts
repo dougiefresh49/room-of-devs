@@ -28,11 +28,7 @@ import {
   readFreshPhoneAck,
   type PhoneAck,
 } from "./live-mode.js";
-import {
-  T3_AUTH_REV_PATH,
-  invalidateT3BearerCache,
-  t3ReplyProvisioned,
-} from "./t3-reply.js";
+import { T3_AUTH_REV_PATH, invalidateT3BearerCache, t3ReplyProvisioned } from "./t3-reply.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");

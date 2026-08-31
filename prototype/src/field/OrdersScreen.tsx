@@ -35,7 +35,11 @@ export function OrdersScreen({ onLocalChange }: { onLocalChange: () => void }) {
                 <span className="vname">&quot;{verb.utterance}&quot;</span>
                 <span className="vparams">{verb.fieldLabel}</span>
               </span>
-              {gated ? <Tag tone="red">GATED #{verb.gatedIssue}</Tag> : <Led tone={on ? "amber" : "dim"} />}
+              {gated ? (
+                <Tag tone="red">GATED #{verb.gatedIssue}</Tag>
+              ) : (
+                <Led tone={on ? "amber" : "dim"} />
+              )}
             </button>
           );
         })}
@@ -48,10 +52,16 @@ export function OrdersScreen({ onLocalChange }: { onLocalChange: () => void }) {
             <div className="watchchip orders-watch" key={craft.id}>
               <Led tone="amber" pulse className="watch-eye" />
               <span>
-                <b>WATCH ORDER · {craft.ticket} · {craft.callsign}</b>
+                <b>
+                  WATCH ORDER · {craft.ticket} · {craft.callsign}
+                </b>
                 <small>SAY “STAND DOWN” TO CANCEL</small>
               </span>
-              <button type="button" aria-label={`Stand down ${craft.ticket}`} onClick={() => standDownWatch(craft.id)}>
+              <button
+                type="button"
+                aria-label={`Stand down ${craft.ticket}`}
+                onClick={() => standDownWatch(craft.id)}
+              >
                 <X size={15} />
               </button>
             </div>

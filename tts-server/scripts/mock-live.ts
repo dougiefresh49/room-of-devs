@@ -221,8 +221,7 @@ async function commandStream(idArg: string | undefined, args: string[]): Promise
   const entry = liveMap()[id];
   if (!entry?.on || !existsSync(join(STATE_DIR, `${id}.json`)))
     fail(`live session not found: ${id}`);
-  if (entry.muted === true)
-    fail(`live session is muted: ${id} (unmute before streaming)`);
+  if (entry.muted === true) fail(`live session is muted: ${id} (unmute before streaming)`);
   let output: "phone" | "mac" = "phone";
   let rate = 16_000;
   for (let i = 0; i < args.length; i++) {

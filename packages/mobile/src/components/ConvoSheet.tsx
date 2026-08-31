@@ -282,7 +282,9 @@ export function ConvoSheet({ agents, nowPlaying, replayAll }: ConvoSheetProps) {
     if (!convo.isAutoLive(sessionId)) return;
     convo.clearAutoLive(sessionId);
     if (agent?.live?.on && readLiveMuted(agent)) {
-      void requestWithTimeout({ type: "set_live", sessionId, on: false } as Command).catch(() => {});
+      void requestWithTimeout({ type: "set_live", sessionId, on: false } as Command).catch(
+        () => {},
+      );
     }
   };
 

@@ -212,9 +212,7 @@ class ConvoStore {
   ): void {
     const list = this.pendingReplies.get(sessionId);
     if (!list?.length) return;
-    const userTexts = items
-      .filter((it) => it.role === "user")
-      .map((it) => normalizeWs(it.text));
+    const userTexts = items.filter((it) => it.role === "user").map((it) => normalizeWs(it.text));
     const cutoff = Date.now() - PENDING_REPLY_TTL_MS;
     const next = list.filter((p) => {
       if (p.at < cutoff) return false;

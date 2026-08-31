@@ -123,9 +123,7 @@ export function openCommission(source: CommissionDraft["source"] = "rig") {
 /** One control change on the bench updates the single live-bound draft. */
 export function updateCommission(patch: Partial<CommissionDraft>) {
   setFleet((fleet) =>
-    fleet.commission
-      ? { ...fleet, commission: { ...fleet.commission, ...patch } }
-      : fleet,
+    fleet.commission ? { ...fleet, commission: { ...fleet.commission, ...patch } } : fleet,
   );
 }
 

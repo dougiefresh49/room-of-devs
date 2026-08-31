@@ -91,37 +91,32 @@ export function CommsLog({
   const logRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [now, setNow] = useState(() => Date.now());
-  const blocks = useMemo(
-    () => {
-      const seenDays = new Set<string>();
-      return rows.reduce<CommsBlock[]>((all, row, index) => {
-        const previousRow = rows[index - 1];
-        const key = dayKey(row.at);
-        if (
-          !previousRow ||
-          dayKey(previousRow.at) !== key ||
-          row.at - previousRow.at > DIVIDER_GAP_MS
-        ) {
-          const firstForDay = !seenDays.has(key);
-          all.push({ kind: "divider", at: row.at, firstForDay });
-          seenDays.add(key);
-        }
-        const you = row.you === true || row.who === "YOU";
-        const previous = all[all.length - 1];
-        if (previous?.kind === "group" && previous.who === row.who && previous.you === you) {
-          previous.rows.push(row);
-        } else {
-          all.push({ kind: "group", who: row.who, you, rows: [row] });
-        }
-        return all;
-      }, []);
-    },
-    [rows],
-  );
+  const blocks = useMemo(() => {
+    const seenDays = new Set<string>();
+    return rows.reduce<CommsBlock[]>((all, row, index) => {
+      const previousRow = rows[index - 1];
+      const key = dayKey(row.at);
+      if (
+        !previousRow ||
+        dayKey(previousRow.at) !== key ||
+        row.at - previousRow.at > DIVIDER_GAP_MS
+      ) {
+        const firstForDay = !seenDays.has(key);
+        all.push({ kind: "divider", at: row.at, firstForDay });
+        seenDays.add(key);
+      }
+      const you = row.you === true || row.who === "YOU";
+      const previous = all[all.length - 1];
+      if (previous?.kind === "group" && previous.who === row.who && previous.you === you) {
+        previous.rows.push(row);
+      } else {
+        all.push({ kind: "group", who: row.who, you, rows: [row] });
+      }
+      return all;
+    }, []);
+  }, [rows]);
   const onAirKey = nowPlaying
-    ? [...rows]
-        .reverse()
-        .find((row) => onAirAliases.includes(row.who.toLowerCase()))
+    ? [...rows].reverse().find((row) => onAirAliases.includes(row.who.toLowerCase()))
     : null;
   const lastRow = rows.at(-1);
   const rowAppendKey = `${rows.length}:${lastRow?.who ?? ""}:${lastRow?.text ?? ""}`;
@@ -150,10 +145,7 @@ export function CommsLog({
   }, [endAdornmentKey]);
 
   return (
-    <div
-      ref={logRef}
-      className={`vt comms-log ${className}`.trim()}
-    >
+    <div ref={logRef} className={`vt comms-log ${className}`.trim()}>
       {blocks.map((block, blockIndex) =>
         block.kind === "divider" ? (
           <div className="comms-divider" key={`divider-${block.at}-${blockIndex}`}>
@@ -185,31 +177,35 @@ export function CommsLog({
               const isExpanded = expanded.has(key);
               const onAir = row === onAirKey;
               return (
-              <div
-                className={`comms-say${block.you ? " you" : ""}${onAir ? " is-onair" : ""}`}
-                key={`${key}-${rowIndex}`}
-              >
-                <span className={`comms-text${long && !isExpanded ? " is-clamped" : ""}`}>{row.text}</span>
-                {typing && blockIndex === blocks.length - 1 && rowIndex === block.rows.length - 1 ? (
-                  <span className="cursor" role="status" aria-label="Reply pending" />
-                ) : null}
-                {long ? (
-                  <button
-                    type="button"
-                    className="comms-read-full"
-                    onClick={() => {
-                      setExpanded((current) => {
-                        const next = new Set(current);
-                        if (next.has(key)) next.delete(key);
-                        else next.add(key);
-                        return next;
-                      });
-                    }}
-                  >
-                    {isExpanded ? "COLLAPSE ▴" : "READ FULL ▸"}
-                  </button>
-                ) : null}
-              </div>
+                <div
+                  className={`comms-say${block.you ? " you" : ""}${onAir ? " is-onair" : ""}`}
+                  key={`${key}-${rowIndex}`}
+                >
+                  <span className={`comms-text${long && !isExpanded ? " is-clamped" : ""}`}>
+                    {row.text}
+                  </span>
+                  {typing &&
+                  blockIndex === blocks.length - 1 &&
+                  rowIndex === block.rows.length - 1 ? (
+                    <span className="cursor" role="status" aria-label="Reply pending" />
+                  ) : null}
+                  {long ? (
+                    <button
+                      type="button"
+                      className="comms-read-full"
+                      onClick={() => {
+                        setExpanded((current) => {
+                          const next = new Set(current);
+                          if (next.has(key)) next.delete(key);
+                          else next.add(key);
+                          return next;
+                        });
+                      }}
+                    >
+                      {isExpanded ? "COLLAPSE ▴" : "READ FULL ▸"}
+                    </button>
+                  ) : null}
+                </div>
               );
             })}
           </div>

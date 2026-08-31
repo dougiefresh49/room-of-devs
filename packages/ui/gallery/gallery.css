@@ -35,11 +35,7 @@ body {
   margin-bottom: 18px;
   border-radius: 2px;
   opacity: 0.85;
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--rig-haz) 0 12px,
-    #151312 12px 24px
-  );
+  background: repeating-linear-gradient(-45deg, var(--rig-haz) 0 12px, #151312 12px 24px);
 }
 .g-sec {
   margin-bottom: 36px;

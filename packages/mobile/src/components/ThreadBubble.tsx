@@ -27,7 +27,13 @@ interface ThreadBubbleProps {
 const CHIP_CLASS =
   "mt-2 inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface py-1 pl-2 pr-2.5 text-[12px] font-semibold text-fg transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-3.5";
 
-export function ThreadBubble({ item, play, onPlayReplay, onGrant, onSpeakText }: ThreadBubbleProps) {
+export function ThreadBubble({
+  item,
+  play,
+  onPlayReplay,
+  onGrant,
+  onSpeakText,
+}: ThreadBubbleProps) {
   if (item.role === "user") {
     return (
       <div className="max-w-[86%] self-end whitespace-pre-wrap break-words rounded-2xl rounded-br-md border border-transparent bg-accent/15 px-3 py-2 text-[14px] leading-relaxed text-fg">

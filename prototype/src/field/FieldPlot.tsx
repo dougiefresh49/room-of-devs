@@ -90,14 +90,11 @@ export function FieldPlot({ onSelectCraft }: FieldPlotProps) {
         const { x, y } = polar(cx, cy, c.salience, c.plotAngle, maxR);
         const size = c.oneOff ? 4.5 : 6;
         const cls =
-          c.state === "needs-you"
-            ? "blip red"
-            : c.state === "settled"
-              ? "blip grn"
-              : "blip";
+          c.state === "needs-you" ? "blip red" : c.state === "settled" ? "blip grn" : "blip";
         const showLabel = c.state === "needs-you" || c.watched || c.state === "spawning";
         const craftHoldSeconds = room.heldQuestion?.craftId === c.id ? heldSeconds : c.holdSeconds;
-        const label = c.state === "needs-you" ? `${c.callsign} ${fmtHoldShort(craftHoldSeconds)}` : c.callsign;
+        const label =
+          c.state === "needs-you" ? `${c.callsign} ${fmtHoldShort(craftHoldSeconds)}` : c.callsign;
         const flip = x > cx;
         const anchor = flip ? "end" : "start";
         const rawX = flip ? x - 10 : x + 10;

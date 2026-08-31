@@ -210,9 +210,7 @@ export const platform: PlatformAdapter = {
       const raw = await invoke<string>("thread_history", { sessionId });
       const parsed: unknown = JSON.parse(raw);
       const items =
-        parsed && typeof parsed === "object"
-          ? (parsed as { items?: unknown }).items
-          : null;
+        parsed && typeof parsed === "object" ? (parsed as { items?: unknown }).items : null;
       if (!Array.isArray(items)) return [];
       const out: ThreadItem[] = [];
       for (const item of items) {

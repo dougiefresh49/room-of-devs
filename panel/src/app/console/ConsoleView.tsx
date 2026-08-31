@@ -60,12 +60,11 @@ export function ConsoleView({
 
   const openAgent = agents.find((a) => a.sessionId === view.openNodeId) ?? null;
   const injectable = agents.filter((a) => a.injectable);
-  const replyTarget =
-    openAgent?.injectable
-      ? openAgent
-      : !openAgent && injectable.length === 1
-        ? injectable[0]
-        : null;
+  const replyTarget = openAgent?.injectable
+    ? openAgent
+    : !openAgent && injectable.length === 1
+      ? injectable[0]
+      : null;
 
   return (
     <div className="console rig">

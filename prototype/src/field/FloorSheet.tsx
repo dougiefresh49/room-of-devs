@@ -8,7 +8,10 @@ import { useAppState, useFleet, useRoom } from "../mock/store";
 import { FieldCrtFace } from "../rig-ext/FieldCrtFace";
 import { RouteControl, formatElapsed, formatGateRemaining } from "../rig-ext/NowPlaying";
 
-export function FloorSheet({ open, onOpenChange }: {
+export function FloorSheet({
+  open,
+  onOpenChange,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -31,11 +34,13 @@ export function FloorSheet({ open, onOpenChange }: {
   const elapsed = nowPlaying ? formatElapsed(nowPlaying.startedAt, now) : "00:00";
   const live = nowPlaying?.kind === "live-clip";
   const replaying = nowPlaying?.kind === "replay";
-  const callsign = transportRoom.crew.find((member) => member.id === nowPlaying?.persona)?.callsign
-    ?? nowPlaying?.persona.toUpperCase();
-  const gateLabel = route === "phone" && transportRoom.audio.gateStartedAt != null
-    ? `GATE HELD ${formatGateRemaining(transportRoom.audio.gateStartedAt, now)}`
-    : "GATE OPEN · MAC";
+  const callsign =
+    transportRoom.crew.find((member) => member.id === nowPlaying?.persona)?.callsign ??
+    nowPlaying?.persona.toUpperCase();
+  const gateLabel =
+    route === "phone" && transportRoom.audio.gateStartedAt != null
+      ? `GATE HELD ${formatGateRemaining(transportRoom.audio.gateStartedAt, now)}`
+      : "GATE OPEN · MAC";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -45,7 +50,12 @@ export function FloorSheet({ open, onOpenChange }: {
         className="screenbed field-bounds-sheet field-floorsheet field-sheet-open"
         overlayClassName="field-sheet-overlay"
       >
-        <button type="button" className="nodesheet-pull" aria-label="Close audio floor" onClick={() => onOpenChange(false)}>
+        <button
+          type="button"
+          className="nodesheet-pull"
+          aria-label="Close audio floor"
+          onClick={() => onOpenChange(false)}
+        >
           <span aria-hidden />
         </button>
         <SheetTitle className="visually-hidden">Audio floor</SheetTitle>
@@ -75,7 +85,12 @@ export function FloorSheet({ open, onOpenChange }: {
             </CutFrame>
             <div className="ffloor-transport">
               <div className="ffloor-transport-action">
-                <button type="button" className="ffloor-stop-round" aria-label="Stop playback" onClick={stopPlayback}>
+                <button
+                  type="button"
+                  className="ffloor-stop-round"
+                  aria-label="Stop playback"
+                  onClick={stopPlayback}
+                >
                   <Square size={22} fill="currentColor" aria-hidden />
                 </button>
                 <span>STOP</span>
@@ -85,7 +100,13 @@ export function FloorSheet({ open, onOpenChange }: {
                 <span>{live ? "LIVE" : "CLIP"}</span>
               </div>
               <div className="ffloor-transport-action">
-                <button type="button" className="ffloor-replay-key" aria-label="Replay last clip free" disabled={!lastClip} onClick={replayLastMikey}>
+                <button
+                  type="button"
+                  className="ffloor-replay-key"
+                  aria-label="Replay last clip free"
+                  disabled={!lastClip}
+                  onClick={replayLastMikey}
+                >
                   <RotateCcw size={18} aria-hidden />
                 </button>
                 <span className="is-free">REPLAY · FREE</span>
@@ -95,7 +116,13 @@ export function FloorSheet({ open, onOpenChange }: {
         ) : (
           <div className="ffloor-idle">
             <b>FLOOR CLEAR</b>
-            <button type="button" className="ffloor-replay-key" aria-label="Replay last clip free" disabled={!lastClip} onClick={replayLastMikey}>
+            <button
+              type="button"
+              className="ffloor-replay-key"
+              aria-label="Replay last clip free"
+              disabled={!lastClip}
+              onClick={replayLastMikey}
+            >
               <RotateCcw size={18} aria-hidden />
             </button>
             <span>REPLAY · FREE</span>

@@ -28,16 +28,11 @@ function windowBtnProps(onActivate: () => void) {
   };
 }
 
-export function Faceplate({
-  agents,
-  nowPlaying,
-  showTranscript,
-  dismissedKey,
-}: FaceplateProps) {
+export function Faceplate({ agents, nowPlaying, showTranscript, dismissedKey }: FaceplateProps) {
   const settings = useSyncExternalStore(subscribeServerData, getServerData).settings;
   const speaking =
     nowPlaying && !nowPlaying.endedAt
-      ? agents.find((a) => a.sessionId === nowPlaying.sessionId) ?? null
+      ? (agents.find((a) => a.sessionId === nowPlaying.sessionId) ?? null)
       : null;
   const active = !!speaking;
   const callsign = (speaking?.label ?? speaking?.name ?? "MIKEY").toUpperCase();
@@ -46,11 +41,12 @@ export function Faceplate({
     (speaking.character ?? "").toLowerCase() === "michelangelo" ||
     speaking.name.toLowerCase().includes("mikey") ||
     speaking.name.toLowerCase().includes("michelangelo");
-  const role = isMikey && !speaking
-    ? "ALWAYS ON // STATELESS"
-    : speaking
-      ? `SPEAKING // ${(speaking.label ?? speaking.name).toUpperCase()}`
-      : "ALWAYS ON // STATELESS";
+  const role =
+    isMikey && !speaking
+      ? "ALWAYS ON // STATELESS"
+      : speaking
+        ? `SPEAKING // ${(speaking.label ?? speaking.name).toUpperCase()}`
+        : "ALWAYS ON // STATELESS";
 
   const dismissed = nowPlaying && dismissedKey === nowPlayingKey(nowPlaying);
   const hasText = nowPlaying && !!nowPlaying.text && !dismissed;
@@ -62,9 +58,7 @@ export function Faceplate({
   return (
     <>
       <Chassis className="console-faceplate" screws>
-        <div className="console-fp-label">
-          FACEPLATE // CONCIERGE UNIT · DIAL 2 HOME (VOICE)
-        </div>
+        <div className="console-fp-label">FACEPLATE // CONCIERGE UNIT · DIAL 2 HOME (VOICE)</div>
         <ScreenBed className="console-fp-screen" scanlines>
           <CrtFace size={176} halo={active} className="console-fp-face">
             {speaking ? (

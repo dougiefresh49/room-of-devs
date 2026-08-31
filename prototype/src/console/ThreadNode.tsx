@@ -2,13 +2,7 @@ import { CrtFace, Keycap } from "@room/ui/rig";
 import { ChevronRight } from "lucide-react";
 import { AvatarFace } from "../avatars/AvatarFace";
 import { PartNo } from "../map/PartNo";
-import {
-  answer,
-  discardArtifact,
-  keepArtifact,
-  setView,
-  toggleCraftOpen,
-} from "../mock/scenario";
+import { answer, discardArtifact, keepArtifact, setView, toggleCraftOpen } from "../mock/scenario";
 import { useRoom } from "../mock/store";
 import type { Craft } from "../mock/types";
 import { ThreadStatLine } from "./ThreadStatLine";
@@ -30,11 +24,8 @@ function stateTag(state: Craft["state"]) {
 
 export function ThreadNode({ craft }: { craft: Craft }) {
   const room = useRoom();
-  const hq =
-    room.heldQuestion?.craftId === craft.id ? room.heldQuestion : null;
-  const artifact = room.artifacts.find(
-    (a) => a.craftId === craft.id && a.status === "pending",
-  );
+  const hq = room.heldQuestion?.craftId === craft.id ? room.heldQuestion : null;
+  const artifact = room.artifacts.find((a) => a.craftId === craft.id && a.status === "pending");
   const showNodeSpend = room.view === "node" && room.focusCraftId === craft.id;
   const wrapClass = [
     "tnwrap",
@@ -98,9 +89,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
           </div>
           <div className="tstat">
             {stateTag(craft.state)}
-            {craft.lastStamp ? (
-              <span className="laststamp">{craft.lastStamp}</span>
-            ) : null}
+            {craft.lastStamp ? <span className="laststamp">{craft.lastStamp}</span> : null}
           </div>
         </summary>
         <div className="expandhint">
@@ -139,8 +128,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
                     />
                   ))}
                   <div className="held-reply-paths">
-                    ANSWER: CLICK A KEY · SAY THE QUOTED PHRASE · OR TYPE IN THE REPLY DECK
-                    BELOW
+                    ANSWER: CLICK A KEY · SAY THE QUOTED PHRASE · OR TYPE IN THE REPLY DECK BELOW
                   </div>
                 </>
               ) : (
@@ -192,8 +180,7 @@ export function ThreadNode({ craft }: { craft: Craft }) {
                       <b
                         className="stn"
                         style={{
-                          color:
-                            craft.salienceDelta > 0 ? "var(--green)" : "var(--red)",
+                          color: craft.salienceDelta > 0 ? "var(--green)" : "var(--red)",
                         }}
                       >
                         {craft.salienceDelta > 0

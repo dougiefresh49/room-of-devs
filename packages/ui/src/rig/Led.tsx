@@ -22,11 +22,7 @@ export function Led({
   title,
 }: LedProps) {
   const pulseClass =
-    pulse && pulseSpeed === "hot"
-      ? "rig-led--pulse-hot"
-      : pulse
-        ? "rig-led--pulse"
-        : null;
+    pulse && pulseSpeed === "hot" ? "rig-led--pulse-hot" : pulse ? "rig-led--pulse" : null;
   return (
     <span
       className={cn("rig-led", `rig-led--${tone}`, pulseClass, className)}

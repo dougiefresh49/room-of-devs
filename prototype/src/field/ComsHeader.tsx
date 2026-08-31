@@ -8,7 +8,8 @@ export function ComsHeader() {
   const speaking = room.speakingPersona != null;
   const persona = room.speakingPersona ?? (room.donnieCheckout ? "donnie" : "mikey");
   const checkedOut = persona === "donnie" && room.donnieCheckout != null;
-  const callsign = room.crew.find((member) => member.id === persona)?.callsign ?? persona.toUpperCase();
+  const callsign =
+    room.crew.find((member) => member.id === persona)?.callsign ?? persona.toUpperCase();
 
   return (
     <div className="coms-header">

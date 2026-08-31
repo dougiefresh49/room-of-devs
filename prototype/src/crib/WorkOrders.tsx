@@ -19,8 +19,8 @@ export function WorkOrders() {
       <div className="crib-workorders-caveat">
         <b>ADOPTION CAVEAT, PRINTED ON EVERY ORDER:</b> {adoptionCaveat}
         <br />
-        <b>DO NOT ADOPT:</b> badge · card · progress · chart · avatar · theme-* — the audit rules each out explicitly,
-        and the RIG primitives they would replace are the product.
+        <b>DO NOT ADOPT:</b> badge · card · progress · chart · avatar · theme-* — the audit rules
+        each out explicitly, and the RIG primitives they would replace are the product.
       </div>
     </div>
   );

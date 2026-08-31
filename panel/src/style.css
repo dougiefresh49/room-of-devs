@@ -458,9 +458,7 @@ button,
 
 .dock-caption-toggle.active {
   border-color: color-mix(in srgb, var(--rig-amber) 70%, var(--rig-gun-edge));
-  background:
-    linear-gradient(180deg, rgba(255, 179, 71, 0.2), rgba(255, 179, 71, 0.055)),
-    #1a1408;
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.2), rgba(255, 179, 71, 0.055)), #1a1408;
   color: var(--rig-amber-hot);
 }
 

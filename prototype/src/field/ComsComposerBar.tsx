@@ -151,14 +151,19 @@ export function ComsComposerBar({
               event.currentTarget.blur();
               return;
             }
-            if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+            if (
+              event.key !== "Enter" ||
+              event.shiftKey ||
+              event.altKey ||
+              event.ctrlKey ||
+              event.metaKey
+            )
+              return;
             if (event.nativeEvent.isComposing) return;
             // Phone-class input keeps Enter as a newline. Evaluate at the
             // keystroke because pointer capability can change at runtime.
-            if (
-              window.matchMedia("(pointer: coarse)").matches ||
-              navigator.maxTouchPoints > 0
-            ) return;
+            if (window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0)
+              return;
             event.preventDefault();
             submit();
           }}

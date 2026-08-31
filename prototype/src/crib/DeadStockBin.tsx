@@ -25,8 +25,7 @@ export function DeadStockBin() {
           deadStockBin.map((entry) => (
             <div key={entry.id} className="crib-deaditem">
               <div className="crib-deaditem-name">
-                {entry.name.toUpperCase()}{" "}
-                <ProvenanceStamp provenance={entry.provenance} />
+                {entry.name.toUpperCase()} <ProvenanceStamp provenance={entry.provenance} />
               </div>
               <div className="crib-deaditem-roll">
                 <b>HAND-ROLLED BY:</b> {entry.handRolledBy}

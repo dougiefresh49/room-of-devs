@@ -14,7 +14,8 @@ const CEREMONIES: Array<{
   {
     value: "full",
     title: "FULL-CEREMONY ROOM",
-    detail: "SPINE · STANDING CAST · NUMBERED BERTH · PLANS DOCK AND SETTLE · LIVES UNTIL DECOMMISSIONED",
+    detail:
+      "SPINE · STANDING CAST · NUMBERED BERTH · PLANS DOCK AND SETTLE · LIVES UNTIL DECOMMISSIONED",
   },
   {
     value: "one-off",

@@ -40,120 +40,112 @@ export interface WorkOrder {
   note: string;
 }
 
-export const adoptionCaveat = "Vendor the Radix behavior, drop shadcn's palette, restyle against packages/ui/src/tokens.css. Never run shadcn add with a theme.";
+export const adoptionCaveat =
+  "Vendor the Radix behavior, drop shadcn's palette, restyle against packages/ui/src/tokens.css. Never run shadcn add with a theme.";
 
 export const deadStockBin: DeadStockEntry[] = [
   {
-    "id": "dead-dom-007",
-    "name": "TransportBar",
-    "provenance": {
-      "kind": "custom"
+    id: "dead-dom-007",
+    name: "TransportBar",
+    provenance: {
+      kind: "custom",
     },
-    "handRolledBy": "panel/src/app/ActionCluster.tsx and mobile transport icon-button clusters.",
-    "verdict": "SCRAP UNTIL A REAL SHARED CONSUMER REPLACES THOSE CLUSTERS"
+    handRolledBy: "panel/src/app/ActionCluster.tsx and mobile transport icon-button clusters.",
+    verdict: "SCRAP UNTIL A REAL SHARED CONSUMER REPLACES THOSE CLUSTERS",
   },
   {
-    "id": "dead-ext-001",
-    "name": "FieldCard",
-    "provenance": {
-      "kind": "custom"
+    id: "dead-ext-001",
+    name: "FieldCard",
+    provenance: {
+      kind: "custom",
     },
-    "handRolledBy": "field screens using raw chassis/view-terminal wrappers.",
-    "verdict": "ADOPT IN FIELD OR SCRAP THE EXTENSION"
-  }
+    handRolledBy: "field screens using raw chassis/view-terminal wrappers.",
+    verdict: "ADOPT IN FIELD OR SCRAP THE EXTENSION",
+  },
 ];
 
 export const workOrders: WorkOrder[] = [
   {
-    "id": "wo-tabs",
-    "title": "TABS",
-    "callSites": [
+    id: "wo-tabs",
+    title: "TABS",
+    callSites: [
       "panel/src/app/PickerView.tsx:397",
       "panel/src/app/SettingsView.tsx:558",
-      "packages/mobile/src/components/PickerSheet.tsx:125"
+      "packages/mobile/src/components/PickerSheet.tsx:125",
     ],
-    "payoff": "One primitive, three deletions, plus keyboard a11y we currently lack.",
-    "note": "Round-D consumer: the crib's own drawer rail."
+    payoff: "One primitive, three deletions, plus keyboard a11y we currently lack.",
+    note: "Round-D consumer: the crib's own drawer rail.",
   },
   {
-    "id": "wo-sonner",
-    "title": "SONNER",
-    "callSites": [
+    id: "wo-sonner",
+    title: "SONNER",
+    callSites: [
       "packages/ui/src/primitives/toast.tsx (vendored)",
       "panel/src/app/App.tsx:114",
-      "packages/mobile/src/components/Toast.tsx"
+      "packages/mobile/src/components/Toast.tsx",
     ],
-    "payoff": "Wiring the existing toast primitive deletes a whole file and two timer states.",
-    "note": "Round-D consumer: the STRIKE BERTH receipt (commissioning bay)."
+    payoff: "Wiring the existing toast primitive deletes a whole file and two timer states.",
+    note: "Round-D consumer: the STRIKE BERTH receipt (commissioning bay).",
   },
   {
-    "id": "wo-native-select",
-    "title": "NATIVE-SELECT",
-    "callSites": [
+    id: "wo-native-select",
+    title: "NATIVE-SELECT",
+    callSites: [
       "panel/src/app/SettingsView.tsx:217",
       "panel/src/app/SettingsView.tsx:408",
       "panel/src/app/PickerView.tsx:446",
-      "packages/mobile/src/components/PickerSheet.tsx:250"
+      "packages/mobile/src/components/PickerSheet.tsx:250",
     ],
-    "payoff": "Low-risk — keeps the OS picker on phone, styles the four raw <select>s.",
-    "note": ""
+    payoff: "Low-risk — keeps the OS picker on phone, styles the four raw <select>s.",
+    note: "",
   },
   {
-    "id": "wo-command",
-    "title": "COMMAND (cmdk)",
-    "callSites": [
-      "prototype/src/deck/ControlDeck.tsx",
-      "panel/src/app/PickerView.tsx (505 lines)"
-    ],
-    "payoff": "Fuzzy filtering for free; control deck and agent picker share one primitive.",
-    "note": "Round-D consumer #2 on day one: the ⌘K room-switcher palette in the hangar."
+    id: "wo-command",
+    title: "COMMAND (cmdk)",
+    callSites: ["prototype/src/deck/ControlDeck.tsx", "panel/src/app/PickerView.tsx (505 lines)"],
+    payoff: "Fuzzy filtering for free; control deck and agent picker share one primitive.",
+    note: "Round-D consumer #2 on day one: the ⌘K room-switcher palette in the hangar.",
   },
   {
-    "id": "wo-slider",
-    "title": "SLIDER",
-    "callSites": [
-      "panel/src/app/SettingsView.tsx:275"
-    ],
-    "payoff": "Bare type=range on a floating NSPanel is awkward to hit.",
-    "note": ""
-  }
+    id: "wo-slider",
+    title: "SLIDER",
+    callSites: ["panel/src/app/SettingsView.tsx:275"],
+    payoff: "Bare type=range on a floating NSPanel is awkward to hit.",
+    note: "",
+  },
 ];
 
 export const instruments: Instrument[] = [
   {
-    "id": "RIG-001",
-    "name": "CutFrame",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-001",
+    name: "CutFrame",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/CutFrame.tsx",
-    "states": [
-      "scale L",
-      "scale M",
-      "scale S",
-      "glow"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/CutFrame.tsx",
+    states: ["scale L", "scale M", "scale S", "glow"],
+    props: [
       {
-        "name": "scale",
-        "type": "\"L\" | \"M\" | \"S\"",
-        "note": "chamfer grammar"
+        name: "scale",
+        type: '"L" | "M" | "S"',
+        note: "chamfer grammar",
       },
       {
-        "name": "glow",
-        "type": "boolean",
-        "note": "drop-shadow halo"
+        name: "glow",
+        type: "boolean",
+        note: "drop-shadow halo",
       },
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "clipped content"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "clipped content",
+      },
     ],
-    "registryEquivalent": "card",
-    "verdict": "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
-    "consumers": [
+    registryEquivalent: "card",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    consumers: [
       "panel/src/app/console/ThreadNode.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/SpecPlate.tsx",
@@ -165,41 +157,35 @@ export const instruments: Instrument[] = [
       "prototype/src/field/ComsHeader.tsx",
       "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
-      "prototype/src/rig-ext/FieldCard.tsx"
+      "prototype/src/rig-ext/FieldCard.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "RIG-002",
-    "name": "Chassis",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-002",
+    name: "Chassis",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Chassis.tsx",
-    "states": [
-      "default",
-      "mainwin"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Chassis.tsx",
+    states: ["default", "mainwin"],
+    props: [
       {
-        "name": "className",
-        "type": "string",
-        "note": "housing modifier"
+        name: "className",
+        type: "string",
+        note: "housing modifier",
       },
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "plate body"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "plate body",
+      },
     ],
-    "registryEquivalent": "card",
-    "verdict": "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
-    "consumers": [
+    registryEquivalent: "card",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    consumers: [
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
@@ -207,118 +193,101 @@ export const instruments: Instrument[] = [
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/hangar/commission/VoicePath.tsx",
-      "prototype/src/map/MapView.tsx"
+      "prototype/src/map/MapView.tsx",
     ],
-    "surfaces": [
-      "console",
-      "panel"
-    ]
+    surfaces: ["console", "panel"],
   },
   {
-    "id": "RIG-003",
-    "name": "Bay",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-003",
+    name: "Bay",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Bay.tsx",
-    "states": [
-      "default",
-      "nested"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Bay.tsx",
+    states: ["default", "nested"],
+    props: [
       {
-        "name": "label",
-        "type": "ReactNode",
-        "note": "stencil header"
+        name: "label",
+        type: "ReactNode",
+        note: "stencil header",
       },
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "bay interior"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "bay interior",
+      },
     ],
-    "registryEquivalent": "card",
-    "verdict": "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
-    "consumers": [
+    registryEquivalent: "card",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    consumers: [
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/DialChips.tsx",
-      "panel/src/app/console/WatchChips.tsx"
+      "panel/src/app/console/WatchChips.tsx",
     ],
-    "surfaces": [
-      "panel"
-    ]
+    surfaces: ["panel"],
   },
   {
-    "id": "RIG-004",
-    "name": "ScreenBed",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-004",
+    name: "ScreenBed",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/ScreenBed.tsx",
-    "states": [
-      "default",
-      "CRT tint"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/ScreenBed.tsx",
+    states: ["default", "CRT tint"],
+    props: [
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "phosphor bed"
+        name: "children",
+        type: "ReactNode",
+        note: "phosphor bed",
       },
       {
-        "name": "className",
-        "type": "string",
-        "note": "layout hook"
-      }
+        name: "className",
+        type: "string",
+        note: "layout hook",
+      },
     ],
-    "registryEquivalent": "card",
-    "verdict": "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
-    "consumers": [
+    registryEquivalent: "card",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    consumers: [
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/InstrumentCard.tsx",
       "prototype/src/crib/SpecPlate.tsx",
       "prototype/src/hangar/TrafficStrip.tsx",
-      "prototype/src/hangar/commission/ManifestPreview.tsx"
+      "prototype/src/hangar/commission/ManifestPreview.tsx",
     ],
-    "surfaces": [
-      "console",
-      "panel"
-    ]
+    surfaces: ["console", "panel"],
   },
   {
-    "id": "RIG-005",
-    "name": "Tag",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-005",
+    name: "Tag",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Tag.tsx",
-    "states": [
-      "default",
-      "amber",
-      "red",
-      "green",
-      "dim"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Tag.tsx",
+    states: ["default", "amber", "red", "green", "dim"],
+    props: [
       {
-        "name": "tone",
-        "type": "TagTone",
-        "note": "semantic color"
+        name: "tone",
+        type: "TagTone",
+        note: "semantic color",
       },
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "stencil text"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "stencil text",
+      },
     ],
-    "registryEquivalent": "badge",
-    "verdict": "Would unify bespoke badges but those carry semantic state colors from tokens.css; a badge migration is a restyle, not a simplification. Skip.",
-    "consumers": [
+    registryEquivalent: "badge",
+    verdict:
+      "Would unify bespoke badges but those carry semantic state colors from tokens.css; a badge migration is a restyle, not a simplification. Skip.",
+    consumers: [
       "panel/src/app/console/ConsoleView.tsx",
       "panel/src/app/console/DialChips.tsx",
       "panel/src/app/console/ThreadNode.tsx",
@@ -340,41 +309,35 @@ export const instruments: Instrument[] = [
       "prototype/src/hangar/commission/CommissioningBay.tsx",
       "prototype/src/hangar/commission/ManifestPreview.tsx",
       "prototype/src/hangar/commission/VoicePath.tsx",
-      "prototype/src/rig-ext/NowPlaying.tsx"
+      "prototype/src/rig-ext/NowPlaying.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "RIG-006",
-    "name": "Waveform",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-006",
+    name: "Waveform",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Waveform.tsx",
-    "states": [
-      "active",
-      "flat idle"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Waveform.tsx",
+    states: ["active", "flat idle"],
+    props: [
       {
-        "name": "active",
-        "type": "boolean",
-        "note": "bars animate when true"
+        name: "active",
+        type: "boolean",
+        note: "bars animate when true",
       },
       {
-        "name": "bars",
-        "type": "number",
-        "note": "bar count (default 12)"
-      }
+        name: "bars",
+        type: "number",
+        note: "bar count (default 12)",
+      },
     ],
-    "registryEquivalent": "chart",
-    "verdict": "Hand-drawn SVG plots carry the RIG phosphor look; Recharts fights custom SVG art. Considered and rejected.",
-    "consumers": [
+    registryEquivalent: "chart",
+    verdict:
+      "Hand-drawn SVG plots carry the RIG phosphor look; Recharts fights custom SVG art. Considered and rejected.",
+    consumers: [
       "panel/src/app/console/Faceplate.tsx",
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/console/ChatFocus.tsx",
@@ -382,50 +345,39 @@ export const instruments: Instrument[] = [
       "prototype/src/field/ComsHeader.tsx",
       "prototype/src/hangar/BerthCard.tsx",
       "prototype/src/hangar/FloorBus.tsx",
-      "prototype/src/rig-ext/NowPlaying.tsx"
+      "prototype/src/rig-ext/NowPlaying.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "RIG-007",
-    "name": "Led",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-007",
+    name: "Led",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Led.tsx",
-    "states": [
-      "amber",
-      "green",
-      "red",
-      "dim",
-      "pulse",
-      "pulse hot"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Led.tsx",
+    states: ["amber", "green", "red", "dim", "pulse", "pulse hot"],
+    props: [
       {
-        "name": "tone",
-        "type": "LedTone",
-        "note": "lamp color"
+        name: "tone",
+        type: "LedTone",
+        note: "lamp color",
       },
       {
-        "name": "pulse",
-        "type": "boolean",
-        "note": "CSS pulse animation"
+        name: "pulse",
+        type: "boolean",
+        note: "CSS pulse animation",
       },
       {
-        "name": "pulseSpeed",
-        "type": "\"default\" | \"hot\"",
-        "note": "pulse rate"
-      }
+        name: "pulseSpeed",
+        type: '"default" | "hot"',
+        note: "pulse rate",
+      },
     ],
-    "registryEquivalent": "spinner",
-    "verdict": "No spinner exists today; Led/Waveform carry busy state. Skip.",
-    "consumers": [
+    registryEquivalent: "spinner",
+    verdict: "No spinner exists today; Led/Waveform carry busy state. Skip.",
+    consumers: [
       "panel/src/app/DockView.tsx",
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
@@ -444,199 +396,159 @@ export const instruments: Instrument[] = [
       "prototype/src/field/FieldPlaceSheet.tsx",
       "prototype/src/field/OrdersScreen.tsx",
       "prototype/src/field/ComsHeader.tsx",
-      "prototype/src/hangar/BerthCard.tsx"
+      "prototype/src/hangar/BerthCard.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "RIG-008",
-    "name": "Keycap",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-008",
+    name: "Keycap",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Keycap.tsx",
-    "states": [
-      "default",
-      "armed glow"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Keycap.tsx",
+    states: ["default", "armed glow"],
+    props: [
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "legend"
+        name: "children",
+        type: "ReactNode",
+        note: "legend",
       },
       {
-        "name": "armed",
-        "type": "boolean",
-        "note": "hot detent glow"
+        name: "armed",
+        type: "boolean",
+        note: "hot detent glow",
       },
       {
-        "name": "onClick",
-        "type": "() => void",
-        "note": "activation"
-      }
+        name: "onClick",
+        type: "() => void",
+        note: "activation",
+      },
     ],
-    "registryEquivalent": "kbd",
-    "verdict": "rig/Keycap.tsx already does this with far more character. Skip.",
-    "consumers": [
+    registryEquivalent: "kbd",
+    verdict: "rig/Keycap.tsx already does this with far more character. Skip.",
+    consumers: [
       "panel/src/app/console/ReplyDeck.tsx",
       "prototype/src/console/ReplyDeck.tsx",
       "prototype/src/console/ThreadNode.tsx",
       "prototype/src/field/NodeSheet.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/hangar/commission/CommissioningBay.tsx"
+      "prototype/src/hangar/commission/CommissioningBay.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "RIG-009",
-    "name": "HexLayer",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-009",
+    name: "HexLayer",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/HexLayer.tsx",
-    "states": [
-      "faint",
-      "dim",
-      "mid",
-      "hot"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/HexLayer.tsx",
+    states: ["faint", "dim", "mid", "hot"],
+    props: [
       {
-        "name": "intensity",
-        "type": "HexIntensity",
-        "note": "backdrop strength"
+        name: "intensity",
+        type: "HexIntensity",
+        note: "backdrop strength",
       },
       {
-        "name": "className",
-        "type": "string",
-        "note": "positioning"
-      }
+        name: "className",
+        type: "string",
+        note: "positioning",
+      },
     ],
-    "consumers": [
-      "prototype/src/console/SpineRail.tsx",
-      "prototype/src/map/MapView.tsx"
-    ],
-    "surfaces": [
-      "console"
-    ]
+    consumers: ["prototype/src/console/SpineRail.tsx", "prototype/src/map/MapView.tsx"],
+    surfaces: ["console"],
   },
   {
-    "id": "RIG-010",
-    "name": "Odometer",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-010",
+    name: "Odometer",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/Odometer.tsx",
-    "states": [
-      "digits 0–9",
-      "leading zeros"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/Odometer.tsx",
+    states: ["digits 0–9", "leading zeros"],
+    props: [
       {
-        "name": "value",
-        "type": "number | string",
-        "note": "readout"
+        name: "value",
+        type: "number | string",
+        note: "readout",
       },
       {
-        "name": "digits",
-        "type": "number",
-        "note": "pad width"
-      }
+        name: "digits",
+        type: "number",
+        note: "pad width",
+      },
     ],
-    "consumers": [
+    consumers: [
       "prototype/src/console/PlanCard.tsx",
       "prototype/src/console/TheCore.tsx",
-      "prototype/src/field/GaugesScreen.tsx"
+      "prototype/src/field/GaugesScreen.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field"
-    ]
+    surfaces: ["console", "field"],
   },
   {
-    "id": "RIG-011",
-    "name": "DialGauge",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-011",
+    name: "DialGauge",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/DialGauge.tsx",
-    "states": [
-      "arc 0–1",
-      "redline zone",
-      "cold",
-      "caption"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/DialGauge.tsx",
+    states: ["arc 0–1", "redline zone", "cold", "caption"],
+    props: [
       {
-        "name": "fraction",
-        "type": "number 0–1",
-        "note": "amber arc fill"
+        name: "fraction",
+        type: "number 0–1",
+        note: "amber arc fill",
       },
       {
-        "name": "redlineFrom",
-        "type": "number",
-        "note": "red arc from here"
+        name: "redlineFrom",
+        type: "number",
+        note: "red arc from here",
       },
       {
-        "name": "caption",
-        "type": "ReactNode",
-        "note": "stencil under dial"
-      }
+        name: "caption",
+        type: "ReactNode",
+        note: "stencil under dial",
+      },
     ],
-    "registryEquivalent": "chart",
-    "verdict": "The nearest registry analogue is chart's radial family, and none of them would survive the restyle. Leave these alone.",
-    "defect": "Session arc belongs in DialGauge — prototype composes it in SessionDial until sessionFraction ships upstream.",
-    "consumers": [
-      "prototype/src/console/TheCore.tsx",
-      "prototype/src/rig-ext/SessionDial.tsx"
-    ],
-    "surfaces": [
-      "console"
-    ]
+    registryEquivalent: "chart",
+    verdict:
+      "The nearest registry analogue is chart's radial family, and none of them would survive the restyle. Leave these alone.",
+    defect:
+      "Session arc belongs in DialGauge — prototype composes it in SessionDial until sessionFraction ships upstream.",
+    consumers: ["prototype/src/console/TheCore.tsx", "prototype/src/rig-ext/SessionDial.tsx"],
+    surfaces: ["console"],
   },
   {
-    "id": "RIG-012",
-    "name": "CrtFace",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-012",
+    name: "CrtFace",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/CrtFace.tsx",
-    "states": [
-      "sm",
-      "md",
-      "lg",
-      "scanlines",
-      "blink"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/CrtFace.tsx",
+    states: ["sm", "md", "lg", "scanlines", "blink"],
+    props: [
       {
-        "name": "size",
-        "type": "CrtFaceSize",
-        "note": "housing scale"
+        name: "size",
+        type: "CrtFaceSize",
+        note: "housing scale",
       },
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "face content"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "face content",
+      },
     ],
-    "registryEquivalent": "avatar",
-    "verdict": "Avatars are lipsync-driven img refs that must never re-render through React. avatar would fight the stage engine. Do not adopt.",
-    "consumers": [
+    registryEquivalent: "avatar",
+    verdict:
+      "Avatars are lipsync-driven img refs that must never re-render through React. avatar would fight the stage engine. Do not adopt.",
+    consumers: [
       "panel/src/app/DockView.tsx",
       "panel/src/app/console/CrewManifest.tsx",
       "panel/src/app/console/Faceplate.tsx",
@@ -647,762 +559,606 @@ export const instruments: Instrument[] = [
       "prototype/src/console/Faceplate.tsx",
       "prototype/src/console/ThreadNode.tsx",
       "prototype/src/hangar/BerthCard.tsx",
-      "prototype/src/rig-ext/FieldCrtFace.tsx"
+      "prototype/src/rig-ext/FieldCrtFace.tsx",
     ],
-    "surfaces": [
-      "console",
-      "panel"
-    ]
+    surfaces: ["console", "panel"],
   },
   {
-    "id": "RIG-013",
-    "name": "SalienceBar",
-    "drawer": "rig",
-    "provenance": {
-      "kind": "custom"
+    id: "RIG-013",
+    name: "SalienceBar",
+    drawer: "rig",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/rig/SalienceBar.tsx",
-    "states": [
-      "fill %",
-      "threshold notch",
-      "dim segment"
-    ],
-    "props": [
+    path: "packages/ui/src/rig/SalienceBar.tsx",
+    states: ["fill %", "threshold notch", "dim segment"],
+    props: [
       {
-        "name": "value",
-        "type": "number 0–100",
-        "note": "amber fill"
+        name: "value",
+        type: "number 0–100",
+        note: "amber fill",
       },
       {
-        "name": "threshold",
-        "type": "number",
-        "note": "gate notch position"
-      }
+        name: "threshold",
+        type: "number",
+        note: "gate notch position",
+      },
     ],
-    "registryEquivalent": "progress",
-    "verdict": "Overlaps rig/SalienceBar.tsx; segmented amber look would be lost. Skip.",
-    "consumers": [
+    registryEquivalent: "progress",
+    verdict: "Overlaps rig/SalienceBar.tsx; segmented amber look would be lost. Skip.",
+    consumers: [
       "panel/src/app/DockView.tsx",
       "prototype/src/console/DockMiniBar.tsx",
       "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/GlanceScreen.tsx",
-      "prototype/src/hangar/BerthCard.tsx"
+      "prototype/src/hangar/BerthCard.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "SHD-001",
-    "name": "button",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "cva"
+    id: "SHD-001",
+    name: "button",
+    drawer: "shadcn",
+    provenance: {
+      kind: "cva",
     },
-    "path": "packages/ui/src/primitives/button.tsx",
-    "states": [
-      "default",
-      "outline",
-      "ghost",
-      "destructive",
-      "sm",
-      "icon"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/button.tsx",
+    states: ["default", "outline", "ghost", "destructive", "sm", "icon"],
+    props: [
       {
-        "name": "variant",
-        "type": "ButtonVariant",
-        "note": "CVA variant"
+        name: "variant",
+        type: "ButtonVariant",
+        note: "CVA variant",
       },
       {
-        "name": "size",
-        "type": "ButtonSize",
-        "note": "CVA size"
-      }
+        name: "size",
+        type: "ButtonSize",
+        note: "CVA size",
+      },
     ],
-    "registryEquivalent": "button",
-    "verdict": "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
-    "consumers": [
-      "prototype/src/console/ConsoleDock.tsx",
-      "prototype/src/field/ComsComposerBar.tsx"
-    ],
-    "surfaces": [
-      "console",
-      "field"
-    ]
+    registryEquivalent: "button",
+    verdict: "Live — barely. Single consumer in prototype; panel/mobile use raw icon-btn.",
+    consumers: ["prototype/src/console/ConsoleDock.tsx", "prototype/src/field/ComsComposerBar.tsx"],
+    surfaces: ["console", "field"],
   },
   {
-    "id": "SHD-002",
-    "name": "dialog",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "DIALOG"
+    id: "SHD-002",
+    name: "dialog",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "DIALOG",
     },
-    "path": "packages/ui/src/primitives/dialog.tsx",
-    "states": [
-      "open",
-      "closed",
-      "modal overlay"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/dialog.tsx",
+    states: ["open", "closed", "modal overlay"],
+    props: [
       {
-        "name": "open",
-        "type": "boolean",
-        "note": "controlled root"
+        name: "open",
+        type: "boolean",
+        note: "controlled root",
       },
       {
-        "name": "onOpenChange",
-        "type": "(open: boolean) => void",
-        "note": "state callback"
-      }
+        name: "onOpenChange",
+        type: "(open: boolean) => void",
+        note: "state callback",
+      },
     ],
-    "registryEquivalent": "dialog",
-    "verdict": "Vendored, dead in audit — exactly what ControlDeck.tsx hand-rolls with role=dialog and a manual keydown listener. Round D adopted Radix dialog in the prototype.",
-    "consumers": [
+    registryEquivalent: "dialog",
+    verdict:
+      "Vendored, dead in audit — exactly what ControlDeck.tsx hand-rolls with role=dialog and a manual keydown listener. Round D adopted Radix dialog in the prototype.",
+    consumers: [
       "prototype/src/deck/ControlDeck.tsx",
       "prototype/src/hangar/RoomSwitcherPalette.tsx",
-      "prototype/src/map/MapView.tsx"
+      "prototype/src/map/MapView.tsx",
     ],
-    "surfaces": [
-      "console"
-    ]
+    surfaces: ["console"],
   },
   {
-    "id": "SHD-003",
-    "name": "command",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "lib",
-      "base": "CMDK"
+    id: "SHD-003",
+    name: "command",
+    drawer: "shadcn",
+    provenance: {
+      kind: "lib",
+      base: "CMDK",
     },
-    "path": "packages/ui/src/primitives/command.tsx",
-    "states": [
-      "palette open",
-      "filtering",
-      "empty"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/command.tsx",
+    states: ["palette open", "filtering", "empty"],
+    props: [
       {
-        "name": "value",
-        "type": "string",
-        "note": "filter value"
+        name: "value",
+        type: "string",
+        note: "filter value",
       },
       {
-        "name": "onValueChange",
-        "type": "(v: string) => void",
-        "note": "filter callback"
-      }
+        name: "onValueChange",
+        type: "(v: string) => void",
+        note: "filter callback",
+      },
     ],
-    "registryEquivalent": "command",
-    "verdict": "Control deck IS a command palette hand-built from a backtick keydown listener; command covers it with fuzzy filtering.",
-    "consumers": [
+    registryEquivalent: "command",
+    verdict:
+      "Control deck IS a command palette hand-built from a backtick keydown listener; command covers it with fuzzy filtering.",
+    consumers: [
       "prototype/src/deck/ControlDeck.tsx",
-      "prototype/src/hangar/RoomSwitcherPalette.tsx"
+      "prototype/src/hangar/RoomSwitcherPalette.tsx",
     ],
-    "surfaces": [
-      "console"
-    ]
+    surfaces: ["console"],
   },
   {
-    "id": "SHD-004",
-    "name": "dropdown-menu",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "DROPDOWN-MENU"
+    id: "SHD-004",
+    name: "dropdown-menu",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "DROPDOWN-MENU",
     },
-    "path": "packages/ui/src/primitives/dropdown-menu.tsx",
-    "states": [
-      "closed",
-      "open",
-      "item hover"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/dropdown-menu.tsx",
+    states: ["closed", "open", "item hover"],
+    props: [
       {
-        "name": "modal",
-        "type": "boolean",
-        "note": "Radix modal behavior"
-      }
+        name: "modal",
+        type: "boolean",
+        note: "Radix modal behavior",
+      },
     ],
-    "consumers": [
+    consumers: [
       "packages/mobile/src/components/OverflowMenu.tsx",
-      "prototype/src/chrome/ViewMenu.tsx"
+      "prototype/src/chrome/ViewMenu.tsx",
     ],
-    "surfaces": [
-      "console",
-      "mobile"
-    ]
+    surfaces: ["console", "mobile"],
   },
   {
-    "id": "SHD-005",
-    "name": "popover",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "POPOVER"
+    id: "SHD-005",
+    name: "popover",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "POPOVER",
     },
-    "path": "packages/ui/src/primitives/popover.tsx",
-    "states": [
-      "closed",
-      "open",
-      "anchored"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/popover.tsx",
+    states: ["closed", "open", "anchored"],
+    props: [
       {
-        "name": "open",
-        "type": "boolean",
-        "note": "controlled"
-      }
+        name: "open",
+        type: "boolean",
+        note: "controlled",
+      },
     ],
-    "consumers": [
+    consumers: [
       "panel/src/app/ActionCluster.tsx",
       "prototype/src/console/SpineLegend.tsx",
       "prototype/src/field/FieldPlaceSheet.tsx",
-      "prototype/src/field/GaugesScreen.tsx"
+      "prototype/src/field/GaugesScreen.tsx",
     ],
-    "surfaces": [
-      "console",
-      "field",
-      "panel"
-    ]
+    surfaces: ["console", "field", "panel"],
   },
   {
-    "id": "SHD-006",
-    "name": "sheet",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "DIALOG"
+    id: "SHD-006",
+    name: "sheet",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "DIALOG",
     },
-    "path": "packages/ui/src/primitives/sheet.tsx",
-    "states": [
-      "side bottom",
-      "side right",
-      "open"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/sheet.tsx",
+    states: ["side bottom", "side right", "open"],
+    props: [
       {
-        "name": "side",
-        "type": "\"top\" | \"right\" | \"bottom\" | \"left\"",
-        "note": "slide edge"
-      }
+        name: "side",
+        type: '"top" | "right" | "bottom" | "left"',
+        note: "slide edge",
+      },
     ],
-    "consumers": [
+    consumers: [
       "packages/mobile/src/components/ConvoSheet.tsx",
       "packages/mobile/src/components/PickerSheet.tsx",
       "packages/mobile/src/components/PlayerSheet.tsx",
-      "prototype/src/field/NodeSheet.tsx"
+      "prototype/src/field/NodeSheet.tsx",
     ],
-    "surfaces": [
-      "field",
-      "mobile"
-    ]
+    surfaces: ["field", "mobile"],
   },
   {
-    "id": "SHD-007",
-    "name": "toggle-group",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "TOGGLE-GROUP"
+    id: "SHD-007",
+    name: "toggle-group",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "TOGGLE-GROUP",
     },
-    "path": "packages/ui/src/primitives/toggle-group.tsx",
-    "states": [
-      "single",
-      "multi",
-      "on/off items"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/toggle-group.tsx",
+    states: ["single", "multi", "on/off items"],
+    props: [
       {
-        "name": "type",
-        "type": "\"single\" | \"multiple\"",
-        "note": "selection mode"
+        name: "type",
+        type: '"single" | "multiple"',
+        note: "selection mode",
       },
       {
-        "name": "value",
-        "type": "string | string[]",
-        "note": "controlled value"
-      }
+        name: "value",
+        type: "string | string[]",
+        note: "controlled value",
+      },
     ],
-    "consumers": [
+    consumers: [
       "prototype/src/hangar/commission/CeremonyFork.tsx",
-      "prototype/src/hangar/commission/DialRow.tsx"
+      "prototype/src/hangar/commission/DialRow.tsx",
     ],
-    "surfaces": [
-      "console"
-    ]
+    surfaces: ["console"],
   },
   {
-    "id": "SHD-008",
-    "name": "tooltip",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "radix",
-      "base": "TOOLTIP"
+    id: "SHD-008",
+    name: "tooltip",
+    drawer: "shadcn",
+    provenance: {
+      kind: "radix",
+      base: "TOOLTIP",
     },
-    "path": "packages/ui/src/primitives/tooltip.tsx",
-    "states": [
-      "closed",
-      "open",
-      "delayed"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/tooltip.tsx",
+    states: ["closed", "open", "delayed"],
+    props: [
       {
-        "name": "delayDuration",
-        "type": "number",
-        "note": "provider default delay"
-      }
+        name: "delayDuration",
+        type: "number",
+        note: "provider default delay",
+      },
     ],
-    "registryEquivalent": "tooltip",
-    "verdict": "Vendored, dead; would replace dozens of native title=\"\" attributes with accessible, styled hints.",
-    "consumers": [
+    registryEquivalent: "tooltip",
+    verdict:
+      'Vendored, dead; would replace dozens of native title="" attributes with accessible, styled hints.',
+    consumers: [
       "prototype/src/console/SpineLegend.tsx",
       "prototype/src/console/ThreeDials.tsx",
       "prototype/src/crib/CribView.tsx",
       "prototype/src/crib/crib-chrome.tsx",
-      "prototype/src/map/PartNo.tsx"
+      "prototype/src/map/PartNo.tsx",
     ],
-    "surfaces": [
-      "console"
-    ]
+    surfaces: ["console"],
   },
   {
-    "id": "SHD-009",
-    "name": "toast",
-    "drawer": "shadcn",
-    "provenance": {
-      "kind": "lib",
-      "base": "SONNER"
+    id: "SHD-009",
+    name: "toast",
+    drawer: "shadcn",
+    provenance: {
+      kind: "lib",
+      base: "SONNER",
     },
-    "path": "packages/ui/src/primitives/toast.tsx",
-    "states": [
-      "queued",
-      "visible",
-      "dismissed"
-    ],
-    "props": [
+    path: "packages/ui/src/primitives/toast.tsx",
+    states: ["queued", "visible", "dismissed"],
+    props: [
       {
-        "name": "position",
-        "type": "ToasterPosition",
-        "note": "sonner placement"
-      }
+        name: "position",
+        type: "ToasterPosition",
+        note: "sonner placement",
+      },
     ],
-    "registryEquivalent": "sonner",
-    "verdict": "Vendored, dead — highest effort-to-payoff in the audit; panel and mobile still hand-roll toast timers.",
-    "consumers": [
+    registryEquivalent: "sonner",
+    verdict:
+      "Vendored, dead — highest effort-to-payoff in the audit; panel and mobile still hand-roll toast timers.",
+    consumers: [
       "prototype/src/field/FieldHangar.tsx",
       "prototype/src/hangar/HangarView.tsx",
       "prototype/src/hangar/commission/CommissioningBay.tsx",
-      "prototype/src/mock/scenario.ts"
+      "prototype/src/mock/scenario.ts",
     ],
-    "surfaces": [
-      "console",
-      "field"
-    ]
+    surfaces: ["console", "field"],
   },
   {
-    "id": "DOM-001",
-    "name": "StateBadge",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-001",
+    name: "StateBadge",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/StateBadge.tsx",
-    "states": [
-      "working",
-      "handRaised",
-      "idle",
-      "needsYou"
-    ],
-    "props": [
+    path: "packages/ui/src/components/StateBadge.tsx",
+    states: ["working", "handRaised", "idle", "needsYou"],
+    props: [
       {
-        "name": "state",
-        "type": "AgentState",
-        "note": "protocol state"
+        name: "state",
+        type: "AgentState",
+        note: "protocol state",
       },
       {
-        "name": "label",
-        "type": "string",
-        "note": "optional override"
-      }
+        name: "label",
+        type: "string",
+        note: "optional override",
+      },
     ],
-    "registryEquivalent": "badge",
-    "verdict": "Fully custom dot + label; registry badge would fight semantic state colors. Skip.",
-    "consumers": [
-      "packages/mobile/src/components/AgentCard.tsx"
-    ],
-    "surfaces": [
-      "mobile"
-    ]
+    registryEquivalent: "badge",
+    verdict: "Fully custom dot + label; registry badge would fight semantic state colors. Skip.",
+    consumers: ["packages/mobile/src/components/AgentCard.tsx"],
+    surfaces: ["mobile"],
   },
   {
-    "id": "DOM-002",
-    "name": "AgentChips",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-002",
+    name: "AgentChips",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/AgentChips.tsx",
-    "states": [
-      "multi agent",
-      "overflow"
-    ],
-    "props": [
+    path: "packages/ui/src/components/AgentChips.tsx",
+    states: ["multi agent", "overflow"],
+    props: [
       {
-        "name": "agents",
-        "type": "AgentChip[]",
-        "note": "persona list"
-      }
+        name: "agents",
+        type: "AgentChip[]",
+        note: "persona list",
+      },
     ],
-    "registryEquivalent": "badge",
-    "verdict": "Fully custom. Registry equivalent: badge. Skip.",
-    "consumers": [
-      "packages/mobile/src/components/AgentCard.tsx"
-    ],
-    "surfaces": [
-      "mobile"
-    ]
+    registryEquivalent: "badge",
+    verdict: "Fully custom. Registry equivalent: badge. Skip.",
+    consumers: ["packages/mobile/src/components/AgentCard.tsx"],
+    surfaces: ["mobile"],
   },
   {
-    "id": "DOM-003",
-    "name": "LiveBadge",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-003",
+    name: "LiveBadge",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/LiveBadge.tsx",
-    "states": [
-      "live",
-      "off"
-    ],
-    "props": [
+    path: "packages/ui/src/components/LiveBadge.tsx",
+    states: ["live", "off"],
+    props: [
       {
-        "name": "live",
-        "type": "boolean",
-        "note": "pulse when live"
-      }
+        name: "live",
+        type: "boolean",
+        note: "pulse when live",
+      },
     ],
-    "registryEquivalent": "badge",
-    "verdict": "Fully custom. Skip.",
-    "consumers": [
-      "packages/mobile/src/components/AgentCard.tsx",
-      "panel/src/app/DockView.tsx"
-    ],
-    "surfaces": [
-      "mobile",
-      "panel"
-    ]
+    registryEquivalent: "badge",
+    verdict: "Fully custom. Skip.",
+    consumers: ["packages/mobile/src/components/AgentCard.tsx", "panel/src/app/DockView.tsx"],
+    surfaces: ["mobile", "panel"],
   },
   {
-    "id": "DOM-004",
-    "name": "FailedCountBadge",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-004",
+    name: "FailedCountBadge",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/FailedCountBadge.tsx",
-    "states": [
-      "zero hidden",
-      "count shown"
-    ],
-    "props": [
+    path: "packages/ui/src/components/FailedCountBadge.tsx",
+    states: ["zero hidden", "count shown"],
+    props: [
       {
-        "name": "count",
-        "type": "number",
-        "note": "failed items"
-      }
+        name: "count",
+        type: "number",
+        note: "failed items",
+      },
     ],
-    "registryEquivalent": "badge",
-    "verdict": "Fully custom. Skip.",
-    "consumers": [
+    registryEquivalent: "badge",
+    verdict: "Fully custom. Skip.",
+    consumers: [
       "packages/mobile/src/components/Header.tsx",
       "panel/src/app/DockView.tsx",
-      "panel/src/app/console/ConsoleView.tsx"
+      "panel/src/app/console/ConsoleView.tsx",
     ],
-    "surfaces": [
-      "mobile",
-      "panel"
-    ]
+    surfaces: ["mobile", "panel"],
   },
   {
-    "id": "DOM-005",
-    "name": "QueuedPreview",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-005",
+    name: "QueuedPreview",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/QueuedPreview.tsx",
-    "states": [
-      "truncated quote"
-    ],
-    "props": [
+    path: "packages/ui/src/components/QueuedPreview.tsx",
+    states: ["truncated quote"],
+    props: [
       {
-        "name": "text",
-        "type": "string",
-        "note": "preview line"
-      }
+        name: "text",
+        type: "string",
+        note: "preview line",
+      },
     ],
-    "consumers": [
-      "packages/mobile/src/components/AgentCard.tsx"
-    ],
-    "surfaces": [
-      "mobile"
-    ]
+    consumers: ["packages/mobile/src/components/AgentCard.tsx"],
+    surfaces: ["mobile"],
   },
   {
-    "id": "DOM-006",
-    "name": "GrantButton",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-006",
+    name: "GrantButton",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/GrantButton.tsx",
-    "states": [
-      "idle",
-      "holding PTT",
-      "disabled"
-    ],
-    "props": [
+    path: "packages/ui/src/components/GrantButton.tsx",
+    states: ["idle", "holding PTT", "disabled"],
+    props: [
       {
-        "name": "onGrant",
-        "type": "() => void",
-        "note": "tap grant"
+        name: "onGrant",
+        type: "() => void",
+        note: "tap grant",
       },
       {
-        "name": "onHoldStart",
-        "type": "() => void",
-        "note": "optional PTT"
+        name: "onHoldStart",
+        type: "() => void",
+        note: "optional PTT",
       },
       {
-        "name": "holdMs",
-        "type": "number",
-        "note": "hold threshold"
-      }
+        name: "holdMs",
+        type: "number",
+        note: "hold threshold",
+      },
     ],
-    "registryEquivalent": "button",
-    "verdict": "Does not use our Button primitive — bespoke hold semantics. Skip migration.",
-    "consumers": [
+    registryEquivalent: "button",
+    verdict: "Does not use our Button primitive — bespoke hold semantics. Skip migration.",
+    consumers: [
       "packages/mobile/src/components/AgentCard.tsx",
-      "panel/src/app/console/ThreadNode.tsx"
+      "panel/src/app/console/ThreadNode.tsx",
     ],
-    "surfaces": [
-      "mobile",
-      "panel"
-    ]
+    surfaces: ["mobile", "panel"],
   },
   {
-    "id": "DOM-007",
-    "name": "TransportBar",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-007",
+    name: "TransportBar",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/TransportBar.tsx",
-    "states": [
-      "playing",
-      "paused",
-      "disabled controls"
-    ],
-    "props": [
+    path: "packages/ui/src/components/TransportBar.tsx",
+    states: ["playing", "paused", "disabled controls"],
+    props: [
       {
-        "name": "onPlay",
-        "type": "() => void",
-        "note": "transport callbacks"
-      }
+        name: "onPlay",
+        type: "() => void",
+        note: "transport callbacks",
+      },
     ],
-    "registryEquivalent": "button-group",
-    "verdict": "Maps onto TransportBar / ActionCluster; styling-only win. Optional.",
-    "consumers": [],
-    "surfaces": []
+    registryEquivalent: "button-group",
+    verdict: "Maps onto TransportBar / ActionCluster; styling-only win. Optional.",
+    consumers: [],
+    surfaces: [],
   },
   {
-    "id": "DOM-008",
-    "name": "SummaryText",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-008",
+    name: "SummaryText",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/SummaryText.tsx",
-    "states": [
-      "markdown summary",
-      "plain"
-    ],
-    "props": [
+    path: "packages/ui/src/components/SummaryText.tsx",
+    states: ["markdown summary", "plain"],
+    props: [
       {
-        "name": "text",
-        "type": "string",
-        "note": "source"
+        name: "text",
+        type: "string",
+        note: "source",
       },
       {
-        "name": "linkPolicy",
-        "type": "LinkPolicy",
-        "note": "inert vs external"
-      }
+        name: "linkPolicy",
+        type: "LinkPolicy",
+        note: "inert vs external",
+      },
     ],
-    "consumers": [
+    consumers: [
       "packages/mobile/src/components/ThreadBubble.tsx",
       "panel/src/app/DockView.tsx",
-      "panel/src/app/console/Faceplate.tsx"
+      "panel/src/app/console/Faceplate.tsx",
     ],
-    "surfaces": [
-      "mobile",
-      "panel"
-    ]
+    surfaces: ["mobile", "panel"],
   },
   {
-    "id": "DOM-009",
-    "name": "Markdown",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "lib",
-      "base": "REACT-MARKDOWN"
+    id: "DOM-009",
+    name: "Markdown",
+    drawer: "domain",
+    provenance: {
+      kind: "lib",
+      base: "REACT-MARKDOWN",
     },
-    "path": "packages/ui/src/markdown/Markdown.tsx",
-    "states": [
-      "headings",
-      "links inert",
-      "links external"
-    ],
-    "props": [
+    path: "packages/ui/src/markdown/Markdown.tsx",
+    states: ["headings", "links inert", "links external"],
+    props: [
       {
-        "name": "text",
-        "type": "string",
-        "note": "markdown source"
+        name: "text",
+        type: "string",
+        note: "markdown source",
       },
       {
-        "name": "linkPolicy",
-        "type": "\"inert\" | \"external\"",
-        "note": "link behavior"
-      }
+        name: "linkPolicy",
+        type: '"inert" | "external"',
+        note: "link behavior",
+      },
     ],
-    "verdict": "Not a registry concept — react-markdown + rehype-sanitize + remark-breaks.",
-    "consumers": [
-      "packages/mobile/src/components/PlayerSheet.tsx"
-    ],
-    "surfaces": [
-      "mobile"
-    ]
+    verdict: "Not a registry concept — react-markdown + rehype-sanitize + remark-breaks.",
+    consumers: ["packages/mobile/src/components/PlayerSheet.tsx"],
+    surfaces: ["mobile"],
   },
   {
-    "id": "DOM-010",
-    "name": "icons",
-    "drawer": "domain",
-    "provenance": {
-      "kind": "custom"
+    id: "DOM-010",
+    name: "icons",
+    drawer: "domain",
+    provenance: {
+      kind: "custom",
     },
-    "path": "packages/ui/src/components/icons.tsx",
-    "states": [
-      "24×24 SVG set"
-    ],
-    "props": [
+    path: "packages/ui/src/components/icons.tsx",
+    states: ["24×24 SVG set"],
+    props: [
       {
-        "name": "className",
-        "type": "string",
-        "note": "size hook"
-      }
+        name: "className",
+        type: "string",
+        note: "size hook",
+      },
     ],
-    "verdict": "Hand-drawn SVGs — Lucide reserved for vendored primitives.",
-    "consumers": [
+    verdict: "Hand-drawn SVGs — Lucide reserved for vendored primitives.",
+    consumers: [
       "packages/mobile/src/components/ThreadBubble.tsx",
-      "panel/src/app/ActionCluster.tsx"
+      "panel/src/app/ActionCluster.tsx",
     ],
-    "surfaces": [
-      "mobile",
-      "panel"
-    ]
+    surfaces: ["mobile", "panel"],
   },
   {
-    "id": "EXT-001",
-    "name": "FieldCard",
-    "drawer": "proto-ext",
-    "provenance": {
-      "kind": "custom"
+    id: "EXT-001",
+    name: "FieldCard",
+    drawer: "proto-ext",
+    provenance: {
+      kind: "custom",
     },
-    "path": "prototype/src/rig-ext/FieldCard.tsx",
-    "states": [
-      "compact card",
-      "CutFrame wrap"
-    ],
-    "props": [
+    path: "prototype/src/rig-ext/FieldCard.tsx",
+    states: ["compact card", "CutFrame wrap"],
+    props: [
       {
-        "name": "children",
-        "type": "ReactNode",
-        "note": "card body"
-      }
+        name: "children",
+        type: "ReactNode",
+        note: "card body",
+      },
     ],
-    "consumers": [],
-    "surfaces": []
+    consumers: [],
+    surfaces: [],
   },
   {
-    "id": "EXT-002",
-    "name": "FieldCrtFace",
-    "drawer": "proto-ext",
-    "provenance": {
-      "kind": "custom"
+    id: "EXT-002",
+    name: "FieldCrtFace",
+    drawer: "proto-ext",
+    provenance: {
+      kind: "custom",
     },
-    "path": "prototype/src/rig-ext/FieldCrtFace.tsx",
-    "states": [
-      "40px",
-      "148px field sizes"
-    ],
-    "props": [
+    path: "prototype/src/rig-ext/FieldCrtFace.tsx",
+    states: ["40px", "148px field sizes"],
+    props: [
       {
-        "name": "size",
-        "type": "40 | 148",
-        "note": "field CRT scale"
-      }
+        name: "size",
+        type: "40 | 148",
+        note: "field CRT scale",
+      },
     ],
-    "consumers": [
+    consumers: [
       "prototype/src/field/ComsScreen.tsx",
       "prototype/src/field/FieldBerthRow.tsx",
       "prototype/src/field/GlanceScreen.tsx",
       "prototype/src/field/NodeSheet.tsx",
-      "prototype/src/field/ComsHeader.tsx"
+      "prototype/src/field/ComsHeader.tsx",
     ],
-    "surfaces": [
-      "field"
-    ]
+    surfaces: ["field"],
   },
   {
-    "id": "EXT-003",
-    "name": "SessionDial",
-    "drawer": "proto-ext",
-    "provenance": {
-      "kind": "custom"
+    id: "EXT-003",
+    name: "SessionDial",
+    drawer: "proto-ext",
+    provenance: {
+      kind: "custom",
     },
-    "path": "prototype/src/rig-ext/SessionDial.tsx",
-    "states": [
-      "window arc",
-      "session arc",
-      "redline"
-    ],
-    "props": [
+    path: "prototype/src/rig-ext/SessionDial.tsx",
+    states: ["window arc", "session arc", "redline"],
+    props: [
       {
-        "name": "fraction",
-        "type": "number",
-        "note": "spend window"
+        name: "fraction",
+        type: "number",
+        note: "spend window",
       },
       {
-        "name": "sessionFraction",
-        "type": "number | null",
-        "note": "blue outer arc"
+        name: "sessionFraction",
+        type: "number | null",
+        note: "blue outer arc",
       },
       {
-        "name": "redlineFrom",
-        "type": "number",
-        "note": "red arc threshold"
-      }
+        name: "redlineFrom",
+        type: "number",
+        note: "red arc threshold",
+      },
     ],
-    "consumers": [
-      "prototype/src/field/GaugesScreen.tsx"
-    ],
-    "surfaces": [
-      "field"
-    ]
-  }
+    consumers: ["prototype/src/field/GaugesScreen.tsx"],
+    surfaces: ["field"],
+  },
 ];
 
 export function countByDrawer(drawer: Instrument["drawer"] | "all"): number {

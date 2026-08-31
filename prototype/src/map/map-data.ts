@@ -132,12 +132,7 @@ export const MAP_NODES: MapNode[] = [
     why: "Puts text inject, push-to-talk, and held-question answers on one interpreter line.",
     tie: "All three inputs classify into command, question, new work, talk-back, or a one-off ask.",
     ties: ["m-04"],
-    terminals: [
-      "heldQuestion",
-      "micHot",
-      "composerText",
-      "focusCraftId",
-    ],
+    terminals: ["heldQuestion", "micHot", "composerText", "focusCraftId"],
     src: `${DOC} · REPLY DECK`,
   },
   {
@@ -233,12 +228,7 @@ export const MAP_NODES: MapNode[] = [
     why: "Unblocks a held thread from the couch without opening the laptop.",
     tie: "A needs-feedback operator gate answered by exact option id, with the inject bound to the ticket.",
     ties: ["m-04", "m-06"],
-    terminals: [
-      "heldQuestion",
-      "focusCraftId",
-      "crafts",
-      "transcript",
-    ],
+    terminals: ["heldQuestion", "focusCraftId", "crafts", "transcript"],
     src: `${DOC} · Mobile 2 · ANSWER`,
   },
   {

@@ -20,8 +20,16 @@ const GEAR: Detent[] = [
 
 const CAST: Detent[] = [
   { value: "mikey", label: "MIKEY", consequence: "ELEVENLABS BILLS PER CHARACTER · SOLO CAST" },
-  { value: "leo", label: "LEO + D", consequence: "ELEVENLABS BILLS PER CHARACTER · DONNIE IN POOL" },
-  { value: "raph", label: "RAPH + POOL", consequence: "ELEVENLABS BILLS PER CHARACTER · CAST CHANGES WHO, NOT RATE" },
+  {
+    value: "leo",
+    label: "LEO + D",
+    consequence: "ELEVENLABS BILLS PER CHARACTER · DONNIE IN POOL",
+  },
+  {
+    value: "raph",
+    label: "RAPH + POOL",
+    consequence: "ELEVENLABS BILLS PER CHARACTER · CAST CHANGES WHO, NOT RATE",
+  },
 ];
 
 const BRAIN: Detent[] = [
@@ -45,7 +53,10 @@ function Dial({
   detents: Detent[];
   onChange: (value: string) => void;
 }) {
-  const activeIndex = Math.max(0, detents.findIndex((detent) => detent.value === value));
+  const activeIndex = Math.max(
+    0,
+    detents.findIndex((detent) => detent.value === value),
+  );
   const active = detents[activeIndex] ?? detents[0];
   return (
     <div className="commission-dial">
@@ -62,17 +73,15 @@ function Dial({
         aria-label={`${number} ${title}`}
       >
         {detents.map((detent) => (
-          <ToggleGroupItem
-            key={detent.value}
-            value={detent.value}
-            className="commission-detent"
-          >
+          <ToggleGroupItem key={detent.value} value={detent.value} className="commission-detent">
             {detent.label}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
       <div className="commission-dial-label">
-        <b>{number} · {title}</b>
+        <b>
+          {number} · {title}
+        </b>
         <span>HOME: {home}</span>
       </div>
       <div className="commission-consequence">

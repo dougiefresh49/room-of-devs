@@ -17,12 +17,7 @@ export function FieldCard({
   children?: ReactNode;
 }) {
   return (
-    <CutFrame
-      scale="s"
-      className={className}
-      innerClassName="fcard"
-      style={style}
-    >
+    <CutFrame scale="s" className={className} innerClassName="fcard" style={style}>
       {children}
     </CutFrame>
   );

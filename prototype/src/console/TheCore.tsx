@@ -32,15 +32,12 @@ export function TheCore() {
           <div className="hv-shell lit" />
         </div>
         <div className="hv-cap">
-          LIT HEXES = TOTAL DRAW <b>{pct}%</b> · BALL = <b>
-            {spend.windowResetLabel}
-          </b> LEFT IN THE 7-DAY WINDOW
+          LIT HEXES = TOTAL DRAW <b>{pct}%</b> · BALL = <b>{spend.windowResetLabel}</b> LEFT IN THE
+          7-DAY WINDOW
           <br />
           TIGHTEST GUARD:{" "}
           <b>
-            {worst
-              ? `${worst.label} ${worst.window} · ${Math.round(worst.fraction * 100)}%`
-              : "—"}
+            {worst ? `${worst.label} ${worst.window} · ${Math.round(worst.fraction * 100)}%` : "—"}
           </b>{" "}
           · FLARE = SPEAKING · GEMINI DIAL RUNS TO OUR SPEND GOAL, NOT A CAP
         </div>

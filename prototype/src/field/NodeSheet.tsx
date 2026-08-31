@@ -116,17 +116,18 @@ export function NodeSheet({
     onAnswered();
   };
 
-  const answerKeycaps = (compact = false) => question?.options.map((option, index) => (
-    <Keycap
-      key={option.id}
-      glyph={String(index + 1)}
-      label={option.label}
-      hint={`SAY “${option.speakHint}”`}
-      armed={option.armed}
-      onPress={() => chooseAnswer(option.id)}
-      className={`nodesheet-keycap${compact ? " is-compact" : ""}`}
-    />
-  ));
+  const answerKeycaps = (compact = false) =>
+    question?.options.map((option, index) => (
+      <Keycap
+        key={option.id}
+        glyph={String(index + 1)}
+        label={option.label}
+        hint={`SAY “${option.speakHint}”`}
+        armed={option.armed}
+        onPress={() => chooseAnswer(option.id)}
+        className={`nodesheet-keycap${compact ? " is-compact" : ""}`}
+      />
+    ));
 
   return (
     <Sheet
@@ -182,7 +183,9 @@ export function NodeSheet({
             </FieldCrtFace>
             <div className="nodesheet-idcopy">
               <SheetTitle>{craft.callsign}</SheetTitle>
-              <span>{craft.ticket} · TMUX {craft.tmux ? "✓" : "—"} · {fmtClear(craft.salienceDelta)} CLR</span>
+              <span>
+                {craft.ticket} · TMUX {craft.tmux ? "✓" : "—"} · {fmtClear(craft.salienceDelta)} CLR
+              </span>
             </div>
             <div className="nodesheet-state">
               <Tag tone={stateTone}>{stateLabel}</Tag>
@@ -205,29 +208,31 @@ export function NodeSheet({
             </section>
           ) : null}
 
-          {!questionOnly ? <section className="nodesheet-context">
-            {question ? (
-              <button type="button" className="nodesheet-back" onClick={() => setShowFull(false)}>
-                ◂ BACK TO QUESTION
-              </button>
-            ) : null}
-            <div className="nodesheet-cap">LIVE TAIL</div>
-            <div className="nodesheet-tail">
-              {craft.tail.slice(-4).map((line, index) => (
-                <div key={`${line.kind}-${line.text}-${index}`}>
-                  <span aria-hidden>{line.kind === "cmd" ? "▸" : "·"}</span>
-                  {line.text}
-                </div>
-              ))}
-            </div>
-            <div className="nodesheet-spend">
-              {`${(craft.tokens / 1000).toFixed(1)}k TOK · $${craft.spendUsd.toFixed(2)} · ${craft.turns} TURNS`}
-            </div>
-            <div className="nodesheet-diff">
-              <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
-              <span className="nodesheet-board-status">ON THE BIG BOARD</span>
-            </div>
-          </section> : null}
+          {!questionOnly ? (
+            <section className="nodesheet-context">
+              {question ? (
+                <button type="button" className="nodesheet-back" onClick={() => setShowFull(false)}>
+                  ◂ BACK TO QUESTION
+                </button>
+              ) : null}
+              <div className="nodesheet-cap">LIVE TAIL</div>
+              <div className="nodesheet-tail">
+                {craft.tail.slice(-4).map((line, index) => (
+                  <div key={`${line.kind}-${line.text}-${index}`}>
+                    <span aria-hidden>{line.kind === "cmd" ? "▸" : "·"}</span>
+                    {line.text}
+                  </div>
+                ))}
+              </div>
+              <div className="nodesheet-spend">
+                {`${(craft.tokens / 1000).toFixed(1)}k TOK · $${craft.spendUsd.toFixed(2)} · ${craft.turns} TURNS`}
+              </div>
+              <div className="nodesheet-diff">
+                <b>DIFF · {craft.diff ? "3 FILES" : "NO PATCH YET"}</b>
+                <span className="nodesheet-board-status">ON THE BIG BOARD</span>
+              </div>
+            </section>
+          ) : null}
         </div>
 
         {showFull && question ? (

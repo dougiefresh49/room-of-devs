@@ -155,8 +155,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
     // Live sessions auto-deliver everything to the phone — final responses
     // included — regardless of playback mode (the owner opted in explicitly).
     // Live-muted sessions fall back to announce/hand-raise (not auto-stream).
-    const liveSession =
-      !!sessionId && isLiveSession(sessionId) && !isLiveMuted(sessionId);
+    const liveSession = !!sessionId && isLiveSession(sessionId) && !isLiveMuted(sessionId);
 
     // Intermediates are retired (not parked) when live ended/muted or a newer
     // clip supersedes them — handled BEFORE the playback-mode gate so a stale
@@ -259,10 +258,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
 
     // Queued-before-mute race: live-cc items must not synthesize if live
     // ended or was muted after enqueue (closes the flip-race window).
-    if (
-      isIntermediate &&
-      (!sessionId || !isLiveSession(sessionId) || isLiveMuted(sessionId))
-    ) {
+    if (isIntermediate && (!sessionId || !isLiveSession(sessionId) || isLiveMuted(sessionId))) {
       log("server", `live muted/off — dropping intermediate ${name}`);
       moveToPlayed(filePath);
       return;

@@ -58,17 +58,17 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
         nowPlaying={room.nowPlaying}
         onAirAliases={onAirAliases}
         onOpenFloor={onOpenFloor}
-        endAdornment={room.heldQuestion && heldCraft ? (
-          <button
-            type="button"
-            className="coms-heldrow"
-            onClick={() => onOpenNode(heldCraft.id)}
-          >
-            <Led tone="red" />
-            <b>{heldCraft.callsign} HOLDING · {heldCraft.ticket} · {formatHold(heldSeconds)}</b>
-            <i aria-hidden>▸</i>
-          </button>
-        ) : null}
+        endAdornment={
+          room.heldQuestion && heldCraft ? (
+            <button type="button" className="coms-heldrow" onClick={() => onOpenNode(heldCraft.id)}>
+              <Led tone="red" />
+              <b>
+                {heldCraft.callsign} HOLDING · {heldCraft.ticket} · {formatHold(heldSeconds)}
+              </b>
+              <i aria-hidden>▸</i>
+            </button>
+          ) : null
+        }
         endAdornmentKey={room.heldQuestion && heldCraft ? `held:${heldCraft.id}` : null}
       />
 
@@ -96,7 +96,9 @@ export function ComsScreen({ onOpenNode, onOpenFloor }: ComsScreenProps) {
       {rows.length === 0 ? (
         <div className="coms-empty">
           <b>TELL MIKEY WHAT TO BUILD</b>
-          <span>Type it below — Mikey writes the ticket and picks the crew. Voice runs on the Mac RIG.</span>
+          <span>
+            Type it below — Mikey writes the ticket and picks the crew. Voice runs on the Mac RIG.
+          </span>
         </div>
       ) : null}
     </div>

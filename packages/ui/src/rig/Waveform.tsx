@@ -15,10 +15,7 @@ export interface WaveformProps {
 export function Waveform({ active, bars = 12, className }: WaveformProps) {
   const n = Math.max(1, Math.min(24, bars));
   return (
-    <div
-      className={cn("rig-wave", !active && "rig-wave--flat", className)}
-      aria-hidden="true"
-    >
+    <div className={cn("rig-wave", !active && "rig-wave--flat", className)} aria-hidden="true">
       {Array.from({ length: n }, (_, i) => (
         <i key={i} style={{ animationDelay: `${(i * 37) % 400}ms` }} />
       ))}
