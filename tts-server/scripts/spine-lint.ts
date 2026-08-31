@@ -23,7 +23,7 @@ type Issue = {
 
 const r = spawnSync(
   "gh",
-  ["issue", "list", "--state", "open", "--limit", "100", "--json", "number,title,labels,comments"],
+  ["issue", "list", "--state", "open", "--limit", "1000", "--json", "number,title,labels,comments"],
   { encoding: "utf-8", maxBuffer: 32 * 1024 * 1024 },
 );
 if (r.status !== 0) {

@@ -68,6 +68,7 @@ type Issue = {
   title: string;
   state: string;
   updatedAt: string;
+  closedAt?: string | null;
   body?: string;
   labels: { name: string }[];
   milestone?: { title: string } | null;
@@ -104,6 +105,11 @@ const STOPWORDS = new Set(
 /** Broad status questions name no entity; resolving them is noise, not signal. */
 const BROAD_QUESTION =
   /\b(where are we|overall|the room|everything|anything else|what's going on|status of the (room|project))\b/i;
+
+/** When a closed ticket actually closed. updatedAt moves on label edits and is not it. */
+function closedTime(i: Issue): number {
+  return Date.parse(i.closedAt ?? i.updatedAt);
+}
 
 function stateOf(i: Issue): string {
   return (
@@ -218,7 +224,7 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
   );
   const working = open.filter((i) => stateOf(i) === "state/working");
   const cutoff = Date.now() - WEEK_MS;
-  const thisWeek = closed.filter((i) => Date.parse(i.updatedAt) >= cutoff);
+  const thisWeek = closed.filter((i) => closedTime(i) >= cutoff);
 
   return [
     "## DIGEST — computed deterministically from the tracker. AUTHORITATIVE for counts,",
@@ -348,18 +354,15 @@ function buildContext(question: string): string {
         "--limit",
         String(CLOSED_LIMIT),
         "--json",
-        "number,title,labels,state,updatedAt,body,milestone",
+        "number,title,labels,state,updatedAt,closedAt,body,milestone",
       ]),
     ) as Issue[]
-  ).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  ).sort((a, b) => closedTime(b) - closedTime(a));
 
   // Comments for open issues (live conclusions) AND recent closed ones
   // (the verification trail the digest quotes).
   const cutoff = Date.now() - WEEK_MS;
-  for (const i of [
-    ...openIssues,
-    ...closedIssues.filter((c) => Date.parse(c.updatedAt) >= cutoff),
-  ]) {
+  for (const i of [...openIssues, ...closedIssues.filter((c) => closedTime(c) >= cutoff)]) {
     i.comments = (
       JSON.parse(gh(["issue", "view", String(i.number), "--json", "comments"])) as Issue
     ).comments;
