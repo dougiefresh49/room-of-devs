@@ -146,19 +146,24 @@ function lastSubstantive(i: Issue): string {
  */
 function claimOf(i: Issue, trusted: Set<string>): { claim: Claim | null; note: string } {
   const comments = (i.comments ?? []).slice().reverse();
+  // An untrusted marker must not mask an earlier trusted one: scan the whole
+  // trail for the newest TRUSTED marker, remembering untrusted ones to flag.
+  let untrusted: (typeof comments)[number] | undefined;
   for (const c of comments) {
     const claim = parseClaim(c.body);
     if (!claim) continue;
     if (trusted.has(c.author?.login ?? ""))
       return {
         claim,
-        note: `(${c.createdAt}) session ${claim.session}${claim.persona ? ` / ${claim.persona}` : ""} — doing ${clip(claim.doing, 200)}`,
+        note: `(${c.createdAt}) session ${claim.session}${claim.persona ? ` / ${claim.persona}` : ""} — doing ${clip(claim.doing, 200)}${untrusted ? ` [a newer untrusted marker from "${untrusted.author?.login ?? "unknown"}" was ignored]` : ""}`,
       };
+    untrusted ??= c;
+  }
+  if (untrusted)
     return {
       claim: null,
-      note: `UNTRUSTED claim marker from "${c.author?.login ?? "unknown"}" (not the owner) — ignored, treat the ticket as unclaimed`,
+      note: `UNTRUSTED claim marker from "${untrusted.author?.login ?? "unknown"}" (not the owner) — ignored, treat the ticket as unclaimed`,
     };
-  }
   const loose = comments.find((c) => /\bclaim(ed|ing)?\b/i.test(c.body)) ?? comments[0];
   if (!loose)
     return {
@@ -248,6 +253,10 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
   // thread's session id; live transcripts carry the same id. Joined here in
   // code so flash narrates the mapping instead of guessing it.
   const trusted = trustedLogins(REPO_ROOT);
+  // An empty set means owner resolution failed, and every valid claim would
+  // render as untrusted. Refuse to build (and bill for) a wrong digest.
+  if (trusted.size === 0)
+    throw new Error("could not resolve the repo owner (gh repo view failed) — cannot trust claims");
   const claims = working.map((i) => ({ i, ...claimOf(i, trusted) }));
   const live = liveSessions();
   const liveness = (claim: Claim | null): string => {
@@ -264,9 +273,9 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
         ? "  (no transcript written in the last 30 min — nobody appears to be working)"
         : live
             .map((s) => {
-              const owned = claims.find((c) => c.claim && sameSession(c.claim.session, s.id));
-              const doing = owned
-                ? `working #${owned.i.number} (${owned.i.title})`
+              const owned = claims.filter((c) => c.claim && sameSession(c.claim.session, s.id));
+              const doing = owned.length
+                ? `working ${owned.map((c) => `#${c.i.number} (${c.i.title})`).join(", ")}`
                 : "no claimed ticket — untracked or violating claim-at-start";
               return `  - session ${s.id.slice(0, 8)} last wrote ${new Date(s.mtime).toISOString()} → ${doing}`;
             })
