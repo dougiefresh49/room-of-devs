@@ -47,7 +47,12 @@ import { startDnd, stopDnd } from "./dnd.js";
 import { startInterpreter, stopInterpreter } from "./interpreter/service.js";
 import { registryPidBySessionId, isPidAlive } from "./session-catalog.js";
 import { t3DoneSessionIds } from "./t3-thread-state.js";
-import { rotateLogIfLarge, runStartupRetention, runPeriodicMaintenance } from "./maintenance.js";
+import {
+  rotateLogIfLarge,
+  runStartupRetention,
+  runPeriodicMaintenance,
+  ageOutQueue,
+} from "./maintenance.js";
 import { emitNotice } from "./services/commands.js";
 import { bumpSnapshot } from "./state-watch.js";
 import { log } from "./logger.js";
@@ -491,6 +496,10 @@ reconcileSessionLineage();
 // Reconcile per-session room state against ~/.claude/sessions so the menu/LEDs
 // reflect live sessions immediately, not an empty room until each fires a hook.
 seedStateOnStartup();
+
+// Only after lineage + seeding: queue items whose state hasn't been migrated
+// or reseeded yet would otherwise read as orphans and get swept (issue #77).
+ageOutQueue();
 
 log("server", `Starting — watching ${QUEUE_DIR}`);
 console.log(`tts-server watching: ${QUEUE_DIR}`);

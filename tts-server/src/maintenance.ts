@@ -75,6 +75,12 @@ function pruneDirByCount(dir: string, keep: number): number {
 // forever, but "aged out" is not "the agent failed" (issue #77).
 const QUEUE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
+// Ingest publishes the queue file BEFORE raising the session's state file, so
+// a brand-new item can look orphaned for a moment. The orphan rule only fires
+// once a file has sat unclaimed past this grace, closing that race (and the
+// boot window before lineage reconciliation/seeding rebuilds state).
+const ORPHAN_MIN_AGE_MS = 15 * 60 * 1000;
+
 /**
  * "<anything>-cc-<shortSession>.json" → shortSession, or null. Mirrors
  * ccShortSession in state-watch.ts — kept local rather than imported since
@@ -147,8 +153,8 @@ export function ageOutQueue(): void {
       let fullSid: string | undefined;
       if (shortSession) {
         fullSid = stateSessions.get(shortSession);
-        if (!fullSid) reason = "orphan";
-        else if (isAged) reason = "age";
+        if (!fullSid && now - mtime > ORPHAN_MIN_AGE_MS) reason = "orphan";
+        else if (fullSid && isAged) reason = "age";
       } else if (isAged) {
         reason = "age";
       }
@@ -168,7 +174,12 @@ export function ageOutQueue(): void {
       }
     }
 
-    for (const sid of toRecompute) recomputeAfterPlayback(sid);
+    for (const sid of toRecompute) {
+      // Re-check right before writing: setSessionState creates the file if
+      // missing, and a SessionEnd cleanup racing this tick must not get its
+      // dead session resurrected as a ghost card.
+      if (existsSync(join(STATE_DIR, `${sid}.json`))) recomputeAfterPlayback(sid);
+    }
 
     if (agedCount || orphanCount) {
       log(
@@ -181,8 +192,10 @@ export function ageOutQueue(): void {
   }
 }
 
-/** Enforce played/ + failed/ retention, then age out stale queue items.
- *  Call once at daemon startup. */
+/** Enforce played/ + failed/ retention. Runs before lineage reconciliation at
+ *  boot, so queue aging does NOT belong here — index.ts calls ageOutQueue()
+ *  separately, after seedStateOnStartup, so pre-migration state never reads
+ *  as orphaned. */
 export function runStartupRetention(): void {
   const cfg = loadConfig();
   const played = pruneDirByCount(PLAYED_DIR, cfg.played_retention_count);
@@ -197,12 +210,11 @@ export function runStartupRetention(): void {
       `retention pruned ${played} played, ${failed} failed (keep ${cfg.played_retention_count}/${cfg.failed_retention_count})`,
     );
   }
-  ageOutQueue();
 }
 
-/** Cheap idempotent housekeeping for the 60s reaper (M-9). runStartupRetention
- *  already calls ageOutQueue(), so it runs once per tick here, not twice. */
+/** Cheap idempotent housekeeping for the 60s reaper (M-9). */
 export function runPeriodicMaintenance(): void {
   rotateLogIfLarge();
   runStartupRetention();
+  ageOutQueue();
 }
