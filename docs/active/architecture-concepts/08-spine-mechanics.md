@@ -29,6 +29,18 @@ summarization step: done by the thread that has full context, at settle
 time, for free. No scheduled log→summary pipelines — that's what teams
 build when they *lack* a settle discipline, and then they drown.
 
+The settle rule has a first half, the checkout (#75, found by the 09
+validation: a tap-in answered "nobody is working" while two threads
+were live, because nothing wrote state until settle). A thread claims
+its ticket before it does anything: file one if none exists, set
+`state/working`, drop a one-line "claimed, doing X" comment. Settle
+clears the claim and writes conclusions as above. Corollary for every
+consumer: surface last substantive activity (last comment, or last
+commit touching the ticket), never `updatedAt`, which moves on label
+edits. Enforced as prose in AGENTS.md plus the one-`state/*`-per-issue
+lint (`pnpm spine-lint`, run in CI); a PreToolUse hook is the next
+rung if discipline slips.
+
 ## Retention pyramid
 
 ```mermaid

@@ -68,6 +68,7 @@ type Issue = {
   title: string;
   state: string;
   updatedAt: string;
+  closedAt?: string | null;
   body?: string;
   labels: { name: string }[];
   milestone?: { title: string } | null;
@@ -105,6 +106,11 @@ const STOPWORDS = new Set(
 const BROAD_QUESTION =
   /\b(where are we|overall|the room|everything|anything else|what's going on|status of the (room|project))\b/i;
 
+/** When a closed ticket actually closed. updatedAt moves on label edits and is not it. */
+function closedTime(i: Issue): number {
+  return Date.parse(i.closedAt ?? i.updatedAt);
+}
+
 function stateOf(i: Issue): string {
   return (
     i.labels.find((l) => l.name.startsWith("state/"))?.name ?? "(UNLABELLED — invariant violation)"
@@ -131,6 +137,18 @@ function lastSubstantive(i: Issue): string {
   return parts.length ? parts.join(" | ") : "no comments, no commits — never worked";
 }
 
+/** The claim comment a thread dropped at start (#75), falling back to the last comment. */
+function claimNote(i: Issue): string {
+  const comments = i.comments ?? [];
+  const hit =
+    comments
+      .slice()
+      .reverse()
+      .find((c) => /\bclaim(ed|ing)?\b/i.test(c.body)) ?? comments.at(-1);
+  if (!hit) return "NO CLAIM COMMENT — claimed without saying what for (protocol violation)";
+  return `(${hit.createdAt}) ${clip(hit.body, 220).replace(/\n+/g, " ")}`;
+}
+
 /** Pull the verification evidence out of a settled ticket's trail. */
 function verificationNote(i: Issue): string {
   const hit = (i.comments ?? [])
@@ -142,9 +160,9 @@ function verificationNote(i: Issue): string {
 
 /**
  * Heuristic liveness the tracker can't give us: transcripts written in the
- * last 30 min mean a thread is ALIVE, even though nothing claimed a ticket.
- * Partial substitute for claim-at-start write-back (#75) — it proves someone
- * is working; it cannot say on what ticket.
+ * last 30 min mean a thread is ALIVE, whether or not it claimed a ticket.
+ * Complements claim-at-start write-back (#75): the claimed ticket says what
+ * the work is; the transcript mtime proves the thread is still breathing.
  */
 function liveThreads(): string {
   const dir = join(homedir(), ".claude", "projects", REPO_ROOT.replace(/\//g, "-"));
@@ -206,7 +224,7 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
   );
   const working = open.filter((i) => stateOf(i) === "state/working");
   const cutoff = Date.now() - WEEK_MS;
-  const thisWeek = closed.filter((i) => Date.parse(i.updatedAt) >= cutoff);
+  const thisWeek = closed.filter((i) => closedTime(i) >= cutoff);
 
   return [
     "## DIGEST — computed deterministically from the tracker. AUTHORITATIVE for counts,",
@@ -219,14 +237,14 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
       ? gate.map((i) => `  - #${i.number} [${stateOf(i)}] ${i.title}`).join("\n")
       : "  (none)",
     "",
-    `IN FLIGHT (state/working) — ${working.length}. This list is COMPLETE:`,
+    `IN FLIGHT (state/working, claimed at start per #75) — ${working.length}. This list is COMPLETE:`,
     working.length
-      ? working.map((i) => `  - #${i.number} ${i.title}`).join("\n")
-      : "  (none) — CAVEAT: threads currently set this only at settle time, not at start,\n  so 'none' means 'nothing has declared itself', NOT 'nobody is working'.",
+      ? working.map((i) => `  - #${i.number} ${i.title}\n    claim: ${claimNote(i)}`).join("\n")
+      : "  (none) — nothing has claimed a ticket. If LIVE THREADS below shows activity,\n  that work is either untracked or violating claim-at-start; say so.",
     "",
-    "LIVE THREADS (heuristic — transcripts written in the last 30 min). This is the",
-    "real answer to 'is anyone working': a live transcript = a live thread, even with",
-    "no ticket claimed. It cannot say WHICH ticket. One of these is the caller itself.",
+    "LIVE THREADS (heuristic — transcripts written in the last 30 min). A live",
+    "transcript = a live thread. Join with IN FLIGHT above: the claimed ticket says",
+    "WHAT each thread is doing. One of these is the caller itself.",
     liveThreads(),
     "",
     `CLOSED IN THE LAST 7 DAYS — ${thisWeek.length}. This list is COMPLETE; naming a subset is a wrong answer:`,
@@ -336,18 +354,15 @@ function buildContext(question: string): string {
         "--limit",
         String(CLOSED_LIMIT),
         "--json",
-        "number,title,labels,state,updatedAt,body,milestone",
+        "number,title,labels,state,updatedAt,closedAt,body,milestone",
       ]),
     ) as Issue[]
-  ).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  ).sort((a, b) => closedTime(b) - closedTime(a));
 
   // Comments for open issues (live conclusions) AND recent closed ones
   // (the verification trail the digest quotes).
   const cutoff = Date.now() - WEEK_MS;
-  for (const i of [
-    ...openIssues,
-    ...closedIssues.filter((c) => Date.parse(c.updatedAt) >= cutoff),
-  ]) {
+  for (const i of [...openIssues, ...closedIssues.filter((c) => closedTime(c) >= cutoff)]) {
     i.comments = (
       JSON.parse(gh(["issue", "view", String(i.number), "--json", "comments"])) as Issue
     ).comments;
