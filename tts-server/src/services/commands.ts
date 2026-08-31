@@ -13,11 +13,20 @@
  * phone grant is mid-synthesis; spawn validation rejects before any script
  * runs; reply marks the phone-ack BEFORE injecting.
  */
-import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
-import { TTS_DIR } from "../config.js";
+import { TTS_DIR, FAILED_DIR } from "../config.js";
 import { buildPanelSnapshotFresh, buildSnapshot, sessionStateAgeMs } from "../state-watch.js";
 import { log } from "../logger.js";
 import {
@@ -26,7 +35,7 @@ import {
   removeSessionFromTeamMap,
   loadTeamMap,
 } from "../team-map.js";
-import { purgeSessionQueue, cleanupSession, isSdkCard } from "../state.js";
+import { purgeSessionQueue, recomputeAfterPlayback, cleanupSession, isSdkCard } from "../state.js";
 import { runStatusSay } from "../status-say.js";
 import { isResumableSession, knownDirs } from "../session-catalog.js";
 import { startPlayReplay } from "../audio.js";
@@ -727,6 +736,55 @@ export function killTeam(sessionId: string): void {
   cleanupSession(sessionId);
 }
 
+/**
+ * Dismiss a stale raised hand from the phone: move the session's pending
+ * queue files to played/ (same dismissed semantics as purgeSessionQueue
+ * elsewhere) and recompute the room card so the ✋ clears. Free — no
+ * synthesis, no script spawn.
+ */
+function dismissQueue(sessionId: string): void {
+  const moved = purgeSessionQueue(sessionId);
+  recomputeAfterPlayback(sessionId);
+  log("commands", `dismiss_queue: ${sessionId.slice(0, 12)} (${moved} item(s) moved)`);
+}
+
+/**
+ * Ack the FAILED badge: move every top-level failed/*.json into
+ * failed/acked/ so countFailedItems (state-watch.ts) sees zero, without
+ * deleting the record. Best-effort per file, never throws. FAILED_DIR is
+ * watched at depth 0 (state-watch.ts startStateWatch); renaming files out of
+ * it fires chokidar's "unlink" for each, so the snapshot rebroadcasts on its
+ * own — no explicit invalidate needed here.
+ */
+function clearFailedItems(): void {
+  if (!existsSync(FAILED_DIR)) return;
+  const ackedDir = join(FAILED_DIR, "acked");
+  try {
+    mkdirSync(ackedDir, { recursive: true });
+  } catch (err: any) {
+    log("commands", `clear_failed: couldn't create acked dir: ${err?.message ?? err}`);
+    return;
+  }
+  let moved = 0;
+  let entries: string[] = [];
+  try {
+    entries = readdirSync(FAILED_DIR);
+  } catch (err: any) {
+    log("commands", `clear_failed: couldn't list ${FAILED_DIR}: ${err?.message ?? err}`);
+    return;
+  }
+  for (const f of entries) {
+    if (!f.endsWith(".json")) continue;
+    try {
+      renameSync(join(FAILED_DIR, f), join(ackedDir, f));
+      moved++;
+    } catch (err: any) {
+      log("commands", `clear_failed: couldn't move ${f}: ${err?.message ?? err}`);
+    }
+  }
+  log("commands", `clear_failed: acked ${moved} item(s)`);
+}
+
 // ── Dispatch ────────────────────────────────────────────────────────────
 
 /**
@@ -752,6 +810,8 @@ const MOBILE_ACTION_TYPES = new Set([
   "set_live",
   "set_live_mute",
   "speak_text",
+  "dismiss_queue",
+  "clear_failed",
 ]);
 
 /** Transport-facing guard over the allowlist above. */
@@ -824,6 +884,12 @@ export function dispatch(msg: PanelMessage): void {
         runScript("hold_room.sh", []);
       }
       return;
+    case "dismiss_queue":
+      dismissQueue(msg.sessionId);
+      return;
+    case "clear_failed":
+      clearFailedItems();
+      return;
   }
 }
 
@@ -846,7 +912,10 @@ export function dispatchPanelAction(raw: unknown): boolean {
   }
 
   if (
-    (msg.type === "grant" || msg.type === "status_say" || msg.type === "speak_text") &&
+    (msg.type === "grant" ||
+      msg.type === "status_say" ||
+      msg.type === "speak_text" ||
+      msg.type === "dismiss_queue") &&
     !sessionInSnapshot(msg.sessionId)
   ) {
     return false;

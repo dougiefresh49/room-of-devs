@@ -27,6 +27,17 @@
     }
   },
   {
+    "type": "dismiss_queue"
+  },
+  {
+    "type": "dismiss_queue",
+    "sessionId": ""
+  },
+  {
+    "type": "dismiss_queue",
+    "sessionId": 5177
+  },
+  {
     "type": "grant",
     "sessionId": ""
   },

@@ -116,6 +116,7 @@ export function handValidatePanelMessage(raw: unknown): PanelMessage | "bad_mess
     case "kill_team":
     case "status_say":
     case "replay_session":
+    case "dismiss_queue":
       if (keys.length !== 2 || typeof msg.sessionId !== "string" || !msg.sessionId.trim()) {
         return "bad_message";
       }
@@ -127,6 +128,7 @@ export function handValidatePanelMessage(raw: unknown): PanelMessage | "bad_mess
     case "pause":
     case "list_resumable":
     case "known_dirs":
+    case "clear_failed":
       if (keys.length !== 1) return "bad_message";
       return { type: msg.type };
     case "play_replay": {

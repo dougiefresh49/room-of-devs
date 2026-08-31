@@ -103,6 +103,20 @@
   text-overflow: ellipsis;
 }
 
+/* Tappable variant (mobile, onClear passed): a <button> instead of a <div>,
+   plus a small × affordance hinting the tap acks/clears the badge. */
+button.failed-badge {
+  font: inherit;
+  cursor: pointer;
+}
+
+.failed-badge-clear {
+  margin-left: 1px;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.75;
+}
+
 /* Audit reduced-motion: the state dots pulse forever. Users who ask for
    reduced motion get the steady dot — color + the StateBadge text label
    still carry the state, so nothing is lost. */
