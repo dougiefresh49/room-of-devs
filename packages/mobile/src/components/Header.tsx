@@ -22,6 +22,7 @@ interface HeaderProps {
   onCatchUp: () => void;
   onStopCatchUp: () => void;
   onOpenPicker: () => void;
+  onClearFailed: () => void;
 }
 
 export function Header({
@@ -36,6 +37,7 @@ export function Header({
   onCatchUp,
   onStopCatchUp,
   onOpenPicker,
+  onClearFailed,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-line bg-bg/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
@@ -43,7 +45,7 @@ export function Header({
 
       <DeviceToggle output={output} onSetOutput={onSetOutput} />
 
-      <FailedCountBadge count={failedCount} />
+      <FailedCountBadge count={failedCount} onClear={onClearFailed} />
 
       <span
         className={`inline-block size-2.5 shrink-0 rounded-full ${

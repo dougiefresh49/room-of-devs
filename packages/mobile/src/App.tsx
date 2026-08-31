@@ -179,6 +179,18 @@ export function App() {
     client.grant(sessionId, prefs.output);
   };
 
+  // Dismiss a stale raised hand from the phone: free, no synthesis — moves
+  // the session's pending queue files to played/ (server-side dismissed
+  // semantics), same as re-engaging the session would.
+  const handleDismiss = (sessionId: string) => {
+    client.send({ type: "dismiss_queue", sessionId });
+  };
+
+  // Ack the FAILED badge: no confirmation, casual by design (owner call).
+  const handleClearFailed = () => {
+    client.send({ type: "clear_failed" });
+  };
+
   const handleReplayLast = (agent: AgentView) => {
     audioController.prime();
     const entry = newestForAgent(replayAll, agent);
@@ -250,6 +262,7 @@ export function App() {
         onCatchUp={handleCatchUp}
         onStopCatchUp={() => audioController.stopCatchUp()}
         onOpenPicker={() => setPickerOpen(true)}
+        onClearFailed={handleClearFailed}
       />
 
       <main className="mx-auto w-full max-w-xl px-4 py-4 pb-28">
@@ -263,6 +276,7 @@ export function App() {
           onReplayLast={handleReplayLast}
           onChat={handleChat}
           onHide={handleHide}
+          onDismiss={handleDismiss}
         />
 
         <HiddenDevs

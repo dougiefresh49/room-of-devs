@@ -33,6 +33,7 @@ interface AgentCardProps {
   onReplayLast: () => void;
   onChat: () => void;
   onHide: () => void;
+  onDismiss: () => void;
 }
 
 export function AgentCard({
@@ -45,6 +46,7 @@ export function AgentCard({
   onReplayLast,
   onChat,
   onHide,
+  onDismiss,
 }: AgentCardProps) {
   const displayName = agent.label || agent.name;
   const raised = agent.state === "hand_raised";
@@ -110,13 +112,25 @@ export function AgentCard({
           {raised && agent.queuedPreview ? <QueuedPreview text={agent.queuedPreview} /> : null}
         </div>
 
-        <button
-          type="button"
-          className="shrink-0 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          onClick={onHide}
-        >
-          Hide
-        </button>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {raised ? (
+            <button
+              type="button"
+              className="shrink-0 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              title="Dismiss this raised hand"
+              onClick={onDismiss}
+            >
+              Dismiss
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="shrink-0 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={onHide}
+          >
+            Hide
+          </button>
+        </div>
       </div>
 
       {raised ? (

@@ -16,6 +16,7 @@ interface RoomGridProps {
   onReplayLast: (agent: AgentView) => void;
   onChat: (agent: AgentView) => void;
   onHide: (rawName: string) => void;
+  onDismiss: (sessionId: string) => void;
 }
 
 export function RoomGrid({
@@ -28,6 +29,7 @@ export function RoomGrid({
   onReplayLast,
   onChat,
   onHide,
+  onDismiss,
 }: RoomGridProps) {
   if (agents.length === 0) {
     return <p className="px-1 py-8 text-center text-sm text-fg-muted">No agents in the room</p>;
@@ -46,6 +48,7 @@ export function RoomGrid({
           onReplayLast={() => onReplayLast(agent)}
           onChat={() => onChat(agent)}
           onHide={() => onHide(agent.name)}
+          onDismiss={() => onDismiss(agent.sessionId)}
         />
       ))}
     </div>

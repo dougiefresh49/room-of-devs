@@ -33,6 +33,19 @@
     "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0"
   },
   {
+    "type": "dismiss_queue",
+    "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0"
+  },
+  {
+    "type": "dismiss_queue",
+    "sessionId": "5177f197-5618-4ccc-9c39-81f755333ff0",
+    "requestId": "req-45",
+    "source": "mobile"
+  },
+  {
+    "type": "clear_failed"
+  },
+  {
     "type": "play_replay",
     "file": "2026-07-22T04-51-52-244Z_example.mp3",
     "offsetSec": 12.5
