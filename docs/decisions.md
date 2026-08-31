@@ -4,6 +4,16 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 
 | # | date | decision | status |
 |---|------|----------|--------|
+| 34 | 2026-08-31 | The Obsidian trial is dropped; Postplan is the good-enough reading layer, and vault-style doc structure being adopted is what reopens it | accepted |
+| 33 | 2026-08-31 | TITAN replaces "craft"; the star map becomes the frontier map (phases as hardpoints on one surface; drop = claim-at-start, eject = needs-owner, evac = settle), recorded in design-ui-target.md | accepted |
+| 32 | 2026-08-31 | The P2 console stays deployed as-is, no pre-RIG revert; the framework build replaces the panel wholesale | accepted |
+| 31 | 2026-08-31 | Mobile Talk absorbs live mode: live becomes a property of what you're talking to, not a separate mode; per-session tap-in may return in the RIG build if Mikey can't surface a specific in-flight session, and no 1-1 port is expected | accepted |
+| 30 | 2026-08-30 | The tape stays killed; ReplayHistory as "recently spoken" is its honest version, and catch-up is the concierge's job | accepted |
+| 29 | 2026-08-30 | Claim-at-start approved (#75): threads set `state/working` plus a claim comment at start, clear at settle; watcher threads un-gate when tap-in names an in-flight thread and its ticket | accepted |
+| 28 | 2026-08-30 | Client prefs (hidden devs, launch flags) stay in localStorage; the output toggle is per-client by design (billing safety) | accepted |
+| 27 | 2026-08-30 | Queue items age out at 3 days as dismissed (moved to `played/`), never failed; mobile gets a dismiss on raised-hand cards and a clear for the failed badge (#77) | accepted |
+| 26 | 2026-08-30 | The mobile call/chat views never port to desktop; desktop live stays indicator-only until the concierge layer replaces per-session narration | accepted |
+| 25 | 2026-08-30 | The Terminal → tmux migration is retired: T3 Code is the reply surface for the owner's own sessions, tmux stays as the persona spawn lane, terminal-tab sessions stay speak-only | accepted |
 | 24 | 2026-08-29 | The STATUS "Now" section was deleted rather than ported (git keeps it); the decisions it held without a row were recovered as rows 17-23, dated from the source; row 12's no-backfill stance otherwise stands | accepted |
 | 23 | 2026-08-01 | Round D: the fable board is the base with 14 opus grafts; the hangar is the boot rung; stock lamps report the generated manifest over the spec's prediction | accepted |
 | 22 | 2026-07-30 | The design target locks in a siloed mock-data prototype (`prototype/`) before the live UI is refactored into shared components; incremental reskins of the live app are retired as the approach (the P2 console reskin stays deployed, row 8) | accepted |
@@ -19,12 +29,12 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 | 12 | 2026-08-27 | This log holds parked questions and new calls only; owner calls that predate it were folded into CLAUDE.md or dropped, not backfilled as rows, so the fleet "nothing is deleted" convention applies from this date forward | accepted |
 | 11 | 2026-08-27 | Claude Code auto-memory is off for this repo: CLAUDE.md is the one durable layer for the dev workflow, memory files were archived and deleted (Theo's memory audit replicated here: 27 of 32 files never read in the surviving month) | accepted |
 | 10 | 2026-08-27 | Product-side recall (Mikey remembering past conversations) is a room feature, separate from dev-workflow memory; leaning is an append-only log queried over the room's own transcripts and replay sidecars, not a vault | unformed |
-| 9 | 2026-08-24 | Trial Obsidian as a viewer over `~/projects` docs (structure only; nothing at runtime) | open |
-| 8 | 2026-07-30 | Whether to revert the RIG P2 panel visuals to pre-RIG (`git revert 97ab295 6e0e13e`) while keeping desktop typed chat, attachments and the reply-inject fix; also still wanted, a better word than "craft" | open |
-| 7 | 2026-07-28 | Whether mobile Talk absorbs live mode (the one pending call that deletes shipped behavior; one Round C board assumed yes) | open |
-| 6 | 2026-07-28 | Whether the tape (scrubbing) killed in candidate A comes back; no board resurrected it | open |
-| 5 | 2026-07-28 | Watcher threads stay hard-gated until #75 (file-at-start + claim-at-start write-back) lands; un-gate when `tap-in.ts "is anyone working right now?"` names the thread and its ticket | open |
-| 4 | 2026-07-23 | Hidden devs, output target and launch flags stay in localStorage rather than daemon-side prefs | assumed (reopens when: a daemon-side prefs migration is scheduled) |
-| 3 | 2026-07-22 | Queue files from long-dead sessions (no state file) are left in `queue/` rather than auto-aged into `failed/`; queue admission is credit-sensitive and wants an awake owner | open |
-| 2 | 2026-07-21 | Desktop live is indicator-only (LiveBadge); thread/composer components stay portable for a later port | assumed (reopens when: the desktop call/chat port is scheduled) |
-| 1 | 2026-07-19 | Hold the full Terminal → tmux migration of the owner's sessions until spawn/reply and grant-supersede are proven in practice | open |
+| 9 | 2026-08-24 | Trial Obsidian as a viewer over `~/projects` docs (structure only; nothing at runtime) | superseded by 34 |
+| 8 | 2026-07-30 | Whether to revert the RIG P2 panel visuals to pre-RIG (`git revert 97ab295 6e0e13e`) while keeping desktop typed chat, attachments and the reply-inject fix; also still wanted, a better word than "craft" | superseded by 32, 33 |
+| 7 | 2026-07-28 | Whether mobile Talk absorbs live mode (the one pending call that deletes shipped behavior; one Round C board assumed yes) | superseded by 31 |
+| 6 | 2026-07-28 | Whether the tape (scrubbing) killed in candidate A comes back; no board resurrected it | superseded by 30 |
+| 5 | 2026-07-28 | Watcher threads stay hard-gated until #75 (file-at-start + claim-at-start write-back) lands; un-gate when `tap-in.ts "is anyone working right now?"` names the thread and its ticket | superseded by 29 |
+| 4 | 2026-07-23 | Hidden devs, output target and launch flags stay in localStorage rather than daemon-side prefs | superseded by 28 |
+| 3 | 2026-07-22 | Queue files from long-dead sessions (no state file) are left in `queue/` rather than auto-aged into `failed/`; queue admission is credit-sensitive and wants an awake owner | superseded by 27 |
+| 2 | 2026-07-21 | Desktop live is indicator-only (LiveBadge); thread/composer components stay portable for a later port | superseded by 26 |
+| 1 | 2026-07-19 | Hold the full Terminal → tmux migration of the owner's sessions until spawn/reply and grant-supersede are proven in practice | superseded by 25 |

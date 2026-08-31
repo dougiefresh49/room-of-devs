@@ -4,8 +4,8 @@ Thin index (fleet `html-status` skill): one line per entry, content lives
 in the linked docs. Publish with `pnpm docs:publish`. History before
 2026-08-29 (the old "Now" section) is in git: `git log -p docs/STATUS.md`.
 
-_Last updated: 2026-08-29 (STATUS reworked to a thin index; docs/active
-pruned)_
+_Last updated: 2026-08-31 (decision interview: rows 1-9 settled as rows
+25-34; #75 approved, #77 filed)_
 
 ## Inbox
 
@@ -15,16 +15,14 @@ backlog, work to `active/` specs or Next up. Empty is the goal state.
 
 ## Awaiting owner
 
-Open calls live in [decisions.md](decisions.md); these block work:
-
-- Keep or revert the RIG P2 panel reskin, plus a better word than
-  "craft" (row 8).
-- Does mobile Talk absorb live mode (row 7).
-- #75 file-at-start + claim-at-start write-back; watcher threads stay
-  gated until it lands (row 5).
-- Optional overrule: the tape (row 6).
-- Open but not blocking: Terminal to tmux migration (row 1), stale queue
-  files (row 3), Obsidian as a docs viewer (row 9).
+Open calls live in [decisions.md](decisions.md). Nothing is blocking:
+rows 1-9 were all settled in the 2026-08-30/31 interview (rows 25-34).
+Headlines: claim-at-start approved (#75; watcher threads un-gate when
+tap-in names an in-flight thread and its ticket), TITAN and the
+frontier map replace "craft" and the star map
+([design-ui-target.md](active/design-ui-target.md)), queue aging plus
+mobile dismiss filed as #77, the P2 console stays as-is until the
+framework build, the tape stays killed, mobile Talk absorbs live mode.
 
 ## Next up (likely order)
 

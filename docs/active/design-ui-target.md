@@ -9,7 +9,7 @@ briefs `../archive/design-brief-round-c-v2/v4/v6.md` (incl. the owner's closing
 corrections), and the settled #73 architecture
 (`architecture-concepts/04–09` — not re-litigated here).
 BLACK // GLASS and the other round-C boards are preserved for a future
-theme system; the 10,000-ft starmap view is backlogged. Neither is built._
+theme system; the 10,000-ft frontier view is backlogged. Neither is built._
 
 **Status: awaiting owner sign-off.** Prototype phase 1 starts only after
 that.
@@ -33,19 +33,42 @@ salience — is ONE daemon-computed number per thread (§6).
 
 Object grammar, used identically at every scale:
 
-> **PILOT** = persona, from the manifest ▸ riveted onto ▸ **CRAFT** =
+> **PILOT** = persona, from the manifest ▸ riveted onto ▸ **TITAN** =
 > one mortal thread (T-####) ▸ feeding ▸ **CONDUIT** to its plan ▸
 > **DOCK** = plan clamped to the rail. Live work projects as holo;
-> settled work bolts on dark. Settle = conclusions → spine, craft
+> settled work bolts on dark. Settle = conclusions → spine, titan
 > scrapped, pilot back on the manifest. **A blip is a node is a face —
 > same object, three magnifications.**
 
 To be explicit, because the boards blur it: **a card/blip/node is the
 SESSION — the mortal thread working a task — never the task itself.**
-The task/ticket is the plan docked on the rail; the craft is what flies
-it. ("Craft" is provisional — owner isn't sold on the word and no better
-one has surfaced yet. It appears only in UI copy and this doc, so a
-rename stays cheap; revisit before P3 ships plot labels.)
+The task/ticket is the plan docked on the rail; the titan is what
+fights it. ("Titan" replaced the provisional "craft", decisions row 33;
+the word appeared only in UI copy and this doc, so the rename was
+cheap. The deployed P2 console still says CRAFT and stays frozen; code
+vocabulary catches up in the framework build.)
+
+### The Titanfall lifecycle (decisions row 33)
+
+The noun is native to the locked aesthetic (the cockpit IS a titan
+cockpit), and the lore maps onto the flow without stretching:
+
+- **The drop is claim-at-start (#75).** "Standby for Titanfall" is the
+  moment a thread claims its ticket: a titan hits the ground. Unclaimed
+  backlog issues are titans racked in orbit; the spine is the command
+  ship above the surface.
+- **A persona is the pilot, embarked.** Crew plate lit = piloting;
+  "NO TITANS OUT" reads verbatim on the manifest.
+- **Needs-you is the ejection.** A doomed titan ejects its pilot; a
+  thread that hits a wall hands back to the owner. Salience reads as
+  hull integrity.
+- **Settle is the evac.** Conclusions extract to the spine and the
+  titan is expended: mortal threads, not ships that sail on.
+- **The map is the Frontier, not a star map.** Titans do not fly
+  between planets, so the backlogged 10,000-ft view is one contested
+  surface, not planet-hopping: the phases (RESEARCH → PLAN → BUILD →
+  REVIEW → VERIFY → MERGE) are hardpoints on a front line a titan
+  advances through.
 
 ## 2. Visual system of record
 
@@ -165,7 +188,7 @@ The console's regions, each with its board-defined anatomy:
   conduits. New work is born at the **top of the rail** (spawning card:
   dashed border, materialize pulse, "reads the spine, not anyone's
   history").
-- **THREAD NODES** — per-craft cards: 58px CRT face, callsign,
+- **THREAD NODES** — per-titan cards: 58px CRT face, callsign,
   `T-#### · TMUX ✓`, task line, state tag + last-substantive stamp.
   States: working / needs-you (glow + red tag + held duration) /
   settled (dim, "waiting for lull") / spawning / empty. Expanding a
@@ -201,8 +224,8 @@ The console's regions, each with its board-defined anatomy:
   "First use is concierge work — you name it; **naming is consent**."
 - **TURN CHIP** — "DIAL 3 · THIS TURN: FLASH · $0.002 — routing table,
   not judgment; every escalation logged with cost." **Dial 3 home.**
-- **CREW MANIFEST** — 7 persona plates; lit = piloting a craft right
-  now; dark = no craft out. Personas are voices + character + spine
+- **CREW MANIFEST** — 7 persona plates; lit = piloting a titan right
+  now; dark = no titans out. Personas are voices + character + spine
   access, never voices in your ear.
 - **THE DOCK STRIP** (NSPanel) — ruler-width: 52px Mikey (blinking,
   lipsyncing), the salience LED bar with its red threshold notch, a
@@ -216,17 +239,17 @@ The console's regions, each with its board-defined anatomy:
 ## 4. The LONG-RANGE PLOT (confirmed keep)
 
 Tactical cartography, one screen: **you are the fixed point at
-center**; every craft's radius = its salience (distance-from-needing-
+center**; every titan's radius = its salience (distance-from-needing-
 you; 0 = needs you NOW, 100 = settle-side rim). The red circle is the
 **speak gate at map scale** — cross it and Mikey talks. Anatomy: dashed
 range rings (25/50/75/100 CLR), red pulsing threshold ring with a
 grab-tab, 9s radar sweep, the spine standing at range as a structure
-(plan blocks docked to a rail; settled craft drift toward "ARCHIVE
-DRIFT"; a second room renders dim + quiet), diamond craft blips with
+(plan blocks docked to a rail; settled titans drift toward "ARCHIVE
+DRIFT"; a second room renders dim + quiet), diamond titan blips with
 leader-line labels, dashed one-off diamonds ("no conduit — dies on
-delivery"), a launch rim for newborn craft, and map-callout leader
+delivery"), a launch rim for newborn titans, and map-callout leader
 lines to chamfered annotation boxes. One "FUTURE: 10,000-FT VIEW —
-ROOMS AS A STARMAP · NOT BUILT" callout is the only starmap presence.
+THE FRONTIER · NOT BUILT" callout is the only frontier-map presence.
 
 **Zoom ladder is a contract, not a camera:** three fixed views with
 hard cuts — PLOT (all rooms) ↔ RAIL (one room, section-3 console) ↔
@@ -347,7 +370,7 @@ panel's summary pane (the existing sanitized Markdown renderer; docs:
 publish already proves Mermaid→SVG rendering). Mobile v1: the artifact
 card appears with a "ON THE BIG BOARD" handoff; simple inline SVG
 render where trivial. "Keep that" graduates the artifact to a ticket
-attachment on the spine; otherwise the craft dies on delivery (dashed
+attachment on the spine; otherwise the titan dies on delivery (dashed
 one-off diamond on the plot).
 
 ## 8. Day-1 scope line (adopted cuts — binding)
@@ -380,7 +403,7 @@ From both boards' cut panels, adopted as scope:
     LISTEN screen only; no bay, no controls.
 11. **Watcher verbs:** racked and visibly `GATED #75` everywhere.
 
-Backlogged, not built: **10,000-ft starmap** (one FUTURE callout
+Backlogged, not built: **10,000-ft frontier view** (one FUTURE callout
 allowed), **theme switching** (BLACK // GLASS preserved in
 `../archive/concepts-round-c-v4/v5`).
 
@@ -414,7 +437,8 @@ independently deployable. UI work and daemon work are separated so
 | **P7 — Artifacts + verbs** | The diagram flow (§7.2: one-off → artifact registry → artifact card → summary-pane render → "keep that" graduation); verb rack over the saved-verbs registry files; THE CORE fed by real spend counters (ElevenLabs month via `fetchCredits()`, Gemini call log). | daemon + both UIs |
 
 Deferred beyond P7: threshold drag-to-write, multi-room plot, phone
-STT, push notifications, ducking, watcher verbs (#75), starmap, themes.
+STT, push notifications, ducking, watcher verbs (#75), the frontier
+view, themes.
 
 ## 10. House rules that bind every phase
 
