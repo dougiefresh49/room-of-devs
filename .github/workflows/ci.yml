@@ -30,3 +30,10 @@ jobs:
       # Tailwind-merge position conflicts in primitive overrides (the
       # off-screen PlayerSheet bug class) — no linter covers this.
       - run: pnpm check-overrides
+
+      # One state/* label per open issue; the tap-in digest trusts the
+      # labels, so a mislabelled ticket is an accuracy bug (#75).
+      - run: pnpm spine-lint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

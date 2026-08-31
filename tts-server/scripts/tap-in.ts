@@ -131,6 +131,18 @@ function lastSubstantive(i: Issue): string {
   return parts.length ? parts.join(" | ") : "no comments, no commits — never worked";
 }
 
+/** The claim comment a thread dropped at start (#75), falling back to the last comment. */
+function claimNote(i: Issue): string {
+  const comments = i.comments ?? [];
+  const hit =
+    comments
+      .slice()
+      .reverse()
+      .find((c) => /\bclaim(ed|ing)?\b/i.test(c.body)) ?? comments.at(-1);
+  if (!hit) return "NO CLAIM COMMENT — claimed without saying what for (protocol violation)";
+  return `(${hit.createdAt}) ${clip(hit.body, 220).replace(/\n+/g, " ")}`;
+}
+
 /** Pull the verification evidence out of a settled ticket's trail. */
 function verificationNote(i: Issue): string {
   const hit = (i.comments ?? [])
@@ -142,9 +154,9 @@ function verificationNote(i: Issue): string {
 
 /**
  * Heuristic liveness the tracker can't give us: transcripts written in the
- * last 30 min mean a thread is ALIVE, even though nothing claimed a ticket.
- * Partial substitute for claim-at-start write-back (#75) — it proves someone
- * is working; it cannot say on what ticket.
+ * last 30 min mean a thread is ALIVE, whether or not it claimed a ticket.
+ * Complements claim-at-start write-back (#75): the claimed ticket says what
+ * the work is; the transcript mtime proves the thread is still breathing.
  */
 function liveThreads(): string {
   const dir = join(homedir(), ".claude", "projects", REPO_ROOT.replace(/\//g, "-"));
@@ -219,14 +231,14 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
       ? gate.map((i) => `  - #${i.number} [${stateOf(i)}] ${i.title}`).join("\n")
       : "  (none)",
     "",
-    `IN FLIGHT (state/working) — ${working.length}. This list is COMPLETE:`,
+    `IN FLIGHT (state/working, claimed at start per #75) — ${working.length}. This list is COMPLETE:`,
     working.length
-      ? working.map((i) => `  - #${i.number} ${i.title}`).join("\n")
-      : "  (none) — CAVEAT: threads currently set this only at settle time, not at start,\n  so 'none' means 'nothing has declared itself', NOT 'nobody is working'.",
+      ? working.map((i) => `  - #${i.number} ${i.title}\n    claim: ${claimNote(i)}`).join("\n")
+      : "  (none) — nothing has claimed a ticket. If LIVE THREADS below shows activity,\n  that work is either untracked or violating claim-at-start; say so.",
     "",
-    "LIVE THREADS (heuristic — transcripts written in the last 30 min). This is the",
-    "real answer to 'is anyone working': a live transcript = a live thread, even with",
-    "no ticket claimed. It cannot say WHICH ticket. One of these is the caller itself.",
+    "LIVE THREADS (heuristic — transcripts written in the last 30 min). A live",
+    "transcript = a live thread. Join with IN FLIGHT above: the claimed ticket says",
+    "WHAT each thread is doing. One of these is the caller itself.",
     liveThreads(),
     "",
     `CLOSED IN THE LAST 7 DAYS — ${thisWeek.length}. This list is COMPLETE; naming a subset is a wrong answer:`,

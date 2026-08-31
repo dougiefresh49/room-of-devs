@@ -4,8 +4,8 @@ Thin index (fleet `html-status` skill): one line per entry, content lives
 in the linked docs. Publish with `pnpm docs:publish`. History before
 2026-08-29 (the old "Now" section) is in git: `git log -p docs/STATUS.md`.
 
-_Last updated: 2026-08-31 (decision interview: rows 1-9 settled as rows
-25-34; #75 approved, #77 filed)_
+_Last updated: 2026-08-31 (claim-at-start built (#75); decision
+interview: rows 1-9 settled as rows 25-34; #77 filed)_
 
 ## Inbox
 
@@ -35,9 +35,9 @@ framework build, the tape stays killed, mobile Talk absorbs live mode.
 3. Rules hierarchy pass: run Lauren Tan's hierarchy over the AGENTS.md
    rules that are still prose only (playback-state mutation during
    tests, deploy step per layer).
-4. Spine follow-ups: parse Next up into the tap-in digest, the
-   one-`state/*`-per-issue lint, a `recommend`/`prioritize` routing-table
-   entry with cost logging.
+4. Spine follow-ups: parse Next up into the tap-in digest, a
+   `recommend`/`prioritize` routing-table entry with cost logging
+   (claim-at-start and the one-`state/*`-per-issue lint shipped, #75).
 5. Conversational layer Stage 2
    ([design-conversational-layer.md](active/design-conversational-layer.md));
    Stage 1 shipped in code per
@@ -61,6 +61,7 @@ and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-08-31 | **Claim-at-start shipped (#75)**: threads claim their ticket before working (`state/working` + a one-line claim comment, cleared at settle; protocol in AGENTS.md and architecture-concepts 08); `pnpm spine-lint` enforces one `state/*` label per open issue in CI; the tap-in digest attributes each in-flight ticket via its claim comment and reads last substantive activity, never `updatedAt`. Watcher threads un-gate when the paid acceptance run (`tap-in.ts "is anyone working right now?"`) names an in-flight thread and its ticket. |
 | 2026-08-29 | **STATUS reworked to a thin index** (fleet `html-status` skill): the 561-line "Now" history deleted (git has it), rules it still carried folded into AGENTS.md, its decisions recovered as decisions.md rows 17-24; `docs/active/` pruned (Round C/D boards, briefs and kickoff prompts to `archive/`, the UI architecture docs to `shipped/`) |
 | 2026-08-29 | **Rulebook split**: AGENTS.md (every agent, fleet convention) and CLAUDE.md (main-session model and delegate guidance) |
 | 2026-08-27 | **Memory rework**: Claude Code auto-memory off for this repo (27 of 32 memory files never read in the surviving month), memory dir archived and deleted, CLAUDE.md rewritten in directional shape with dated history stripped, `docs/decisions.md` kept as a parking lot (rows 11-15) |

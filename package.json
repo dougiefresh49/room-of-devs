@@ -6,6 +6,7 @@
     "typecheck": "pnpm -r --if-present run typecheck",
     "check-fixtures": "pnpm --filter @room/protocol run check-fixtures",
     "check-live-fixtures": "pnpm --dir tts-server exec tsx scripts/mock-live.ts check-tailer",
+    "spine-lint": "pnpm --dir tts-server exec tsx scripts/spine-lint.ts",
     "docs:publish": "node scripts/docs-publish.mjs",
     "lint": "biome lint .",
     "check-overrides": "node scripts/check-class-overrides.mjs",
