@@ -4,5 +4,7 @@ packages:
   - packages/*
   - prototype
 allowBuilds:
+  '@google/genai': false
   esbuild: true
   node-hid: true
+  protobufjs: false
