@@ -16,6 +16,7 @@ import { homedir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { GoogleGenAI } from "@google/genai";
+import { type Claim, parseClaim, sameSession, trustedLogins } from "./spine-claim";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..", "..");
@@ -137,16 +138,37 @@ function lastSubstantive(i: Issue): string {
   return parts.length ? parts.join(" | ") : "no comments, no commits — never worked";
 }
 
-/** The claim comment a thread dropped at start (#75), falling back to the last comment. */
-function claimNote(i: Issue): string {
-  const comments = i.comments ?? [];
-  const hit =
-    comments
-      .slice()
-      .reverse()
-      .find((c) => /\bclaim(ed|ing)?\b/i.test(c.body)) ?? comments.at(-1);
-  if (!hit) return "NO CLAIM COMMENT — claimed without saying what for (protocol violation)";
-  return `(${hit.createdAt}) ${clip(hit.body, 220).replace(/\n+/g, " ")}`;
+/**
+ * The claim a thread dropped at start (#75), in the structured form of #83:
+ * `claimed by session <sid>[ / <Persona>], doing <what>`, trusted only from
+ * the repo owner (or a designated bot). The sid joins the ticket to LIVE
+ * THREADS. Unstructured or untrusted comments are surfaced but never joined.
+ */
+function claimOf(i: Issue, trusted: Set<string>): { claim: Claim | null; note: string } {
+  const comments = (i.comments ?? []).slice().reverse();
+  for (const c of comments) {
+    const claim = parseClaim(c.body);
+    if (!claim) continue;
+    if (trusted.has(c.author?.login ?? ""))
+      return {
+        claim,
+        note: `(${c.createdAt}) session ${claim.session}${claim.persona ? ` / ${claim.persona}` : ""} — doing ${clip(claim.doing, 200)}`,
+      };
+    return {
+      claim: null,
+      note: `UNTRUSTED claim marker from "${c.author?.login ?? "unknown"}" (not the owner) — ignored, treat the ticket as unclaimed`,
+    };
+  }
+  const loose = comments.find((c) => /\bclaim(ed|ing)?\b/i.test(c.body)) ?? comments[0];
+  if (!loose)
+    return {
+      claim: null,
+      note: "NO CLAIM COMMENT — claimed without saying what for (protocol violation)",
+    };
+  return {
+    claim: null,
+    note: `unstructured (pre-#83, no session join): (${loose.createdAt}) ${clip(loose.body, 220).replace(/\n+/g, " ")}`,
+  };
 }
 
 /** Pull the verification evidence out of a settled ticket's trail. */
@@ -163,21 +185,17 @@ function verificationNote(i: Issue): string {
  * last 30 min mean a thread is ALIVE, whether or not it claimed a ticket.
  * Complements claim-at-start write-back (#75): the claimed ticket says what
  * the work is; the transcript mtime proves the thread is still breathing.
+ * Returns null when the transcript directory is unreachable.
  */
-function liveThreads(): string {
+function liveSessions(): { id: string; mtime: number }[] | null {
   const dir = join(homedir(), ".claude", "projects", REPO_ROOT.replace(/\//g, "-"));
-  if (!existsSync(dir)) return "  (transcript directory unreachable — cannot tell)";
+  if (!existsSync(dir)) return null;
   const cutoff = Date.now() - LIVE_WINDOW_MS;
-  const live = readdirSync(dir)
+  return readdirSync(dir)
     .filter((f) => f.endsWith(".jsonl"))
-    .map((f) => ({ f, m: statSync(join(dir, f)).mtimeMs }))
-    .filter((x) => x.m >= cutoff)
-    .sort((a, b) => b.m - a.m);
-  if (live.length === 0)
-    return "  (no transcript written in the last 30 min — nobody appears to be working)";
-  return live
-    .map((x) => `  - session ${x.f.slice(0, 8)} last wrote ${new Date(x.m).toISOString()}`)
-    .join("\n");
+    .map((f) => ({ id: f.replace(/\.jsonl$/, ""), mtime: statSync(join(dir, f)).mtimeMs }))
+    .filter((x) => x.mtime >= cutoff)
+    .sort((a, b) => b.mtime - a.mtime);
 }
 
 /** Entity resolution: which ticket titles does the question's noun phrase match? */
@@ -226,6 +244,34 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
   const cutoff = Date.now() - WEEK_MS;
   const thisWeek = closed.filter((i) => closedTime(i) >= cutoff);
 
+  // Session-to-ticket join (#83): the structured claim marker carries the
+  // thread's session id; live transcripts carry the same id. Joined here in
+  // code so flash narrates the mapping instead of guessing it.
+  const trusted = trustedLogins(REPO_ROOT);
+  const claims = working.map((i) => ({ i, ...claimOf(i, trusted) }));
+  const live = liveSessions();
+  const liveness = (claim: Claim | null): string => {
+    if (!claim) return "no session id to join on";
+    if (live === null) return "thread liveness unknown (transcript directory unreachable)";
+    return live.some((s) => sameSession(s.id, claim.session))
+      ? "thread LIVE (transcript active)"
+      : "thread NOT live (no transcript write in 30 min — stalled, done-but-unsettled, or working elsewhere)";
+  };
+  const liveLines =
+    live === null
+      ? "  (transcript directory unreachable — cannot tell)"
+      : live.length === 0
+        ? "  (no transcript written in the last 30 min — nobody appears to be working)"
+        : live
+            .map((s) => {
+              const owned = claims.find((c) => c.claim && sameSession(c.claim.session, s.id));
+              const doing = owned
+                ? `working #${owned.i.number} (${owned.i.title})`
+                : "no claimed ticket — untracked or violating claim-at-start";
+              return `  - session ${s.id.slice(0, 8)} last wrote ${new Date(s.mtime).toISOString()} → ${doing}`;
+            })
+            .join("\n");
+
   return [
     "## DIGEST — computed deterministically from the tracker. AUTHORITATIVE for counts,",
     "## completeness and freshness. Do NOT re-derive these from the raw tickets below.",
@@ -237,15 +283,20 @@ function buildDigest(open: Issue[], closed: Issue[], question: string): string {
       ? gate.map((i) => `  - #${i.number} [${stateOf(i)}] ${i.title}`).join("\n")
       : "  (none)",
     "",
-    `IN FLIGHT (state/working, claimed at start per #75) — ${working.length}. This list is COMPLETE:`,
-    working.length
-      ? working.map((i) => `  - #${i.number} ${i.title}\n    claim: ${claimNote(i)}`).join("\n")
+    `IN FLIGHT (state/working, claimed at start per #75/#83) — ${working.length}. This list is COMPLETE:`,
+    claims.length
+      ? claims
+          .map(
+            (c) =>
+              `  - #${c.i.number} ${c.i.title}\n    claim: ${c.note}\n    liveness: ${liveness(c.claim)}`,
+          )
+          .join("\n")
       : "  (none) — nothing has claimed a ticket. If LIVE THREADS below shows activity,\n  that work is either untracked or violating claim-at-start; say so.",
     "",
-    "LIVE THREADS (heuristic — transcripts written in the last 30 min). A live",
-    "transcript = a live thread. Join with IN FLIGHT above: the claimed ticket says",
-    "WHAT each thread is doing. One of these is the caller itself.",
-    liveThreads(),
+    "LIVE THREADS (heuristic — transcripts written in the last 30 min), each joined",
+    "to its claimed ticket on the claim marker's session id (#83). The join is",
+    "computed; do not re-derive it. One of these is the caller itself.",
+    liveLines,
     "",
     `CLOSED IN THE LAST 7 DAYS — ${thisWeek.length}. This list is COMPLETE; naming a subset is a wrong answer:`,
     thisWeek.length

@@ -3,22 +3,24 @@
  * spine-lint — the one-`state/*`-per-issue invariant (#75, docs/active/architecture-concepts/09).
  *
  * Every open issue carries exactly one `state/*` label, and a `state/working`
- * issue has a claim comment (claim-at-start writes one before work begins).
- * The digest in tap-in.ts trusts the labels; a mislabelled ticket silently
- * drops out of the operator-gate and in-flight lists, so count violations are
- * accuracy bugs, not tidiness.
+ * issue has a structured claim comment from a trusted login (#83): claim-at-start
+ * writes `claimed by session <sid>, doing <what>` before work begins, and the
+ * tap-in digest joins live threads to tickets on that sid. The digest trusts
+ * the labels and the claim, so a mislabelled ticket or a spoofable claim is an
+ * accuracy bug, not tidiness.
  *
  *   pnpm spine-lint          # from the repo root (CI runs this on push)
  *
- * Read-only: one `gh issue list` call, no LLM, no TTS.
+ * Read-only: two gh calls (issue list, repo owner), no LLM, no TTS.
  */
 import { spawnSync } from "node:child_process";
+import { parseClaim, trustedLogins } from "./spine-claim";
 
 type Issue = {
   number: number;
   title: string;
   labels: { name: string }[];
-  comments: { body: string }[];
+  comments: { author?: { login?: string }; body: string }[];
 };
 
 const r = spawnSync(
@@ -32,6 +34,14 @@ if (r.status !== 0) {
 }
 const issues = JSON.parse(r.stdout) as Issue[];
 
+const trusted = trustedLogins();
+if (trusted.size === 0) {
+  console.error(
+    "[spine-lint] could not resolve the repo owner (gh repo view failed) — cannot validate claims",
+  );
+  process.exit(1);
+}
+
 const failures: string[] = [];
 for (const i of issues) {
   const states = i.labels.filter((l) => l.name.startsWith("state/")).map((l) => l.name);
@@ -39,14 +49,26 @@ for (const i of issues) {
     failures.push(
       `#${i.number} has ${states.length} state/* labels (${states.join(", ") || "none"}) — ${i.title}`,
     );
-  } else if (states[0] === "state/working" && i.comments.length === 0) {
-    failures.push(`#${i.number} is state/working with no claim comment — ${i.title}`);
+  } else if (states[0] === "state/working") {
+    const claim = i.comments.find(
+      (c) => trusted.has(c.author?.login ?? "") && parseClaim(c.body) !== null,
+    );
+    if (!claim) {
+      const why = i.comments.some((c) => parseClaim(c.body) !== null)
+        ? `only untrusted authors wrote one (trusted: ${[...trusted].join(", ")})`
+        : `expected 'claimed by session <sid>, doing <what>' from ${[...trusted].join(" or ")}`;
+      failures.push(
+        `#${i.number} is state/working with no structured claim comment — ${why} — ${i.title}`,
+      );
+    }
   }
 }
 
 if (failures.length) {
-  console.error(`[spine-lint] ${failures.length} violation(s) of one-state/*-per-issue (#75):`);
+  console.error(`[spine-lint] ${failures.length} violation(s) of the spine invariants (#75, #83):`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`[spine-lint] OK — ${issues.length} open issue(s), one state/* label each`);
+console.log(
+  `[spine-lint] OK — ${issues.length} open issue(s): one state/* label each, structured claims on state/working`,
+);
