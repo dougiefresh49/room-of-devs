@@ -1,11 +1,6 @@
 import { toast } from "@room/ui";
 import { Chassis, CutFrame, Keycap, Tag } from "@room/ui/rig";
-import {
-  patchFleet,
-  strikeCommission,
-  updateCommission,
-  useFleet,
-} from "../../mock/store";
+import { patchFleet, strikeCommission, updateCommission, useFleet } from "../../mock/store";
 import { CeremonyFork } from "./CeremonyFork";
 import { DialRow } from "./DialRow";
 import { ManifestPreview } from "./ManifestPreview";
@@ -40,13 +35,19 @@ export function CommissioningBay() {
     >
       <header className="commission-bay-head">
         <div>
-          <span className="commission-bay-kicker">COMMISSIONING BAY · B-{String(draft.berth ?? 0).padStart(2, "0")}</span>
+          <span className="commission-bay-kicker">
+            COMMISSIONING BAY · B-{String(draft.berth ?? 0).padStart(2, "0")}
+          </span>
           <h2>STRIKE A ROOM FROM CONFIG</h2>
         </div>
         <Tag tone={draft.source === "voice" ? "hot" : "dim"}>
           SOURCE · {draft.source.toUpperCase()}
         </Tag>
-        <Keycap glyph="×" label="RETURN TO HANGAR" onPress={() => patchFleet({ commission: null })} />
+        <Keycap
+          glyph="×"
+          label="RETURN TO HANGAR"
+          onPress={() => patchFleet({ commission: null })}
+        />
       </header>
 
       <div className="commission-bay-grid">

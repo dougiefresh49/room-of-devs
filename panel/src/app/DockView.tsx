@@ -94,9 +94,7 @@ function dockTickerText(agents: AgentView[]): string {
       const name = (a.label ?? a.name).toUpperCase();
       const state = stateLabels[a.state].toUpperCase();
       const preview = a.queuedPreview?.trim();
-      return preview
-        ? `${name} · ${state} · ${preview}`
-        : `${name} · ${state}`;
+      return preview ? `${name} · ${state} · ${preview}` : `${name} · ${state}`;
     })
     .join("  ◆  ");
 }
@@ -183,13 +181,12 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
   }, [width, height]);
 
   const clearPct = dockSalienceClear(agents);
-  const litSegs = Math.round(DOCK_SALIENCE_SEGMENTS * clearPct / 100);
-  const thSeg = Math.round(DOCK_SALIENCE_SEGMENTS * DOCK_SALIENCE_THRESHOLD_PCT / 100);
+  const litSegs = Math.round((DOCK_SALIENCE_SEGMENTS * clearPct) / 100);
+  const thSeg = Math.round((DOCK_SALIENCE_SEGMENTS * DOCK_SALIENCE_THRESHOLD_PCT) / 100);
   const ticker = dockTickerText(agents);
   const anyRaised = agents.some((a) => a.state === "hand_raised");
   const anyWorking = agents.some((a) => a.state === "working");
-  const allSettled =
-    agents.length > 0 && agents.every((a) => a.state === "idle");
+  const allSettled = agents.length > 0 && agents.every((a) => a.state === "idle");
 
   return (
     <main
@@ -247,11 +244,7 @@ export function DockView({ snapshot, connected, staleSessions, view, ui }: DockV
         </div>
         <div className="dock-scr no-drag">
           {/* P3: replace with snapshot.salience */}
-          <SalienceBar
-            segments={DOCK_SALIENCE_SEGMENTS}
-            lit={litSegs}
-            threshold={thSeg}
-          />
+          <SalienceBar segments={DOCK_SALIENCE_SEGMENTS} lit={litSegs} threshold={thSeg} />
           <div className="dock-tick" title={ticker}>
             <span className="dock-tick-marquee">{ticker}</span>
             <span className="dock-tick-static">{ticker}</span>

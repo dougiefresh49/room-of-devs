@@ -20,19 +20,14 @@ export function SessionDial({
   redlineFrom?: number;
   caption?: ReactNode;
 }) {
-  const sf =
-    sessionFraction == null ? null : Math.min(1, Math.max(0, sessionFraction));
+  const sf = sessionFraction == null ? null : Math.min(1, Math.max(0, sessionFraction));
   // Outer arc around DialGauge's centre (66, 62) / main r=52 — ride outside it.
   const SESS = "M6 62 A60 60 0 0 1 126 62";
 
   return (
     <div className="fdial session-dial">
       {sf != null ? (
-        <svg
-          className="session-dial-arc"
-          viewBox="0 0 132 76"
-          aria-hidden
-        >
+        <svg className="session-dial-arc" viewBox="0 0 132 76" aria-hidden>
           <path d={SESS} fill="none" stroke="#16242e" strokeWidth="4" />
           <path
             d={SESS}
@@ -46,11 +41,7 @@ export function SessionDial({
           />
         </svg>
       ) : null}
-      <DialGauge
-        fraction={fraction}
-        redlineFrom={redlineFrom}
-        caption={caption}
-      />
+      <DialGauge fraction={fraction} redlineFrom={redlineFrom} caption={caption} />
     </div>
   );
 }

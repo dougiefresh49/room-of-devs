@@ -71,7 +71,8 @@ export function FieldTopBar({
         }}
         onPointerMove={(event) => {
           const origin = start.current;
-          if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 8) cancelPress();
+          if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 8)
+            cancelPress();
         }}
         onPointerUp={cancelPress}
         onPointerCancel={cancelPress}
@@ -90,7 +91,9 @@ export function FieldTopBar({
             return (
               <Led
                 key={candidate.id}
-                tone={candidate.counts.needsYou > 0 ? "red" : candidate.berth != null ? "amber" : "dim"}
+                tone={
+                  candidate.counts.needsYou > 0 ? "red" : candidate.berth != null ? "amber" : "dim"
+                }
                 pulse={candidate.counts.needsYou > 0}
                 className={coupled ? "is-coupled" : undefined}
               />
@@ -119,12 +122,20 @@ export function FieldTopBar({
         type="button"
         className={`ftop-pip${nowPlaying ? " is-playing" : ""}`}
         onClick={onOpenFloor}
-        aria-label={nowPlaying
-          ? `${nowPlaying.persona} has the floor, ${elapsed}. Open audio floor.`
-          : "Audio floor clear. Open audio floor."}
+        aria-label={
+          nowPlaying
+            ? `${nowPlaying.persona} has the floor, ${elapsed}. Open audio floor.`
+            : "Audio floor clear. Open audio floor."
+        }
       >
         <span className="ftop-pip-key">
-          {nowPlaying ? <Waveform active bars={4} /> : fleet.audioFloor.route === "phone" ? <PhoneGlyph /> : <MacGlyph />}
+          {nowPlaying ? (
+            <Waveform active bars={4} />
+          ) : fleet.audioFloor.route === "phone" ? (
+            <PhoneGlyph />
+          ) : (
+            <MacGlyph />
+          )}
         </span>
         {elapsed ? <span className="sseg">{elapsed}</span> : null}
       </button>

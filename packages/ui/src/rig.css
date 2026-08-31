@@ -157,21 +157,17 @@
   color: var(--rig-amber);
 }
 .rig-screenbed--hex {
-  background:
-    var(--rig-hex-faint),
-    linear-gradient(180deg, var(--rig-screen), var(--rig-screen2));
-  background-size: 26px 15px, auto;
+  background: var(--rig-hex-faint), linear-gradient(180deg, var(--rig-screen), var(--rig-screen2));
+  background-size:
+    26px 15px,
+    auto;
 }
 .rig-screenbed-scan {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.22) 0 1px,
-    transparent 1px 3px
-  );
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
 }
 .rig-screenbed-sweep {
   position: absolute;
@@ -320,11 +316,7 @@
   letter-spacing: 0.05em;
   color: var(--rig-amber);
   text-transform: uppercase;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 179, 71, 0.13),
-    rgba(255, 179, 71, 0.04)
-  );
+  background: linear-gradient(180deg, rgba(255, 179, 71, 0.13), rgba(255, 179, 71, 0.04));
   border: 1px solid var(--rig-amber-dim);
   border-radius: 8px 2px 2px 2px;
   padding: 8px 10px;
@@ -538,11 +530,7 @@
   inset: 0;
   pointer-events: none;
   z-index: 2;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.22) 0 1px,
-    transparent 1px 3px
-  );
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
 }
 .rig-crt-halo {
   position: absolute;

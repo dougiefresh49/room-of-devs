@@ -14,21 +14,18 @@ export function SalienceRing() {
   const needleAngle = 3.565 * clearPct + 1.2;
   const tabAngle = 3.565 * threshold + 1.2;
 
-  const onPointer = useCallback(
-    (clientX: number, clientY: number, svg: SVGSVGElement) => {
-      const rect = svg.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const ang = (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
-      // Convert screen angle to threshold pct matching our tabAngle mapping.
-      // tabAngle = 3.565*t + 1.2; invert roughly from SVG rotate about center.
-      // SVG rotate(tabAngle) with tab at top → use atan2 from top.
-      const fromTop = ((ang + 90 + 360) % 360);
-      const pct = Math.round((fromTop - 1.2) / 3.565);
-      setThreshold(pct);
-    },
-    [],
-  );
+  const onPointer = useCallback((clientX: number, clientY: number, svg: SVGSVGElement) => {
+    const rect = svg.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const ang = (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+    // Convert screen angle to threshold pct matching our tabAngle mapping.
+    // tabAngle = 3.565*t + 1.2; invert roughly from SVG rotate about center.
+    // SVG rotate(tabAngle) with tab at top → use atan2 from top.
+    const fromTop = (ang + 90 + 360) % 360;
+    const pct = Math.round((fromTop - 1.2) / 3.565);
+    setThreshold(pct);
+  }, []);
 
   return (
     <div className="instr-plate has-part-no has-top-screws">
@@ -59,7 +56,15 @@ export function SalienceRing() {
         >
           <title>Salience ring and draggable speak-gate threshold</title>
           <circle cx="115" cy="115" r="106" fill="none" stroke="#31363c" strokeWidth="15" />
-          <circle cx="115" cy="115" r="106" fill="none" stroke="#454b53" strokeWidth="2" opacity=".6" />
+          <circle
+            cx="115"
+            cy="115"
+            r="106"
+            fill="none"
+            stroke="#454b53"
+            strokeWidth="2"
+            opacity=".6"
+          />
           <g fill="#565e67">
             <circle cx="115" cy="12" r="3.4" />
             <circle cx="218" cy="115" r="3.4" />
@@ -142,7 +147,14 @@ export function SalienceRing() {
           </g>
           <circle cx="115" cy="115" r="13" fill="#2b3036" stroke="#12151a" strokeWidth="2" />
           <circle cx="115" cy="115" r="5" fill="#565e67" />
-          <text x="35" y="182" fontSize="7.5" letterSpacing="1.5" fill="#ff5340" fontFamily="monospace">
+          <text
+            x="35"
+            y="182"
+            fontSize="7.5"
+            letterSpacing="1.5"
+            fill="#ff5340"
+            fontFamily="monospace"
+          >
             NEEDS YOU
           </text>
         </svg>
@@ -151,10 +163,7 @@ export function SalienceRing() {
             <span className="dotmx ghost">SALIENCE</span>
             <span className="pct">{clearPct}% CLR</span>
           </div>
-          <div
-            className="salgate"
-            title="Drag the red tab on the ring to set the speak gate"
-          >
+          <div className="salgate" title="Drag the red tab on the ring to set the speak gate">
             <span>SPEAK GATE</span>
             <b className="sseg">{threshold}</b>
             <span className="salgate-drag">
@@ -170,9 +179,7 @@ export function SalienceRing() {
         {contributors.map((c) => (
           <div className="r" key={c.label}>
             <span>{c.label}</span>
-            <b className={c.delta < 0 ? "neg" : undefined}>
-              {c.delta === 0 ? "−0" : c.delta}
-            </b>
+            <b className={c.delta < 0 ? "neg" : undefined}>{c.delta === 0 ? "−0" : c.delta}</b>
           </div>
         ))}
       </div>

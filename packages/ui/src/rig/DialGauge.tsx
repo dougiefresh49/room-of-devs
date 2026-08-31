@@ -15,12 +15,7 @@ export interface DialGaugeProps {
  * Half-moon SVG gauge — board `.dial` (viewBox 0 0 132 76, pathLength 100).
  * Needle angle: −90° + fraction×180° about (66,62).
  */
-export function DialGauge({
-  fraction,
-  redlineFrom,
-  caption,
-  className,
-}: DialGaugeProps) {
+export function DialGauge({ fraction, redlineFrom, caption, className }: DialGaugeProps) {
   const f = Math.min(1, Math.max(0, fraction));
   const filled = Math.round(f * 100);
   const rest = 100 - filled;

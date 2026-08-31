@@ -273,19 +273,16 @@ async function sendAttempt(
   // received rejection (non-2xx) definitively means the turn did not run.
   let dispatch: Response;
   try {
-    dispatch = await fetch(
-      `${origin}/api/orchestration/dispatch`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(command),
-        redirect: "error",
-        signal,
+    dispatch = await fetch(`${origin}/api/orchestration/dispatch`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(command),
+      redirect: "error",
+      signal,
+    });
   } catch {
     throw new ReplyFailure(
       signal.aborted ? "t3_timeout" : "t3_unreachable",

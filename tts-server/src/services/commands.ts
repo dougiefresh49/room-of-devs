@@ -41,11 +41,7 @@ import {
   markPendingPhoneAck,
   clearPendingPhoneAck,
 } from "../live-mode.js";
-import {
-  sendT3Reply,
-  t3ReplyProvisioned,
-  type T3ReplyFailureCode,
-} from "../t3-reply.js";
+import { sendT3Reply, t3ReplyProvisioned, type T3ReplyFailureCode } from "../t3-reply.js";
 import {
   parseCommand,
   isKnownCommandType,
@@ -140,7 +136,10 @@ function speakTextNow(sessionId: string, text: string, output?: "mac" | "phone")
       source: "say",
     };
     writeFileSync(path, JSON.stringify(item, null, 2));
-    log("commands", `speak_text: ${sessionId.slice(0, 12)} (${text.length} chars, ${output ?? "mac"})`);
+    log(
+      "commands",
+      `speak_text: ${sessionId.slice(0, 12)} (${text.length} chars, ${output ?? "mac"})`,
+    );
     runScript("play_node.sh", [path], output === "phone" ? { CR_OUTPUT: "phone" } : undefined);
   } catch (err: any) {
     log("commands", `speak_text failed: ${err?.message ?? err}`);
@@ -590,12 +589,7 @@ export function validateAndResume(
 // session, and never re-armed).
 const T3_REPLY_ACK_FRESH_MS = 5 * 60_000;
 
-export type ReplyStatus =
-  | "ok"
-  | "not_in_team"
-  | "pane_not_ready"
-  | "failed"
-  | T3ReplyFailureCode;
+export type ReplyStatus = "ok" | "not_in_team" | "pane_not_ready" | "failed" | T3ReplyFailureCode;
 
 interface ValidReply {
   sessionId: string;
@@ -649,9 +643,7 @@ export function handleTeamReplyAction(raw: unknown): { status: ReplyStatus } | n
 }
 
 /** Ordered, exhaustive reply routing. Returns null only for malformed input. */
-export async function handleReplyAction(
-  raw: unknown,
-): Promise<{ status: ReplyStatus } | null> {
+export async function handleReplyAction(raw: unknown): Promise<{ status: ReplyStatus } | null> {
   const msg = validateReply(raw);
   if (!msg) return null;
 

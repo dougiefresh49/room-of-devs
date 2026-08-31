@@ -13,17 +13,18 @@ export interface SalienceBarProps {
  * Dock LED salience bar — board `.dock .salbar` (dim unlit `#3d3325`,
  * red notch `.th`).
  */
-export function SalienceBar({
-  segments = 16,
-  lit,
-  threshold,
-  className,
-}: SalienceBarProps) {
+export function SalienceBar({ segments = 16, lit, threshold, className }: SalienceBarProps) {
   const litCount = Math.min(segments, Math.max(0, Math.round(lit)));
   const th = Math.min(segments - 1, Math.max(0, Math.round(threshold)));
 
   return (
-    <div className={cn("rig-salbar", className)} role="meter" aria-valuenow={litCount} aria-valuemin={0} aria-valuemax={segments}>
+    <div
+      className={cn("rig-salbar", className)}
+      role="meter"
+      aria-valuenow={litCount}
+      aria-valuemin={0}
+      aria-valuemax={segments}
+    >
       {Array.from({ length: segments }, (_, i) => {
         const isTh = i === th;
         const isDim = i >= litCount && !isTh;

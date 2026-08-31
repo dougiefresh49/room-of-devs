@@ -89,8 +89,7 @@
     calc(100% - var(--cut-s)) 100%,
     0 100%
   );
-  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55))
-    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.6));
 }
 .plan .bpcard {
   border-radius: 12px 4px 4px 4px;

@@ -54,11 +54,26 @@ export function GaugesScreen() {
             ⓘ
           </PopoverTrigger>
           <PopoverContent className="gauge-info-popover" align="start" sideOffset={6}>
-            <p><span className="swatch amber" /><b>AMBER ARC</b> — the provider&apos;s window meter, keeps climbing until its cycle resets.</p>
-            <p><span className="swatch blue" /><b className="blue">BLUE ARC</b> — this session&apos;s usage; resets each session. Only Claude and Codex have sessions.</p>
-            <p><b>CURSOR</b> — 30-day rolling cycle.</p>
-            <p><b>ELEVENLABS</b> — tokens: +1K granted monthly, bank caps at 3K.</p>
-            <p><b>GEMINI</b> — month-to-date spend against OUR OWN goal, not a provider cap. Real billing-cycle data TBD.</p>
+            <p>
+              <span className="swatch amber" />
+              <b>AMBER ARC</b> — the provider&apos;s window meter, keeps climbing until its cycle
+              resets.
+            </p>
+            <p>
+              <span className="swatch blue" />
+              <b className="blue">BLUE ARC</b> — this session&apos;s usage; resets each session.
+              Only Claude and Codex have sessions.
+            </p>
+            <p>
+              <b>CURSOR</b> — 30-day rolling cycle.
+            </p>
+            <p>
+              <b>ELEVENLABS</b> — tokens: +1K granted monthly, bank caps at 3K.
+            </p>
+            <p>
+              <b>GEMINI</b> — month-to-date spend against OUR OWN goal, not a provider cap. Real
+              billing-cycle data TBD.
+            </p>
           </PopoverContent>
         </Popover>
       </div>
@@ -72,8 +87,7 @@ export function GaugesScreen() {
               <>
                 CLAUDE · FABLE 7D
                 <br />
-                <b>{claudeLong.readout}</b> · 5H{" "}
-                {Math.round((claude.sessionFraction ?? 0) * 100)}%
+                <b>{claudeLong.readout}</b> · 5H {Math.round((claude.sessionFraction ?? 0) * 100)}%
               </>
             }
           />
@@ -86,8 +100,7 @@ export function GaugesScreen() {
               <>
                 CODEX · 7D
                 <br />
-                <b>{codexLong.readout}</b> · SESS{" "}
-                {Math.round((codex.sessionFraction ?? 0) * 100)}%
+                <b>{codexLong.readout}</b> · SESS {Math.round((codex.sessionFraction ?? 0) * 100)}%
               </>
             }
           />
@@ -103,9 +116,7 @@ export function GaugesScreen() {
           <CutFrame
             key={g.id}
             scale="s"
-            className={
-              g.windows.some((w) => w.fraction >= 0.85) ? "gtile-wrap hot" : "gtile-wrap"
-            }
+            className={g.windows.some((w) => w.fraction >= 0.85) ? "gtile-wrap hot" : "gtile-wrap"}
             innerClassName="gtile"
           >
             <div className="gname">{g.label}</div>
@@ -118,11 +129,7 @@ export function GaugesScreen() {
 
       <CutFrame scale="s" className="spendfoot-wrap" innerClassName="spendfoot fcard">
         <span>VOICE CHARS TODAY</span>
-        <Odometer
-          value={spend.voiceCharsToday}
-          digits={5}
-          rolling={burning}
-        />
+        <Odometer value={spend.voiceCharsToday} digits={5} rolling={burning} />
       </CutFrame>
 
       <details className="fdials" open>

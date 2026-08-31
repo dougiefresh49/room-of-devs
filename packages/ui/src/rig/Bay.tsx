@@ -16,7 +16,11 @@ export interface BayProps {
  */
 export function Bay({ label, meta, screws, className, children }: BayProps) {
   return (
-    <Chassis screws={screws} className={cn("rig-bay", className)} glow="0 10px 22px rgba(0,0,0,.45)">
+    <Chassis
+      screws={screws}
+      className={cn("rig-bay", className)}
+      glow="0 10px 22px rgba(0,0,0,.45)"
+    >
       <div className="rig-bay-body">
         <div className="rig-bay-label">
           <span>{label}</span>

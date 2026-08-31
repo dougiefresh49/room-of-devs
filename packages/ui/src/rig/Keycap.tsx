@@ -14,14 +14,7 @@ export interface KeycapProps {
 /**
  * Machined option key — board `.optbtn` + `.keycap` (22px face).
  */
-export function Keycap({
-  glyph,
-  label,
-  hint,
-  armed = false,
-  onPress,
-  className,
-}: KeycapProps) {
+export function Keycap({ glyph, label, hint, armed = false, onPress, className }: KeycapProps) {
   return (
     <button
       type="button"

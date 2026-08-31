@@ -67,7 +67,8 @@ const INSTRUMENTS: InstrumentSeed[] = [
       { name: "children", type: "ReactNode", note: "plate body" },
     ],
     registryEquivalent: "card",
-    verdict: "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
   },
   {
     id: "RIG-003",
@@ -82,7 +83,8 @@ const INSTRUMENTS: InstrumentSeed[] = [
       { name: "children", type: "ReactNode", note: "bay interior" },
     ],
     registryEquivalent: "card",
-    verdict: "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
   },
   {
     id: "RIG-004",
@@ -97,7 +99,8 @@ const INSTRUMENTS: InstrumentSeed[] = [
       { name: "className", type: "string", note: "layout hook" },
     ],
     registryEquivalent: "card",
-    verdict: "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
+    verdict:
+      "Overlaps rig/Chassis.tsx + rig/Bay.tsx; RIG chamfer styling makes it a net loss. Skip.",
   },
   {
     id: "RIG-005",
@@ -361,7 +364,7 @@ const INSTRUMENTS: InstrumentSeed[] = [
     props: [{ name: "delayDuration", type: "number", note: "provider default delay" }],
     registryEquivalent: "tooltip",
     verdict:
-      "Vendored, dead; would replace dozens of native title=\"\" attributes with accessible, styled hints.",
+      'Vendored, dead; would replace dozens of native title="" attributes with accessible, styled hints.',
   },
   {
     id: "SHD-009",
@@ -545,11 +548,13 @@ const DEAD_STOCK_NOTES: Record<string, { handRolledBy: string; verdict: string }
     verdict: "ADOPT",
   },
   command: {
-    handRolledBy: "prototype/src/deck/ControlDeck.tsx — backtick listener + manually filtered button list.",
+    handRolledBy:
+      "prototype/src/deck/ControlDeck.tsx — backtick listener + manually filtered button list.",
     verdict: "ADOPT",
   },
   toast: {
-    handRolledBy: "panel/src/app/App.tsx + packages/mobile/src/components/Toast.tsx + view-state timers.",
+    handRolledBy:
+      "panel/src/app/App.tsx + packages/mobile/src/components/Toast.tsx + view-state timers.",
     verdict: "ADOPT — HIGHEST PAYOFF IN THE AUDIT",
   },
   tooltip: {
@@ -612,10 +617,7 @@ const WORK_ORDERS = [
   {
     id: "wo-command",
     title: "COMMAND (cmdk)",
-    callSites: [
-      "prototype/src/deck/ControlDeck.tsx",
-      "panel/src/app/PickerView.tsx (505 lines)",
-    ],
+    callSites: ["prototype/src/deck/ControlDeck.tsx", "panel/src/app/PickerView.tsx (505 lines)"],
     payoff: "Fuzzy filtering for free; control deck and agent picker share one primitive.",
     note: "Round-D consumer #2 on day one: the ⌘K room-switcher palette in the hangar.",
   },
@@ -650,7 +652,13 @@ function grepConsumers(): Map<string, Set<string>> {
       if (!isSharedUi && !isPrototypeRigExtension) continue;
       const symbols = match[1]!
         .split(",")
-        .map((symbol) => symbol.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]?.trim())
+        .map((symbol) =>
+          symbol
+            .trim()
+            .replace(/^type\s+/, "")
+            .split(/\s+as\s+/)[0]
+            ?.trim(),
+        )
         .filter(Boolean) as string[];
       for (const symbol of symbols) {
         if (!bySymbol.has(symbol)) bySymbol.set(symbol, new Set());

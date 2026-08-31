@@ -14,15 +14,20 @@ interface FieldBerthRowProps {
 export function FieldBerthRow({ berth, activeRoomId, floorRoomId, onCouple }: FieldBerthRowProps) {
   const scratch = berth.berth == null;
   const row = (
-    <div className={`fberth${scratch ? " is-scratch" : ""}${berth.counts.needsYou ? " needs-you" : ""}`}>
-      <span className="fberth-num">{scratch ? "◇" : `B-${String(berth.berth).padStart(2, "0")}`}</span>
+    <div
+      className={`fberth${scratch ? " is-scratch" : ""}${berth.counts.needsYou ? " needs-you" : ""}`}
+    >
+      <span className="fberth-num">
+        {scratch ? "◇" : `B-${String(berth.berth).padStart(2, "0")}`}
+      </span>
       <FieldCrtFace size={32} scanlines>
         <AvatarFace persona={berth.manifest.cast.lead} size={32} />
       </FieldCrtFace>
       <span className="fberth-main">
         <b>{roomShortLabel(berth.id)}</b>
         <small>
-          {berth.counts.working} CRAFT · {berth.counts.needsYou} RED · {berth.counts.watchers} WATCHER
+          {berth.counts.working} CRAFT · {berth.counts.needsYou} RED · {berth.counts.watchers}{" "}
+          WATCHER
         </small>
       </span>
       <span className="fberth-salience">
@@ -42,8 +47,14 @@ export function FieldBerthRow({ berth, activeRoomId, floorRoomId, onCouple }: Fi
 
   return (
     <CutFrame scale="s" className="fberth-wrap" innerClassName="fberth-shell">
-      {scratch ? row : (
-        <button type="button" onClick={() => onCouple(berth.id)} aria-label={`Couple ${berth.manifest.name}`}>
+      {scratch ? (
+        row
+      ) : (
+        <button
+          type="button"
+          onClick={() => onCouple(berth.id)}
+          aria-label={`Couple ${berth.manifest.name}`}
+        >
           {row}
         </button>
       )}

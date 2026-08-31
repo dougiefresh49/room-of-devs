@@ -9,9 +9,7 @@ export function ProvenanceStamp({
   provenance: Instrument["provenance"];
   verdict?: string;
 }) {
-  const stamp = (
-    <span className={provenanceClass(provenance)}>{provenanceLabel(provenance)}</span>
-  );
+  const stamp = <span className={provenanceClass(provenance)}>{provenanceLabel(provenance)}</span>;
   if (!verdict) return stamp;
   return (
     <Tooltip>

@@ -43,12 +43,15 @@ export function speak(text: string, who = "mikey"): Promise<void> {
     persona = who;
     emit();
     return new Promise((resolve) => {
-      window.setTimeout(() => {
-        speaking = false;
-        persona = null;
-        emit();
-        resolve();
-      }, Math.min(4000, 400 + text.length * 40));
+      window.setTimeout(
+        () => {
+          speaking = false;
+          persona = null;
+          emit();
+          resolve();
+        },
+        Math.min(4000, 400 + text.length * 40),
+      );
     });
   }
 

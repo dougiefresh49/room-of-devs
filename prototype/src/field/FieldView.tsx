@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { flushSync } from "react-dom";
 import { roomShortLabel } from "../chrome/MastheadTabs";
 import { coupleRoom, focusCraftForAnswer } from "../mock/scenario";
@@ -387,7 +395,16 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
     };
     window.addEventListener("keydown", onEscape, true);
     return () => window.removeEventListener("keydown", onEscape, true);
-  }, [closeNode, floorOpen, hangarOpen, placeOpen, restoreFromHangar, screensOpen, sheetCraftId, voiceOpen]);
+  }, [
+    closeNode,
+    floorOpen,
+    hangarOpen,
+    placeOpen,
+    restoreFromHangar,
+    screensOpen,
+    sheetCraftId,
+    voiceOpen,
+  ]);
 
   const unseenHeld = Boolean(
     room.heldQuestion && currentHeldKey && !seenHeldKeys.has(currentHeldKey),
@@ -488,10 +505,7 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
         ) : screen === "glance" ? (
           <GlanceScreen onOpenNode={openNode} onCouple={coupleFromField} />
         ) : screen === "coms" ? (
-          <ComsScreen
-            onOpenNode={openNode}
-            onOpenFloor={() => setFloorOpen(true)}
-          />
+          <ComsScreen onOpenNode={openNode} onOpenFloor={() => setFloorOpen(true)} />
         ) : screen === "orders" ? (
           <OrdersScreen
             onLocalChange={() => {
@@ -572,20 +586,27 @@ export function FieldView({ bare = false }: { bare?: boolean }) {
   } as CSSProperties;
 
   return (
-    <div className={`field-root${bare ? " is-bare" : ""}${moodClass ? ` ${moodClass}` : ""}`} style={fieldStyle}>
-      {!bare ? <div className="field-mast">
-        <div className="haz" style={{ marginBottom: 12 }} />
-        <h1>
-          THE <span>RIG</span>
-          {" // FIELD UNIT"}
-        </h1>
-        <a className="back" href="/">
-          ◂ RIG
-        </a>
-        <FieldSizePicker value={handsetSize} onChange={setHandsetSize} />
-      </div> : null}
+    <div
+      className={`field-root${bare ? " is-bare" : ""}${moodClass ? ` ${moodClass}` : ""}`}
+      style={fieldStyle}
+    >
+      {!bare ? (
+        <div className="field-mast">
+          <div className="haz" style={{ marginBottom: 12 }} />
+          <h1>
+            THE <span>RIG</span>
+            {" // FIELD UNIT"}
+          </h1>
+          <a className="back" href="/">
+            ◂ RIG
+          </a>
+          <FieldSizePicker value={handsetSize} onChange={setHandsetSize} />
+        </div>
+      ) : null}
 
-      {bare ? screenBed : (
+      {bare ? (
+        screenBed
+      ) : (
         <div className="fone">
           <span className="sidekey" />
           <span className="sidekey low" />

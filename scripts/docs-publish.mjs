@@ -41,8 +41,22 @@ function renderMermaid(src) {
     );
     execFileSync(
       "pnpm",
-      ["dlx", "@mermaid-js/mermaid-cli@11", "-p", pptrFile, "-i", mmdFile, "-o", svgFile,
-       "-b", "transparent", "-t", "neutral", "-I", `m${hash}`],
+      [
+        "dlx",
+        "@mermaid-js/mermaid-cli@11",
+        "-p",
+        pptrFile,
+        "-i",
+        mmdFile,
+        "-o",
+        svgFile,
+        "-b",
+        "transparent",
+        "-t",
+        "neutral",
+        "-I",
+        `m${hash}`,
+      ],
       { stdio: ["ignore", "ignore", "inherit"] },
     );
     // Postplan caps pages at 512KB; minified SVGs buy real headroom.

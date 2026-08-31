@@ -80,24 +80,29 @@ function setPlayback(roomId: RoomId, clip: NowPlaying | null, expected?: NowPlay
         const current = room.nowPlaying;
         if (id !== roomId && !current) return [id, room];
         if (id !== roomId) {
-          return [id, {
+          return [
+            id,
+            {
+              ...room,
+              rev: room.rev + 1,
+              lastClip: current?.kind === "replay" ? room.lastClip : (current ?? room.lastClip),
+              nowPlaying: null,
+              speakingPersona: null,
+              liveClip: null,
+            },
+          ];
+        }
+        return [
+          id,
+          {
             ...room,
             rev: room.rev + 1,
-            lastClip: current?.kind === "replay" ? room.lastClip : (current ?? room.lastClip),
-            nowPlaying: null,
-            speakingPersona: null,
-            liveClip: null,
-          }];
-        }
-        return [id, {
-          ...room,
-          rev: room.rev + 1,
-          lastClip:
-            current && current.kind !== "replay" ? current : room.lastClip,
-          nowPlaying: clip,
-          speakingPersona: clip?.persona ?? null,
-          liveClip: clip?.kind === "live-clip" ? clip.label : null,
-        }];
+            lastClip: current && current.kind !== "replay" ? current : room.lastClip,
+            nowPlaying: clip,
+            speakingPersona: clip?.persona ?? null,
+            liveClip: clip?.kind === "live-clip" ? clip.label : null,
+          },
+        ];
       }),
     ) as typeof app.rooms;
     return {
@@ -942,7 +947,11 @@ export function setAudioRoute(next: "phone" | "mac") {
     const roomId = app.fleet.audioFloor.roomId ?? app.fleet.activeRoomId;
     const room = app.rooms[roomId];
     if (!room || room.audio.route === next) return app;
-    const audio = { ...room.audio, route: next, gateStartedAt: next === "phone" ? Date.now() : null };
+    const audio = {
+      ...room.audio,
+      route: next,
+      gateStartedAt: next === "phone" ? Date.now() : null,
+    };
     return {
       ...app,
       rooms: { ...app.rooms, [roomId]: { ...room, rev: room.rev + 1, audio } },
@@ -965,10 +974,7 @@ export function injectReply(text: string, target: ComposerTarget) {
   setRoom((s) => {
     const at = Date.now();
     const craftId = target.kind === "craft" ? target.craft.id : null;
-    const transcript = [
-      ...s.transcript,
-      { who: "YOU" as const, text: trimmed, you: true, at },
-    ];
+    const transcript = [...s.transcript, { who: "YOU" as const, text: trimmed, you: true, at }];
     if (target.kind === "mikey-about") {
       transcript.push({
         who: "MIKEY",

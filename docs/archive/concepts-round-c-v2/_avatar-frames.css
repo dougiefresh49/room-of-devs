@@ -21,35 +21,73 @@
 
 /* --- A face you can drop anywhere ------------------------------------- */
 .face {
-  width: 176px; aspect-ratio: 1;
-  background-size: contain; background-repeat: no-repeat; background-position: center;
+  width: 176px;
+  aspect-ratio: 1;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   background-image: var(--av-mikey-idle);
 }
 
 /* --- Lipsync: a 4-frame flip-book, stepped so it snaps like real mouth art.
        Put .face.speaking on the element while audio is playing. ---------- */
 @keyframes lipsync {
-  0%, 24%   { background-image: var(--av-mikey-mouth-mid); }
-  25%, 49%  { background-image: var(--av-mikey-speaking); }
-  50%, 74%  { background-image: var(--av-mikey-mouth-mid); }
-  75%, 100% { background-image: var(--av-mikey-idle); }
+  0%,
+  24% {
+    background-image: var(--av-mikey-mouth-mid);
+  }
+  25%,
+  49% {
+    background-image: var(--av-mikey-speaking);
+  }
+  50%,
+  74% {
+    background-image: var(--av-mikey-mouth-mid);
+  }
+  75%,
+  100% {
+    background-image: var(--av-mikey-idle);
+  }
 }
-.face.speaking { animation: lipsync 420ms steps(1, end) infinite; }
+.face.speaking {
+  animation: lipsync 420ms steps(1, end) infinite;
+}
 
 /* --- Blink: rare, asymmetric, so it reads as alive rather than mechanical. */
 @keyframes blink {
-  0%, 92%, 96%, 100% { background-image: var(--av-mikey-idle); }
-  93%, 95%           { background-image: var(--av-mikey-blink); }
+  0%,
+  92%,
+  96%,
+  100% {
+    background-image: var(--av-mikey-idle);
+  }
+  93%,
+  95% {
+    background-image: var(--av-mikey-blink);
+  }
 }
-.face.idle { animation: blink 7s steps(1, end) infinite; }
+.face.idle {
+  animation: blink 7s steps(1, end) infinite;
+}
 
 /* --- Excited/stoked variant, for a good result landing ------------------ */
-.face.stoked { background-image: var(--av-mikey-stoked); }
+.face.stoked {
+  background-image: var(--av-mikey-stoked);
+}
 
 /* --- The checked-out second voice -------------------------------------- */
-.face.donnie      { background-image: var(--av-donnie-idle); }
-.face.donnie.speaking { animation: none; background-image: var(--av-donnie-speaking); }
+.face.donnie {
+  background-image: var(--av-donnie-idle);
+}
+.face.donnie.speaking {
+  animation: none;
+  background-image: var(--av-donnie-speaking);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .face, .face.idle, .face.speaking { animation: none; }
+  .face,
+  .face.idle,
+  .face.speaking {
+    animation: none;
+  }
 }

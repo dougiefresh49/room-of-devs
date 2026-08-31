@@ -157,18 +157,12 @@ export function NowPlaying({
       className={`audio-floor audio-floor--${variant}${variant === "dock" ? " screenbed" : ""} ${speaking ? "is-speaking" : "is-idle"}${live ? " is-live" : ""}`}
       aria-label={speaking ? `${nowPlaying.persona} has the audio floor` : "Audio floor clear"}
     >
-      {showRoute ? (
-        <RouteControl compact={false} route={route} onRoute={onRoute} />
-      ) : null}
+      {showRoute ? <RouteControl compact={false} route={route} onRoute={onRoute} /> : null}
 
       {showFace && nowPlaying ? (
         <div className="ffloor-face">
           <FieldCrtFace size={28}>
-            <AvatarFace
-              persona={nowPlaying.persona}
-              mode="speaking"
-              size={28}
-            />
+            <AvatarFace persona={nowPlaying.persona} mode="speaking" size={28} />
           </FieldCrtFace>
         </div>
       ) : null}

@@ -16,7 +16,8 @@ export function VoicePath({ draft }: { draft: CommissionDraft }) {
       <div className="commission-voice-line">
         <b>MIKEY</b>
         <span>
-          “Berth {draft.berth ?? "scratch"}. It has a repo and it’ll live a while — full ceremony. Leo can lead.”
+          “Berth {draft.berth ?? "scratch"}. It has a repo and it’ll live a while — full ceremony.
+          Leo can lead.”
         </span>
       </div>
       <div className="commission-interpreter-receipt">

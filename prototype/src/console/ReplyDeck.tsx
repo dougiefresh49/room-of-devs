@@ -23,12 +23,9 @@ export function ReplyDeck() {
         </div>
         <div className="screenbed scr" style={{ minHeight: 0 }}>
           <div className="dimln">
-            REPLY // {focus?.ticket ?? "—"} · {focus?.callsign ?? "—"} · BOUND TO
-            TICKET
+            REPLY // {focus?.ticket ?? "—"} · {focus?.callsign ?? "—"} · BOUND TO TICKET
           </div>
-          <div className="amberln">
-            {focus?.task ?? "No craft selected."}
-          </div>
+          <div className="amberln">{focus?.task ?? "No craft selected."}</div>
         </div>
         <div className="composer">
           <input
@@ -68,9 +65,7 @@ export function ReplyDeck() {
           <span className="lbl">
             <b>{room.micHot ? "CAPTURING — RELEASE TO SEND" : "HOLD TO TALK"}</b>
             <br />
-            {room.micHot
-              ? "RELEASE SPACE / HW KEY"
-              : "SPACE / HW KEY · NEVER ALWAYS-LISTENING"}
+            {room.micHot ? "RELEASE SPACE / HW KEY" : "SPACE / HW KEY · NEVER ALWAYS-LISTENING"}
           </span>
           {room.micHot ? <Waveform active bars={6} /> : null}
         </div>

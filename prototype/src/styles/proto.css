@@ -3796,20 +3796,29 @@ footer {
     0 0 14px rgba(255, 160, 40, 0.3);
 }
 @media (pointer: coarse) {
-  .deck-fab { display: none; }
+  .deck-fab {
+    display: none;
+  }
 }
-body:has(.field-root) .deck-fab { display: none; }
-html.deck-forced .deck-fab { display: block !important; }
+body:has(.field-root) .deck-fab {
+  display: none;
+}
+html.deck-forced .deck-fab {
+  display: block !important;
+}
 html.deck-forced body:has(.field-root) .deck-fab {
   top: calc(var(--field-screen-top, 0px) + 52px);
-  right: max(8px, calc(100vw - var(--field-screen-left, 0px) - var(--field-screen-width, 100vw) + 8px));
+  right: max(
+    8px,
+    calc(100vw - var(--field-screen-left, 0px) - var(--field-screen-width, 100vw) + 8px)
+  );
   bottom: auto;
 }
 .deck-touch-hint {
   margin: 0 4px 8px;
   color: var(--steel-dim);
   font: 8.5px var(--mono);
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 .deck-drawer {
   position: fixed;

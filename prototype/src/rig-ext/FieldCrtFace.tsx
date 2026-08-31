@@ -27,12 +27,7 @@ export function FieldCrtFace({
       className={className}
       style={{ width: size, height: size, position: "relative", flex: "none" }}
     >
-      <CrtFace
-        size={libSize}
-        halo={halo}
-        scanlines={scanlines}
-        className="field-crt-fill"
-      >
+      <CrtFace size={libSize} halo={halo} scanlines={scanlines} className="field-crt-fill">
         {children}
       </CrtFace>
     </div>

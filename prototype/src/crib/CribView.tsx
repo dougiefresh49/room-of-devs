@@ -93,9 +93,10 @@ export function CribView() {
                 <div className="crib-rail-note">
                   <div className="crib-rail-note-title">Dead-stock detector</div>
                   <p>
-                    Generated manifest unions exports and scans every named import whose source begins with{" "}
-                    <code>@room/ui</code>, plus the prototype rig extensions. Catalog-only specimens are excluded.
-                    Zero hits ⇒ red lamp. Counts render from the file — never hardcoded in JSX.
+                    Generated manifest unions exports and scans every named import whose source
+                    begins with <code>@room/ui</code>, plus the prototype rig extensions.
+                    Catalog-only specimens are excluded. Zero hits ⇒ red lamp. Counts render from
+                    the file — never hardcoded in JSX.
                   </p>
                 </div>
               </aside>

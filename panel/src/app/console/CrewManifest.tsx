@@ -21,7 +21,10 @@ function matchAgent(agents: AgentView[], personaName: string, avatar: string): A
   return null;
 }
 
-function statusLabel(agent: AgentView | null): { led: "amber" | "red" | "green" | "dim"; text: string } {
+function statusLabel(agent: AgentView | null): {
+  led: "amber" | "red" | "green" | "dim";
+  text: string;
+} {
   if (!agent) return { led: "dim", text: "NO SESSION" };
   switch (agent.state) {
     case "hand_raised":
@@ -52,7 +55,12 @@ export function CrewManifest({ agents }: CrewManifestProps) {
               className={`console-crewplate${lit ? "" : " off"}`}
               glow={lit ? "0 0 10px rgba(255,179,71,.2)" : "none"}
             >
-              <CrtFace size={52} className="console-crew-face" scanlines={false} halo={lit && agent?.state === "speaking"}>
+              <CrtFace
+                size={52}
+                className="console-crew-face"
+                scanlines={false}
+                halo={lit && agent?.state === "speaking"}
+              >
                 <img src={personaAvatarSrc(p)} alt="" />
               </CrtFace>
               <div className="console-cname">{p.label.toUpperCase()}</div>
