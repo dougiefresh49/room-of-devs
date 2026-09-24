@@ -110,6 +110,54 @@ Package boundaries are rules:
 - User-facing text is taste work: both UIs, character copy, and the Gemini system prompts in `gemini.ts` and `dynamic-response.ts`.
 - Prose and docs: no em dashes or en dashes; commas, colons, or sentences.
 
+## Claim before you start
+
+Two counted bites, which is what earns a corefile rung. A tap-in asking
+"is anyone working right now?" answered "no active in-flight sessions"
+while two threads were live, one of them the experiment asking (room-of-
+devs #75, 2026-07-29). On 2026-09-08 I went to fan out voice-lab and
+found no in-progress indicator on any issue. Neither was a model failure:
+nothing ever wrote `state/working`, because threads wrote back only at
+settle.
+
+- Before your first edit on tracked work, file a ticket if none exists,
+  then claim it: swap its `state/*` label to `state/working` and comment
+  `claimed by session <sid>[ / <name>], doing <what>` on its own line.
+  `<sid>` is the first 8+ hex chars of your session id (the transcript
+  filename prefix; the worktree or branch hash in a T3 Code session; a
+  delegate lane's branch-name hash, minted by the skill that launches
+  it). One `gh issue edit N --add-label state/working --remove-label
+  <old>`, one `gh issue comment`.
+- A lane claimed by whoever launched it is claimed; the brief names the
+  claim, and the delegate posts no second one.
+- At settle, write conclusions back and close the issue as
+  `state/settled`. When evidence is still owed, the issue stays open as
+  `state/verify` with a comment naming who owes it; they settle it when
+  it lands. Closed issues leave the lint's view, so an open
+  `state/verify` is the only shape that keeps owed evidence visible.
+- A lane that stalls or gets dropped goes back to `state/open`, or to
+  `state/blocked` when it stalled on a dependency, with a one-line
+  comment (config, not earned: no counted moment yet). A silent
+  `state/working` is the failure above wearing a different label.
+- A claim counts only from my login or a bot login the repo names. The
+  fleet `scripts/spine-lint.ts` checks one `state/*` label per open
+  issue and a claim on every `state/working`; wire it into CI where the
+  repo has one.
+- When reporting activity, cite the last substantive activity: the last
+  comment or commit touching the ticket. Never `updatedAt`. That
+  timestamp moves on a label edit and reports motion where there is none
+  (#75, second finding).
+
+Quoted evidence, left as written.
+BAD (room-of-devs #75, 2026-07-29, the tap-in's answer while two threads
+were live):
+> no active in-flight sessions
+
+GOOD (room-of-devs #83, 2026-08-31, the claim comment as written):
+> claimed by session d8b3e22d, doing structured claim markers: claim
+> format in AGENTS.md, session-to-ticket join in tap-in.ts,
+> trusted-login marker validation in spine-lint.ts
+
 ## Docs
 
 - `docs/STATUS.md` is the tracking surface: what shipped, what awaits the owner, what's next. It is a thin index (fleet `html-status` skill): one line per entry, content lives in the topic docs it links, and it never absorbs content. Its Inbox is the owner's drop zone: check it at session start and triage (bugs to fixes, ideas to the backlog, work to `active/` specs or Next up).
@@ -117,5 +165,5 @@ Package boundaries are rules:
 - `docs/active/` unbuilt specs; `docs/shipped/` specs whose feature landed (move it there, log it in STATUS); `docs/archive/` superseded material (a one-line pointer banner at the top says what replaced it); `docs/reference/` evergreen (check `ideas-backlog.md` before proposing "new" ideas; `testing-live-mode.md`, `worktree-parallel-flow.md`).
 - The GitHub wiki stays unused: docs live in-tree so delegates can read them from any worktree.
 - GitHub issues are the spine: start fix work from `gh issue view`. The owner reads from the GitHub mobile app, so offer to push when a round lands. `pnpm docs:publish` after a shipped round renders STATUS and `active/` to the owner's phone-viewable Postplan draft (no API cost).
-- Claim-at-start (#75, decisions row 29; marker format #83). Before starting tracked-worthy work, file a ticket if none exists, then claim it: swap its `state/*` label to `state/working` and drop a structured claim comment, `claimed by session <sid>[ / <Persona>], doing <what>`, where `<sid>` is your session id's first 8+ hex chars (the transcript filename prefix; for a T3 Code session, the worktree/branch hash) (`gh issue edit N --add-label state/working --remove-label <its current state/* label>`, then `gh issue comment`). tap-in joins live threads to claimed tickets on that sid and only trusts claims commented by the repo owner; spine-lint enforces the marker. At settle, write conclusions back and set the closing state label. Exactly one `state/*` label per issue, always; `pnpm spine-lint` checks it and CI runs it. When reporting activity, cite the last substantive activity (last comment or commit touching the ticket), never `updatedAt`: that timestamp moves on label edits and is not progress.
+- Claim-at-start: the "Claim before you start" section above, instantiated from fleet `corefiles/AGENTS-base.md` (github.com/dougiefresh49/fleet; re-apply by hand when fleet changes it; origin #75, decisions row 29, marker #83). Repo specifics: tap-in joins live threads to claimed tickets on the sid, `pnpm spine-lint` runs `tts-server/scripts/spine-lint.ts` in CI, and that copy plus `spine-claim.ts` stay here until `tap-in.ts` imports the fleet pair (fleet `scripts/`).
 - Auto-memory is off for this repo (`autoMemoryEnabled: false` in `.claude/settings.json`). Durable workflow knowledge goes in this file, decisions in `docs/decisions.md`, nowhere else.
