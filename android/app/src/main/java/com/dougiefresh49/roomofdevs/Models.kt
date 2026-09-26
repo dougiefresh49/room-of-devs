@@ -16,6 +16,7 @@ data class Agent(
     val raisedAt: String? = null,
     val character: String? = null,
     val project: String? = null,
+    val lastActivityAt: String? = null,
     val raisedCount: Int = 0,
 ) {
     val title get() = label.ifEmpty { name }
@@ -24,9 +25,9 @@ data class Agent(
     val badge get() = when { hasUpdate -> Badge.HAND; state == "working" -> Badge.WRENCH; else -> Badge.NONE }
 }
 enum class Badge { HAND, WRENCH, NONE }
+/** Most recent activity first (ISO-8601 UTC strings sort chronologically); badges carry status. */
 fun roomOrder(agents: List<Agent>): List<Agent> = agents.sortedWith(
-    compareBy<Agent> { when { it.hasUpdate -> 0; it.state == "working" -> 1; else -> 2 } }
-        .thenBy { if (it.hasUpdate) it.raisedAt ?: "\uffff" else "" }
+    compareByDescending<Agent> { it.lastActivityAt ?: it.raisedAt ?: "" }
         .thenBy { it.title }.thenBy { it.sessionId },
 )
 

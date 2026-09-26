@@ -268,6 +268,7 @@ export function buildSnapshot(): AgentView[] {
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,
         project: projects.get(sessionId) ?? null,
+        lastActivityAt: state.updatedAt ?? null,
         raisedCount: queueIndex.get(shortSession)?.length ?? 0,
         supersededCount: countSupersededFrom(playedIndex.get(shortSession), state.raisedAt ?? null),
         muted: muted.has(sessionId),
