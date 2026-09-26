@@ -1,0 +1,68 @@
+name: Release Android
+on:
+  push:
+    tags: ['android-v*']
+  workflow_dispatch:
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle*
+            android/gradle/wrapper/gradle-wrapper.properties
+      - uses: android-actions/setup-android@v4
+      - name: Install CI SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Prepare release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            test -n "${!name:-}" || { echo "::error::Missing $name"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/room-release.p12"
+      - name: Test and build signed APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/room-release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew testDebugUnitTest assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk RoomOfDevs.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose RoomOfDevs.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RoomOfDevs
+          path: android/RoomOfDevs.apk
+      - name: Attach tagged release
+        if: startsWith(github.ref, 'refs/tags/android-v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: android/RoomOfDevs.apk
+          generate_release_notes: true
+          make_latest: false
+      - name: Remove release keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/room-release.p12"
