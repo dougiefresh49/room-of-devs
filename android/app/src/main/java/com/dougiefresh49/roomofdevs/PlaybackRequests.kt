@@ -83,7 +83,7 @@ class PlaybackRequests(
             }
         }
         val saved = replays(agent.sessionId)
-        val current = saved.find { it.file == file } ?: Replay(file, agent.sessionId, started.text)
+        val current = saved.find { it.file == file } ?: Replay(file, agent.sessionId, started.text, playbackRate = started.playbackRate)
         return listOf(current) + saved.filter { it.file != file }
     }
 }

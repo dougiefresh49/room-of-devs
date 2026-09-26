@@ -42,11 +42,19 @@ data class NowPlaying(
     val grantId: String? = null,
     val synthesisComplete: Boolean? = null,
     val kind: String? = null,
+    val playbackRate: Double? = null,
 )
 @Serializable
 data class Snapshot(val agents: List<Agent>, val nowPlaying: NowPlaying? = null, val epoch: Long? = null, val rev: Long? = null)
 @Serializable
-data class Replay(val file: String, val sessionId: String? = null, val textPreview: String? = null, val timestamp: String? = null)
+data class Replay(
+    val file: String,
+    val sessionId: String? = null,
+    val textPreview: String? = null,
+    val timestamp: String? = null,
+    /** The daemon's tempo for this clip (config default_speed, per character); the mobile page's base rate. */
+    val playbackRate: Double? = null,
+)
 
 /** Same epoch/revision and pre-epoch reconnect rules as room-client/store.ts. */
 class SnapshotGate {

@@ -42,6 +42,12 @@ class RoomMediaService : MediaLibraryService() {
     private var selectedThread: String? = null
     private var completedFile: String? = null
     private var selectedFile: String? = null
+    /** Per-clip daemon tempo by replay file; the car plays clip rate x speed setting (x 0.85 when Slower). */
+    private val clipRates = java.util.concurrent.ConcurrentHashMap<String, Double>()
+    private var slower = false
+    private val speedListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == ConnectionPrefs.SPEED_KEY) applySpeed()
+    }
     private val tiles = mutableMapOf<String, MediaItem>()
     private val custom = listOf(
         Triple(DISMISS, "Dismiss", R.drawable.ic_dismiss),
@@ -91,7 +97,9 @@ class RoomMediaService : MediaLibraryService() {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) ackFinished(player.currentMediaItem)
             }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = applySpeed()
         })
+        ConnectionPrefs.prefs(this).registerOnSharedPreferenceChangeListener(speedListener)
         configure()
     }
     private fun configure() {
@@ -126,6 +134,7 @@ class RoomMediaService : MediaLibraryService() {
     }
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = session
     override fun onDestroy() {
+        ConnectionPrefs.prefs(this).unregisterOnSharedPreferenceChangeListener(speedListener)
         feed?.stop(); requests?.close(); scope.cancel(); session.release(); player.release()
         super.onDestroy()
     }
@@ -162,7 +171,8 @@ class RoomMediaService : MediaLibraryService() {
             scope.launch {
                 try {
                     val playlist = request.audio.await()
-                    if (selectionVersion == version) selectedFile = playlist.first().file
+                    playlist.forEach { r -> r.playbackRate?.takeIf { it > 0 }?.let { clipRates[r.file] = it } }
+                    if (selectionVersion == version) { selectedFile = playlist.first().file; applySpeed() }
                     // Wait until MediaSession has installed this tap's placeholder item.
                     withTimeout(5_000) {
                         while (selectionVersion == version && player.currentMediaItem?.mediaId != "request:${request.id}") delay(20)
@@ -177,6 +187,12 @@ class RoomMediaService : MediaLibraryService() {
             MediaMetadata.Builder().setTitle(agent.title).setArtist(agent.subtitle).setIsPlayable(true).build(),
         ).build()).buildUpon().setMediaId("request:${request.id}")
             .setUri("room://request/${request.id}").setMimeType(MimeTypes.AUDIO_MPEG).build()
+    }
+    private fun applySpeed() {
+        val id = player.currentMediaItem?.mediaId
+        val file = if (id?.startsWith("replay:") == true) id.removePrefix("replay:") else selectedFile
+        val clip = file?.let(clipRates::get) ?: 1.0
+        player.setPlaybackSpeed((clip * ConnectionPrefs.speed(this) * if (slower) 0.85 else 1.0).toFloat())
     }
     private fun ackFinished(item: MediaItem?) {
         val id = item?.mediaId ?: return
@@ -253,7 +269,7 @@ class RoomMediaService : MediaLibraryService() {
                 when (command.customAction) {
                     DISMISS -> selectedThread?.let { api?.action("dismiss_queue", "sessionId" to it) }
                         ?: return@future SessionResult(SessionError.ERROR_BAD_VALUE)
-                    SLOWER -> player.setPlaybackSpeed(if (player.playbackParameters.speed == 1f) .85f else 1f)
+                    SLOWER -> { slower = !slower; applySpeed() }
                     NEXT -> {
                         val next = roomOrder(feed?.snapshots?.value?.agents.orEmpty()).firstOrNull { it.hasUpdate && it.sessionId != selectedThread }
                             ?: return@future SessionResult(SessionError.ERROR_BAD_VALUE)
