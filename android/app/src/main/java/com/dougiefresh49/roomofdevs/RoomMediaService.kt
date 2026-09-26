@@ -26,7 +26,6 @@ class RoomMediaService : MediaLibraryService() {
         private const val ROOM = "room"
         private const val DISMISS = "room.dismiss"
         private const val SLOWER = "room.slower"
-        private const val LIVE_RETRIES = 5
         private const val NEXT = "room.next_hand"
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -62,12 +61,12 @@ class RoomMediaService : MediaLibraryService() {
         player = ExoPlayer.Builder(this).setMediaSourceFactory(
             DefaultMediaSourceFactory(DataSource.Factory {
                 RoomDataSource(requireNotNull(api), requireNotNull(requests))
-            }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy(LIVE_RETRIES) {
-                // Network drops on audio GETs retry (free; a live tail resumes at ?from=).
-                // Tap failures never retry: reopening a request never re-grants anyway.
+            }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
+                // Live-tail reconnects live in RoomDataSource (bounded, resumes at ?from=). A
+                // terminal error is fatal here so ExoPlayer never restarts the tail from byte 0.
                 override fun getRetryDelayMsFor(info: LoadErrorInfo): Long {
                     val terminal = generateSequence<Throwable>(info.exception) { it.cause }.any { it is TerminalRoomException }
-                    return if (terminal || info.errorCount > LIVE_RETRIES) C.TIME_UNSET else 1_000L
+                    return if (terminal) C.TIME_UNSET else super.getRetryDelayMsFor(info)
                 }
             }),
         ).setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
@@ -269,7 +268,16 @@ class RoomMediaService : MediaLibraryService() {
         override fun onSetMediaItems(session: MediaSession, controller: MediaSession.ControllerInfo, mediaItems: List<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
             val id = mediaItems.getOrNull(startIndex.coerceAtLeast(0))?.mediaId ?: ""
             val agent = feed?.snapshots?.value?.agents?.find { id == "thread:${it.sessionId}" }
-            if (agent != null) return Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(listOf(select(agent)), 0, 0))
+            if (agent != null) {
+                val item = select(agent)
+                // A re-tap that reuses the playing request keeps its Queue history.
+                val installed = (0 until player.mediaItemCount).map(player::getMediaItemAt)
+                val at = installed.indexOfFirst { it.mediaId == item.mediaId }
+                return Futures.immediateFuture(
+                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, 0)
+                    else MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0),
+                )
+            }
             // Some hosts select a queue entry by media ID rather than seekTo(index).
             // Resolve against our installed playlist, never controller-supplied URIs.
             val queue = (0 until player.mediaItemCount).map(player::getMediaItemAt)
