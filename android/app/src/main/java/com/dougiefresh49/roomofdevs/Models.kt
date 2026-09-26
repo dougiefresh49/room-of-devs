@@ -54,6 +54,8 @@ data class Replay(
     val timestamp: String? = null,
     /** The daemon's tempo for this clip (config default_speed, per character); the mobile page's base rate. */
     val playbackRate: Double? = null,
+    /** Granted clip still synthesizing: stream it from /live-audio (the mobile page's live path). */
+    @kotlinx.serialization.Transient val live: Boolean = false,
 )
 
 /** Same epoch/revision and pre-epoch reconnect rules as room-client/store.ts. */

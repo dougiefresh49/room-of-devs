@@ -12,23 +12,39 @@ import okhttp3.mockwebserver.SocketPolicy
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackTest {
     private val agent = Agent("session-123", "Thread", state = "hand_raised", raisedCount = 1)
-    @Test fun duplicateTapsShareOneGrantAndWaitForFinalFile() = runTest {
+    @Test fun duplicateTapsShareOneGrantAndStreamOnceSynthesisStarts() = runTest {
         var calls = 0
         var polls = 0
         val current = NowPlaying(agent.sessionId, "new", output = "phone", replayFile = "new.mp3", synthesisComplete = false)
         val manager = PlaybackRequests(this, {
             polls++
-            Snapshot(listOf(agent), if (polls == 1) null else current.copy(synthesisComplete = polls >= 4))
-        }, { listOf(Replay("old.mp3", agent.sessionId), Replay("new.mp3", agent.sessionId)) }, { calls++ })
+            Snapshot(listOf(agent), if (polls == 1) null else current)
+        }, { listOf(Replay("old.mp3", agent.sessionId)) }, { calls++ })
         val first = manager.tap(agent)
         val duplicate = manager.tap(agent)
         assertSame(first, duplicate)
-        assertEquals(listOf("new.mp3", "old.mp3"), first.audio.await().map { it.file })
+        val playlist = first.audio.await()
+        assertEquals(listOf("new.mp3", "old.mp3"), playlist.map { it.file })
+        // The granted clip streams live while still synthesizing; history plays saved files.
+        assertEquals(listOf(true, false), playlist.map { it.live })
         assertEquals(1, calls)
-        assertTrue(polls >= 4)
+        assertEquals(2, polls)
         // Reopening/seeking the same request cannot dispatch a second grant.
         first.audio.await()
         assertEquals(1, calls)
+    }
+    @Test fun retapWhileGrantedClipStillPlaysNeverGrantsAgain() = runTest {
+        var calls = 0
+        var now: NowPlaying? = null
+        val playing = NowPlaying(agent.sessionId, "t1", output = "phone", replayFile = "new.mp3", synthesisComplete = false)
+        val manager = PlaybackRequests(this, { Snapshot(listOf(agent), now) }, { emptyList() }, { calls++; now = playing },
+            current = { Snapshot(listOf(agent), now) })
+        val first = manager.tap(agent)
+        first.audio.await()
+        assertSame(first, manager.tap(agent))
+        assertEquals(1, calls)
+        now = playing.copy(endedAt = "t2")
+        assertNotSame(first, manager.tap(agent))
     }
     @Test fun switchingThreadsKeepsTheFirstThreadsGrantGuard() = runTest {
         val other = agent.copy(sessionId = "other-session")

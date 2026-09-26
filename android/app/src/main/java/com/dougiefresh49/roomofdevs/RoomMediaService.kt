@@ -45,6 +45,7 @@ class RoomMediaService : MediaLibraryService() {
     /** Per-clip daemon tempo by replay file; the car plays clip rate x speed setting (x 0.85 when Slower). */
     private val clipRates = java.util.concurrent.ConcurrentHashMap<String, Double>()
     private var slower = false
+    private var selectedLive = false
     private val speedListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == ConnectionPrefs.SPEED_KEY) applySpeed()
     }
@@ -60,8 +61,13 @@ class RoomMediaService : MediaLibraryService() {
         player = ExoPlayer.Builder(this).setMediaSourceFactory(
             DefaultMediaSourceFactory(DataSource.Factory {
                 RoomDataSource(requireNotNull(api), requireNotNull(requests))
-            }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy(0) {
-                override fun getRetryDelayMsFor(info: LoadErrorInfo) = C.TIME_UNSET
+            }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
+                // Live-tail reconnects live in RoomDataSource (bounded, resumes at ?from=). A
+                // terminal error is fatal here so ExoPlayer never restarts the tail from byte 0.
+                override fun getRetryDelayMsFor(info: LoadErrorInfo): Long {
+                    val terminal = generateSequence<Throwable>(info.exception) { it.cause }.any { it is TerminalRoomException }
+                    return if (terminal) C.TIME_UNSET else super.getRetryDelayMsFor(info)
+                }
             }),
         ).setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(), true)
@@ -114,6 +120,7 @@ class RoomMediaService : MediaLibraryService() {
         requests = PlaybackRequests(scope, nextFeed::refresh, nextApi::replays,
             { id -> nextApi.action("grant", "sessionId" to id, "output" to "phone") },
             pollSnapshot = nextFeed::currentOrRefresh,
+            current = { nextFeed.snapshots.value },
         )
         feedJob = scope.launch {
             var previous: List<Agent>? = null
@@ -167,12 +174,14 @@ class RoomMediaService : MediaLibraryService() {
         val request = manager.tap(agent)
         if (selection?.id != request.id) {
             val version = ++selectionVersion
-            selection = request; selectedThread = agent.sessionId; completedFile = null; selectedFile = null
+            selection = request; selectedThread = agent.sessionId; completedFile = null; selectedFile = null; selectedLive = false
             scope.launch {
                 try {
                     val playlist = request.audio.await()
                     playlist.forEach { r -> r.playbackRate?.takeIf { it > 0 }?.let { clipRates[r.file] = it } }
-                    if (selectionVersion == version) { selectedFile = playlist.first().file; applySpeed() }
+                    if (selectionVersion == version) {
+                        selectedFile = playlist.first().file; selectedLive = playlist.first().live; applySpeed()
+                    }
                     // Wait until MediaSession has installed this tap's placeholder item.
                     withTimeout(5_000) {
                         while (selectionVersion == version && player.currentMediaItem?.mediaId != "request:${request.id}") delay(20)
@@ -192,7 +201,10 @@ class RoomMediaService : MediaLibraryService() {
         val id = player.currentMediaItem?.mediaId
         val file = if (id?.startsWith("replay:") == true) id.removePrefix("replay:") else selectedFile
         val clip = file?.let(clipRates::get) ?: 1.0
-        player.setPlaybackSpeed((clip * ConnectionPrefs.speed(this) * if (slower) 0.85 else 1.0).toFloat())
+        // A live tail can't sustain more than the clip's own rate (the mobile page's rule).
+        val live = selectedLive && id?.startsWith("request:") == true
+        val mult = if (live) 1.0 else ConnectionPrefs.speed(this)
+        player.setPlaybackSpeed((clip * mult * if (slower) 0.85 else 1.0).toFloat())
     }
     private fun ackFinished(item: MediaItem?) {
         val id = item?.mediaId ?: return
@@ -256,7 +268,16 @@ class RoomMediaService : MediaLibraryService() {
         override fun onSetMediaItems(session: MediaSession, controller: MediaSession.ControllerInfo, mediaItems: List<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
             val id = mediaItems.getOrNull(startIndex.coerceAtLeast(0))?.mediaId ?: ""
             val agent = feed?.snapshots?.value?.agents?.find { id == "thread:${it.sessionId}" }
-            if (agent != null) return Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(listOf(select(agent)), 0, 0))
+            if (agent != null) {
+                val item = select(agent)
+                // A re-tap that reuses the playing request keeps its Queue history.
+                val installed = (0 until player.mediaItemCount).map(player::getMediaItemAt)
+                val at = installed.indexOfFirst { it.mediaId == item.mediaId }
+                return Futures.immediateFuture(
+                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, 0)
+                    else MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0),
+                )
+            }
             // Some hosts select a queue entry by media ID rather than seekTo(index).
             // Resolve against our installed playlist, never controller-supplied URIs.
             val queue = (0 until player.mediaItemCount).map(player::getMediaItemAt)
