@@ -38,6 +38,23 @@ class SetupActivity : Activity() {
         layout.addView(connect)
         status = TextView(this)
         layout.addView(status)
+        layout.addView(TextView(this).apply {
+            text = "Playback speed"; textSize = 18f; setPadding(0, 48, 0, 8)
+        })
+        layout.addView(TextView(this).apply {
+            text = "Multiplies each character's own pace, same as the speed control on the mobile page."
+        })
+        val speeds = RadioGroup(this).apply { orientation = RadioGroup.HORIZONTAL }
+        val current = ConnectionPrefs.speed(this)
+        ConnectionPrefs.SPEED_STEPS.forEach { step ->
+            speeds.addView(RadioButton(this).apply {
+                id = android.view.View.generateViewId()
+                text = if (step % 1.0 == 0.0) "${step.toInt()}×" else "${step}×"
+                isChecked = step == current
+                setOnClickListener { ConnectionPrefs.saveSpeed(this@SetupActivity, step) }
+            })
+        }
+        layout.addView(speeds)
         setContentView(layout)
         receive(intent)
         ConnectionPrefs.load(this)?.let { test(it, save = false) }
