@@ -25,13 +25,14 @@ class ProtocolTest {
             assertTrue(it, runCatching { Connection.parse(it) }.isFailure)
         }
     }
-    @Test fun ordersHandsByAgeThenWorkingThenIdleAndMapsBadges() {
-        val idle = agent("idle")
-        val working = agent("working")
+    @Test fun ordersByMostRecentActivityAndMapsBadges() {
+        val idle = agent("idle").copy(lastActivityAt = "2026-09-25T09:00:00Z")
+        val working = agent("working").copy(lastActivityAt = "2026-09-26T05:18:00Z")
         val newer = agent("hand_raised", "2026-09-25T12:00:00Z")
-        val older = agent("hand_raised", "2026-09-25T11:00:00Z")
-        val result = roomOrder(listOf(idle, newer, working, older))
-        assertEquals(listOf(older, newer, working, idle), result)
+        val older = agent("hand_raised", "2026-09-25T11:00:00Z").copy(lastActivityAt = "2026-09-25T11:30:00Z")
+        val unknown = agent("idle", "x").copy(raisedAt = null)
+        val result = roomOrder(listOf(idle, newer, unknown, working, older))
+        assertEquals(listOf(working, newer, older, idle, unknown), result)
         assertEquals(Badge.HAND, newer.badge)
         assertEquals(Badge.WRENCH, working.badge)
         assertEquals(Badge.NONE, idle.badge)
