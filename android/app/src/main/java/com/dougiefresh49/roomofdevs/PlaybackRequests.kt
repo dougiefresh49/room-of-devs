@@ -15,16 +15,25 @@ class PlaybackRequests(
     private val grant: suspend (String) -> Unit,
     private val pollMs: Long = 500,
     private val grantWaitMs: Long = 25_000,
-    private val completeWaitMs: Long = 120_000,
     private val pollSnapshot: suspend () -> Snapshot = snapshot,
+    /** Latest snapshot without I/O (the SSE value), for the re-tap guard. */
+    private val current: () -> Snapshot? = { null },
 ) {
     val requests = ConcurrentHashMap<String, PlaybackRequest>()
     private val pending = mutableMapOf<String, PlaybackRequest>()
     private val history = ArrayDeque<String>()
 
     // Called on the service main thread. Store the guard before the coroutine can dispatch.
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun tap(agent: Agent): PlaybackRequest {
-        pending[agent.sessionId]?.takeIf { it.audio.isActive }?.let { return it }
+        pending[agent.sessionId]?.let { previous ->
+            if (previous.audio.isActive) return previous
+            // A granted clip streams before synthesis ends, so the request completes early.
+            // While that clip is still the phone's now-playing, a re-tap replays it, never re-grants.
+            val first = runCatching { previous.audio.getCompleted().firstOrNull() }.getOrNull()
+            val np = current()?.nowPlaying
+            if (first?.live == true && np?.replayFile == first.file && np.endedAt == null) return previous
+        }
         val id = UUID.randomUUID().toString()
         val audio = CompletableDeferred<List<Replay>>()
         val job = scope.launch(start = CoroutineStart.LAZY) {
@@ -70,20 +79,12 @@ class PlaybackRequests(
             } while (frame == null)
             frame
         }
-        // Replay endpoint serves finalized files only. Do not consume a growing .part as MP3.
+        // Play as soon as synthesis starts: /live-audio tails the growing .part and serves
+        // the finalized file the same way, so the granted clip always streams from there.
         val file = requireNotNull(started.replayFile)
-        withTimeout(completeWaitMs) {
-            var frame = started
-            while (frame.synthesisComplete == false) {
-                delay(pollMs)
-                val next = pollSnapshot().nowPlaying
-                if (next?.replayFile == file) frame = next
-                else if (replays(agent.sessionId).any { it.file == file }) break
-                else throw IOException("Update was interrupted; tap again")
-            }
-        }
         val saved = replays(agent.sessionId)
-        val current = saved.find { it.file == file } ?: Replay(file, agent.sessionId, started.text, playbackRate = started.playbackRate)
+        val current = (saved.find { it.file == file } ?: Replay(file, agent.sessionId, started.text, playbackRate = started.playbackRate))
+            .copy(live = true)
         return listOf(current) + saved.filter { it.file != file }
     }
 }
