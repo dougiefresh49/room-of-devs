@@ -58,6 +58,8 @@ export const AgentViewSchema = v.object({
   state: SessionStateSchema,
   raisedAt: v.nullable(v.string()),
   character: v.nullable(v.string()),
+  /** Working-directory basename. Additive; older readers default null. */
+  project: v.optional(v.nullable(v.string())),
   raisedCount: v.number(),
   supersededCount: v.number(),
   muted: v.boolean(),

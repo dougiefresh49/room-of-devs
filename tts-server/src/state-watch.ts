@@ -12,6 +12,7 @@ import {
   loadSessionVoices,
   loadMutedSessions,
   loadNicknames,
+  getActiveSessions,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
 import { resolveVoiceId } from "./elevenlabs.js";
@@ -230,6 +231,9 @@ export function buildSnapshot(): AgentView[] {
   const queueIndex = indexQueueDir();
   const playedIndex = indexPlayedDir();
   const t3Provisioned = t3ReplyProvisioned();
+  const projects = new Map(
+    getActiveSessions().map((s) => [s.sessionId, s.cwd ? basename(s.cwd) : null]),
+  );
   const agents: AgentView[] = [];
 
   try {
@@ -263,6 +267,7 @@ export function buildSnapshot(): AgentView[] {
         state: shownState,
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,
+        project: projects.get(sessionId) ?? null,
         raisedCount: queueIndex.get(shortSession)?.length ?? 0,
         supersededCount: countSupersededFrom(playedIndex.get(shortSession), state.raisedAt ?? null),
         muted: muted.has(sessionId),
