@@ -58,8 +58,10 @@ export const AgentViewSchema = v.object({
   state: SessionStateSchema,
   raisedAt: v.nullable(v.string()),
   character: v.nullable(v.string()),
-  /** Working-directory basename. Additive; older readers default null. */
+  /** Working-directory basename (T3 project title for SDK cards). Additive; older readers default null. */
   project: v.optional(v.nullable(v.string())),
+  /** T3 Code thread title for SDK cards. Additive; readers default null. */
+  threadTitle: v.optional(v.nullable(v.string())),
   /** Last hook touch (prompt or stop) from the state file. Additive; readers default null. */
   lastActivityAt: v.optional(v.nullable(v.string())),
   raisedCount: v.number(),

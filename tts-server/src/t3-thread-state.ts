@@ -78,3 +78,61 @@ HAVING SUM(CASE WHEN t.settled_override='settled'
   }
   return done;
 }
+
+export interface T3ThreadLabel {
+  title: string;
+  project: string;
+}
+
+const LABEL_TTL_MS = 15_000;
+let labelCache: { key: string; at: number; labels: Map<string, T3ThreadLabel> } | null = null;
+
+/**
+ * Thread and project titles for the given Claude sessionIds' active T3
+ * threads, for display. Sessions with zero or several active threads are
+ * omitted. Cached briefly: snapshot builds call this on every state change.
+ */
+export function t3ThreadLabels(sessionIds: string[]): Map<string, T3ThreadLabel> {
+  const ids = sessionIds.filter((s) => UUID_RE.test(s)).sort();
+  const key = ids.join(",");
+  if (labelCache && labelCache.key === key && Date.now() - labelCache.at < LABEL_TTL_MS) {
+    return labelCache.labels;
+  }
+  const labels = new Map<string, T3ThreadLabel>();
+  if (ids.length > 0 && existsSync(T3_STATE_DB)) {
+    const inList = ids.map((s) => `'${s}'`).join(",");
+    const sql = `SELECT json_extract(r.resume_cursor_json,'$.resume'),
+  json_object('title', t.title, 'project', p.title)
+FROM provider_session_runtime r
+JOIN projection_threads t ON t.thread_id = r.thread_id
+JOIN projection_projects p ON p.project_id = t.project_id
+WHERE json_extract(r.resume_cursor_json,'$.resume') IN (${inList})
+  AND t.deleted_at IS NULL
+  AND t.archived_at IS NULL
+  AND t.settled_override IS NOT 'settled'
+GROUP BY 1
+HAVING COUNT(DISTINCT t.thread_id) = 1;`;
+    try {
+      const r = spawnSync("sqlite3", ["-separator", "\t", `file:${T3_STATE_DB}?mode=ro`, sql], {
+        encoding: "utf-8",
+        timeout: 3000,
+      });
+      if (r.status === 0) {
+        for (const line of r.stdout.split("\n")) {
+          const tab = line.indexOf("\t");
+          if (tab < 0) continue;
+          try {
+            const row = JSON.parse(line.slice(tab + 1)) as T3ThreadLabel;
+            if (row.title) labels.set(line.slice(0, tab), row);
+          } catch {
+            /* skip malformed row */
+          }
+        }
+      }
+    } catch {
+      /* best-effort: tiles fall back to the session name */
+    }
+  }
+  labelCache = { key, at: Date.now(), labels };
+  return labels;
+}

@@ -30,6 +30,7 @@ import {
   type PhoneAck,
 } from "./live-mode.js";
 import { T3_AUTH_REV_PATH, invalidateT3BearerCache, t3ReplyProvisioned } from "./t3-reply.js";
+import { t3ThreadLabels } from "./t3-thread-state.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
@@ -291,6 +292,15 @@ export function buildSnapshot(): AgentView[] {
     }
   } catch (err: any) {
     log("state-watch", `buildSnapshot failed: ${err?.message ?? err}`);
+  }
+
+  // T3 cards all read "<repo>-<hex>"; the thread title tells them apart.
+  const t3Labels = t3ThreadLabels(agents.filter((a) => a.sdk).map((a) => a.sessionId));
+  for (const agent of agents) {
+    const t3 = t3Labels.get(agent.sessionId);
+    if (!t3) continue;
+    agent.threadTitle = t3.title;
+    agent.project = t3.project || agent.project;
   }
 
   return agents;

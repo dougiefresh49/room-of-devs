@@ -39,6 +39,7 @@ class ProtocolTest {
         assertEquals(Badge.WRENCH, working.copy(raisedCount = 1).badge)
         assertFalse(working.copy(raisedCount = 1).hasUpdate)
         assertEquals("Thread label", idle.copy(label = "Thread label").title)
+        assertEquals("Wave 3", idle.copy(label = "comic-reader-5e", threadTitle = "Wave 3").title)
         assertEquals("Raphael", idle.copy(character = "Raphael").subtitle)
         assertEquals("repo", idle.copy(project = "repo", character = "Raphael").subtitle)
     }
