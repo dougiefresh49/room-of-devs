@@ -18,8 +18,10 @@ data class Agent(
     val project: String? = null,
     val lastActivityAt: String? = null,
     val raisedCount: Int = 0,
+    /** T3 Code thread title (SDK cards only). */
+    val threadTitle: String? = null,
 ) {
-    val title get() = label.ifEmpty { name }
+    val title get() = threadTitle?.takeIf { it.isNotBlank() } ?: label.ifEmpty { name }
     val subtitle get() = project ?: character ?: ""
     val hasUpdate get() = state == "hand_raised"
     val badge get() = when { hasUpdate -> Badge.HAND; state == "working" -> Badge.WRENCH; else -> Badge.NONE }
