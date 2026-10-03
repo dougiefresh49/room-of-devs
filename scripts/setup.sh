@@ -103,6 +103,11 @@ if command -v pnpm &>/dev/null; then
         err "pnpm-lock.yaml missing under $TTS_SERVER_DEST — cannot pin install"
         exit 1
     fi
+    # pnpm 11 reads build-script approvals only from pnpm-workspace.yaml, and
+    # the installed copy is a standalone project: carry the repo root's
+    # allowBuilds over, or the install stops on ERR_PNPM_IGNORED_BUILDS.
+    awk '/^allowBuilds:/{f=1;print;next} f&&/^[^ ]/{f=0} f' \
+        "$PROJECT_DIR/pnpm-workspace.yaml" > "$TTS_SERVER_DEST/pnpm-workspace.yaml"
     cd "$TTS_SERVER_DEST"
     # Fail loudly on lockfile drift — never fall back to an unpinned install
     # (audit H-8 / Q-13).
