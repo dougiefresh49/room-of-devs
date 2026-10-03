@@ -8,14 +8,13 @@ import {
   FAILED_DIR,
   TTS_DIR,
   SESSION_VOICES_PATH,
+  PROJECT_VOICES_PATH,
   NICKNAMES_PATH,
-  loadSessionVoices,
   loadMutedSessions,
   loadNicknames,
-  getActiveSessions,
 } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
-import { resolveVoiceId } from "./elevenlabs.js";
+import { projectsForSessions, resolveEffectiveVoices } from "./session-voice.js";
 import type { SessionState } from "./state.js";
 import type { NowPlaying } from "./protocol/index.js";
 import { NOW_PLAYING_PATH } from "./now-playing.js";
@@ -30,7 +29,6 @@ import {
   type PhoneAck,
 } from "./live-mode.js";
 import { T3_AUTH_REV_PATH, invalidateT3BearerCache, t3ReplyProvisioned } from "./t3-reply.js";
-import { t3ThreadLabels } from "./t3-thread-state.js";
 
 const HOLD_ROOM_PATH = join(TTS_DIR, ".hold-room.json");
 const PAUSED_FLAG_PATH = join(TTS_DIR, ".playback-paused");
@@ -174,9 +172,34 @@ function indexQueueDir(): Map<string, string[]> {
   return bySession;
 }
 
-function indexPlayedDir(): Map<string, number[]> {
-  // shortSession → played-file mtimes (unsorted; callers compare thresholds).
-  const bySession = new Map<string, number[]>();
+/**
+ * Enqueue time from a queue basename ("<epochSec>-<ms>-cc-<short>.json"), in
+ * ms. Numeric, not lexical: the TS writers don't zero-pad the ms field. NaN
+ * when the name doesn't carry one.
+ */
+function queueNameTs(f: string): number {
+  const m = /^(\d+)-(\d+)-/.exec(f);
+  return m ? Number(m[1]) * 1000 + Number(m[2]) : Number.NaN;
+}
+
+function newestNameTs(names: readonly string[] | undefined): number {
+  let newest = Number.NEGATIVE_INFINITY;
+  for (const f of names ?? []) {
+    const ts = queueNameTs(f);
+    if (ts > newest) newest = ts;
+  }
+  return newest;
+}
+
+interface PlayedIndexEntry {
+  /** Played-file mtimes (unsorted; callers compare thresholds). */
+  mtimes: number[];
+  /** Newest enqueue time by basename; -Infinity when none parse. */
+  newestTs: number;
+}
+
+function indexPlayedDir(): Map<string, PlayedIndexEntry> {
+  const bySession = new Map<string, PlayedIndexEntry>();
   try {
     if (!existsSync(PLAYED_DIR)) return bySession;
     for (const f of readdirSync(PLAYED_DIR)) {
@@ -184,9 +207,11 @@ function indexPlayedDir(): Map<string, number[]> {
       if (!key) continue;
       try {
         const mtime = statSync(join(PLAYED_DIR, f)).mtimeMs;
-        const list = bySession.get(key) ?? [];
-        list.push(mtime);
-        bySession.set(key, list);
+        const entry = bySession.get(key) ?? { mtimes: [], newestTs: Number.NEGATIVE_INFINITY };
+        entry.mtimes.push(mtime);
+        const ts = queueNameTs(f);
+        if (ts > entry.newestTs) entry.newestTs = ts;
+        bySession.set(key, entry);
       } catch {
         /* skip unreadable file */
       }
@@ -195,6 +220,40 @@ function indexPlayedDir(): Map<string, number[]> {
     /* empty index */
   }
   return bySession;
+}
+
+/** shortSession → newest failed/ enqueue time. One readdir, no stats. */
+function indexFailedDir(): Map<string, number> {
+  const bySession = new Map<string, number>();
+  try {
+    if (!existsSync(FAILED_DIR)) return bySession;
+    for (const f of readdirSync(FAILED_DIR)) {
+      const key = ccShortSession(f);
+      if (!key) continue;
+      const ts = queueNameTs(f);
+      if (ts > (bySession.get(key) ?? Number.NEGATIVE_INFINITY)) bySession.set(key, ts);
+    }
+  } catch {
+    /* empty index */
+  }
+  return bySession;
+}
+
+/**
+ * The most recent turn's speech failed: the newest failed/ item is newer than
+ * anything played or still queued, and no prompt has started since. A prompt
+ * flips the raw state to "working", which holds until that turn's Stop
+ * enqueues a newer item, so a working state file always reads not-failed.
+ */
+export function lastTurnFailed(
+  rawState: SessionState,
+  newestFailedTs: number | undefined,
+  newestPlayedTs: number,
+  newestQueuedTs: number,
+): boolean {
+  if (rawState === "working") return false;
+  if (newestFailedTs === undefined || !Number.isFinite(newestFailedTs)) return false;
+  return newestFailedTs > newestPlayedTs && newestFailedTs > newestQueuedTs;
 }
 
 /**
@@ -224,6 +283,18 @@ function countSupersededFrom(playedMtimes: number[] | undefined, raisedAt: strin
   return count;
 }
 
+function readRoomStates(): { sessionId: string; state: StateFile }[] {
+  const out: { sessionId: string; state: StateFile }[] = [];
+  if (!existsSync(STATE_DIR)) return out;
+  for (const f of readdirSync(STATE_DIR)) {
+    if (!f.endsWith(".json")) continue;
+    const sessionId = f.slice(0, -5);
+    const state = readStateFile(sessionId);
+    if (state) out.push({ sessionId, state });
+  }
+  return out;
+}
+
 export function buildSnapshot(): AgentView[] {
   const muted = new Set(loadMutedSessions());
   const teamIds = teamSessionIds();
@@ -231,23 +302,27 @@ export function buildSnapshot(): AgentView[] {
   const liveMap = loadLiveSessions();
   const queueIndex = indexQueueDir();
   const playedIndex = indexPlayedDir();
+  const failedIndex = indexFailedDir();
   const t3Provisioned = t3ReplyProvisioned();
-  const projects = new Map(
-    getActiveSessions().map((s) => [s.sessionId, s.cwd ? basename(s.cwd) : null]),
-  );
   const agents: AgentView[] = [];
 
   try {
-    if (!existsSync(STATE_DIR)) return agents;
-    for (const f of readdirSync(STATE_DIR)) {
-      if (!f.endsWith(".json")) continue;
-      const sessionId = f.slice(0, -5);
-      const state = readStateFile(sessionId);
-      if (!state) continue;
-
+    const room = readRoomStates();
+    // One batch for the whole room (registry cwds + one T3 query), shared by
+    // each card's project and its voice. See session-voice.ts.
+    const projects = projectsForSessions(
+      room.map(({ sessionId, state }) => ({ sessionId, sdk: state.sdk === true })),
+    );
+    const voices = resolveEffectiveVoices(
+      room.map((r) => r.sessionId),
+      projects,
+    );
+    for (const { sessionId, state } of room) {
       const shortSession = sessionId.slice(0, 12);
-      const voiceId = resolveVoiceId(sessionId);
+      const voiceId = voices.get(sessionId)?.voiceId;
       const character = voiceId ? getCharacter(voiceId) : null;
+      const sessionProject = projects.get(sessionId);
+      const played = playedIndex.get(shortSession);
 
       const displayName = state.name || shortSession;
       // A killed turn (usage limit, crash) never fires the Stop hook, so
@@ -268,10 +343,12 @@ export function buildSnapshot(): AgentView[] {
         state: shownState,
         raisedAt: state.raisedAt ?? null,
         character: character?.name ?? null,
-        project: projects.get(sessionId) ?? null,
+        project: sessionProject?.project ?? null,
+        // T3 cards all read "<repo>-<hex>"; the thread title tells them apart.
+        ...(sessionProject?.threadTitle ? { threadTitle: sessionProject.threadTitle } : {}),
         lastActivityAt: state.updatedAt ?? null,
         raisedCount: queueIndex.get(shortSession)?.length ?? 0,
-        supersededCount: countSupersededFrom(playedIndex.get(shortSession), state.raisedAt ?? null),
+        supersededCount: countSupersededFrom(played?.mtimes, state.raisedAt ?? null),
         muted: muted.has(sessionId),
         isTeam: inTeam,
         queuedPreview: queuedPreviewFrom(queueIndex.get(shortSession)),
@@ -288,19 +365,16 @@ export function buildSnapshot(): AgentView[] {
               lastEmitAt: liveEntry.lastEmitAt ?? null,
             }
           : null,
+        failed: lastTurnFailed(
+          state.state,
+          failedIndex.get(shortSession),
+          played?.newestTs ?? Number.NEGATIVE_INFINITY,
+          newestNameTs(queueIndex.get(shortSession)),
+        ),
       });
     }
   } catch (err: any) {
     log("state-watch", `buildSnapshot failed: ${err?.message ?? err}`);
-  }
-
-  // T3 cards all read "<repo>-<hex>"; the thread title tells them apart.
-  const t3Labels = t3ThreadLabels(agents.filter((a) => a.sdk).map((a) => a.sessionId));
-  for (const agent of agents) {
-    const t3 = t3Labels.get(agent.sessionId);
-    if (!t3) continue;
-    agent.threadTitle = t3.title;
-    agent.project = t3.project || agent.project;
   }
 
   return agents;
@@ -375,6 +449,7 @@ export function startStateWatch(): void {
         // Voice + nickname changes must re-broadcast or the panel shows the
         // old character until an unrelated state change comes along.
         SESSION_VOICES_PATH,
+        PROJECT_VOICES_PATH,
         NICKNAMES_PATH,
         PAUSED_FLAG_PATH,
         LIVE_SESSIONS_PATH,

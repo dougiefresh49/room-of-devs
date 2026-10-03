@@ -16,7 +16,8 @@
       "queuedPreview": null,
       "injectable": false,
       "sdk": false,
-      "live": null
+      "live": null,
+      "failed": true
     },
     {
       "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",

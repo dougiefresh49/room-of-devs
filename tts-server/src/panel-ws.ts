@@ -51,6 +51,7 @@ import {
   type PanelMessage,
   type ButtonPatch,
 } from "./services/commands.js";
+import { setProjectVoice } from "./services/project-voices.js";
 
 // Command/dispatch API re-exported for existing callers (mobile-http imports
 // from the service directly; these keep the old panel-ws surface working).
@@ -601,6 +602,12 @@ function handleMessage(ws: WebSocket, raw: unknown): void {
       return;
     }
     runScript("set_session_voice.sh", [msg.sessionId, voiceId]);
+    return;
+  }
+
+  if (msg.type === "set_project_voice") {
+    const result = setProjectVoice(msg.project, msg.voiceId);
+    if (result !== "ok") sendError(ws, result);
     return;
   }
 

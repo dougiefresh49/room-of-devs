@@ -120,6 +120,16 @@
     "character": "Splinter"
   },
   {
+    "type": "set_project_voice",
+    "project": "comic-reader",
+    "voiceId": "AbCdEf0123456789wxyz"
+  },
+  {
+    "type": "set_project_voice",
+    "project": "comic-reader",
+    "voiceId": ""
+  },
+  {
     "type": "set_nickname",
     "sessionId": "75a33b56-e82d-4d10-9b66-7630aab2f808",
     "label": "Sanitized Nick"

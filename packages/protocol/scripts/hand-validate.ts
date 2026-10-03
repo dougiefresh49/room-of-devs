@@ -284,6 +284,28 @@ export function handValidatePanelMessage(raw: unknown): PanelMessage | "bad_mess
         return "bad_message";
       }
       return { type: "set_voice", sessionId: msg.sessionId, character: msg.character };
+    case "set_project_voice": {
+      // #97: bare project name (no path chars, no padding, <= 100) and a
+      // voice id of [A-Za-z0-9_-] up to 64 chars, "" = clear.
+      const project = msg.project;
+      const voiceId = msg.voiceId;
+      if (
+        keys.length !== 3 ||
+        typeof project !== "string" ||
+        project.length === 0 ||
+        project.length > 100 ||
+        project.trim() !== project ||
+        project === "." ||
+        project === ".." ||
+        /[/\\\x00-\x1f\x7f]/.test(project) ||
+        typeof voiceId !== "string" ||
+        voiceId.length > 64 ||
+        !/^[A-Za-z0-9_-]*$/.test(voiceId)
+      ) {
+        return "bad_message";
+      }
+      return { type: "set_project_voice", project, voiceId };
+    }
     case "set_nickname":
       if (
         keys.length !== 3 ||

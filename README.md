@@ -280,7 +280,8 @@ The tool can generate dynamic notification sounds via the ElevenLabs Sound Effec
 ~/.cursor/tts/
   .env                              # API keys (ELEVENLABS_API_KEY, GEMINI_API_KEY)
   config.json                       # voice, speed, playback mode, notification settings
-  session_voices.json               # per-session voice overrides
+  session_voices.json               # per-session voice overrides (always win)
+  project_voices.json               # project name → voiceId, the fallback before config's default
   aliases.json                      # optional spoken phrase → canonical command map
   muted_sessions.json               # sessions muted from auto-play and acks
   team_map.json                     # persona → tmux target + sessionId (written by team.sh)

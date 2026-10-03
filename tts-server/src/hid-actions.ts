@@ -1,8 +1,9 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { spawn } from "child_process";
-import { TTS_DIR, STATE_DIR, loadSessionVoices, effectivePlaybackMode } from "./config.js";
+import { TTS_DIR, STATE_DIR, effectivePlaybackMode } from "./config.js";
 import { getCharacter } from "./dynamic-response.js";
+import { resolveEffectiveVoices, voiceHolderIds } from "./session-voice.js";
 import { log } from "./logger.js";
 import { loadTeamMap } from "./team-map.js";
 import { emitNotice } from "./services/commands.js";
@@ -45,7 +46,7 @@ export function runSignalReplay(): void {
 
 // ── Character → session resolution ────────────────────────────────
 // Reverse of press-time lookup: character name → voiceId (via characters.json)
-// → the session wearing that voice (session_voices.json). Newest active
+// → the session speaking in that voice (session-voice.ts). Newest active
 // session wins; a team_map.json persona whose name matches wins ties.
 interface StateSnapshot {
   state?: string;
@@ -67,12 +68,16 @@ export function resolveCharacterSession(character: string): string | null {
   const want = character.trim().toLowerCase();
   if (!want) return null;
 
-  // Sessions whose assigned voice belongs to this character.
-  const candidates: string[] = [];
-  for (const [sessionId, voiceId] of Object.entries(loadSessionVoices())) {
+  // Sessions speaking in this character's voice. Explicit and project picks
+  // first; sessions merely on the config default only when none match.
+  const picked: string[] = [];
+  const byDefault: string[] = [];
+  for (const [sessionId, { voiceId, source }] of resolveEffectiveVoices(voiceHolderIds())) {
     const char = getCharacter(voiceId);
-    if (char && char.name.trim().toLowerCase() === want) candidates.push(sessionId);
+    if (!char || char.name.trim().toLowerCase() !== want) continue;
+    (source === "default" ? byDefault : picked).push(sessionId);
   }
+  const candidates = picked.length > 0 ? picked : byDefault;
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
 
