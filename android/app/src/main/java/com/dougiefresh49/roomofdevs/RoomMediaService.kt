@@ -138,10 +138,19 @@ class RoomMediaService : MediaLibraryService() {
                 tiles.keys.retainAll(agents.map { it.sessionId }.toSet())
             }
         }
-        if (hasExternalController()) nextFeed.start()
+        if (browsing) nextFeed.start()
     }
-    /** Android Auto connects as a legacy browser; only Media3's own notification controller is excluded. */
-    private fun hasExternalController() = session.connectedControllers.any { !session.isMediaNotificationController(it) }
+    /**
+     * A client (Android Auto's legacy browser) is bound. Media3 never prunes legacy browsers from
+     * connectedControllers, so the feed's lifetime follows binding instead: on from onConnect or any
+     * browse, off in onUnbind when the last client unbinds (the car unplugged).
+     */
+    private var browsing = false
+    override fun onUnbind(intent: Intent?): Boolean {
+        browsing = false
+        feed?.stop()
+        return super.onUnbind(intent)
+    }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == RECONFIGURE) configure()
         return super.onStartCommand(intent, flags, startId)
@@ -193,6 +202,7 @@ class RoomMediaService : MediaLibraryService() {
     /** The live snapshot when the stream is open, else one fresh GET; a failed GET keeps the last value. */
     private suspend fun agents(): List<Agent> {
         val current = feed ?: return emptyList()
+        browsing = true; current.start()
         return (runCatching { current.currentOrRefresh() }.getOrNull() ?: current.snapshots.value)?.agents.orEmpty()
     }
     private fun replayItem(replay: Replay, agent: Agent) = MediaItem.Builder().setMediaId("replay:${replay.file}")
@@ -263,11 +273,8 @@ class RoomMediaService : MediaLibraryService() {
             custom.forEach { commands.add(SessionCommand(it.first, Bundle.EMPTY)) }
             // Media3 never calls onPostConnect for legacy (MediaBrowserCompat) clients, and Android
             // Auto is one, so the feed has to start here or the car browses a frozen snapshot.
-            if (!session.isMediaNotificationController(controller)) feed?.start()
+            if (!session.isMediaNotificationController(controller)) { browsing = true; feed?.start() }
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session).setAvailableSessionCommands(commands.build()).build()
-        }
-        override fun onDisconnected(session: MediaSession, controller: MediaSession.ControllerInfo) {
-            if (!hasExternalController()) feed?.stop()
         }
         override fun onGetLibraryRoot(session: MediaLibrarySession, browser: MediaSession.ControllerInfo, params: LibraryParams?) =
             Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "Room of Devs", grid), LibraryParams.Builder().setExtras(grid).build()))

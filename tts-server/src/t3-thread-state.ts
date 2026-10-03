@@ -96,6 +96,9 @@ let labelCache: { key: string; at: number; labels: Map<string, T3ThreadLabel> } 
  */
 export function t3ThreadLabels(sessionIds: string[]): Map<string, T3ThreadLabel> {
   const ids = sessionIds.filter((s) => UUID_RE.test(s)).sort();
+  // Nothing to look up (a CLI session's voice resolution): answer without
+  // touching the cache, so the snapshot's batch survives for the next build.
+  if (ids.length === 0) return new Map();
   const key = ids.join(",");
   if (labelCache && Date.now() - labelCache.at < LABEL_TTL_MS) {
     if (labelCache.key === key) return labelCache.labels;

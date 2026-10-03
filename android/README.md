@@ -83,12 +83,13 @@ ExoPlayer speed between 1.0 and 0.85. Next hand selects the oldest other raised
 thread and uses the same single-dispatch path. No next hand is an unsuccessful
 custom command, with no grant.
 
-One SSE connection exists while external controllers are connected; losing the
-last controller disconnects it. The feed starts from `onConnect`, not
-`onPostConnect`: Media3 never calls `onPostConnect` for legacy
-`MediaBrowserCompat` clients, and Android Auto is one, which is why tiles once
-froze until the phone was replugged. Media3's internal notification controller
-does not keep this connection alive. Reconnects use bounded backoff.
+One SSE connection exists while a client is bound to the service. The feed
+starts from `onConnect` (and any browse), not `onPostConnect`: Media3 never
+calls `onPostConnect` for legacy `MediaBrowserCompat` clients, and Android Auto
+is one, which is why tiles once froze until the phone was replugged. It stops in
+`onUnbind`, when the last client unbinds (the car unplugged), because Media3
+never prunes legacy browsers from `connectedControllers`. Reconnects use
+bounded backoff.
 
 The browse tree (`BrowseTree.kt`, pure and unit-tested) is root, then `room`
 (a grid, one `project:<name>` tile per project with live sessions, subtitle
