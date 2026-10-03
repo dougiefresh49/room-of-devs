@@ -37,7 +37,7 @@ class SetupActivity : Activity() {
             text = "Playback speed"; textSize = 18f; setPadding(0, 48, 0, 8)
         })
         layout.addView(TextView(this).apply {
-            text = "Multiplies each character's own pace, same as the speed control on the mobile page."
+            text = "How fast the car plays updates. 1× is the voice's natural pace."
         })
         val speeds = RadioGroup(this).apply { orientation = RadioGroup.HORIZONTAL }
         val current = ConnectionPrefs.speed(this)

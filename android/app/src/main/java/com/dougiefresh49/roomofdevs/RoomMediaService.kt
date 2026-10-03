@@ -43,7 +43,7 @@ class RoomMediaService : MediaLibraryService() {
     private var selectedThread: String? = null
     private var completedFile: String? = null
     private var selectedFile: String? = null
-    /** Per-clip daemon tempo by replay file; the car plays clip rate x speed setting (x 0.85 when Slower). */
+    /** Per-clip daemon tempo by replay file; only caps a live tail (the speed setting is what the car plays). */
     private val clipRates = java.util.concurrent.ConcurrentHashMap<String, Double>()
     private var slower = false
     private var selectedLive = false
@@ -61,7 +61,9 @@ class RoomMediaService : MediaLibraryService() {
         super.onCreate()
         player = ExoPlayer.Builder(this).setMediaSourceFactory(
             DefaultMediaSourceFactory(DataSource.Factory {
-                RoomDataSource(requireNotNull(api), requireNotNull(requests))
+                RoomDataSource(requireNotNull(api), requireNotNull(requests), onFinalized = { file ->
+                    scope.launch { if (file == selectedFile && selectedLive) { selectedLive = false; applySpeed() } }
+                })
             }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
                 // Live-tail reconnects live in RoomDataSource (bounded, resumes at ?from=). A
                 // terminal error is fatal here so ExoPlayer never restarts the tail from byte 0.
@@ -213,8 +215,17 @@ class RoomMediaService : MediaLibraryService() {
             .setIsPlayable(true).setIsBrowsable(false).build()).build()
 
     /** Synchronous tap registration means duplicate callbacks share a single outstanding grant. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun select(agent: Agent): MediaItem {
         val manager = requests ?: throw IOException("Set up Room of Devs on your phone")
+        // Re-tapping the thread whose clip is loaded (paused, or still playing) resumes that
+        // clip; it never starts a second grant.
+        val loaded = selection?.takeIf {
+            it.agent.sessionId == agent.sessionId && player.playbackState != Player.STATE_ENDED &&
+                it.audio.isCompleted && !it.audio.isCancelled && it.audio.getCompletionExceptionOrNull() == null
+        }
+        val current = player.currentMediaItem
+        if (loaded != null && current?.mediaId == "request:${loaded.id}") return current
         val request = manager.tap(agent)
         if (selection?.id != request.id) {
             val version = ++selectionVersion
@@ -245,10 +256,8 @@ class RoomMediaService : MediaLibraryService() {
         val id = player.currentMediaItem?.mediaId
         val file = if (id?.startsWith("replay:") == true) id.removePrefix("replay:") else selectedFile
         val clip = file?.let(clipRates::get) ?: 1.0
-        // A live tail can't sustain more than the clip's own rate (the mobile page's rule).
         val live = selectedLive && id?.startsWith("request:") == true
-        val mult = if (live) 1.0 else ConnectionPrefs.speed(this)
-        player.setPlaybackSpeed((clip * mult * if (slower) 0.85 else 1.0).toFloat())
+        player.setPlaybackSpeed(carPlaybackRate(ConnectionPrefs.speed(this), clip, live, slower))
     }
     private fun ackFinished(item: MediaItem?) {
         val id = item?.mediaId ?: return
@@ -319,8 +328,11 @@ class RoomMediaService : MediaLibraryService() {
                 // A re-tap that reuses the playing request keeps its Queue history.
                 val installed = (0 until player.mediaItemCount).map(player::getMediaItemAt)
                 val at = installed.indexOfFirst { it.mediaId == item.mediaId }
+                // Resuming the loaded clip keeps its place; reinstalling reopens the source, so a
+                // clip that finished synthesizing comes back whole, with a duration to seek in.
+                val resumeAt = if (at >= 0 && at == player.currentMediaItemIndex && player.playbackState != Player.STATE_ENDED) player.currentPosition else 0
                 return Futures.immediateFuture(
-                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, 0)
+                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, resumeAt)
                     else MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0),
                 )
             }
