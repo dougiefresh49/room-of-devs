@@ -28,6 +28,11 @@ framework build, the tape stays killed, mobile Talk absorbs live mode.
   the 3.5 flash-lite rewriter, spoken session prefix removed (rows 35-36).
   After merge: `./scripts/setup.sh` (one-time config flip), then
   `tts-server.sh restart`, then one short test clip by ear.
+- **Project voices + car grouped by project (#97, PR #98)**: daemon deployed,
+  comic-reader → Michelangelo, cursor-read-aloud → Donatello, fleet → Karai set.
+  After merge: install the android-dev APK, then check in the car that tiles
+  refresh in place (working → done), the project grid and album list layouts,
+  and whether Done/Error show green/red. Chime follow-up: #99.
 
 ## Next up (likely order)
 
