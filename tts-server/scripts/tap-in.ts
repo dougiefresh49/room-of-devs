@@ -21,10 +21,11 @@ import { type Claim, parseClaim, sameSession, trustedLogins } from "./spine-clai
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..", "..");
 const DOCS_DIR = join(REPO_ROOT, "docs");
-const MODEL = process.env.TAPIN_MODEL ?? "gemini-3.1-flash-lite";
-// gemini-3.1-flash-lite list price, USD per 1M tokens (2026-07). Override if it moves.
-const USD_IN_PER_MTOK = Number(process.env.TAPIN_USD_IN ?? 0.1);
-const USD_OUT_PER_MTOK = Number(process.env.TAPIN_USD_OUT ?? 0.4);
+const MODEL = process.env.TAPIN_MODEL ?? "gemini-3.5-flash-lite";
+// gemini-3.5-flash-lite paid list price, USD per 1M tokens (ai.google.dev
+// pricing, 2026-10-02; output includes thinking). Override if it moves.
+const USD_IN_PER_MTOK = Number(process.env.TAPIN_USD_IN ?? 0.3);
+const USD_OUT_PER_MTOK = Number(process.env.TAPIN_USD_OUT ?? 2.5);
 
 const CLOSED_LIMIT = 12;
 const COMMENT_CHARS = 900;

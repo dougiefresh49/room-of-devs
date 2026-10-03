@@ -4,6 +4,8 @@ One line per decision, newest first, written the moment it resolves (fleet `deci
 
 | # | date | decision | status |
 |---|------|----------|--------|
+| 36 | 2026-10-02 | The Gemini rewrite and the interpreter move from `gemini-3.1-flash-lite` to `gemini-3.5-flash-lite` alongside v4 (#93), on the owner's call after an 8-call side-by-side on four real replay messages: 3.5 averaged 1.6s to 3.1's 1.9s, spoke about 13% fewer characters, held character better and invented less; its two slips (an owner flipped to "our", a version number misread) got prompt rules; the spoken "In <thread title>..." session prefix and its `streaming_session_prefix` config are removed (the owner taps the card to see what plays, so it only spent credits) | accepted |
+| 35 | 2026-10-02 | Room TTS moves from `eleven_v3` to `eleven_v4` (#93), no audition first, on the owner's call and comic-reader #213's probe (with-timestamps works, the alignment keeps tag characters, one credit per character as on v3); v4 ignores `style` and `speed`, so the request sends stability and similarity only and the full `default_speed` moves to playback (`atempo`, afplay `-r`, the phone's `playbackRate`); `TTS_CHAR_CAP` stays 4,800 though v4 allows 10,000 | accepted |
 | 34 | 2026-08-31 | The Obsidian trial is dropped; Postplan is the good-enough reading layer, and vault-style doc structure being adopted is what reopens it | accepted |
 | 33 | 2026-08-31 | TITAN replaces "craft"; the star map becomes the frontier map (phases as hardpoints on one surface; drop = claim-at-start, eject = needs-owner, evac = settle), recorded in design-ui-target.md | accepted |
 | 32 | 2026-08-31 | The P2 console stays deployed as-is, no pre-RIG revert; the framework build replaces the panel wholesale | accepted |

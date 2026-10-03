@@ -44,7 +44,6 @@ export interface Config {
   notification_sound: string;
   streaming_enabled: boolean;
   playback_mode: "auto" | "announce" | "silent";
-  streaming_session_prefix: "auto" | "always" | "never";
   played_retention_count: number;
   // failed/ has the same unbounded-growth problem; pruned at daemon startup.
   failed_retention_count: number;
@@ -73,14 +72,13 @@ export interface Config {
 
 const DEFAULTS: Config = {
   elevenlabs_voice_id: "",
-  elevenlabs_model_id: "eleven_v3",
-  gemini_model: "gemini-3.1-flash-lite",
+  elevenlabs_model_id: "eleven_v4",
+  gemini_model: "gemini-3.5-flash-lite",
   default_speed: 1.25,
   notifications_enabled: false,
   notification_sound: "random_sfx",
   streaming_enabled: false,
   playback_mode: "auto",
-  streaming_session_prefix: "auto",
   played_retention_count: 50,
   failed_retention_count: 50,
   dynamic_responses: "always",
@@ -91,7 +89,7 @@ const DEFAULTS: Config = {
   dnd_apps: ["zoom.us", "FaceTime", "Microsoft Teams", "Webex"],
   victory_lines: true,
   interpreter_enabled: true,
-  interpreter_model: "gemini-3.1-flash-lite",
+  interpreter_model: "gemini-3.5-flash-lite",
   interpreter_timeout_ms: 4000,
 };
 
@@ -105,7 +103,6 @@ const ConfigSchema = v.object({
   notification_sound: v.string(),
   streaming_enabled: v.boolean(),
   playback_mode: v.picklist(["auto", "announce", "silent"]),
-  streaming_session_prefix: v.picklist(["auto", "always", "never"]),
   played_retention_count: v.number(),
   failed_retention_count: v.number(),
   dynamic_responses: v.picklist(["always", "cached", "off"]),

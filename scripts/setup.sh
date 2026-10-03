@@ -137,8 +137,9 @@ except (OSError, json.JSONDecodeError):
 
 defaults = {
     "elevenlabs_voice_id": "",
-    "elevenlabs_model_id": "eleven_v3",
-    "gemini_model": "gemini-3.1-flash-lite",
+    "elevenlabs_model_id": "eleven_v4",
+    "gemini_model": "gemini-3.5-flash-lite",
+    "interpreter_model": "gemini-3.5-flash-lite",
     "default_speed": 1.25,
     "notifications_enabled": False,
     "notification_icon": "~/.cursor/tts/icons/tmnt-notification-queued.png",
@@ -146,7 +147,6 @@ defaults = {
     "terminal_notifier_app": "",
     "notification_sound": "random_sfx",
     "streaming_enabled": False,
-    "streaming_session_prefix": "auto",
     "played_retention_count": 50,
     "mic_device": ":default",
     "arcade_enabled": False,
@@ -163,10 +163,28 @@ for key, val in defaults.items():
         changed = True
 
 # Drop stale Piper-era keys
-for stale in ("sfx_categories", "model", "piper_port"):
+for stale in ("sfx_categories", "model", "piper_port", "streaming_session_prefix"):
     if stale in c:
         del c[stale]
         changed = True
+
+# One-time move to eleven_v4 (owner call, 2026-10-02, room-of-devs #93). The
+# marker keeps a later deliberate switch back to v3 from being undone.
+if not c.get("eleven_v4_migrated"):
+    if c.get("elevenlabs_model_id") == "eleven_v3":
+        c["elevenlabs_model_id"] = "eleven_v4"
+    c["eleven_v4_migrated"] = True
+    changed = True
+
+# Same owner call, own marker so an install that already took the v4 flip
+# still gets it: the Gemini rewrite and the interpreter move to 3.5
+# flash-lite. Only the old default moves; any other pick is left alone.
+if not c.get("gemini_35_migrated"):
+    for key in ("gemini_model", "interpreter_model"):
+        if c.get(key) == "gemini-3.1-flash-lite":
+            c[key] = "gemini-3.5-flash-lite"
+    c["gemini_35_migrated"] = True
+    changed = True
 
 if c.get("notification_icon") == "~/.cursor/tts/icons/tmnt-icon.png":
     c["notification_icon"] = "~/.cursor/tts/icons/tmnt-notification-queued.png"
@@ -406,7 +424,7 @@ log "  TTS Server:  $TTS_DIR/tts-server/"
 log "  Queue:       $TTS_DIR/queue/"
 log "  Sounds:      $TTS_DIR/sounds/default/"
 log "  Hooks:       $HOOKS_FILE"
-log "  TTS Engine:  ElevenLabs (eleven_v3) via Node.js server"
+log "  TTS Engine:  ElevenLabs (eleven_v4) via Node.js server"
 log ""
 log "Next steps:"
 log "  1. Start the TTS server: $TTS_DIR/scripts/tts-server.sh start"

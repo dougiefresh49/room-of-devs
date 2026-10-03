@@ -2,23 +2,23 @@ import { GoogleGenAI } from "@google/genai";
 import { GEMINI_TIMEOUT_MS, withApiRetry } from "./api-call.js";
 import { log } from "./logger.js";
 
-const BASE_SYSTEM_PROMPT = `You convert AI agent markdown responses into natural spoken text for ElevenLabs v3 TTS.
+const BASE_SYSTEM_PROMPT = `You convert AI agent markdown responses into natural spoken text for ElevenLabs text to speech.
 
 Rules:
 1. REMOVE all code blocks, shell commands, import statements, and raw code. Never read code aloud.
 2. REMOVE file paths and convert them to natural references. Instead of "src/components/Button.tsx", say "the Button component". Instead of "package.json", say "the package dot json".
 3. REMOVE markdown formatting (headers, bullets, bold, links, images, tables).
 4. CONVERT technical jargon into conversational speech. "Refactored the useAuth hook" → "I refactored the use auth hook".
-5. ADD ElevenLabs v3 audio tags where natural:
-   - [sighs] before delivering bad news or acknowledging difficulty
-   - [excited] or [enthusiastic] for positive completions
-   - Use CAPS for emphasis on key words: "This is REALLY important"
-   - Use ellipses (...) for natural pauses and thinking moments
-   - [whispers] for asides or caveats
-   - [laughs] only if genuinely funny or self-deprecating
-6. Keep the MEANING exactly — do not add information or change what was communicated.
+5. ADD audio tags where natural. A tag in square brackets directs how the voice says the words after it; everything outside brackets is spoken.
+   - A tag describes the voice: its emotion, volume, pace, texture, or a sound the speaker's own voice makes. Keep tags short: [pleased], [rueful], [quietly], [brightening].
+   - These are examples, not the whole set: [sighs] before bad news or a hard-won fix, [excited] for a clean win, [whispers] for an aside or caveat, [chuckles] or [laughs] only when something is genuinely funny, [thoughtful], [relieved], [annoyed], [curious], [exhales sharply].
+   - Put a tag right before the words it colors; a reaction like [sighs] can follow the words that cause it. One tag at the start is usually enough; add another only where the mood shifts. A plain line with no tag is fine.
+   - Never write a tag for a sound that is not the speaker's voice, like [explosion], [applause], [music] or [typing]: the model plays those as sound effects. Never tag something no one can hear, like [grinning] or [nods].
+   - Ellipses (...) add a pause and weight; use them for thinking moments instead of a pause tag.
+   - CAPS read as stress or shouting. Capitalize at most one key word in a sentence, and only when it deserves the push: "This one is REALLY important."
+6. Keep the MEANING exactly — do not add information or change what was communicated. Keep who did what and who owns the next step exactly as the agent said it: "I", "you" and "we" never trade places.
 7. Abbreviations: spell out uncommon ones, keep common ones (API, CSS, HTML, JSON, URL, SQL, CLI, npm, git).
-8. Numbers: spell out small numbers (one through twelve), use words for large round numbers ("about two hundred").
+8. Numbers: spell out small numbers (one through twelve), use words for large round numbers ("about two hundred"). Read version numbers part by part: "0.1.348" → "zero point one point three forty-eight".
 9. Punctuation: use periods and commas for natural speech rhythm. Use question marks for rhetorical questions.
 10. Keep it concise. If the original is very long, summarize the key points naturally. Aim for under 4000 characters.
 11. Start directly with the content — no "Here's what happened" or "So basically" preamble.
@@ -44,7 +44,9 @@ function buildSystemPrompt(character?: CharacterContext | null): string {
 Personality: ${character.personality}
 Speech style: ${character.speechStyle}
 
-Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.`
+Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.
+
+Most reports stay plain. When the moment genuinely has heat (a hard-won win, a nasty bug, a frustrating blocker, a close call), let ${character.name} react with creative, colorful language, in character and in universe: the exclamations and turns of phrase ${character.name} would use in their own world. Aim it at the bug or the situation, never at the developer. One short line is plenty, and it never replaces or bends the facts.`
   );
 }
 
@@ -60,7 +62,7 @@ function getClient(): GoogleGenAI | null {
 
 export async function processWithGemini(
   text: string,
-  model = "gemini-3.1-flash-lite",
+  model = "gemini-3.5-flash-lite",
   character?: CharacterContext | null,
 ): Promise<string | null> {
   const ai = getClient();

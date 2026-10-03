@@ -61,12 +61,15 @@ export function writeNowPlaying(
   renameSync(tmp, NOW_PLAYING_PATH);
 }
 
-/** Duration estimate for phone-grant timeout / refuse window (ms). */
-export function phoneGrantDurationMs(alignment?: AlignmentTuples): number {
+/**
+ * Duration estimate for phone-grant timeout / refuse window (ms), in wall
+ * time: alignment is file time, and the phone plays the file at `rate`.
+ */
+export function phoneGrantDurationMs(alignment?: AlignmentTuples, rate = 1): number {
   if (alignment?.length) {
     const last = alignment[alignment.length - 1];
     if (typeof last[1] === "number" && Number.isFinite(last[1]) && last[1] > 0) {
-      return last[1];
+      return rate > 0 ? last[1] / rate : last[1];
     }
   }
   return 60_000;
@@ -85,7 +88,8 @@ export function activePhoneGrantId(): string | null {
     if (np.synthesisComplete === false) return np.grantId;
     const start = Date.parse(np.startedAt);
     if (!Number.isFinite(start)) return null;
-    const open = Date.now() < start + phoneGrantDurationMs(np.alignment) + PHONE_GRANT_SLACK_MS;
+    const window = phoneGrantDurationMs(np.alignment, np.playbackRate) + PHONE_GRANT_SLACK_MS;
+    const open = Date.now() < start + window;
     return open ? np.grantId : null;
   } catch {
     return null;

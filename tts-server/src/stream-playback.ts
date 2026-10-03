@@ -2,7 +2,8 @@ import { spawn } from "child_process";
 import { writeFileSync } from "fs";
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
-import type { WordTiming } from "./elevenlabs.js";
+import type { TTSStream, WordTiming } from "./elevenlabs.js";
+import { residualTempo } from "./tts-speed.js";
 import { basename } from "path";
 import { releaseLock } from "./playback-locks.js";
 import { saveReplayFile, openReplayWriter, type ReplayMeta } from "./replay-store.js";
@@ -135,7 +136,7 @@ async function playStreamToPhone(
 
   const waitMs = Math.max(
     0,
-    startedAtMs + phoneGrantDurationMs(alignment) + PHONE_GRANT_SLACK_MS - Date.now(),
+    startedAtMs + phoneGrantDurationMs(alignment, tempoRate) + PHONE_GRANT_SLACK_MS - Date.now(),
   );
   log("audio", `Phone grant ${grantId}: waiting ${Math.round(waitMs / 1000)}s for playback window`);
   await sleep(waitMs);
@@ -150,7 +151,7 @@ async function playStreamToPhone(
 }
 
 export function playStreamBuffer(
-  audioStream: AsyncIterable<Uint8Array>,
+  tts: TTSStream,
   queueFile: string,
   ctx: PlaybackContext = "meta",
   replayMeta?: ReplayMeta,
@@ -163,10 +164,13 @@ export function playStreamBuffer(
   onPersisted?: () => void,
 ): Promise<number> {
   return new Promise(async (resolve) => {
-    const config = loadConfig();
-    const rawSpeed = config.default_speed;
-    const elMax = 1.2;
-    const tempoRate = rawSpeed > elMax ? +(rawSpeed / elMax).toFixed(4) : 1.0;
+    // tts.elSpeed is what the request baked in (up to 1.2x on v3, none on
+    // v4); the player makes up the rest of today's speed.
+    const audioStream = tts.audio;
+    const elSpeed = tts.elSpeed;
+    const rawSpeed = loadConfig().default_speed;
+    const tempoRate = residualTempo(rawSpeed, elSpeed);
+    if (replayMeta) replayMeta.elSpeed = elSpeed;
 
     if (sink === "none") {
       resolve(
@@ -184,9 +188,9 @@ export function playStreamBuffer(
     }
 
     const ffplayArgs = ["-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "pipe:0"];
-    if (tempoRate > 1.0) {
+    if (tempoRate !== 1.0) {
       ffplayArgs.push("-af", `atempo=${tempoRate}`);
-      log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elMax}x)`);
+      log("audio", `Applying atempo=${tempoRate} (target=${rawSpeed}x, el=${elSpeed}x)`);
     }
 
     // Stable playback start for the whole session so progressive alignment

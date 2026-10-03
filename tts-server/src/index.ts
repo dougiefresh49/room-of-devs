@@ -10,7 +10,6 @@ import {
   loadEnv,
   loadMutedSessions,
   lookupSessionName,
-  getActiveSessions,
   SESSIONS_DIR,
 } from "./config.js";
 import { processWithGemini, fallbackClean } from "./gemini.js";
@@ -80,8 +79,9 @@ function parseQueueFile(path: string): QueueItem | null {
 // so anything beyond a few multiples of that is wasted input billing.
 const GEMINI_INPUT_CAP = 16_000;
 
-// eleven_v3 per-request limit is 5,000 chars (verified against
-// elevenlabs.io/docs/overview/models on 2026-07-06); 4,800 leaves margin.
+// Per-request limit: eleven_v3 5,000 chars, eleven_v4 10,000 (verified against
+// elevenlabs.io/docs/overview/models on 2026-07-06 and 2026-10-02). The cap is
+// a spend cap, not the API limit: 4,800 leaves margin on v3 and stays put on v4.
 const TTS_CHAR_CAP = 4800;
 // When Gemini failed, the fallback cleaner output is rougher — cap it much
 // lower so a hiccup doesn't bill 4,800 chars of near-raw markdown (C3).
@@ -96,16 +96,6 @@ function truncateForTTS(text: string, limit = TTS_CHAR_CAP): string {
     result = result ? result + " " + s : s;
   }
   return result || text.slice(0, limit);
-}
-
-function shouldAddPrefix(config: ReturnType<typeof loadConfig>, title?: string): boolean {
-  const pref = config.streaming_session_prefix;
-  if (pref === "never") return false;
-  if (pref === "always" && title) return true;
-  if (pref === "auto" && title && title !== "Claude Code") {
-    return getActiveSessions().length > 1;
-  }
-  return false;
 }
 
 async function maybePlayVictoryLine(voiceId: string): Promise<void> {
@@ -296,11 +286,6 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
       return;
     }
 
-    if (shouldAddPrefix(config, item.thread_title)) {
-      const prefix = (item.thread_title ?? "").slice(0, 30);
-      processed = `In ${prefix}... ${processed}`;
-    }
-
     // Intermediates are narration, not essays — cap them well below a full
     // response so a chatty turn can't bill 4,800 chars per progress beat.
     const cap = isIntermediate
@@ -348,7 +333,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
     if (timestamped) {
       log("server", `Playing+captions: ${name} (${processed.length} chars)`);
       code = await playStreamBuffer(
-        timestamped.audio,
+        timestamped,
         filePath,
         ctx,
         replayMeta,
@@ -365,7 +350,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
       }
       log("server", `Playing: ${name} (${processed.length} chars, no captions)`);
       code = await playStreamBuffer(
-        stream as any,
+        stream,
         filePath,
         ctx,
         replayMeta,

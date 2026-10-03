@@ -153,7 +153,7 @@ export async function handleDynamicResponse(
     const stream = await streamTTS(responseText, { voiceId });
     if (stream) {
       log("dynamic", `Streaming: "${responseText}"`);
-      await playStreamBuffer(stream as any, "dynamic-response", ctx, meta);
+      await playStreamBuffer(stream, "dynamic-response", ctx, meta);
       return true;
     }
 
@@ -337,7 +337,7 @@ async function streamAndPlay(
 ): Promise<boolean> {
   const stream = await streamTTS(text, { voiceId });
   if (stream) {
-    await playStreamBuffer(stream as any, "ask-user-response", ctx, meta);
+    await playStreamBuffer(stream, "ask-user-response", ctx, meta);
     return true;
   }
   return false;
