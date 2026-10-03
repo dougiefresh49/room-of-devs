@@ -12,7 +12,9 @@ import {
 import { networkInterfaces } from "os";
 import { basename, dirname, join, resolve, sep } from "path";
 import { fileURLToPath } from "url";
-import { loadConfig, TTS_DIR, SESSION_VOICES_PATH, PHRASES_DIR } from "./config.js";
+import { loadConfig, TTS_DIR, PHRASES_DIR } from "./config.js";
+import { effectiveSessionVoices } from "./session-voice.js";
+import { projectVoicesPayload } from "./services/project-voices.js";
 import { CHARACTERS_PATH } from "./characters-path.js";
 import { buildPanelSnapshot, subscribe } from "./state-watch.js";
 import {
@@ -706,15 +708,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         characters = {};
       }
     }
-    let sessionVoices: Record<string, string> = {};
-    if (existsSync(SESSION_VOICES_PATH)) {
-      try {
-        sessionVoices = JSON.parse(readFileSync(SESSION_VOICES_PATH, "utf-8"));
-      } catch {
-        sessionVoices = {};
-      }
-    }
-    sendJson(res, 200, { characters, sessionVoices });
+    // Effective voices (explicit → project → default), not the raw file.
+    sendJson(res, 200, { characters, sessionVoices: effectiveSessionVoices() });
+    return;
+  }
+
+  if (method === "GET" && path === "/project-voices") {
+    sendJson(res, 200, projectVoicesPayload());
     return;
   }
 

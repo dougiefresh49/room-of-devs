@@ -3,7 +3,7 @@
  */
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { loadSessionVoices } from "../config.js";
+import { effectiveSessionVoices } from "../session-voice.js";
 import { log } from "../logger.js";
 import { dispatch, runScriptSync } from "../services/commands.js";
 import { acquireLock, releaseLock } from "../playback-locks.js";
@@ -69,7 +69,7 @@ function unduck(duckToken: string | null, floorHeld: boolean): void {
 }
 
 async function playPlanAck(boundTarget: string | null): Promise<void> {
-  const voices = loadSessionVoices();
+  const voices = effectiveSessionVoices();
   let voiceId: string | undefined;
   if (boundTarget && voices[boundTarget]) voiceId = voices[boundTarget];
   if (!voiceId) voiceId = Object.values(voices)[0];

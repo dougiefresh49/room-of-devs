@@ -1,6 +1,7 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { ELEVENLABS_TIMEOUT_MS, withApiRetry } from "./api-call.js";
-import { loadConfig, loadSessionVoices } from "./config.js";
+import { loadConfig } from "./config.js";
+import { resolveSessionVoice } from "./session-voice.js";
 import { log } from "./logger.js";
 import { bakedSpeed, modelTakesSpeed } from "./tts-speed.js";
 
@@ -270,13 +271,9 @@ export async function generateTTS(text: string, opts: TTSOptions): Promise<Buffe
   }
 }
 
+/** session_voices[sid] → project_voices[project(sid)] → config default (#97). */
 export function resolveVoiceId(sessionId?: string): string {
-  const config = loadConfig();
-  if (sessionId) {
-    const sessionVoices = loadSessionVoices();
-    if (sessionVoices[sessionId]) return sessionVoices[sessionId];
-  }
-  return config.elevenlabs_voice_id;
+  return resolveSessionVoice(sessionId);
 }
 
 export async function fetchCredits(): Promise<{
