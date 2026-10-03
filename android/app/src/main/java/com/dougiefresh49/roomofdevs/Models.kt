@@ -20,14 +20,18 @@ data class Agent(
     val raisedCount: Int = 0,
     /** T3 Code thread title (SDK cards only). */
     val threadTitle: String? = null,
+    /** The thread's last turn failed (additive AgentView.failed; older daemons omit it). */
+    val failed: Boolean = false,
 ) {
     val title get() = threadTitle?.takeIf { it.isNotBlank() } ?: label.ifEmpty { name }
     val subtitle get() = project ?: character ?: ""
     val hasUpdate get() = state == "hand_raised"
-    val badge get() = when { hasUpdate -> Badge.HAND; state == "working" -> Badge.WRENCH; else -> Badge.NONE }
+    /** Error wins; "working" is the only live state; hand_raised, speaking and idle all read as done. */
+    val status get() = when { failed -> Status.ERROR; state == "working" -> Status.WORKING; else -> Status.DONE }
 }
-enum class Badge { HAND, WRENCH, NONE }
-/** Most recent activity first (ISO-8601 UTC strings sort chronologically); badges carry status. */
+/** The plain status word on a thread row; colors are applied by the service, never here. */
+enum class Status(val label: String) { WORKING("Working"), DONE("Done"), ERROR("Error") }
+/** Most recent activity first (ISO-8601 UTC strings sort chronologically). */
 fun roomOrder(agents: List<Agent>): List<Agent> = agents.sortedWith(
     compareByDescending<Agent> { it.lastActivityAt ?: it.raisedAt ?: "" }
         .thenBy { it.title }.thenBy { it.sessionId },
