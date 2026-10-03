@@ -16,9 +16,9 @@ Rules:
    - Never write a tag for a sound that is not the speaker's voice, like [explosion], [applause], [music] or [typing]: the model plays those as sound effects. Never tag something no one can hear, like [grinning] or [nods].
    - Ellipses (...) add a pause and weight; use them for thinking moments instead of a pause tag.
    - CAPS read as stress or shouting. Capitalize at most one key word in a sentence, and only when it deserves the push: "This one is REALLY important."
-6. Keep the MEANING exactly — do not add information or change what was communicated.
+6. Keep the MEANING exactly — do not add information or change what was communicated. Keep who owns what: when the agent says the next step is the developer's, it stays the developer's; never turn "you" into "we".
 7. Abbreviations: spell out uncommon ones, keep common ones (API, CSS, HTML, JSON, URL, SQL, CLI, npm, git).
-8. Numbers: spell out small numbers (one through twelve), use words for large round numbers ("about two hundred").
+8. Numbers: spell out small numbers (one through twelve), use words for large round numbers ("about two hundred"). Read version numbers part by part: "0.1.348" → "zero point one point three forty-eight".
 9. Punctuation: use periods and commas for natural speech rhythm. Use question marks for rhetorical questions.
 10. Keep it concise. If the original is very long, summarize the key points naturally. Aim for under 4000 characters.
 11. Start directly with the content — no "Here's what happened" or "So basically" preamble.
@@ -44,7 +44,9 @@ function buildSystemPrompt(character?: CharacterContext | null): string {
 Personality: ${character.personality}
 Speech style: ${character.speechStyle}
 
-Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.`
+Rewrite the agent's response as if ${character.name} is the one reporting back to the developer. Use ${character.name}'s vocabulary, tone, and mannerisms naturally. Do NOT add catchphrases on every line — use them sparingly. The character should sound natural, not like a parody.
+
+When the moment has some heat (a clean win, a nasty bug, a frustrating blocker, a close call), let ${character.name} react with creative, colorful language, in character and in universe: the exclamations, insults and turns of phrase ${character.name} would use in their own world. A line or two is plenty, and it never replaces or bends the facts.`
   );
 }
 
@@ -60,7 +62,7 @@ function getClient(): GoogleGenAI | null {
 
 export async function processWithGemini(
   text: string,
-  model = "gemini-3.1-flash-lite",
+  model = "gemini-3.5-flash-lite",
   character?: CharacterContext | null,
 ): Promise<string | null> {
   const ai = getClient();

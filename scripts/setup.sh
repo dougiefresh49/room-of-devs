@@ -138,7 +138,8 @@ except (OSError, json.JSONDecodeError):
 defaults = {
     "elevenlabs_voice_id": "",
     "elevenlabs_model_id": "eleven_v4",
-    "gemini_model": "gemini-3.1-flash-lite",
+    "gemini_model": "gemini-3.5-flash-lite",
+    "interpreter_model": "gemini-3.5-flash-lite",
     "default_speed": 1.25,
     "notifications_enabled": False,
     "notification_icon": "~/.cursor/tts/icons/tmnt-notification-queued.png",
@@ -146,7 +147,6 @@ defaults = {
     "terminal_notifier_app": "",
     "notification_sound": "random_sfx",
     "streaming_enabled": False,
-    "streaming_session_prefix": "auto",
     "played_retention_count": 50,
     "mic_device": ":default",
     "arcade_enabled": False,
@@ -163,7 +163,7 @@ for key, val in defaults.items():
         changed = True
 
 # Drop stale Piper-era keys
-for stale in ("sfx_categories", "model", "piper_port"):
+for stale in ("sfx_categories", "model", "piper_port", "streaming_session_prefix"):
     if stale in c:
         del c[stale]
         changed = True
@@ -173,6 +173,11 @@ for stale in ("sfx_categories", "model", "piper_port"):
 if not c.get("eleven_v4_migrated"):
     if c.get("elevenlabs_model_id") == "eleven_v3":
         c["elevenlabs_model_id"] = "eleven_v4"
+    # Same owner call: the Gemini rewrite and the interpreter move to
+    # 3.5 flash-lite alongside v4.
+    for key in ("gemini_model", "interpreter_model"):
+        if c.get(key) == "gemini-3.1-flash-lite":
+            c[key] = "gemini-3.5-flash-lite"
     c["eleven_v4_migrated"] = True
     changed = True
 

@@ -10,7 +10,6 @@ import {
   loadEnv,
   loadMutedSessions,
   lookupSessionName,
-  getActiveSessions,
   SESSIONS_DIR,
 } from "./config.js";
 import { processWithGemini, fallbackClean } from "./gemini.js";
@@ -97,16 +96,6 @@ function truncateForTTS(text: string, limit = TTS_CHAR_CAP): string {
     result = result ? result + " " + s : s;
   }
   return result || text.slice(0, limit);
-}
-
-function shouldAddPrefix(config: ReturnType<typeof loadConfig>, title?: string): boolean {
-  const pref = config.streaming_session_prefix;
-  if (pref === "never") return false;
-  if (pref === "always" && title) return true;
-  if (pref === "auto" && title && title !== "Claude Code") {
-    return getActiveSessions().length > 1;
-  }
-  return false;
 }
 
 async function maybePlayVictoryLine(voiceId: string): Promise<void> {
@@ -295,11 +284,6 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
       log("server", `No speakable text after processing: ${name}`);
       moveToPlayed(filePath);
       return;
-    }
-
-    if (shouldAddPrefix(config, item.thread_title)) {
-      const prefix = (item.thread_title ?? "").slice(0, 30);
-      processed = `In ${prefix}... ${processed}`;
     }
 
     // Intermediates are narration, not essays — cap them well below a full

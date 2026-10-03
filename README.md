@@ -115,7 +115,6 @@ Edit `~/.cursor/tts/config.json`:
   "default_speed": 1.25,
   "streaming_enabled": true,
   "playback_mode": "announce",
-  "streaming_session_prefix": "auto",
   "dynamic_responses": "always",
   "mic_device": ":default",
   "arcade_enabled": false,
@@ -137,7 +136,6 @@ Edit `~/.cursor/tts/config.json`:
 | **default_speed** | Playback speed (0.75x–2.0x). ElevenLabs handles up to 1.2x natively; faster speeds add an `ffplay` atempo filter on top. |
 | **streaming_enabled** | Legacy shim — kept in sync with `playback_mode` (`true` = auto, `false` = silent). Prefer the Playback menu. |
 | **playback_mode** | `auto` (play on arrival), `announce` (cached chime + hand raise; synthesize on grant), `silent` (queue only). Live — no restart. |
-| **streaming_session_prefix** | Prepend the session name to spoken text (`auto` = only when multiple sessions are active, `always`, `never`). |
 | **dynamic_responses** | Prompt acknowledgments: `always` (Gemini-generated, in character), `cached` (free pre-generated phrases), `off`. |
 | **mic_device** | ffmpeg avfoundation input for push-to-talk (default `:default`; pin an index if the wrong mic is picked). |
 | **arcade_enabled** | Enable USB arcade-encoder HID input (`node-hid`). Inert until `true` — requires daemon restart. |

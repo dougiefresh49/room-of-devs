@@ -24,7 +24,8 @@ frontier map replace "craft" and the star map
 mobile dismiss filed as #77, the P2 console stays as-is until the
 framework build, the tape stays killed, mobile Talk absorbs live mode.
 
-- **eleven_v4 (#93)**: the room moves to Eleven v4 (decisions row 35).
+- **eleven_v4 + gemini-3.5-flash-lite (#93)**: the room moves to Eleven v4 and
+  the 3.5 flash-lite rewriter, spoken session prefix removed (rows 35-36).
   After merge: `./scripts/setup.sh` (one-time config flip), then
   `tts-server.sh restart`, then one short test clip by ear.
 
