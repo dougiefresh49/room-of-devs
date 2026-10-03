@@ -1,9 +1,10 @@
 # Room of Devs for Android Auto
 
-A standard Media3 media app. Open **Room** in Android Auto to see the room's
-characters, tap a thread to hear its update, and use Queue or steering-wheel
-track buttons for its saved messages. There is no reply or automatic new-update
-playback in this version.
+A standard Media3 media app. Open **Room** in Android Auto to see one tile per
+project with live sessions, open a project for its album-style list of threads
+(the second line reads Working, Done or Error), tap a thread to hear its
+update, and use Queue or steering-wheel track buttons for its saved messages.
+There is no reply or automatic new-update playback in this version.
 
 ## Build
 
@@ -83,14 +84,29 @@ thread and uses the same single-dispatch path. No next hand is an unsuccessful
 custom command, with no grant.
 
 One SSE connection exists while external controllers are connected; losing the
-last controller disconnects it. Media3's internal notification controller does
-not keep this connection alive. Reconnects use bounded backoff. Grid content changes
-notify Android Auto. Title is `label || name`; subtitle is `project`, then the
-character name. Raised hands sort by `raisedAt`, then working threads, then idle.
-Avatar paths match mobile, `/avatars/tmnt/<lowercase-character>/idle.png`, with
-the same default-art fallback. Badges and cached PNGs are made locally and served
-through a read-only `content://` provider. Tokens stay in HTTP cookies inside the
-app, never in media metadata or artwork URLs sent to Android Auto.
+last controller disconnects it. The feed starts from `onConnect`, not
+`onPostConnect`: Media3 never calls `onPostConnect` for legacy
+`MediaBrowserCompat` clients, and Android Auto is one, which is why tiles once
+froze until the phone was replugged. Media3's internal notification controller
+does not keep this connection alive. Reconnects use bounded backoff.
+
+The browse tree (`BrowseTree.kt`, pure and unit-tested) is root, then `room`
+(a grid, one `project:<name>` tile per project with live sessions, subtitle
+like `1 working · 2 done`, art from the project's most common character), then
+each project's `thread:<sessionId>` rows as a list (title is the T3 thread
+title, else `label || name`; second line is `Working`, `Done` in green or
+`Error` in red when `failed` is set). Threads without a project group under
+their character, else `Other`. Projects and rows order by most recent activity.
+On every snapshot the service diffs the tree and calls `notifyChildrenChanged`
+for each parent whose rows or summaries changed (a thread flipping working to
+done notifies its project and the grid). The status colors are
+`ForegroundColorSpan`s; AAOS's media center renders them, Android Auto
+projection may show the plain word. Avatar paths match mobile,
+`/avatars/tmnt/<lowercase-character>/idle.png`, with the same default-art
+fallback. Cached PNGs are keyed per character (no status badges, so the host's
+per-URI artwork cache never goes stale) and served through a read-only
+`content://` provider. Tokens stay in HTTP cookies inside the app, never in
+media metadata or artwork URLs sent to Android Auto.
 
 ## Daemon and verification
 
@@ -104,18 +120,20 @@ This lane does not edit or deploy the installed runtime, per its brief. Older
 daemons remain usable: the app falls back to the character subtitle.
 
 Tests read the real protocol snapshot fixture and cover URL parsing, ordering,
-badges, stale-frame gating, duplicate taps, finalization waits, empty history,
-and POST failure/redirect behavior using a local mock HTTP server. No development
+status words, project grouping and the changed-parent diff, stale-frame gating,
+duplicate taps, finalization waits, empty history, and POST failure/redirect
+behavior using a local mock HTTP server. No development
 test grants against the running daemon or calls Gemini/ElevenLabs.
 
 **Known routing caveat:** every open mobile browser with output set to phone can
 also pick up the car's grant. Before listening in the car, close those browser
 tabs or set them to Mac output. The app does not change daemon routing.
 
-**Unverified until the owner drives:** Android Auto discovery, grid presentation
-(the host may ignore the grid hint), content-provider artwork, custom-button
-placement, Queue and steering-wheel controls, car-speaker playback, and Maps
-split-screen behavior. Signing with the repository's private release key and
+**Unverified until the owner drives:** Android Auto discovery, grid and list
+presentation (the host may ignore the content-style hints), the colored status
+words, tiles refreshing in place after a thread finishes, content-provider
+artwork, custom-button placement, Queue and steering-wheel controls,
+car-speaker playback, and Maps split-screen behavior. Signing with the repository's private release key and
 the GitHub workflow require a real CI run. No DHU, emulator, or paid synthesis
 was used during implementation.
 
