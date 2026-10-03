@@ -82,6 +82,8 @@ HAVING SUM(CASE WHEN t.settled_override='settled'
 export interface T3ThreadLabel {
   title: string;
   project: string;
+  /** The T3 project's workspace root (repo checkout), when T3 recorded one. */
+  root?: string | null;
 }
 
 const LABEL_TTL_MS = 15_000;
@@ -94,15 +96,29 @@ let labelCache: { key: string; at: number; labels: Map<string, T3ThreadLabel> } 
  */
 export function t3ThreadLabels(sessionIds: string[]): Map<string, T3ThreadLabel> {
   const ids = sessionIds.filter((s) => UUID_RE.test(s)).sort();
+  // Nothing to look up (a CLI session's voice resolution): answer without
+  // touching the cache, so the snapshot's batch survives for the next build.
+  if (ids.length === 0) return new Map();
   const key = ids.join(",");
-  if (labelCache && labelCache.key === key && Date.now() - labelCache.at < LABEL_TTL_MS) {
-    return labelCache.labels;
+  if (labelCache && Date.now() - labelCache.at < LABEL_TTL_MS) {
+    if (labelCache.key === key) return labelCache.labels;
+    // A single-session lookup (voice resolution at speak time) is answered
+    // from the snapshot's batch instead of evicting it with a one-id query.
+    const cached = new Set(labelCache.key.split(","));
+    if (ids.length > 0 && ids.every((id) => cached.has(id))) {
+      const subset = new Map<string, T3ThreadLabel>();
+      for (const id of ids) {
+        const hit = labelCache.labels.get(id);
+        if (hit) subset.set(id, hit);
+      }
+      return subset;
+    }
   }
   const labels = new Map<string, T3ThreadLabel>();
   if (ids.length > 0 && existsSync(T3_STATE_DB)) {
     const inList = ids.map((s) => `'${s}'`).join(",");
     const sql = `SELECT json_extract(r.resume_cursor_json,'$.resume'),
-  json_object('title', t.title, 'project', p.title)
+  json_object('title', t.title, 'project', p.title, 'root', p.workspace_root)
 FROM provider_session_runtime r
 JOIN projection_threads t ON t.thread_id = r.thread_id
 JOIN projection_projects p ON p.project_id = t.project_id

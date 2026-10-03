@@ -37,6 +37,10 @@ class RoomApi(val connection: Connection) {
     suspend fun snapshot() = wireJson.decodeFromString<Snapshot>(execute(request("snapshot")))
     suspend fun replays(sessionId: String) = wireJson.decodeFromString<List<Replay>>(execute(request("replay-list")))
         .filter { it.sessionId == sessionId && safeReplay(it.file) }.sortedByDescending { it.file }
+    suspend fun projectVoices() = wireJson.decodeFromString<ProjectVoicesPayload>(execute(request("project-voices"))).usable()
+    /** Saves one project's voice; an empty [voiceId] clears it back to the room default. */
+    suspend fun setProjectVoice(project: String, voiceId: String) =
+        action("set_project_voice", "project" to project, "voiceId" to voiceId)
     suspend fun action(type: String, vararg fields: Pair<String, String>) {
         val body = buildJsonObject { put("type", type); fields.forEach { (k, v) -> put(k, v) } }
         val result = execute(Request.Builder().url(connection.url("action"))

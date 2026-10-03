@@ -17,6 +17,9 @@ export const SESSIONS_DIR =
   process.env.SESSIONS_DIR_OVERRIDE ?? join(homedir(), ".claude", "sessions");
 export const CONFIG_PATH = join(TTS_DIR, "config.json");
 export const SESSION_VOICES_PATH = join(TTS_DIR, "session_voices.json");
+// Per-project voice picks ({ "<project name>": "<voiceId>" }); the fallback
+// between an explicit session_voices entry and the config default (#97).
+export const PROJECT_VOICES_PATH = join(TTS_DIR, "project_voices.json");
 export const MUTED_SESSIONS_PATH = join(TTS_DIR, "muted_sessions.json");
 export const NICKNAMES_PATH = join(TTS_DIR, "nicknames.json");
 export const PHRASES_DIR = join(TTS_DIR, "sounds", "phrases");
@@ -184,6 +187,30 @@ export function loadSessionVoices(): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+/** Raw project_voices.json map; non-string values are dropped. */
+export function loadProjectVoices(): Record<string, string> {
+  try {
+    if (!existsSync(PROJECT_VOICES_PATH)) return {};
+    const data = JSON.parse(readFileSync(PROJECT_VOICES_PATH, "utf-8")) as unknown;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+    // Null prototype: keys are project names, never inherited properties.
+    const out: Record<string, string> = Object.create(null);
+    for (const [k, v] of Object.entries(data)) {
+      if (typeof v === "string" && v) out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** Atomic replace (tmp + rename) so hook readers never see partial JSON. */
+export function saveProjectVoices(map: Record<string, string>): void {
+  const tmp = `${PROJECT_VOICES_PATH}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(map, null, 2) + "\n");
+  renameSync(tmp, PROJECT_VOICES_PATH);
 }
 
 // One physical button on the encoder. Keyed by HID bit-index in the map;

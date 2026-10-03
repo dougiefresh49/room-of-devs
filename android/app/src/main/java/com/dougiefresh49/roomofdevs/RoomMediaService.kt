@@ -22,8 +22,10 @@ import java.io.IOException
 class RoomMediaService : MediaLibraryService() {
     companion object {
         const val RECONFIGURE = "com.dougiefresh49.roomofdevs.RECONFIGURE"
-        private const val ROOT = "root"
-        private const val ROOM = "room"
+        private const val ROOT = BrowseTree.ROOT
+        private const val ROOM = BrowseTree.ROOM
+        private const val DONE_GREEN = 0xFF66BB6A.toInt()
+        private const val ERROR_RED = 0xFFEF5350.toInt()
         private const val DISMISS = "room.dismiss"
         private const val SLOWER = "room.slower"
         private const val NEXT = "room.next_hand"
@@ -36,13 +38,12 @@ class RoomMediaService : MediaLibraryService() {
     private var artwork: ArtworkCache? = null
     private var requests: PlaybackRequests? = null
     private var feedJob: Job? = null
-    private val controllers = mutableSetOf<MediaSession.ControllerInfo>()
     private var selection: PlaybackRequest? = null
     private var selectionVersion = 0L
     private var selectedThread: String? = null
     private var completedFile: String? = null
     private var selectedFile: String? = null
-    /** Per-clip daemon tempo by replay file; the car plays clip rate x speed setting (x 0.85 when Slower). */
+    /** Per-clip daemon tempo by replay file; only caps a live tail (the speed setting is what the car plays). */
     private val clipRates = java.util.concurrent.ConcurrentHashMap<String, Double>()
     private var slower = false
     private var selectedLive = false
@@ -60,7 +61,9 @@ class RoomMediaService : MediaLibraryService() {
         super.onCreate()
         player = ExoPlayer.Builder(this).setMediaSourceFactory(
             DefaultMediaSourceFactory(DataSource.Factory {
-                RoomDataSource(requireNotNull(api), requireNotNull(requests))
+                RoomDataSource(requireNotNull(api), requireNotNull(requests), onFinalized = { file ->
+                    scope.launch { if (file == selectedFile && selectedLive) { selectedLive = false; applySpeed() } }
+                })
             }).setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
                 // Live-tail reconnects live in RoomDataSource (bounded, resumes at ?from=). A
                 // terminal error is fatal here so ExoPlayer never restarts the tail from byte 0.
@@ -123,17 +126,32 @@ class RoomMediaService : MediaLibraryService() {
             current = { nextFeed.snapshots.value },
         )
         feedJob = scope.launch {
-            var previous: List<Agent>? = null
+            var previous: List<ProjectGroup>? = null
             nextFeed.snapshots.collect { snapshot ->
-                val ordered = roomOrder(snapshot?.agents.orEmpty())
-                if (ordered != previous) {
-                    previous = ordered
-                    tiles.keys.retainAll(ordered.map { it.sessionId }.toSet())
-                    session.notifyChildrenChanged(ROOM, ordered.size, null)
+                val agents = snapshot?.agents ?: return@collect
+                val projects = BrowseTree.projects(agents)
+                // Every parent whose rows or summaries moved gets re-requested by its subscribed
+                // browser; a thread flipping working -> done touches its project and the Room grid.
+                for (parent in BrowseTree.changedParents(previous, projects)) {
+                    val count = if (parent == ROOM) projects.size else projects.find { it.id == parent }?.agents?.size ?: 0
+                    session.notifyChildrenChanged(parent, count, null)
                 }
+                previous = projects
+                tiles.keys.retainAll(agents.map { it.sessionId }.toSet())
             }
         }
-        if (controllers.isNotEmpty()) nextFeed.start()
+        if (browsing) nextFeed.start()
+    }
+    /**
+     * A client (Android Auto's legacy browser) is bound. Media3 never prunes legacy browsers from
+     * connectedControllers, so the feed's lifetime follows binding instead: on from onConnect or any
+     * browse, off in onUnbind when the last client unbinds (the car unplugged).
+     */
+    private var browsing = false
+    override fun onUnbind(intent: Intent?): Boolean {
+        browsing = false
+        feed?.stop()
+        return super.onUnbind(intent)
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == RECONFIGURE) configure()
@@ -146,20 +164,48 @@ class RoomMediaService : MediaLibraryService() {
         super.onDestroy()
     }
 
-    private fun folder(id: String, title: String) = MediaItem.Builder().setMediaId(id)
-        .setMediaMetadata(MediaMetadata.Builder().setTitle(title).setIsBrowsable(true).setIsPlayable(false)
-            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED).setExtras(gridHints()).build()).build()
-    private fun gridHints() = Bundle().apply {
-        putInt("android.media.browse.CONTENT_STYLE_BROWSABLE_HINT", 2)
-        putInt("android.media.browse.CONTENT_STYLE_PLAYABLE_HINT", 2)
-        putBoolean("android.media.browse.CONTENT_STYLE_SUPPORTED", true)
+    /** Content-style hints on a browsable item describe how its children are laid out. */
+    private fun styleHints(browsable: Int, playable: Int) = Bundle().apply {
+        putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, browsable)
+        putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_PLAYABLE, playable)
     }
-    private suspend fun tile(agent: Agent): MediaItem {
-        val art = artwork?.uri(agent)
-        return MediaItem.Builder().setMediaId("thread:${agent.sessionId}")
-            .setMediaMetadata(MediaMetadata.Builder().setTitle(agent.title).setSubtitle(agent.subtitle)
-                .setArtist(agent.subtitle).setArtworkUri(art).setIsBrowsable(false).setIsPlayable(true)
+    private val grid get() = styleHints(MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM, MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM)
+    private val list get() = styleHints(MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM, MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM)
+    private fun folder(id: String, title: String, hints: Bundle) = MediaItem.Builder().setMediaId(id)
+        .setMediaMetadata(MediaMetadata.Builder().setTitle(title).setIsBrowsable(true).setIsPlayable(false)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED).setExtras(hints).build()).build()
+    /** A project tile on the Room grid: album-style, its children listed under the project name. */
+    private suspend fun projectTile(project: ProjectGroup): MediaItem {
+        val art = artwork?.uri(project.character, project.name)
+        return MediaItem.Builder().setMediaId(project.id)
+            .setMediaMetadata(MediaMetadata.Builder().setTitle(project.name).setSubtitle(project.summary)
+                .setArtist(project.summary).setArtworkUri(art).setIsBrowsable(true).setIsPlayable(false)
+                .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM).setExtras(list).build()).build()
+    }
+    /**
+     * Done is green and Error red through a ForegroundColorSpan. AAOS's media center passes the
+     * subtitle CharSequence straight to its TextView; a host that strips spans still shows the word.
+     */
+    private fun statusText(agent: Agent): CharSequence {
+        val status = agent.status
+        val color = when (status) { Status.DONE -> DONE_GREEN; Status.ERROR -> ERROR_RED; Status.WORKING -> return status.label }
+        return android.text.SpannableString(status.label).apply {
+            setSpan(android.text.style.ForegroundColorSpan(color), 0, length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
+    private suspend fun threadRow(agent: Agent): MediaItem {
+        val art = artwork?.uri(agent.character, agent.title)
+        val status = statusText(agent)
+        return MediaItem.Builder().setMediaId(BrowseTree.threadId(agent.sessionId))
+            .setMediaMetadata(MediaMetadata.Builder().setTitle(agent.title).setSubtitle(status)
+                .setArtist(status).setArtworkUri(art).setIsBrowsable(false).setIsPlayable(true)
                 .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC).build()).build().also { tiles[agent.sessionId] = it }
+    }
+    /** The live snapshot when the stream is open, else one fresh GET; a failed GET keeps the last value. */
+    private suspend fun agents(): List<Agent> {
+        val current = feed ?: return emptyList()
+        browsing = true; current.start()
+        return (runCatching { current.currentOrRefresh() }.getOrNull() ?: current.snapshots.value)?.agents.orEmpty()
     }
     private fun replayItem(replay: Replay, agent: Agent) = MediaItem.Builder().setMediaId("replay:${replay.file}")
         .setUri(Uri.Builder().scheme("room").authority("replay").appendPath(replay.file).build())
@@ -169,8 +215,20 @@ class RoomMediaService : MediaLibraryService() {
             .setIsPlayable(true).setIsBrowsable(false).build()).build()
 
     /** Synchronous tap registration means duplicate callbacks share a single outstanding grant. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun select(agent: Agent): MediaItem {
         val manager = requests ?: throw IOException("Set up Room of Devs on your phone")
+        // Re-tapping the thread whose clip is loaded (paused, or still playing) resumes that
+        // clip; it never starts a second grant. A newer update waiting in the queue (the granted
+        // one has left it), an ended clip, or a player error goes through tap() instead.
+        val state = player.playbackState
+        val loaded = selection?.takeIf {
+            it.agent.sessionId == agent.sessionId && agent.raisedCount == 0 &&
+                (state == Player.STATE_READY || state == Player.STATE_BUFFERING) &&
+                it.audio.isCompleted && !it.audio.isCancelled && it.audio.getCompletionExceptionOrNull() == null
+        }
+        val current = player.currentMediaItem
+        if (loaded != null && current?.mediaId == "request:${loaded.id}") return current
         val request = manager.tap(agent)
         if (selection?.id != request.id) {
             val version = ++selectionVersion
@@ -201,10 +259,8 @@ class RoomMediaService : MediaLibraryService() {
         val id = player.currentMediaItem?.mediaId
         val file = if (id?.startsWith("replay:") == true) id.removePrefix("replay:") else selectedFile
         val clip = file?.let(clipRates::get) ?: 1.0
-        // A live tail can't sustain more than the clip's own rate (the mobile page's rule).
         val live = selectedLive && id?.startsWith("request:") == true
-        val mult = if (live) 1.0 else ConnectionPrefs.speed(this)
-        player.setPlaybackSpeed((clip * mult * if (slower) 0.85 else 1.0).toFloat())
+        player.setPlaybackSpeed(carPlaybackRate(ConnectionPrefs.speed(this), clip, live, slower))
     }
     private fun ackFinished(item: MediaItem?) {
         val id = item?.mediaId ?: return
@@ -227,54 +283,59 @@ class RoomMediaService : MediaLibraryService() {
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
             custom.forEach { commands.add(SessionCommand(it.first, Bundle.EMPTY)) }
+            // Media3 never calls onPostConnect for legacy (MediaBrowserCompat) clients, and Android
+            // Auto is one, so the feed has to start here or the car browses a frozen snapshot.
+            if (!session.isMediaNotificationController(controller)) { browsing = true; feed?.start() }
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session).setAvailableSessionCommands(commands.build()).build()
         }
-        override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
-            if (!session.isMediaNotificationController(controller)) {
-                controllers.add(controller); feed?.start()
-            }
-        }
-        override fun onDisconnected(session: MediaSession, controller: MediaSession.ControllerInfo) {
-            controllers.remove(controller)
-            if (controllers.isEmpty()) feed?.stop()
-        }
         override fun onGetLibraryRoot(session: MediaLibrarySession, browser: MediaSession.ControllerInfo, params: LibraryParams?) =
-            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "Room of Devs"), LibraryParams.Builder().setExtras(gridHints()).build()))
+            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "Room of Devs", grid), LibraryParams.Builder().setExtras(grid).build()))
         override fun onGetChildren(session: MediaLibrarySession, browser: MediaSession.ControllerInfo, parentId: String, page: Int, pageSize: Int, params: LibraryParams?): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = future {
             if (page < 0 || pageSize < 1) return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
             val items = when (parentId) {
-                ROOT -> listOf(folder(ROOM, "Room"))
-                ROOM -> {
-                    val snapshot = feed?.snapshots?.value ?: feed?.refresh()
-                    roomOrder(snapshot?.agents.orEmpty()).map { tile(it) }
+                ROOT -> listOf(folder(ROOM, "Room", grid))
+                ROOM -> BrowseTree.projects(agents()).map { projectTile(it) }
+                else -> {
+                    val name = BrowseTree.projectName(parentId) ?: return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+                    BrowseTree.project(agents(), name)?.agents?.map { threadRow(it) } ?: emptyList()
                 }
-                else -> return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
             }
             val start = (page.toLong() * pageSize).coerceAtMost(items.size.toLong()).toInt()
             LibraryResult.ofItemList(items.drop(start).take(pageSize), params)
         }
         override fun onGetItem(session: MediaLibrarySession, browser: MediaSession.ControllerInfo, mediaId: String): ListenableFuture<LibraryResult<MediaItem>> = future {
+            val current = feed?.snapshots?.value?.agents.orEmpty()
             val item = when (mediaId) {
-                ROOT -> folder(ROOT, "Room of Devs")
-                ROOM -> folder(ROOM, "Room")
-                else -> feed?.snapshots?.value?.agents?.find { "thread:${it.sessionId}" == mediaId }?.let { tile(it) }
+                ROOT -> folder(ROOT, "Room of Devs", grid)
+                ROOM -> folder(ROOM, "Room", grid)
+                else -> BrowseTree.projectName(mediaId)?.let { name -> BrowseTree.project(current, name)?.let { projectTile(it) } }
+                    ?: BrowseTree.sessionId(mediaId)?.let { sid -> current.find { it.sessionId == sid }?.let { threadRow(it) } }
             }
             if (item == null) LibraryResult.ofError(SessionError.ERROR_BAD_VALUE) else LibraryResult.ofItem(item, null)
         }
         override fun onSubscribe(session: MediaLibrarySession, browser: MediaSession.ControllerInfo, parentId: String, params: LibraryParams?): ListenableFuture<LibraryResult<Void>> {
-            session.notifyChildrenChanged(browser, parentId, if (parentId == ROOT) 1 else feed?.snapshots?.value?.agents?.size ?: 0, params)
+            val current = feed?.snapshots?.value?.agents.orEmpty()
+            val count = when (parentId) {
+                ROOT -> 1
+                ROOM -> BrowseTree.projects(current).size
+                else -> BrowseTree.projectName(parentId)?.let { BrowseTree.project(current, it)?.agents?.size } ?: 0
+            }
+            session.notifyChildrenChanged(browser, parentId, count, params)
             return Futures.immediateFuture(LibraryResult.ofVoid())
         }
         override fun onSetMediaItems(session: MediaSession, controller: MediaSession.ControllerInfo, mediaItems: List<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
             val id = mediaItems.getOrNull(startIndex.coerceAtLeast(0))?.mediaId ?: ""
-            val agent = feed?.snapshots?.value?.agents?.find { id == "thread:${it.sessionId}" }
+            val agent = feed?.snapshots?.value?.agents?.find { id == BrowseTree.threadId(it.sessionId) }
             if (agent != null) {
                 val item = select(agent)
                 // A re-tap that reuses the playing request keeps its Queue history.
                 val installed = (0 until player.mediaItemCount).map(player::getMediaItemAt)
                 val at = installed.indexOfFirst { it.mediaId == item.mediaId }
+                // Resuming the loaded clip keeps its place; reinstalling reopens the source, so a
+                // clip that finished synthesizing comes back whole, with a duration to seek in.
+                val resumeAt = if (at >= 0 && at == player.currentMediaItemIndex && player.playbackState != Player.STATE_ENDED) player.currentPosition else 0
                 return Futures.immediateFuture(
-                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, 0)
+                    if (at >= 0) MediaSession.MediaItemsWithStartPosition(installed, at, resumeAt)
                     else MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0),
                 )
             }

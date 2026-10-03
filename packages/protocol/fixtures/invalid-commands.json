@@ -1,4 +1,17 @@
 [
+  { "type": "set_project_voice", "project": "", "voiceId": "AbCdEf0123456789wxyz" },
+  { "type": "set_project_voice", "project": "../etc", "voiceId": "AbCdEf0123456789wxyz" },
+  { "type": "set_project_voice", "project": "a/b", "voiceId": "" },
+  { "type": "set_project_voice", "project": "..", "voiceId": "" },
+  { "type": "set_project_voice", "project": " comic-reader", "voiceId": "" },
+  {
+    "type": "set_project_voice",
+    "project": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "voiceId": ""
+  },
+  { "type": "set_project_voice", "project": "comic-reader", "voiceId": "../voice" },
+  { "type": "set_project_voice", "project": "comic-reader" },
+  { "type": "set_project_voice", "project": "comic-reader", "voiceId": "", "extra": true },
   {
     "type": "set_button",
     "idx": 4,

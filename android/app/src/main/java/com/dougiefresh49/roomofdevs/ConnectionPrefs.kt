@@ -20,3 +20,13 @@ object ConnectionPrefs {
         prefs(context).edit().putString("base", connection.base.toString()).putString("token", connection.token).apply()
     }
 }
+
+/**
+ * The car's ExoPlayer speed. The setting is the speed heard (1x = the voice's natural pace), not a
+ * multiplier on the daemon's default_speed. A live tail can't outrun synthesis, so it stays at or
+ * under the clip's own daemon tempo (the mobile page's rule). Slower trims 15%.
+ */
+fun carPlaybackRate(setting: Double, clipRate: Double, live: Boolean, slower: Boolean): Float {
+    val rate = if (live && clipRate > 0) minOf(setting, clipRate) else setting
+    return (rate * if (slower) 0.85 else 1.0).toFloat()
+}

@@ -11,11 +11,15 @@ import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * One cached PNG per character. The URI is keyed on the character alone, so the host's
+ * per-URI artwork cache never goes stale: status lives in text, not in the picture.
+ */
 class ArtworkCache(private val context: Context, private val api: RoomApi) {
-    suspend fun uri(agent: Agent): Uri = withContext(Dispatchers.IO) {
-        val character = agent.character?.lowercase() ?: "default"
+    suspend fun uri(character: String?, initials: String): Uri = withContext(Dispatchers.IO) {
+        val name = character?.takeIf { it.isNotBlank() }?.lowercase() ?: "default"
         val key = MessageDigest.getInstance("SHA-256")
-            .digest("${api.connection.base}|$character|${agent.badge}".toByteArray())
+            .digest("${api.connection.base}|$name".toByteArray())
             .joinToString("") { "%02x".format(it) }
         val dir = File(context.cacheDir, "artwork").apply { mkdirs() }
         val file = File(dir, "$key.png")
@@ -23,25 +27,19 @@ class ArtworkCache(private val context: Context, private val api: RoomApi) {
             val bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             canvas.drawColor(Color.rgb(34, 38, 42))
-            fun fetch(name: String): Bitmap? = runCatching {
-                api.http.newCall(api.request("avatars", "tmnt", name, "idle.png")).execute().use {
+            fun fetch(avatar: String): Bitmap? = runCatching {
+                api.http.newCall(api.request("avatars", "tmnt", avatar, "idle.png")).execute().use {
                     if (it.isSuccessful) it.body?.byteStream()?.use(BitmapFactory::decodeStream) else null
                 }
             }.getOrNull()
-            val source = fetch(character) ?: if (character != "default") fetch("default") else null
+            val source = fetch(name) ?: if (name != "default") fetch("default") else null
             if (source != null) {
                 canvas.drawBitmap(source, null, Rect(0, 0, 256, 256), Paint(Paint.FILTER_BITMAP_FLAG))
                 source.recycle()
             } else {
-                canvas.drawText(agent.title.take(2).uppercase(), 40f, 150f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                canvas.drawText(initials.take(2).uppercase(), 40f, 150f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = Color.LTGRAY; textSize = 80f
                 })
-            }
-            if (agent.badge != Badge.NONE) {
-                canvas.drawCircle(216f, 216f, 40f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(20, 23, 26) })
-                context.getDrawable(if (agent.badge == Badge.HAND) R.drawable.ic_hand else R.drawable.ic_wrench)?.apply {
-                    setBounds(190, 190, 242, 242); draw(canvas)
-                }
             }
             val temp = File.createTempFile("art", ".tmp", dir)
             temp.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }

@@ -26,7 +26,7 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawn, spawnSync } from "child_process";
-import { TTS_DIR, FAILED_DIR } from "../config.js";
+import { TTS_DIR, FAILED_DIR, loadSessionVoices } from "../config.js";
 import { buildPanelSnapshotFresh, buildSnapshot, sessionStateAgeMs } from "../state-watch.js";
 import { log } from "../logger.js";
 import {
@@ -61,6 +61,7 @@ import {
 } from "../protocol/index.js";
 
 import { CHARACTERS_PATH } from "../characters-path.js";
+import { setProjectVoice } from "./project-voices.js";
 const SCRIPTS_DIR = join(TTS_DIR, "scripts");
 const SERVER_DIR = join(TTS_DIR, "tts-server");
 export const HOLD_ROOM_FILE = join(TTS_DIR, ".hold-room.json");
@@ -464,8 +465,13 @@ function personaBusyReason(persona: string): string | null {
   if (pendingPersonas.has(key)) {
     return `${persona} is already in the room`;
   }
+  // Only an explicit voice (team.sh persona, a panel voice pick) claims a
+  // persona. Sessions speaking it through a project pick or the config
+  // default share the voice without holding the persona (#97).
+  const explicit = loadSessionVoices();
   for (const agent of buildSnapshot()) {
     if (agent.character?.toLowerCase() !== key) continue;
+    if (!explicit[agent.sessionId]) continue;
     // Team sessions are adjudicated by the tmux liveness checks below —
     // a team card with dead tmux is a ghost, not a conflict.
     if (agent.isTeam) continue;
@@ -812,6 +818,7 @@ const MOBILE_ACTION_TYPES = new Set([
   "speak_text",
   "dismiss_queue",
   "clear_failed",
+  "set_project_voice",
 ]);
 
 /** Transport-facing guard over the allowlist above. */
@@ -865,6 +872,10 @@ export function dispatch(msg: PanelMessage): void {
     case "play_replay":
       // Handled synchronously in dispatchPanelAction (lock + file checks).
       return;
+    case "set_project_voice":
+      // Synchronous result path: dispatchPanelAction / panel-ws handleMessage.
+      setProjectVoice(msg.project, msg.voiceId);
+      return;
     case "phone_done":
       markPhonePlaybackDone(msg.file);
       return;
@@ -909,6 +920,10 @@ export function dispatchPanelAction(raw: unknown): boolean {
   if (msg.type === "play_replay") {
     // Missing file or stream lock held → 400. Free path (no synthesis).
     return startPlayReplay(msg.file, msg.offsetSec ?? 0);
+  }
+  if (msg.type === "set_project_voice") {
+    // Unknown voiceId / bad name → 400. A file write, no synthesis.
+    return setProjectVoice(msg.project, msg.voiceId) === "ok";
   }
 
   if (

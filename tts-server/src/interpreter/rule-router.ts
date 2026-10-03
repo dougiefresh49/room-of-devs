@@ -11,11 +11,11 @@ import {
   STATE_DIR,
   STREAM_LOCK,
   getActiveSessions,
-  loadSessionVoices,
   loadMutedSessions,
   loadNicknames,
 } from "../config.js";
 import { getCharacter } from "../dynamic-response.js";
+import { resolveEffectiveVoices, voiceHolderIds } from "../session-voice.js";
 
 const TEAM_MAP_PATH = join(TTS_DIR, "team_map.json");
 const ALIASES_PATH = join(TTS_DIR, "aliases.json");
@@ -159,13 +159,16 @@ export function buildFloorCandidates(): NameCandidate[] {
     add(s.name, s.sessionId, 1);
   }
 
-  const voices = loadSessionVoices();
-  for (const [sessionId, voiceId] of Object.entries(voices)) {
+  // Character names by effective voice. Explicit and project picks rank as
+  // character names (2); a session only on the config default ranks like a
+  // session name (1), so "Donnie" still reaches the one session made Donnie.
+  for (const [sessionId, { voiceId, source }] of resolveEffectiveVoices(voiceHolderIds())) {
     const char = getCharacter(voiceId);
     if (!char) continue;
-    add(char.name, sessionId, 2);
+    const priority = source === "default" ? 1 : 2;
+    add(char.name, sessionId, priority);
     for (const nick of NICKNAMES[normalizeToken(char.name)] ?? []) {
-      add(nick, sessionId, 2);
+      add(nick, sessionId, priority);
     }
   }
 
