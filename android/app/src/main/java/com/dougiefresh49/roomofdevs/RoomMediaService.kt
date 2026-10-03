@@ -219,9 +219,12 @@ class RoomMediaService : MediaLibraryService() {
     private fun select(agent: Agent): MediaItem {
         val manager = requests ?: throw IOException("Set up Room of Devs on your phone")
         // Re-tapping the thread whose clip is loaded (paused, or still playing) resumes that
-        // clip; it never starts a second grant.
+        // clip; it never starts a second grant. A newer update waiting in the queue (the granted
+        // one has left it), an ended clip, or a player error goes through tap() instead.
+        val state = player.playbackState
         val loaded = selection?.takeIf {
-            it.agent.sessionId == agent.sessionId && player.playbackState != Player.STATE_ENDED &&
+            it.agent.sessionId == agent.sessionId && agent.raisedCount == 0 &&
+                (state == Player.STATE_READY || state == Player.STATE_BUFFERING) &&
                 it.audio.isCompleted && !it.audio.isCancelled && it.audio.getCompletionExceptionOrNull() == null
         }
         val current = player.currentMediaItem

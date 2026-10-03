@@ -34,8 +34,10 @@ class RoomDataSource(
                 uri.host == "request" -> {
                     val request = requests.requests[uri.lastPathSegment] ?: throw IOException("Tap the thread again")
                     val first = runBlocking { request.audio.await() }.first()
-                    runBlocking { wholeOnceFinalized(first, request.agent.sessionId, api::replays) }
-                        .also { if (first.live && !it.live) onFinalized(it.file) }
+                    // Once a clip is known whole, later opens (seeks, resumes) skip the lookup.
+                    if (first.live && first.file in requests.finalized) first.copy(live = false)
+                    else runBlocking { wholeOnceFinalized(first, request.agent.sessionId, api::replays) }
+                        .also { if (first.live && !it.live) { requests.finalized.add(it.file); onFinalized(it.file) } }
                 }
                 else -> throw IOException("Unsupported media URI")
             }

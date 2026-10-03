@@ -27,6 +27,6 @@ object ConnectionPrefs {
  * under the clip's own daemon tempo (the mobile page's rule). Slower trims 15%.
  */
 fun carPlaybackRate(setting: Double, clipRate: Double, live: Boolean, slower: Boolean): Float {
-    val rate = if (live) minOf(setting, clipRate.coerceAtLeast(1.0)) else setting
+    val rate = if (live && clipRate > 0) minOf(setting, clipRate) else setting
     return (rate * if (slower) 0.85 else 1.0).toFloat()
 }

@@ -32,6 +32,6 @@ class ResumeAndSpeedTest {
     @Test fun liveTailHonorsSlowerSettingsButNeverOutrunsTheClipTempo() {
         assertEquals(1.0f, carPlaybackRate(1.0, 1.5, live = true, slower = false), 0.001f)
         assertEquals(1.5f, carPlaybackRate(2.0, 1.5, live = true, slower = false), 0.001f)
-        assertEquals(1.0f, carPlaybackRate(1.25, 0.9, live = true, slower = false), 0.001f)
+        assertEquals(0.9f, carPlaybackRate(1.25, 0.9, live = true, slower = false), 0.001f)
     }
 }
