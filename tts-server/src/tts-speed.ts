@@ -1,5 +1,5 @@
 // Speed across the render and the player. ElevenLabs bakes some speed into
-// the audio; the player (ffplay atempo, afplay -r, the phone's playbackRate)
+// the audio; the player (ffplay atempo, the phone's playbackRate)
 // makes up the rest.
 
 // eleven_v4 ignores speed (and style) without an error (comic-reader #213

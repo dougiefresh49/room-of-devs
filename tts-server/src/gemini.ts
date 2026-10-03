@@ -10,7 +10,7 @@ Rules:
 3. REMOVE markdown formatting (headers, bullets, bold, links, images, tables).
 4. CONVERT technical jargon into conversational speech. "Refactored the useAuth hook" → "I refactored the use auth hook".
 5. ADD audio tags where natural. A tag in square brackets directs how the voice says the words after it; everything outside brackets is spoken.
-   - A tag describes the voice: its emotion, volume, pace, texture, or a sound the speaker's own voice makes. Fuller directions work well: [warm, quietly pleased], [low voice, a little rueful], [brightening, excited].
+   - A tag describes the voice: its emotion, volume, pace, texture, or a sound the speaker's own voice makes. Keep tags short: [pleased], [rueful], [quietly], [brightening].
    - These are examples, not the whole set: [sighs] before bad news or a hard-won fix, [excited] for a clean win, [whispers] for an aside or caveat, [chuckles] or [laughs] only when something is genuinely funny, [thoughtful], [relieved], [annoyed], [curious], [exhales sharply].
    - Put a tag right before the words it colors; a reaction like [sighs] can follow the words that cause it. One tag at the start is usually enough; add another only where the mood shifts. A plain line with no tag is fine.
    - Never write a tag for a sound that is not the speaker's voice, like [explosion], [applause], [music] or [typing]: the model plays those as sound effects. Never tag something no one can hear, like [grinning] or [nods].

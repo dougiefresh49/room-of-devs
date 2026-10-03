@@ -57,10 +57,13 @@ function resolveRequest(opts: TTSOptions): ResolvedRequest {
   };
 }
 
-export async function streamTTS(
-  text: string,
-  opts: TTSOptions,
-): Promise<ReadableStream<Uint8Array> | null> {
+/** A TTS audio stream plus the speed ElevenLabs baked into it. */
+export interface TTSStream {
+  audio: AsyncIterable<Uint8Array>;
+  elSpeed: number;
+}
+
+export async function streamTTS(text: string, opts: TTSOptions): Promise<TTSStream | null> {
   const el = getClient();
   if (!el) {
     log("elevenlabs", "No ELEVENLABS_API_KEY — skipping");
@@ -87,7 +90,7 @@ export async function streamTTS(
       "elevenlabs",
       `Streaming: voice=${opts.voiceId}, model=${modelId}, speed=${rawSpeed}x (el=${elSpeed}), chars=${text.length}`,
     );
-    return response as any;
+    return { audio: response as any, elSpeed };
   } catch (err: any) {
     log("elevenlabs", `Stream error: ${err.message || err}`);
     return null;
@@ -131,7 +134,7 @@ function groupCharsIntoWords(chars: CharTiming[]): WordTiming[] {
   return words;
 }
 
-export interface TimestampedTTS {
+export interface TimestampedTTS extends TTSStream {
   // Audio chunks decoded from each base64 JSON frame — pipe exactly like a
   // plain stream. Consuming this generator is what populates the alignment.
   audio: AsyncGenerator<Uint8Array>;
@@ -225,7 +228,7 @@ export async function streamTTSWithTimestamps(
     }
   }
 
-  return { audio: gen(), getWords: () => groupCharsIntoWords(chars) };
+  return { audio: gen(), elSpeed, getWords: () => groupCharsIntoWords(chars) };
 }
 
 export async function generateTTS(text: string, opts: TTSOptions): Promise<Buffer | null> {

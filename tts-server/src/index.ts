@@ -349,7 +349,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
     if (timestamped) {
       log("server", `Playing+captions: ${name} (${processed.length} chars)`);
       code = await playStreamBuffer(
-        timestamped.audio,
+        timestamped,
         filePath,
         ctx,
         replayMeta,
@@ -366,7 +366,7 @@ async function processQueueFile(filePath: string, auto = false): Promise<void> {
       }
       log("server", `Playing: ${name} (${processed.length} chars, no captions)`);
       code = await playStreamBuffer(
-        stream as any,
+        stream,
         filePath,
         ctx,
         replayMeta,

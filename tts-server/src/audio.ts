@@ -36,11 +36,13 @@ export function playFile(
     // the full default_speed would over-speed a v3 render.
     const residual = replayResidual(config.default_speed, replayMeta);
     const speed = +(residual * speedFactor).toFixed(4);
-    const args = [filePath];
-    if (speed !== 1.0) args.push("-r", String(speed));
+    // ffplay atempo keeps pitch; afplay -r shifts it, which v4's full-speed
+    // residual (1.25x by default) makes plainly audible.
+    const args = ["-nodisp", "-autoexit", "-loglevel", "quiet", "-i", filePath];
+    if (speed !== 1.0) args.push("-af", `atempo=${speed}`);
 
     beginSessionPlayback(ctx, replayMeta, undefined, speed);
-    const child = spawn("afplay", args, { stdio: "ignore" });
+    const child = spawn("ffplay", args, { stdio: "ignore" });
     playerRef.current = child;
     writePidFiles(child.pid);
     const stopHealer = startSuspendHealer(child);
@@ -57,7 +59,7 @@ export function playFile(
       resolve(code);
     };
     child.on("error", (err) => {
-      log("audio", `afplay error: ${err.message}`);
+      log("audio", `playFile ffplay error: ${err.message}`);
       settle(1);
     });
     child.on("close", (code) => settle(code ?? 0));

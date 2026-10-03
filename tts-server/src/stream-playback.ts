@@ -2,8 +2,8 @@ import { spawn } from "child_process";
 import { writeFileSync } from "fs";
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
-import type { WordTiming } from "./elevenlabs.js";
-import { bakedSpeed, residualTempo } from "./tts-speed.js";
+import type { TTSStream, WordTiming } from "./elevenlabs.js";
+import { residualTempo } from "./tts-speed.js";
 import { basename } from "path";
 import { releaseLock } from "./playback-locks.js";
 import { saveReplayFile, openReplayWriter, type ReplayMeta } from "./replay-store.js";
@@ -136,7 +136,7 @@ async function playStreamToPhone(
 
   const waitMs = Math.max(
     0,
-    startedAtMs + phoneGrantDurationMs(alignment) + PHONE_GRANT_SLACK_MS - Date.now(),
+    startedAtMs + phoneGrantDurationMs(alignment, tempoRate) + PHONE_GRANT_SLACK_MS - Date.now(),
   );
   log("audio", `Phone grant ${grantId}: waiting ${Math.round(waitMs / 1000)}s for playback window`);
   await sleep(waitMs);
@@ -151,7 +151,7 @@ async function playStreamToPhone(
 }
 
 export function playStreamBuffer(
-  audioStream: AsyncIterable<Uint8Array>,
+  tts: TTSStream,
   queueFile: string,
   ctx: PlaybackContext = "meta",
   replayMeta?: ReplayMeta,
@@ -164,11 +164,11 @@ export function playStreamBuffer(
   onPersisted?: () => void,
 ): Promise<number> {
   return new Promise(async (resolve) => {
-    // Same config read as the TTS request, so this matches what ElevenLabs
-    // baked in: up to 1.2x on v3, none on v4. ffplay makes up the rest.
-    const config = loadConfig();
-    const rawSpeed = config.default_speed;
-    const elSpeed = bakedSpeed(config.elevenlabs_model_id, rawSpeed);
+    // tts.elSpeed is what the request baked in (up to 1.2x on v3, none on
+    // v4); the player makes up the rest of today's speed.
+    const audioStream = tts.audio;
+    const elSpeed = tts.elSpeed;
+    const rawSpeed = loadConfig().default_speed;
     const tempoRate = residualTempo(rawSpeed, elSpeed);
     if (replayMeta) replayMeta.elSpeed = elSpeed;
 
