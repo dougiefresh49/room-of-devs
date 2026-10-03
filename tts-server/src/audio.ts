@@ -4,7 +4,12 @@ import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
 import { join } from "path";
 import { acquireLock, releaseLock } from "./playback-locks.js";
-import { REPLAY_DIR, loadReplayAttribution, type ReplayMeta } from "./replay-store.js";
+import {
+  REPLAY_DIR,
+  loadReplayAttribution,
+  replayResidual,
+  type ReplayMeta,
+} from "./replay-store.js";
 import {
   type PlaybackContext,
   endSessionPlayback,
@@ -26,11 +31,10 @@ export function playFile(
 ): Promise<number> {
   return new Promise((resolve) => {
     const config = loadConfig();
-    // Replay files were saved from ElevenLabs streams, which bake in speed
-    // up to the API max of 1.2x. Only the residual factor above 1.2 needs
-    // applying here — using the full default_speed would over-speed them.
-    const rawSpeed = config.default_speed;
-    const residual = rawSpeed > 1.2 ? +(rawSpeed / 1.2).toFixed(4) : 1.0;
+    // Replay files may carry speed ElevenLabs baked in (v3 bakes up to
+    // 1.2x, v4 bakes none). Only the residual factor needs applying here;
+    // the full default_speed would over-speed a v3 render.
+    const residual = replayResidual(config.default_speed, replayMeta);
     const speed = +(residual * speedFactor).toFixed(4);
     const args = [filePath];
     if (speed !== 1.0) args.push("-r", String(speed));
@@ -107,8 +111,7 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
 
   const { ctx, meta } = loadReplayAttribution(filePath);
   const config = loadConfig();
-  const rawSpeed = config.default_speed;
-  const residual = rawSpeed > 1.2 ? +(rawSpeed / 1.2).toFixed(4) : 1.0;
+  const residual = replayResidual(config.default_speed, meta);
 
   const ffplayArgs = [
     "-nodisp",
@@ -120,11 +123,11 @@ export function startPlayReplay(file: string, offsetSec = 0): boolean {
     "-i",
     filePath,
   ];
-  if (residual > 1.0) ffplayArgs.push("-af", `atempo=${residual}`);
+  if (residual !== 1.0) ffplayArgs.push("-af", `atempo=${residual}`);
 
   log(
     "audio",
-    `play_replay: ${file} offset=${offsetSec}s${residual > 1.0 ? ` atempo=${residual}` : ""}`,
+    `play_replay: ${file} offset=${offsetSec}s${residual !== 1.0 ? ` atempo=${residual}` : ""}`,
   );
 
   // Backdate startedAt by the seek offset (in wall time: file-time ÷ rate) so

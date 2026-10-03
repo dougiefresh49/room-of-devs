@@ -80,8 +80,9 @@ function parseQueueFile(path: string): QueueItem | null {
 // so anything beyond a few multiples of that is wasted input billing.
 const GEMINI_INPUT_CAP = 16_000;
 
-// eleven_v3 per-request limit is 5,000 chars (verified against
-// elevenlabs.io/docs/overview/models on 2026-07-06); 4,800 leaves margin.
+// Per-request limit: eleven_v3 5,000 chars, eleven_v4 10,000 (verified against
+// elevenlabs.io/docs/overview/models on 2026-07-06 and 2026-10-02). The cap is
+// a spend cap, not the API limit: 4,800 leaves margin on v3 and stays put on v4.
 const TTS_CHAR_CAP = 4800;
 // When Gemini failed, the fallback cleaner output is rougher — cap it much
 // lower so a hiccup doesn't bill 4,800 chars of near-raw markdown (C3).

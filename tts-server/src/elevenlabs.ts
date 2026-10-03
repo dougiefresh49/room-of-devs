@@ -2,6 +2,7 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { ELEVENLABS_TIMEOUT_MS, withApiRetry } from "./api-call.js";
 import { loadConfig, loadSessionVoices } from "./config.js";
 import { log } from "./logger.js";
+import { bakedSpeed, modelTakesSpeed } from "./tts-speed.js";
 
 let client: ElevenLabsClient | null = null;
 
@@ -22,6 +23,40 @@ export interface TTSOptions {
   style?: number;
 }
 
+interface ResolvedRequest {
+  modelId: string;
+  rawSpeed: number;
+  elSpeed: number;
+  voiceSettings: {
+    stability: number;
+    similarityBoost: number;
+    style?: number;
+    speed?: number;
+  };
+}
+
+// One home for the model id and voice settings, so the stream, timestamps and
+// convert calls send the same request. eleven_v4 gets stability and
+// similarity only: it ignores style and speed (see tts-speed.ts).
+function resolveRequest(opts: TTSOptions): ResolvedRequest {
+  const config = loadConfig();
+  const modelId = opts.modelId ?? config.elevenlabs_model_id;
+  const rawSpeed = opts.speed ?? config.default_speed;
+  const elSpeed = bakedSpeed(modelId, rawSpeed);
+  const base = {
+    stability: opts.stability ?? 0.4,
+    similarityBoost: opts.similarityBoost ?? 0.75,
+  };
+  return {
+    modelId,
+    rawSpeed,
+    elSpeed,
+    voiceSettings: modelTakesSpeed(modelId)
+      ? { ...base, style: opts.style ?? 0.15, speed: elSpeed }
+      : base,
+  };
+}
+
 export async function streamTTS(
   text: string,
   opts: TTSOptions,
@@ -32,10 +67,7 @@ export async function streamTTS(
     return null;
   }
 
-  const config = loadConfig();
-  const modelId = opts.modelId ?? config.elevenlabs_model_id;
-  const rawSpeed = opts.speed ?? config.default_speed;
-  const elSpeed = Math.min(1.2, Math.max(0.7, rawSpeed));
+  const { modelId, rawSpeed, elSpeed, voiceSettings } = resolveRequest(opts);
 
   try {
     const response = await withApiRetry(
@@ -46,12 +78,7 @@ export async function streamTTS(
           text,
           modelId,
           outputFormat: "mp3_44100_128",
-          voiceSettings: {
-            stability: opts.stability ?? 0.4,
-            similarityBoost: opts.similarityBoost ?? 0.75,
-            style: opts.style ?? 0.15,
-            speed: elSpeed,
-          },
+          voiceSettings,
         }),
       { retryOnTimeout: false },
     );
@@ -126,10 +153,7 @@ export async function streamTTSWithTimestamps(
     return null;
   }
 
-  const config = loadConfig();
-  const modelId = opts.modelId ?? config.elevenlabs_model_id;
-  const rawSpeed = opts.speed ?? config.default_speed;
-  const elSpeed = Math.min(1.2, Math.max(0.7, rawSpeed));
+  const { modelId, rawSpeed, elSpeed, voiceSettings } = resolveRequest(opts);
 
   let stream: AsyncIterable<{
     audioBase64?: string;
@@ -153,12 +177,7 @@ export async function streamTTSWithTimestamps(
           text,
           modelId,
           outputFormat: "mp3_44100_128",
-          voiceSettings: {
-            stability: opts.stability ?? 0.4,
-            similarityBoost: opts.similarityBoost ?? 0.75,
-            style: opts.style ?? 0.15,
-            speed: elSpeed,
-          },
+          voiceSettings,
         }),
       { retryOnTimeout: false },
     )) as any;
@@ -216,10 +235,7 @@ export async function generateTTS(text: string, opts: TTSOptions): Promise<Buffe
     return null;
   }
 
-  const config = loadConfig();
-  const modelId = opts.modelId ?? config.elevenlabs_model_id;
-  const rawSpeed = opts.speed ?? config.default_speed;
-  const elSpeed = Math.min(1.2, Math.max(0.7, rawSpeed));
+  const { modelId, voiceSettings } = resolveRequest(opts);
 
   try {
     const audio = await withApiRetry(
@@ -230,12 +246,7 @@ export async function generateTTS(text: string, opts: TTSOptions): Promise<Buffe
           text,
           modelId,
           outputFormat: "mp3_44100_128",
-          voiceSettings: {
-            stability: opts.stability ?? 0.4,
-            similarityBoost: opts.similarityBoost ?? 0.75,
-            style: opts.style ?? 0.15,
-            speed: elSpeed,
-          },
+          voiceSettings,
         }),
       { retryOnTimeout: false },
     );

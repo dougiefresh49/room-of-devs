@@ -137,7 +137,7 @@ except (OSError, json.JSONDecodeError):
 
 defaults = {
     "elevenlabs_voice_id": "",
-    "elevenlabs_model_id": "eleven_v3",
+    "elevenlabs_model_id": "eleven_v4",
     "gemini_model": "gemini-3.1-flash-lite",
     "default_speed": 1.25,
     "notifications_enabled": False,
@@ -167,6 +167,14 @@ for stale in ("sfx_categories", "model", "piper_port"):
     if stale in c:
         del c[stale]
         changed = True
+
+# One-time move to eleven_v4 (owner call, 2026-10-02, room-of-devs #93). The
+# marker keeps a later deliberate switch back to v3 from being undone.
+if not c.get("eleven_v4_migrated"):
+    if c.get("elevenlabs_model_id") == "eleven_v3":
+        c["elevenlabs_model_id"] = "eleven_v4"
+    c["eleven_v4_migrated"] = True
+    changed = True
 
 if c.get("notification_icon") == "~/.cursor/tts/icons/tmnt-icon.png":
     c["notification_icon"] = "~/.cursor/tts/icons/tmnt-notification-queued.png"
@@ -406,7 +414,7 @@ log "  TTS Server:  $TTS_DIR/tts-server/"
 log "  Queue:       $TTS_DIR/queue/"
 log "  Sounds:      $TTS_DIR/sounds/default/"
 log "  Hooks:       $HOOKS_FILE"
-log "  TTS Engine:  ElevenLabs (eleven_v3) via Node.js server"
+log "  TTS Engine:  ElevenLabs (eleven_v4) via Node.js server"
 log ""
 log "Next steps:"
 log "  1. Start the TTS server: $TTS_DIR/scripts/tts-server.sh start"

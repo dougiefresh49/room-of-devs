@@ -12,6 +12,7 @@ import {
 } from "fs";
 import { TTS_DIR, STATE_DIR } from "./config.js";
 import { log } from "./logger.js";
+import { residualTempo } from "./tts-speed.js";
 import { join } from "path";
 import type { AlignmentTuples } from "./protocol/index.js";
 import type { PlaybackContext } from "./now-playing.js";
@@ -34,6 +35,9 @@ export interface ReplayMeta {
   alignment?: AlignmentTuples;
   // Post-EL atempo factor for karaoke sync (see playStreamBuffer tempoRate).
   playbackRate?: number;
+  // Speed ElevenLabs baked into the render (1.0 on eleven_v4, which ignores
+  // speed). Replays scale from this; absent on sidecars from before v4.
+  elSpeed?: number;
   // "ack" keeps short prompt acknowledgments off the panel's stage;
   // "live" marks an intermediate live-mode clip (conversation view dims it).
   kind?: "ack" | "update" | "live";
@@ -193,6 +197,15 @@ export function openReplayWriter(queueFile: string, meta?: ReplayMeta): ReplayWr
     log("audio", `Failed to open replay writer: ${err.message}`);
     return null;
   }
+}
+
+/**
+ * Playback factor for a saved replay at today's speed. Sidecars without
+ * `elSpeed` predate eleven_v4; those renders baked in min(speed, 1.2).
+ */
+export function replayResidual(rawSpeed: number, meta?: ReplayMeta): number {
+  const baked = meta?.elSpeed ?? Math.min(1.2, rawSpeed);
+  return residualTempo(rawSpeed, baked);
 }
 
 export function loadReplayAttribution(filePath: string): {
