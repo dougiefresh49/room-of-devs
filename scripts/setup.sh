@@ -173,12 +173,17 @@ for stale in ("sfx_categories", "model", "piper_port", "streaming_session_prefix
 if not c.get("eleven_v4_migrated"):
     if c.get("elevenlabs_model_id") == "eleven_v3":
         c["elevenlabs_model_id"] = "eleven_v4"
-    # Same owner call: the Gemini rewrite and the interpreter move to
-    # 3.5 flash-lite alongside v4.
+    c["eleven_v4_migrated"] = True
+    changed = True
+
+# Same owner call, own marker so an install that already took the v4 flip
+# still gets it: the Gemini rewrite and the interpreter move to 3.5
+# flash-lite. Only the old default moves; any other pick is left alone.
+if not c.get("gemini_35_migrated"):
     for key in ("gemini_model", "interpreter_model"):
         if c.get(key) == "gemini-3.1-flash-lite":
             c[key] = "gemini-3.5-flash-lite"
-    c["eleven_v4_migrated"] = True
+    c["gemini_35_migrated"] = True
     changed = True
 
 if c.get("notification_icon") == "~/.cursor/tts/icons/tmnt-icon.png":

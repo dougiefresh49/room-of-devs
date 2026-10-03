@@ -170,7 +170,7 @@ the existing daemon pidfile) bounds how long audio stays ducked.
 
 ```ts
 interpreter_enabled: boolean   // default true
-interpreter_model: string      // default "gemini-3.1-flash-lite"
+interpreter_model: string      // default "gemini-3.5-flash-lite" (was 3.1, decisions row 36)
 interpreter_timeout_ms: number // default 4000; on timeout → rule-only fallback
 ```
 

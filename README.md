@@ -110,8 +110,8 @@ Edit `~/.cursor/tts/config.json`:
 ```json
 {
   "elevenlabs_voice_id": "oFMuHQNZ0Bh0jz5SJXQy",
-  "elevenlabs_model_id": "eleven_v3",
-  "gemini_model": "gemini-3.1-flash-lite",
+  "elevenlabs_model_id": "eleven_v4",
+  "gemini_model": "gemini-3.5-flash-lite",
   "default_speed": 1.25,
   "streaming_enabled": true,
   "playback_mode": "announce",
