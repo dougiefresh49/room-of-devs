@@ -28,11 +28,6 @@ framework build, the tape stays killed, mobile Talk absorbs live mode.
   the 3.5 flash-lite rewriter, spoken session prefix removed (rows 35-36).
   After merge: `./scripts/setup.sh` (one-time config flip), then
   `tts-server.sh restart`, then one short test clip by ear.
-- **Project voices + car grouped by project (#97, PR #98)**: daemon deployed,
-  comic-reader → Michelangelo, cursor-read-aloud → Donatello, fleet → Karai set.
-  After merge: install the android-dev APK, then check in the car that tiles
-  refresh in place (working → done), the project grid and album list layouts,
-  and whether Done/Error show green/red. Chime follow-up: #99.
 
 ## Next up (likely order)
 
@@ -71,6 +66,7 @@ and more.
 
 | When       | What                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-10-04 | **Project voices + car grouped by project (#97)**: each project picks a voice from the mobile app (comic-reader → Michelangelo, cursor-read-aloud → Donatello, fleet → Karai); the car home screen is one tile per project with active sessions, each opening an album-style thread list with a Working/Done/Error second line that refreshes in place. Car speed setting is now the speed heard; re-tapping a paused thread resumes a seekable clip. The daemon reads T3 Code's v2 store (`statev2.sqlite`), so settled threads leave the room and T3 titles resolve again. Owner-verified in the car. Chime follow-up: #99. |
 | 2026-09-28 | **Android Auto app, phase 1 (#85)**: Room grid in the car, tap a tile to hear its update, clips stream live at the daemon's tempo, T3 tiles show thread title and project. Owner-verified in the car; install from the rolling [android-dev](https://github.com/dougiefresh49/room-of-devs/releases/tag/android-dev) prerelease. Voice reply (phase 2) on hold. |
 | 2026-09-26 | **Raph v3 removed from the room**: the `66KaORPuFP0qLgNZk7im` entry deleted from `~/.cursor/tts/characters.json` (and the gitignored repo seed), daemon restarted; "Raphael" resolves to Raph v2 again. The EL voice itself is untouched (still holds a slot). |
 | 2026-08-31 | **Claim-at-start shipped (#75)**: threads claim their ticket before working (`state/working` + a one-line claim comment, cleared at settle; protocol in AGENTS.md and architecture-concepts 08); `pnpm spine-lint` enforces one `state/*` label per open issue in CI; the tap-in digest attributes each in-flight ticket via its claim comment and reads last substantive activity, never `updatedAt`. Acceptance passed on the paid run (tap-in named #75 as the in-flight ticket with its claim, $0.0018), so watcher threads are un-gated per decisions row 29; structured claim markers (session-to-ticket join, claim trust) follow as #83. |
