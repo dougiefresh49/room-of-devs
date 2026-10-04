@@ -64,17 +64,34 @@ if not sdk:
     print("cleanup")
     raise SystemExit(0)
 
-db = os.path.expanduser("~/.t3/userdata/state.sqlite")
+# T3's v2 store (statev2.sqlite) wins; the v1 file lingers stale after the
+# migration. Same session->thread join as tts-server/src/t3-thread-state.ts.
+userdata = os.path.expanduser("~/.t3/userdata")
+v2 = os.path.join(userdata, "statev2.sqlite")
+if os.path.exists(v2):
+    db = v2
+    sql = (
+        "WITH s(sid, thread_id) AS ("
+        " SELECT json_extract(payload_json,'$.nativeThreadRef.nativeId'), thread_id"
+        " FROM orchestration_v2_projection_provider_threads WHERE thread_id IS NOT NULL"
+        " UNION SELECT json_extract(resume_cursor_json,'$.resume'), thread_id"
+        " FROM provider_session_runtime)"
+        " SELECT json_extract(t.payload_json,'$.settledOverride'), t.archived_at, t.deleted_at"
+        " FROM s JOIN orchestration_v2_projection_threads t ON t.thread_id = s.thread_id"
+        " WHERE s.sid = ?"
+    )
+else:
+    db = os.path.join(userdata, "state.sqlite")
+    sql = (
+        "SELECT t.settled_override, t.archived_at, t.deleted_at"
+        " FROM provider_session_runtime r"
+        " JOIN projection_threads t ON t.thread_id = r.thread_id"
+        " WHERE json_extract(r.resume_cursor_json,'$.resume') = ?"
+    )
 if os.path.exists(db):
     try:
         con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=1)
-        rows = con.execute(
-            "SELECT t.settled_override, t.archived_at, t.deleted_at"
-            " FROM provider_session_runtime r"
-            " JOIN projection_threads t ON t.thread_id = r.thread_id"
-            " WHERE json_extract(r.resume_cursor_json,'$.resume') = ?",
-            (os.environ["SESSION_ID"],),
-        ).fetchall()
+        rows = con.execute(sql, (os.environ["SESSION_ID"],)).fetchall()
         con.close()
         if rows and all(
             so == "settled" or arch is not None or dele is not None

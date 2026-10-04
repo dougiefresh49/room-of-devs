@@ -20,6 +20,8 @@ class PlaybackRequests(
     private val current: () -> Snapshot? = { null },
 ) {
     val requests = ConcurrentHashMap<String, PlaybackRequest>()
+    /** Granted clips seen finalized in /replay-list; reopened whole from then on. */
+    val finalized: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val pending = mutableMapOf<String, PlaybackRequest>()
     private val history = ArrayDeque<String>()
 
@@ -58,7 +60,7 @@ class PlaybackRequests(
         job.start()
         return request
     }
-    fun close() { requests.values.forEach { it.audio.cancel() }; requests.clear(); pending.clear(); history.clear() }
+    fun close() { requests.values.forEach { it.audio.cancel() }; requests.clear(); pending.clear(); history.clear(); finalized.clear() }
 
     private suspend fun resolve(selected: Agent): List<Replay> {
         val before = snapshot()

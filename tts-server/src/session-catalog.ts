@@ -169,6 +169,12 @@ function scanSessionsUncached(): ResumableSession[] {
   return sessions;
 }
 
+/** Every transcript the catalog knows (live ones included), from the same
+ *  5s memo as the picker. Read-only: callers must not mutate the entries. */
+export function allCatalogSessions(): readonly ResumableSession[] {
+  return scanSessions();
+}
+
 export function listResumable(): ResumableSession[] {
   const live = liveSessionIds();
   return scanSessions()

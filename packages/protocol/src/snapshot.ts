@@ -58,7 +58,11 @@ export const AgentViewSchema = v.object({
   state: SessionStateSchema,
   raisedAt: v.nullable(v.string()),
   character: v.nullable(v.string()),
-  /** Working-directory basename (T3 project title for SDK cards). Additive; older readers default null. */
+  /**
+   * Project name: the repo a session runs in, with worktree checkouts mapped
+   * to their main repo's folder name (T3 project root for SDK cards). The
+   * key project_voices.json uses. Additive; older readers default null.
+   */
   project: v.optional(v.nullable(v.string())),
   /** T3 Code thread title for SDK cards. Additive; readers default null. */
   threadTitle: v.optional(v.nullable(v.string())),
@@ -77,6 +81,12 @@ export const AgentViewSchema = v.object({
   /** Reply capability across team inject and provisioned SDK dispatch. */
   replyable: v.optional(v.boolean()),
   live: v.nullable(AgentLiveSchema),
+  /**
+   * The most recent turn's speech failed: this session's newest queue item
+   * landed in failed/ after its newest played/ and queued items, and no new
+   * prompt has started since. Additive; readers default false.
+   */
+  failed: v.optional(v.boolean()),
 });
 export type AgentView = v.InferOutput<typeof AgentViewSchema>;
 

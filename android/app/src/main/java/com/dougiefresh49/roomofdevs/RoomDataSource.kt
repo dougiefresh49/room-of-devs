@@ -17,6 +17,8 @@ class RoomDataSource(
     private val api: RoomApi,
     private val requests: PlaybackRequests,
     private val reconnectDelayMs: Long = 1_000,
+    /** A granted clip finished synthesizing before this open and is served whole. */
+    private val onFinalized: (String) -> Unit = {},
 ) : DataSource {
     private val delegate = OkHttpDataSource.Factory(api.http).createDataSource()
     private var publicUri: Uri? = null
@@ -31,7 +33,11 @@ class RoomDataSource(
                 uri.host == "replay" -> Replay(uri.lastPathSegment ?: throw IOException("Missing replay"))
                 uri.host == "request" -> {
                     val request = requests.requests[uri.lastPathSegment] ?: throw IOException("Tap the thread again")
-                    runBlocking { request.audio.await() }.first()
+                    val first = runBlocking { request.audio.await() }.first()
+                    // Once a clip is known whole, later opens (seeks, resumes) skip the lookup.
+                    if (first.live && first.file in requests.finalized) first.copy(live = false)
+                    else runBlocking { wholeOnceFinalized(first, request.agent.sessionId, api::replays) }
+                        .also { if (first.live && !it.live) { requests.finalized.add(it.file); onFinalized(it.file) } }
                 }
                 else -> throw IOException("Unsupported media URI")
             }
@@ -64,6 +70,17 @@ class RoomDataSource(
     override fun getUri() = publicUri
     override fun getResponseHeaders(): Map<String, List<String>> = emptyMap()
     override fun close() { tail = null; delegate.close() }
+}
+
+/**
+ * A granted clip streams live while it synthesizes. Once /replay-list shows it (the list skips
+ * .part files) a reopen serves the whole file instead: known length, so the car shows a duration
+ * and can seek. A failed check keeps the live tail, which serves a finished file too.
+ */
+suspend fun wholeOnceFinalized(clip: Replay, sessionId: String, replays: suspend (String) -> List<Replay>): Replay {
+    if (!clip.live) return clip
+    val listed = runCatching { replays(sessionId) }.getOrNull()?.any { it.file == clip.file } == true
+    return if (listed) clip.copy(live = false) else clip
 }
 
 /**

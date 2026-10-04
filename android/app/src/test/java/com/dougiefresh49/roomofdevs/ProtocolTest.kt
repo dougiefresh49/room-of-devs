@@ -25,7 +25,7 @@ class ProtocolTest {
             assertTrue(it, runCatching { Connection.parse(it) }.isFailure)
         }
     }
-    @Test fun ordersByMostRecentActivityAndMapsBadges() {
+    @Test fun ordersByMostRecentActivityAndMapsStatus() {
         val idle = agent("idle").copy(lastActivityAt = "2026-09-25T09:00:00Z")
         val working = agent("working").copy(lastActivityAt = "2026-09-26T05:18:00Z")
         val newer = agent("hand_raised", "2026-09-25T12:00:00Z")
@@ -33,10 +33,11 @@ class ProtocolTest {
         val unknown = agent("idle", "x").copy(raisedAt = null)
         val result = roomOrder(listOf(idle, newer, unknown, working, older))
         assertEquals(listOf(working, newer, older, idle, unknown), result)
-        assertEquals(Badge.HAND, newer.badge)
-        assertEquals(Badge.WRENCH, working.badge)
-        assertEquals(Badge.NONE, idle.badge)
-        assertEquals(Badge.WRENCH, working.copy(raisedCount = 1).badge)
+        assertTrue(newer.hasUpdate)
+        assertEquals(Status.DONE, newer.status)
+        assertEquals(Status.WORKING, working.status)
+        assertEquals(Status.DONE, idle.status)
+        assertEquals(Status.WORKING, working.copy(raisedCount = 1).status)
         assertFalse(working.copy(raisedCount = 1).hasUpdate)
         assertEquals("Thread label", idle.copy(label = "Thread label").title)
         assertEquals("Wave 3", idle.copy(label = "comic-reader-5e", threadTitle = "Wave 3").title)

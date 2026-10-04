@@ -47,6 +47,30 @@ const ReplayFileName = v.pipe(
   ),
 );
 
+/** Longest accepted project name (a ~/projects dir or repo basename). */
+export const PROJECT_NAME_MAX = 100;
+
+/**
+ * A project key for project_voices.json: a bare directory-style name, never a
+ * path. No separators, control chars, `.`/`..`, or surrounding whitespace.
+ */
+export function isValidProjectName(name: unknown): name is string {
+  return (
+    typeof name === "string" &&
+    name.length > 0 &&
+    name.length <= PROJECT_NAME_MAX &&
+    name.trim() === name &&
+    name !== "." &&
+    name !== ".." &&
+    !/[\/\\\x00-\x1f\x7f]/.test(name)
+  );
+}
+
+/** ElevenLabs voice id, or "" to clear. Existence is checked server-side. */
+export function isValidVoiceIdField(voiceId: unknown): voiceId is string {
+  return typeof voiceId === "string" && voiceId.length <= 64 && /^[A-Za-z0-9_-]*$/.test(voiceId);
+}
+
 /** Aliases accepted by `claude --model`; absent/empty = CLI default. */
 export const SpawnModelSchema = v.picklist(["fable", "opus", "sonnet", "haiku"]);
 export type SpawnModel = v.InferOutput<typeof SpawnModelSchema>;
@@ -179,6 +203,24 @@ export const SetVoiceCommandSchema = v.strictObject({
   ...envelope,
 });
 
+/**
+ * Pick the character voice every session in a project speaks in (#97).
+ * `voiceId: ""` clears the pick. The daemon also rejects voiceIds missing
+ * from characters.json. Resolution: session_voices[sid] → this → default.
+ */
+export const SetProjectVoiceCommandSchema = v.strictObject({
+  type: v.literal("set_project_voice"),
+  project: v.pipe(
+    v.string(),
+    v.check((s: string) => isValidProjectName(s), "bare project name only"),
+  ),
+  voiceId: v.pipe(
+    v.string(),
+    v.check((s: string) => isValidVoiceIdField(s), "voice id or empty string"),
+  ),
+  ...envelope,
+});
+
 export const SetNicknameCommandSchema = v.strictObject({
   type: v.literal("set_nickname"),
   sessionId: NonEmptyString,
@@ -252,6 +294,7 @@ export const CommandSchema = v.variant("type", [
   SetLiveMuteCommandSchema,
   SpeakTextCommandSchema,
   SetVoiceCommandSchema,
+  SetProjectVoiceCommandSchema,
   SetNicknameCommandSchema,
   SetSettingCommandSchema,
   SetButtonCommandSchema,
@@ -291,6 +334,7 @@ export const COMMAND_TYPES = [
   "set_live_mute",
   "speak_text",
   "set_voice",
+  "set_project_voice",
   "set_nickname",
   "set_setting",
   "set_button",
