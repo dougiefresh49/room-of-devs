@@ -16,6 +16,7 @@ import {
   PLAYED_DIR,
   SESSION_VOICES_PATH,
   getActiveSessions,
+  isSdkEntrypoint,
 } from "./config.js";
 import { isProcessing } from "./playback-locks.js";
 import { log } from "./logger.js";
@@ -142,7 +143,7 @@ export function setSessionState(
     const info = getActiveSessions().find((s) => s.sessionId === sessionId);
     const name = opts?.name ?? info?.name ?? existing?.name ?? sessionId.slice(0, 12);
     // Sticky: the registry file vanishes on teardown, so carry the flag forward.
-    const sdk = existing?.sdk === true || (info?.entrypoint ?? "").startsWith("sdk");
+    const sdk = existing?.sdk === true || isSdkEntrypoint(info?.entrypoint);
 
     const data: StateFile = { sessionId, name, state, raisedAt, updatedAt: now };
     if (sdk) data.sdk = true;
