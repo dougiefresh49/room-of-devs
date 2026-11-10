@@ -370,8 +370,14 @@ export interface SessionInfo {
   name: string;
   cwd: string;
   status: string;
-  /** Harness entrypoint from the registry file: "cli" for terminals, "sdk-*" for app-embedded (T3 Code) sessions. */
+  /** Harness entrypoint from the registry file: "cli" for terminals; "sdk-*" or "t3-code" for app-embedded (T3 Code) sessions. */
   entrypoint: string;
+}
+
+/** App-embedded (T3 Code) session: older harnesses report "sdk-*", newer ones "t3-code". */
+export function isSdkEntrypoint(entrypoint: string | undefined): boolean {
+  const e = entrypoint ?? "";
+  return e.startsWith("sdk") || e === "t3-code";
 }
 
 export function getActiveSessions(): SessionInfo[] {
