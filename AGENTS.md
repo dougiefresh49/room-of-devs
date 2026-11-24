@@ -1,5 +1,5 @@
 <!-- Shared rulebook for every agent in this repo: the main Claude session, subagents, codex and cursor-agent delegates.
-     Main-session-only guidance (model roster, delegation mechanics) lives in CLAUDE.md, which imports this file. -->
+     Main-session-only guidance (model roster overrides, delegation mechanics) lives in CLAUDE.md, which imports this file. -->
 
 # Room of Devs (cursor-read-aloud)
 
