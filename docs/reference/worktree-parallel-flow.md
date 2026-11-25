@@ -94,8 +94,9 @@ changes stay additive (the refactor's envelope rules).
 1. Integrator: write/collect specs, define lanes + file ownership, note
    hot-file conflicts, land any shared prerequisite on main.
 2. Launch lanes in parallel (cursor-agent worktrees and/or Agent-tool
-   worktree subagents; model per the CLAUDE.md rubric — taste ≥ 7 for
-   user-facing UI).
+   worktree subagents; model per the fleet default roster
+   (`~/.claude/rules/fleet-model-roster.md`) and CLAUDE.md's
+   `## Model roster overrides`).
 3. Lanes report; integrator reviews diffs (targeted review, not
    re-authoring), merges sequentially, resolves the trivial conflicts
    that file-ownership discipline should have made rare.
